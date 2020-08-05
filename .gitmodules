@@ -1,0 +1,3 @@
+[submodule "base_design"]
+	path = base_design
+	url = https://gitlab.informatik.uni-osnabrueck.de/FastSense/base_design
