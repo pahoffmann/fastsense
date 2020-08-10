@@ -1,52 +1,82 @@
-all: check_files check_env compile_host link_host compile_kernel link_kernel compile_kernel_emu link_kernel_emu
+#
+# Variables
+#
 
-CPP_STD := c++14
-SYSROOT := ${CURDIR}/FastSense_platform/sw/FastSense_platform/linux_domain/sysroot/aarch64-xilinx-linux
-CONNECTIVITY := ${CURDIR}/connectivity.cfg
-BUILD_DIR := ${CURDIR}/build
+# Tools
+CXX := aarch64-linux-gnu-g++
+VXX := v++
+MKDIR_P := mkdir -p
 SHELL := /bin/bash
+VIVADO_HLS := vivado_hls
+
+# Global
+BUILD_DIR := ${CURDIR}/build
+APP_NAME := FastSense
+PLATFORM_DIR ?= ${CURDIR}/base_design/platform/FastSense_platform/export/FastSense_platform
+
+# Software
+SYSROOT := ${PLATFORM_DIR}/sw/FastSense_platform/linux_domain/sysroot/aarch64-xilinx-linux/
+
+SRCS := src/vadd.cpp
+OBJS := $(SRCS:%.cpp=$(BUILD_DIR)/%.o)
+DEPS := $(OBJS:.o=.d)
+
+INC_DIRS := src
+INC_FLAGS := $(addprefix -I,$(INC_DIRS))
+CXX_STD := c++14
+CXXFLAGS := $(INC_FLAGS) -MMD -MP -D__USE_XOPEN2K8 -I${SYSROOT}/usr/include/xrt -I${XILINX_VIVADO}/include -I${SYSROOT}/usr/include -c -fmessage-length=0 -std=${CXX_STD} --sysroot=${SYSROOT}
+
+LDFLAGS := -lxilinxopencl -lpthread -lrt -lstdc++ -lgmp -lxrt_core -L${SYSROOT}/usr/lib/ --sysroot=${SYSROOT}
+
+# Hardware
+LINK_CFG := ${CURDIR}/link.cfg
+BUILD_CFG := ${CURDIR}/build.cfg
+
+HW_TARGET ?= hw
+HW_PLATFORM := ${PLATFORM_DIR}/FastSense_platform.xpfm
+
+HW_SRCS := src/krnl_vadd.cpp
+HW_OBJS := $(HW_SRCS:%.cpp=$(BUILD_DIR)/%.xo)
+
+VXXFLAGS := -t $(HW_TARGET) -f $(HW_PLATFORM) -c $(INC_FLAGS) --config $(BUILD_CFG)
+VXXLDFLAGS := -t $(HW_TARGET) -f $(HW_PLATFORM) --config $(LINK_CFG) --link
+
+#
+# Rules
+#
+
+all: $(BUILD_DIR)/$(APP_NAME) $(BUILD_DIR)/$(APP_NAME).xclbin
 
 clean: 
-	@rm -rf _x _vimage *.log build/* 
+	@rm -rf _x _vimage *.log build/*
 
-check_files:
-	@echo "-- files --"
-	@[ -f "${CONNECTIVITY}" ] && echo "Found connectivity file: connectivity.cfg" || (echo "connectivity.cfg file missing"; exit 1)
-	@[ -d "${BUILD_DIR}" ] && echo "Found build directory ${BUILD_DIR}" ||  (mkdir ${BUILD_DIR} && echo "Created build directory")
-	@echo "-----------"
+# Link software
+$(BUILD_DIR)/$(APP_NAME): $(OBJS)
+	@echo "Link: $(APP_NAME)"
+	@$(MKDIR_P) $(dir $@)
+	@$(CXX) $(OBJS) -o $@ $(LDFLAGS)
 
-check_env:
-	@echo "--  env  --"
-	@[ "${XILINX_VITIS}" ] && echo "XILINX_VITIS: ${XILINX_VITIS}" || ( echo "XILINX_VITIS is not set"; exit 1 )
-	@[ "${XILINX_VIVADO}" ] && echo "XILINX_VIVADO: ${XILINX_VIVADO}" || ( echo "XILINX_VIVADO is not set"; exit 1 )
-	@[ "${SYSROOT}" ] && echo "SYSROOT: ${SYSROOT}" || ( echo "SYSROOT is not set"; exit 1 )
-	@[ "${PLATFORM_REPO_PATHS}" ] && echo "PLATFORM_REPO_PATHS: ${PLATFORM_REPO_PATHS}" || ( echo "PLATFORM_REPO_PATHS is not set"; exit 1 )
-	@echo "-----------"
+# Compile software
+$(BUILD_DIR)/%.o: %.cpp
+	@echo "Compile: $<"
+	@$(MKDIR_P) $(dir $@)
+	@$(CXX) $(CXXFLAGS) $< -o $@
 
-compile_host:
-	@echo "Compile host"	
-	@${XILINX_VITIS}/gnu/aarch64/lin/aarch64-linux/bin/aarch64-linux-gnu-g++ -D__USE_XOPEN2K8 -I${SYSROOT}/usr/include/xrt -I${XILINX_VIVADO}/include -I${SYSROOT}/usr/include -c -fmessage-length=0 -std=${CPP_STD} --sysroot=${SYSROOT} -o build/vadd.o src/vadd.cpp
+# Link hardware
+$(BUILD_DIR)/$(APP_NAME).xclbin: $(HW_OBJS) $(LINK_CFG)
+	@echo "Link hardawre: $(APP_NAME).xclbin"
+	@$(MKDIR_P) $(dir $@)
+	@$(VXX) $(HW_OBJS) -o $@ $(VXXLDFLAGS)
 
-link_host: build/vadd.o
-	@echo "Link host"
-	@${XILINX_VITIS}/gnu/aarch64/lin/aarch64-linux/bin/aarch64-linux-gnu-g++ -o build/vadd.exe build/vadd.o -lxilinxopencl -lpthread -lrt -lstdc++ -lgmp -lxrt_core -L${SYSROOT}/usr/lib/ --sysroot=${SYSROOT}
+# Compile kernels
+$(BUILD_DIR)/%.xo: %.cpp $(BUILD_CFG)
+	@echo "Compile kernel: $<"
+	@$(MKDIR_P) $(dir $@)
+	@$(VXX) $(VXXFLAGS) $< -o $@ -k $(notdir $*)
 
-compile_kernel: build/vadd.exe
-	@echo "Compile kernel"
-	@v++ -t sw_emu --platform FastSense_platform -c -k krnl_vadd -I src -o build/krnl_vadd.xo src/krnl_vadd.cpp --config ./build.cfg
+# Open HLS GUI for kernel
+hls_%: $(filter %$*.xo,$(HW_OBJS))
+	@echo "Opening HLS for kernel $* ($<) "
+	@$(VIVADO_HLS) -p _x/$*/$*/$*/
 
-link_kernel: build/krnl_vadd.xo
-	@echo "link kernel"
-	@v++ -t sw_emu --platform FastSense_platform --link build/krnl_vadd.xo -o build/krnl_vadd.xclbin --config ./connectivity.cfg
-
-compile_kernel_emu: build/vadd.exe
-	@echo "Compile kernel simulation"
-	@v++ -t hw --platform FastSense_platform -c -k krnl_vadd -I src -o build/krnl_vadd.xo src/krnl_vadd.cpp
-
-link_kernel_emu: build/krnl_vadd.xo
-	@echo "link kernel simulation"
-	@v++ -t hw --platform FastSense_platform --link build/krnl_vadd.xo -o build/krnl_vadd.xclbin --config ./connectivity.cfg
-
-
-
-
+.PHONY: all clean hls_%
