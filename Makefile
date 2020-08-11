@@ -5,6 +5,7 @@
 # Tools
 CXX := $(XILINX_VITIS)/gnu/aarch64/lin/aarch64-linux/bin/aarch64-linux-gnu-g++
 VXX := $(XILINX_VITIS)/bin/v++
+HOST_CXX := g++
 MKDIR_P := mkdir -p
 SHELL := /bin/bash
 VIVADO_HLS := vivado_hls
@@ -37,13 +38,18 @@ HW_PLATFORM := ${PLATFORM_DIR}/FastSense_platform.xpfm
 
 HW_SRCS := src/krnl_vadd.cpp
 HW_OBJS := $(HW_SRCS:%.cpp=$(BUILD_DIR)/%.xo)
+HW_DEPS := $(HW_OBJS:.xo=.d)
 
 VXXFLAGS := -t $(HW_TARGET) -f $(HW_PLATFORM) -c $(INC_FLAGS) --config $(BUILD_CFG)
 VXXLDFLAGS := -t $(HW_TARGET) -f $(HW_PLATFORM) --config $(LINK_CFG) --link
 
+HW_DEPS_FLAGS := $(INC_FLAGS) -isystem ${XILINX_VIVADO}/include -MM -MP
+
 #
 # Rules
 #
+
+.PHONY: all software hardware clean hls_%
 
 all: software hardware
 
@@ -76,6 +82,7 @@ $(BUILD_DIR)/$(APP_NAME).xclbin: $(HW_OBJS) $(LINK_CFG)
 $(BUILD_DIR)/%.xo: %.cpp $(BUILD_CFG)
 	@echo "Compile kernel: $<"
 	@$(MKDIR_P) $(dir $@)
+	@$(HOST_CXX) $< $(HW_DEPS_FLAGS) -MF $(@:.xo=.d) -MT $@
 	@$(VXX) $(VXXFLAGS) $< -o $@ -k $(notdir $*)
 
 # Open HLS GUI for kernel
@@ -83,4 +90,5 @@ hls_%: $(filter %$*.xo,$(HW_OBJS))
 	@echo "Opening HLS for kernel $* ($<) "
 	@$(VIVADO_HLS) -p _x/$*/$*/$*/
 
-.PHONY: all software hardware clean hls_%
+-include $(DEPS)
+-include $(HW_DEPS)
