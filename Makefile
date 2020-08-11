@@ -3,8 +3,8 @@
 #
 
 # Tools
-CXX := aarch64-linux-gnu-g++
-VXX := v++
+CXX := $(XILINX_VITIS)/gnu/aarch64/lin/aarch64-linux/bin/aarch64-linux-gnu-g++
+VXX := $(XILINX_VITIS)/bin/v++
 MKDIR_P := mkdir -p
 SHELL := /bin/bash
 VIVADO_HLS := vivado_hls
@@ -45,10 +45,14 @@ VXXLDFLAGS := -t $(HW_TARGET) -f $(HW_PLATFORM) --config $(LINK_CFG) --link
 # Rules
 #
 
-all: $(BUILD_DIR)/$(APP_NAME) $(BUILD_DIR)/$(APP_NAME).xclbin
+all: software hardware
 
 clean: 
 	@rm -rf _x _vimage *.log build/*
+
+software: $(BUILD_DIR)/$(APP_NAME)
+
+hardware: $(BUILD_DIR)/$(APP_NAME).xclbin
 
 # Link software
 $(BUILD_DIR)/$(APP_NAME): $(OBJS)
@@ -79,4 +83,4 @@ hls_%: $(filter %$*.xo,$(HW_OBJS))
 	@echo "Opening HLS for kernel $* ($<) "
 	@$(VIVADO_HLS) -p _x/$*/$*/$*/
 
-.PHONY: all clean hls_%
+.PHONY: all software hardware clean hls_%
