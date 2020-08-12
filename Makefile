@@ -51,7 +51,7 @@ HW_DEPS_FLAGS := $(INC_FLAGS) -isystem ${XILINX_VIVADO}/include -MM -MP
 
 .PHONY: all software hardware clean hls_%
 
-all: software hardware
+all: software hardware format
 
 clean: 
 	@rm -rf _x _vimage *.log build/*
@@ -89,6 +89,9 @@ $(BUILD_DIR)/%.xo: %.cpp $(BUILD_CFG)
 hls_%: $(filter %$*.xo,$(HW_OBJS))
 	@echo "Opening HLS for kernel $* ($<) "
 	@$(VIVADO_HLS) -p _x/$*/$*/$*/
+
+format:
+	@astyle --recursive "src/*.c??" "src/*.h" 
 
 -include $(DEPS)
 -include $(HW_DEPS)
