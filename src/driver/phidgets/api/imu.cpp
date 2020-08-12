@@ -1,6 +1,5 @@
 #include "imu.h"
 #include <stdexcept>
-#include <iostream>
 
 namespace phidgets {
 
@@ -17,11 +16,7 @@ Imu::Imu() : Phidget(), imu_handle_(nullptr)
 
     // register imu data callback
     CPhidgetSpatial_set_OnSpatialData_Handler(imu_handle_, SpatialDataHandler,
-                                              this);
-}
-
-Imu::~Imu()
-{
+            this);
 }
 
 void Imu::setDataRate(int rate)
@@ -44,23 +39,23 @@ int Imu::SpatialDataHandler(CPhidgetSpatialHandle /* handle */, void *userptr,
         double ts = data[i]->timestamp.seconds +
                     (data[i]->timestamp.microseconds / 1000.0 / 1000.0);
         ((Imu *)userptr)
-            ->dataHandler(data[i]->acceleration, data[i]->angularRate,
-                          data[i]->magneticField, ts);
+        ->dataHandler(data[i]->acceleration, data[i]->angularRate,
+                      data[i]->magneticField, ts);
     }
     return 0;
 }
 
 void Imu::setCompassCorrectionParameters(double cc_mag_field, double cc_offset0,
-                                         double cc_offset1, double cc_offset2,
-                                         double cc_gain0, double cc_gain1,
-                                         double cc_gain2, double cc_T0,
-                                         double cc_T1, double cc_T2,
-                                         double cc_T3, double cc_T4,
-                                         double cc_T5)
+        double cc_offset1, double cc_offset2,
+        double cc_gain0, double cc_gain1,
+        double cc_gain2, double cc_T0,
+        double cc_T1, double cc_T2,
+        double cc_T3, double cc_T4,
+        double cc_T5)
 {
     int ret = CPhidgetSpatial_setCompassCorrectionParameters(
-        imu_handle_, cc_mag_field, cc_offset0, cc_offset1, cc_offset2, cc_gain0,
-        cc_gain1, cc_gain2, cc_T0, cc_T1, cc_T2, cc_T3, cc_T4, cc_T5);
+                  imu_handle_, cc_mag_field, cc_offset0, cc_offset1, cc_offset2, cc_gain0,
+                  cc_gain1, cc_gain2, cc_T0, cc_T1, cc_T2, cc_T3, cc_T4, cc_T5);
 
     if (ret != EPHIDGET_OK)
     {

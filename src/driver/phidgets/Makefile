@@ -3,16 +3,23 @@
 #
 
 # Tools
-CXX := g++
-MKDIR_P := mkdir -p
-SHELL := /bin/bash
-VIVADO_HLS := vivado_hls
+CXX :
+    = g++
+      MKDIR_P :
+      = mkdir -p
+        SHELL :
+        = /bin/bash
+           VIVADO_HLS :
+           = vivado_hls
 
 # Global
-BUILD_DIR := ${CURDIR}/build
-APP_NAME := ImuDriver 
+             BUILD_DIR :
+             = $ {CURDIR}/build
+               APP_NAME :
+               = ImuDriver
 
-SRCS := $(wildcard api/*.cpp) $(wildcard ./*.cpp)
+                 SRCS :
+                 = $(wildcard api/*.cpp) $(wildcard ./*.cpp)
 OBJS := $(SRCS:%.cpp=$(BUILD_DIR)/%.o)
 DEPS := $(OBJS:.o=.d)
 
@@ -27,11 +34,11 @@ LDFLAGS := -lpthread -lphidget21
 # Rules
 #
 
-.PHONY: all software clean 
+.PHONY: all software clean
 
 all: software
 
-clean: 
+clean:
 	@rm -rf _x _vimage *.log build/*
 
 software: $(BUILD_DIR)/$(APP_NAME)

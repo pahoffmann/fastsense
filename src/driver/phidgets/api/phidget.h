@@ -32,14 +32,13 @@
 #define PHIDGETS_API_PHIDGET_H
 
 #include <phidget21.h>
-
 #include <string>
 
 namespace phidgets {
 
 class Phidget
 {
-  public:
+public:
     Phidget();
     virtual ~Phidget();
 
@@ -75,7 +74,7 @@ class Phidget
      *@param errorCode The error code returned from the CPhidget API */
     static std::string getErrorDescription(int errorCode);
 
-  protected:
+protected:
     void init(CPhidgetHandle handle);
 
     void registerHandlers();
@@ -83,7 +82,7 @@ class Phidget
     virtual void detachHandler();
     virtual void errorHandler(int error);
 
-  private:
+private:
     CPhidgetHandle handle_;
 
     static int AttachHandler(CPhidgetHandle handle, void *userptr);

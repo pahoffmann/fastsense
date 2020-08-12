@@ -7,12 +7,12 @@ namespace phidgets {
 
 class Imu : public Phidget
 {
-  public:
+public:
     Imu();
 
-    virtual ~Imu();
+    virtual ~Imu() = default;
 
-  protected:
+protected:
     void zero();
     void setDataRate(int rate);
 
@@ -27,7 +27,7 @@ class Imu : public Phidget
                              const double angularRate[3],
                              const double magneticField[3], double timestamp) = 0;
 
-  private:
+private:
     CPhidgetSpatialHandle imu_handle_;
 
     static int SpatialDataHandler(CPhidgetSpatialHandle spatial, void *userptr,

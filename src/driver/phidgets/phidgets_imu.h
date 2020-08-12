@@ -12,10 +12,10 @@ const float MAX_TIMEDIFF_SECONDS = 0.1;
 
 class PhidgetsImu final : public Imu
 {
-  public:
+public:
     explicit PhidgetsImu();
 
-  private:
+private:
     // diagnostics
     bool is_connected_;
     int error_number_;
