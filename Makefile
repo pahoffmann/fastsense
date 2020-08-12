@@ -18,11 +18,14 @@ PLATFORM_DIR ?= ${CURDIR}/base_design/platform/FastSense_platform/export/FastSen
 # Software
 SYSROOT := ${PLATFORM_DIR}/sw/FastSense_platform/linux_domain/sysroot/aarch64-xilinx-linux/
 
-SRCS := src/vadd.cpp
+SRCS := src/vadd.cpp \
+	src/driver/velodyne.cpp
 OBJS := $(SRCS:%.cpp=$(BUILD_DIR)/%.o)
 DEPS := $(OBJS:.o=.d)
 
-INC_DIRS := src
+INC_DIRS := src \
+	src/driver \
+	src/util
 INC_FLAGS := $(addprefix -I,$(INC_DIRS))
 CXX_STD := c++14
 CXXFLAGS := $(INC_FLAGS) -MMD -MP -D__USE_XOPEN2K8 -I${SYSROOT}/usr/include/xrt -I${XILINX_VIVADO}/include -I${SYSROOT}/usr/include -c -fmessage-length=0 -std=${CXX_STD} --sysroot=${SYSROOT}
