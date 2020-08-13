@@ -1,0 +1,10 @@
+--add-brackets
+--convert-tabs
+--align-pointer=type
+--align-reference=type
+--pad-header
+--pad-oper
+--style=allman
+--indent=spaces=4
+--max-code-length=200
+--indent-labels
