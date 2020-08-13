@@ -1,6 +1,7 @@
 /**
+ * @file velodyne.cpp
  * @author Marcel Flottmann
- * @date   2020-08-11
+ * @date 2020-08-11
  */
 
 #include "velodyne.h"
@@ -19,17 +20,25 @@
 
 using namespace fastsense::driver;
 
+// Magic constants of the sensor
 constexpr uint8_t PROD_ID_VLP16 = 0x22;
 constexpr uint8_t MODE_STRONGEST = 0x37;
 constexpr uint8_t MODE_LAST = 0x38;
 constexpr uint8_t MODE_DUAL = 0x39;
 constexpr uint16_t BLOCK_FLAG = 0xEEFF;
 
+/**
+ * @brief Calculate degrees to radians.
+ *
+ * @param deg Angle in degrees.
+ * @return float Calcualted angle in radians.
+ */
 constexpr float deg_to_rad(float deg)
 {
     return deg * M_PIf32 / 180.f;
 }
 
+/// Lookup table to convert the laser id to vertical angles in radians.
 constexpr float LASER_ID_TO_VERT_ANGLE[16] =
 {
     deg_to_rad(-15),
@@ -50,6 +59,7 @@ constexpr float LASER_ID_TO_VERT_ANGLE[16] =
     deg_to_rad(15)
 };
 
+/// Lookup table to get the offset of a laser.
 constexpr float LASER_ID_TO_OFFSET[16] =
 {
     11.2f / 1000.f,
@@ -69,6 +79,7 @@ constexpr float LASER_ID_TO_OFFSET[16] =
     -11.2f / 1000.f
 };
 
+/// Lookup table to get ring of laser.
 constexpr uint8_t LASER_ID_TO_RING[16] =
 {
     15,
@@ -194,7 +205,7 @@ void VelodyneDriver::receivePacket()
         while (!(fds[0].revents & POLLIN));
 
         // receive packet
-        ssize_t size = recvfrom(sockfd, &packet, PACKET_SIZE, 0, (sockaddr*)&sender, &senderLength);
+        ssize_t size = recvfrom(sockfd, &packet, sizeof(VelodynePacket), 0, (sockaddr*)&sender, &senderLength);
 
         if (size < 0)
         {
@@ -202,7 +213,7 @@ void VelodyneDriver::receivePacket()
         }
 
         // process packet
-        if (size == PACKET_SIZE)
+        if (size == sizeof(VelodynePacket))
         {
             decodePacket();
         }
@@ -257,7 +268,7 @@ void VelodyneDriver::decodePacket()
                 // select point
                 Point& new_point = currentScan->points[LASER_ID_TO_RING[p % 16] + (p < 16 ? 0 : 16)];
 
-                // interpolate azimuth
+                // interpolate azimuth (VLP-16 User Manual, Ch. 9.5)
                 float az;
                 if (p < 16)
                 {

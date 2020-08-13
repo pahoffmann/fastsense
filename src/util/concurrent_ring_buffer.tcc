@@ -1,3 +1,9 @@
+/**
+ * @file concurrent_ring_buffer.tcc
+ * @author Marcel Flottmann
+ * @date 2020-08-13
+ */
+
 #pragma once
 
 template<typename T>
