@@ -19,54 +19,55 @@ constexpr uint8_t POINTS_IN_BLOCK = 32;
 constexpr uint8_t BLOCKS_IN_PACKET = 12;
 
 #pragma pack(push, 1)
-struct velodyne_data_point
+struct VelodyneDataPoint
 {
     uint16_t distance;
     uint8_t intensity;
 };
 
-struct velodyne_block
+struct VelodyneBlock
 {
     uint16_t flag;
     uint16_t azimuth;
-    velodyne_data_point points[POINTS_IN_BLOCK];
+    VelodyneDataPoint points[POINTS_IN_BLOCK];
 };
 
-struct velodyne_packet
+struct VelodynePacket
 {
-    velodyne_block blocks[BLOCKS_IN_PACKET];
+    VelodyneBlock blocks[BLOCKS_IN_PACKET];
     uint32_t timestamp;
     uint8_t mode;
     uint8_t produkt_id;
 };
 #pragma pack(pop)
 
-constexpr uint16_t PACKET_SIZE = sizeof(velodyne_packet);
+constexpr uint16_t PACKET_SIZE = sizeof(VelodynePacket);
 static_assert(PACKET_SIZE == 1206);
 
-class velodyne
+class VelodyneDriver
 {
 public:
-    velodyne(const std::string& ipaddr, uint16_t port, const std::shared_ptr<concurrent_ring_buffer<point_cloud::ptr>>& buffer);
-    virtual ~velodyne();
+    VelodyneDriver(const std::string& ipaddr, uint16_t port, const std::shared_ptr<ConcurrentRingBuffer<PointCloud::ptr>>& buffer);
+    virtual ~VelodyneDriver();
     void start();
     void stop();
-    point_cloud::ptr get_scan();
+    PointCloud::ptr getScan();
 
 protected:
-    void receive_packet();
-    void decode_packet(uint8_t packet[PACKET_SIZE]);
-    
+    void receivePacket();
+    void decodePacket();
+
     std::string ipaddr;
     uint16_t port;
     int sockfd;
 
     std::thread worker;
     bool running;
-    float az_last;
+    VelodynePacket packet;
+    float azLast;
 
-    concurrent_ring_buffer<point_cloud::ptr>::ptr scan_buffer;
-    point_cloud::ptr current_scan;
+    ConcurrentRingBuffer<PointCloud::ptr>::ptr scanBuffer;
+    PointCloud::ptr currentScan;
 };
 
 }

@@ -10,25 +10,25 @@
 #include <condition_variable>
 
 template<typename T>
-class concurrent_ring_buffer
+class ConcurrentRingBuffer
 {
 public:
-    explicit concurrent_ring_buffer(size_t size) :
+    explicit ConcurrentRingBuffer(size_t size) :
         buffer(size),
         length(0),
-        push_idx(0),
-        pop_idx(0)
+        pushIdx(0),
+        popIdx(0)
     {
     }
 
     bool push_nb(const T& val, bool force = false)
     {
         std::unique_lock<std::mutex> lock(mutex);
-        if(length == buffer.size())
+        if (length == buffer.size())
         {
-            if(force)
+            if (force)
             {
-                do_pop(nullptr);
+                doPop(nullptr);
             }
             else
             {
@@ -36,46 +36,46 @@ public:
             }
         }
 
-        do_push(val);
-        cv_empty.notify_one();
+        doPush(val);
+        cvEmpty.notify_one();
         return true;
     }
 
     void push(const T&)
     {
         std::unique_lock<std::mutex> lock(mutex);
-        if(length == buffer.size())
+        if (length == buffer.size())
         {
-            cv_full.wait(lock, [&]{ return length < buffer.size(); });
+            cvFull.wait(lock, [&] { return length < buffer.size(); });
         }
 
-        do_push();
-        cv_empty.notify_one();
+        doPush();
+        cvEmpty.notify_one();
     }
 
     bool pop_nb(T* val)
     {
         std::unique_lock<std::mutex> lock(mutex);
-        if(length == 0)
+        if (length == 0)
         {
             return false;
         }
 
-        do_pop(val);
-        cv_full.notify_one();
+        doPop(val);
+        cvFull.notify_one();
         return true;
     }
 
     void pop(T* val)
     {
         std::unique_lock<std::mutex> lock(mutex);
-        if(length == 0)
+        if (length == 0)
         {
-            cv_empty.wait(lock, [&]{ return length != 0; });
+            cvEmpty.wait(lock, [&] { return length != 0; });
         }
 
-        do_pop(val);
-        cv_full.notify_one();
+        doPop(val);
+        cvFull.notify_one();
     }
 
     void clear()
@@ -83,44 +83,44 @@ public:
         std::unique_lock<std::mutex> lock(mutex);
         std::fill(buffer.begin(), buffer.end(), T());
         length = 0;
-        push_idx = 0;
-        pop_idx = 0;
-        cv_full.notify_all();
+        pushIdx = 0;
+        popIdx = 0;
+        cvFull.notify_all();
     }
 
-    using ptr = std::shared_ptr<concurrent_ring_buffer<T>>;
+    using ptr = std::shared_ptr<ConcurrentRingBuffer<T>>;
 
 private:
-    void do_push(const T& val)
+    void doPush(const T& val)
     {
-        buffer[push_idx] = val;
+        buffer[pushIdx] = val;
         length++;
-        push_idx++;
-        if(push_idx == buffer.size())
+        pushIdx++;
+        if (pushIdx == buffer.size())
         {
-            push_idx = 0;
+            pushIdx = 0;
         }
     }
 
-    void do_pop(T* val)
+    void doPop(T* val)
     {
-        if(val != nullptr)
+        if (val != nullptr)
         {
-            *val = buffer[pop_idx];
+            *val = buffer[popIdx];
         }
         length--;
-        pop_idx++;
-        if(pop_idx == buffer.size())
+        popIdx++;
+        if (popIdx == buffer.size())
         {
-            pop_idx = 0;
+            popIdx = 0;
         }
     }
 
     std::vector<T> buffer;
     size_t length;
-    size_t push_idx;
-    size_t pop_idx;
+    size_t pushIdx;
+    size_t popIdx;
     std::mutex mutex;
-    std::condition_variable cv_empty;
-    std::condition_variable cv_full;
+    std::condition_variable cvEmpty;
+    std::condition_variable cvFull;
 };

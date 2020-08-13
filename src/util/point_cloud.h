@@ -9,17 +9,17 @@
 #include <vector>
 #include <memory>
 
-struct point
+struct Point
 {
     uint16_t x;
     uint16_t y;
     uint16_t z;
 };
 
-class point_cloud
+class PointCloud
 {
 public:
-    using ptr = std::shared_ptr<point_cloud>;
-    std::vector<point> points;
+    using ptr = std::shared_ptr<PointCloud>;
+    std::vector<Point> points;
     uint16_t rings;
 };
