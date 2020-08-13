@@ -91,7 +91,7 @@ hls_%: $(filter %$*.xo,$(HW_OBJS))
 	@$(VIVADO_HLS) -p _x/$*/$*/$*/
 
 format:
-	@astyle --recursive "src/*.c??" "src/*.h" 
+	@astyle --project=.astylerc --recursive "src/*.c??" "src/*.h" 
 
 -include $(DEPS)
 -include $(HW_DEPS)
