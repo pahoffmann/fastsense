@@ -8,7 +8,7 @@
 #include <point_cloud.h>
 #include <memory>
 #include <thread>
-#include <ring_buffer.h>
+#include <concurrent_ring_buffer.h>
 
 namespace fastsense
 {
@@ -47,7 +47,7 @@ static_assert(PACKET_SIZE == 1206);
 class velodyne
 {
 public:
-    velodyne(std::string ipaddr, uint16_t port);
+    velodyne(const std::string& ipaddr, uint16_t port, const std::shared_ptr<concurrent_ring_buffer<point_cloud::ptr>>& buffer);
     virtual ~velodyne();
     void start();
     void stop();
@@ -65,7 +65,7 @@ protected:
     bool running;
     float az_last;
 
-    ring_buffer<point_cloud::ptr> scan_buffer;
+    concurrent_ring_buffer<point_cloud::ptr>::ptr scan_buffer;
     point_cloud::ptr current_scan;
 };
 

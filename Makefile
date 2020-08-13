@@ -12,19 +12,19 @@ VIVADO_HLS := vivado_hls
 
 # Global
 BUILD_DIR := ${CURDIR}/build
-APP_NAME := FastSense
+APP_NAME := FastSense.exe
 PLATFORM_DIR ?= ${CURDIR}/base_design/platform/FastSense_platform/export/FastSense_platform
 
 # Software
 SYSROOT := ${PLATFORM_DIR}/sw/FastSense_platform/linux_domain/sysroot/aarch64-xilinx-linux/
 
 SRCS := src/vadd.cpp \
-	src/driver/velodyne.cpp
+	src/driver/lidar/velodyne.cpp
 OBJS := $(SRCS:%.cpp=$(BUILD_DIR)/%.o)
 DEPS := $(OBJS:.o=.d)
 
 INC_DIRS := src \
-	src/driver \
+	src/driver/lidar \
 	src/util
 INC_FLAGS := $(addprefix -I,$(INC_DIRS))
 CXX_STD := c++14

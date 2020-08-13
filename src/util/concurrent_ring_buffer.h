@@ -10,10 +10,10 @@
 #include <condition_variable>
 
 template<typename T>
-class ring_buffer
+class concurrent_ring_buffer
 {
 public:
-    explicit ring_buffer(size_t size) :
+    explicit concurrent_ring_buffer(size_t size) :
         buffer(size),
         length(0),
         push_idx(0),
@@ -87,6 +87,8 @@ public:
         pop_idx = 0;
         cv_full.notify_all();
     }
+
+    using ptr = std::shared_ptr<concurrent_ring_buffer<T>>;
 
 private:
     void do_push(const T& val)

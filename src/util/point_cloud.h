@@ -11,11 +11,9 @@
 
 struct point
 {
-    float x;
-    float y;
-    float z;
-    float intensity;
-    uint32_t ring;
+    uint16_t x;
+    uint16_t y;
+    uint16_t z;
 };
 
 class point_cloud
@@ -23,4 +21,5 @@ class point_cloud
 public:
     using ptr = std::shared_ptr<point_cloud>;
     std::vector<point> points;
+    uint16_t rings;
 };

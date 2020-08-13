@@ -86,12 +86,12 @@ constexpr uint8_t LASER_ID_TO_RING[16] = {
     0
 };
 
-velodyne::velodyne(std::string ipaddr, uint16_t port) :
+velodyne::velodyne(const std::string& ipaddr, uint16_t port, const concurrent_ring_buffer<point_cloud::ptr>::ptr& buffer) :
     ipaddr(ipaddr),
     port(port),
     running(false),
     az_last(0.f),
-    scan_buffer(16)
+    scan_buffer(buffer)
 {
     // open socket
     sockfd = socket(PF_INET, SOCK_DGRAM, 0);
@@ -135,7 +135,7 @@ void velodyne::start()
         running = true;
         az_last = 0.f;
         current_scan = std::make_shared<point_cloud>();
-        scan_buffer.clear();
+        scan_buffer->clear();
         worker = std::thread(&velodyne::receive_packet, this);
     }
 }
@@ -149,7 +149,7 @@ void velodyne::stop()
 point_cloud::ptr velodyne::get_scan()
 {
     point_cloud::ptr pc;
-    scan_buffer.pop(&pc);
+    scan_buffer->pop(&pc);
     return pc;
 }
 
@@ -213,7 +213,7 @@ void velodyne::decode_packet(uint8_t packet[PACKET_SIZE])
 
     if(v_packet->produkt_id != PROD_ID_VLP16)
     {
-        //throw std::runtime_error("wrong sensor");
+        throw std::runtime_error("wrong sensor");
     }
 
     if(v_packet->mode != MODE_STRONGEST && v_packet->mode != MODE_LAST)
@@ -230,8 +230,9 @@ void velodyne::decode_packet(uint8_t packet[PACKET_SIZE])
             // add new scan to queue when azimuth overflows
             if(az_block < az_last)
             {
-                scan_buffer.push_nb(current_scan, true);
+                scan_buffer->push_nb(current_scan, true);
                 current_scan = std::make_shared<point_cloud>();
+                current_scan->rings = 16;
             }
             az_last = az_block;
 
@@ -281,8 +282,6 @@ void velodyne::decode_packet(uint8_t packet[PACKET_SIZE])
                 new_point.x = r * cos_vertical * sin(az);
                 new_point.y = r * cos_vertical * cos(az);
                 new_point.z = r * sin(LASER_ID_TO_VERT_ANGLE[p%16]);
-                new_point.ring = LASER_ID_TO_RING[p%16];
-                new_point.intensity = v_packet->blocks[b].points[p].intensity / 255.f;
             }
         }
     }
