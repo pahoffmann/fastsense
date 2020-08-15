@@ -3,23 +3,15 @@
 #
 
 # Tools
-CXX :
-    = g++
-      MKDIR_P :
-      = mkdir -p
-        SHELL :
-        = /bin/bash
-           VIVADO_HLS :
-           = vivado_hls
+CXX := g++
+MKDIR_P := mkdir -p
+SHELL := /bin/bash
+VIVADO_HLS := vivado_hls
 
 # Global
-             BUILD_DIR :
-             = $ {CURDIR}/build
-               APP_NAME :
-               = ImuDriver
-
-                 SRCS :
-                 = $(wildcard api/*.cpp) $(wildcard ./*.cpp)
+BUILD_DIR := ./build
+APP_NAME := imu
+SRCS := $(wildcard api/*.cpp) $(wildcard ./*.cpp)
 OBJS := $(SRCS:%.cpp=$(BUILD_DIR)/%.o)
 DEPS := $(OBJS:.o=.d)
 
@@ -42,6 +34,8 @@ clean:
 	@rm -rf _x _vimage *.log build/*
 
 software: $(BUILD_DIR)/$(APP_NAME)
+
+rebuild: clean software
 
 # Link software
 $(BUILD_DIR)/$(APP_NAME): $(OBJS)
