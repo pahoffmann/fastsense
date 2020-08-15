@@ -1,7 +1,7 @@
-#include "phidgets_imu.h"
+#include "imu.h"
 
 int main() {
-    phidgets::PhidgetsImu imu = phidgets::PhidgetsImu();
+    phidgets::Imu imu = phidgets::Imu();
     while (true) {};
     return 0;
 }

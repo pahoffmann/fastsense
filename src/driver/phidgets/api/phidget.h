@@ -39,7 +39,7 @@ namespace phidgets {
 class Phidget
 {
 public:
-    Phidget();
+    Phidget() = default;
     virtual ~Phidget();
 
     /**@brief Open a connection to a Phidget
@@ -84,7 +84,6 @@ protected:
 
 private:
     CPhidgetHandle handle_;
-
     static int AttachHandler(CPhidgetHandle handle, void *userptr);
     static int DetachHandler(CPhidgetHandle handle, void *userptr);
     static int ErrorHandler(CPhidgetHandle handle, void *userptr, int ErrorCode,

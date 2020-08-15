@@ -5,10 +5,6 @@
 
 namespace phidgets {
 
-Phidget::Phidget()
-{
-}
-
 Phidget::~Phidget()
 {
     // close(); // segfaults, why?
