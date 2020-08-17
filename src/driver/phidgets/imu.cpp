@@ -1,5 +1,6 @@
 #include "imu.h"
 #include "params.h"
+#include "imu_msg.h"
 #include <thread>
 #include <stdexcept>
 #include <iostream>
@@ -7,7 +8,7 @@
 
 namespace phidgets {
 
-Imu::Imu() : Phidget(), imu_handle_(nullptr)
+Imu::Imu() : Phidget(), imu_handle_(nullptr), is_calibrated_(false), init_compass_(false)
 {
     initApi();
     initDevice();
@@ -64,6 +65,10 @@ using namespace std::chrono_literals;
 void
 phidgets::Imu::dataHandler(const double *acceleration, const double *angularRate, const double *magneticField,
                                    double timestamp) {
+    // Even during calibration, the device reports back zeroes, so force driver to wait until
+    // after calibration
+    if (not is_calibrated_) return;
+
     std::cout << "=========== ( " << timestamp << ")\n-- acc --\n";
     std::cout << -acceleration[0] * params::G << "\n";
     std::cout << -acceleration[1] * params::G << "\n";
@@ -74,14 +79,16 @@ phidgets::Imu::dataHandler(const double *acceleration, const double *angularRate
     std::cout << angularRate[1] * (M_PI / 180.0) << "\n";
     std::cout << angularRate[2] * (M_PI / 180.0) << "\n";
 
-    if (magneticField[0] != PUNK_DBL)
-    {
+//    if (magneticField[0] != PUNK_DBL)
+//    {
         // device reports data in Gauss, multiply by 1e-4 to convert to Tesla
-        std::cout << "-- mag -- \n";
-        std::cout << magneticField[0] * 1e-4 << "\n";
-        std::cout << magneticField[1] * 1e-4 << "\n";
-        std::cout << magneticField[2] * 1e-4 << "\n";
-    }
+//        std::cout << "-- mag -- \n";
+//        std::cout << magneticField[0] * 1e-4 << "\n";
+//        std::cout << magneticField[1] * 1e-4 << "\n";
+//        std::cout << magneticField[2] * 1e-4 << "\n";
+//    }
+
+
 }
 
 void phidgets::Imu::attachHandler() {
@@ -104,15 +111,19 @@ void phidgets::Imu::calibrate() {
     // The API call returns directly, so we "enforce" the recommended 2 sec
     // here. See: https://github.com/ros-drivers/phidgets_drivers/issues/40
     std::this_thread::sleep_for(2s);
+    is_calibrated_ = true;
 }
 
 void phidgets::Imu::initDevice() {
     openAndWaitForAttachment(-1, 10000);
+
     calibrate();
 
-    using namespace phidgets::params;
-    Imu::setCompassCorrectionParameters(cc_mag_field_, cc_offset0_, cc_offset1_, cc_offset2_, cc_gain0_, cc_gain1_, cc_gain2_, cc_T0_, cc_T1_, cc_T2_, cc_T3_, cc_T4_, cc_T5_);
-
+    if (init_compass_) {
+        using namespace phidgets::params;
+        Imu::setCompassCorrectionParameters(cc_mag_field_, cc_offset0_, cc_offset1_, cc_offset2_, cc_gain0_, cc_gain1_,
+                                            cc_gain2_, cc_T0_, cc_T1_, cc_T2_, cc_T3_, cc_T4_, cc_T5_);
+    }
 }
 
 void Imu::initApi() {

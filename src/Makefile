@@ -10,7 +10,7 @@ SHELL = /bin/bash
 # Global
 BUILD_DIR = ./build
 APP_NAME = imu_test
-SRCS = $(wildcard driver/phidgets/api/*.cpp) $(wildcard driver/phidgets/*.cpp)
+SRCS = $(wildcard driver/phidgets/api/*.cpp) $(wildcard driver/phidgets/msg/*.cpp) $(wildcard driver/phidgets/*.cpp)
 OBJS = $(SRCS:%.cpp=$(BUILD_DIR)/%.o)
 DEPS = $(OBJS:.o=.d)
 

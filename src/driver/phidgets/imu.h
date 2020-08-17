@@ -15,6 +15,8 @@ public:
 private:
     // diagnostics
     bool is_connected_;
+    bool is_calibrated_;
+    bool init_compass_;
     int error_number_;
 
     double angular_velocity_stdev_;

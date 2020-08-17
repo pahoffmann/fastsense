@@ -7,7 +7,7 @@ namespace phidgets {
 
 Phidget::~Phidget()
 {
-    // close(); // segfaults, why?
+    close(); // segfaults, why?
     CPhidget_delete(handle_);
 }
 
