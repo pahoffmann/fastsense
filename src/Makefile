@@ -3,24 +3,23 @@
 #
 
 # Tools
-CXX := g++
-MKDIR_P := mkdir -p
-SHELL := /bin/bash
-VIVADO_HLS := vivado_hls
+CXX = g++
+MKDIR_P = mkdir -p
+SHELL = /bin/bash
 
 # Global
-BUILD_DIR := ./build
-APP_NAME := imu
-SRCS := $(wildcard api/*.cpp) $(wildcard ./*.cpp)
-OBJS := $(SRCS:%.cpp=$(BUILD_DIR)/%.o)
-DEPS := $(OBJS:.o=.d)
+BUILD_DIR = ./build
+APP_NAME = imu_test
+SRCS = $(wildcard driver/phidgets/api/*.cpp) $(wildcard driver/phidgets/*.cpp)
+OBJS = $(SRCS:%.cpp=$(BUILD_DIR)/%.o)
+DEPS = $(OBJS:.o=.d)
 
-INC_DIRS := src
-INC_FLAGS := $(addprefix -I,$(INC_DIRS))
-CXX_STD := c++14
-CXXFLAGS := $(INC_FLAGS) -c -std=${CXX_STD}
+INC_DIRS = src
+INC_FLAGS = $(addprefix -I,$(INC_DIRS))
+CXX_STD = c++14
+CXXFLAGS = $(INC_FLAGS) -c -std=${CXX_STD}
 
-LDFLAGS := -lpthread -lphidget21
+LDFLAGS = -lpthread -lphidget21
 
 #
 # Rules
