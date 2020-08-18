@@ -10,6 +10,7 @@
 
 class AngularRate : public XYZ {
 public:
+    AngularRate() = default;
     AngularRate(const double* angular_rate);
 };
 

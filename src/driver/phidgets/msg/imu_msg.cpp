@@ -7,6 +7,8 @@
 ImuMsg::ImuMsg(const double* acceleration, const double* angular_rate) : acc(acceleration), ang(angular_rate)
 {}
 
+ImuMsg::ImuMsg() : acc(), ang() {}
+
 std::ostream& operator<<(std::ostream& os, const ImuMsg& data)
 {
     os << "-- acc --\n";

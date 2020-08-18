@@ -9,6 +9,7 @@
 
 class Acceleration : public XYZ {
 public:
+    Acceleration() = default;
     explicit Acceleration(const double* acceleration);
 };
 

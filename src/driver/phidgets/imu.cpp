@@ -1,6 +1,6 @@
 #include "imu.h"
 #include "params.h"
-#include "imu_msg.h"
+#include "msg/imu_msg.h"
 #include <thread>
 #include <stdexcept>
 #include <iostream>
@@ -8,7 +8,7 @@
 
 namespace phidgets {
 
-Imu::Imu() : Phidget(), imu_handle_(nullptr), is_calibrated_(false), init_compass_(false)
+Imu::Imu(ring_buffer<ImuMsg> &ringbuffer) : Phidget(), data_buffer(ringbuffer), imu_handle_(nullptr), is_calibrated_(false), init_compass_(false)
 {
     initApi();
     initDevice();
@@ -69,26 +69,8 @@ phidgets::Imu::dataHandler(const double *acceleration, const double *angularRate
     // after calibration
     if (not is_calibrated_) return;
 
-    std::cout << "=========== ( " << timestamp << ")\n-- acc --\n";
-    std::cout << -acceleration[0] * params::G << "\n";
-    std::cout << -acceleration[1] * params::G << "\n";
-    std::cout << -acceleration[2] * params::G << "\n";
-
-    std::cout << "-- ang --\n";
-    std::cout << angularRate[0] * (M_PI / 180.0) << "\n";
-    std::cout << angularRate[1] * (M_PI / 180.0) << "\n";
-    std::cout << angularRate[2] * (M_PI / 180.0) << "\n";
-
-//    if (magneticField[0] != PUNK_DBL)
-//    {
-        // device reports data in Gauss, multiply by 1e-4 to convert to Tesla
-//        std::cout << "-- mag -- \n";
-//        std::cout << magneticField[0] * 1e-4 << "\n";
-//        std::cout << magneticField[1] * 1e-4 << "\n";
-//        std::cout << magneticField[2] * 1e-4 << "\n";
-//    }
-
-
+    ImuMsg msg(acceleration, angularRate);
+    data_buffer.push(msg);
 }
 
 void phidgets::Imu::attachHandler() {
@@ -140,6 +122,5 @@ void Imu::initApi() {
     CPhidgetSpatial_set_OnSpatialData_Handler(imu_handle_, SpatialDataHandler,
                                               this);
 }
-
 
 }  // namespace phidgets

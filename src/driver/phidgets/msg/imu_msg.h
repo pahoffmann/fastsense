@@ -14,9 +14,10 @@
 
 class ImuMsg {
 public:
+    ImuMsg();
     ImuMsg(const double* acc, const double* ang);
-    const Acceleration acc;
-    const AngularRate ang;
+    Acceleration acc;
+    AngularRate ang;
 };
 
 std::ostream& operator<<(std::ostream& os, const ImuMsg& data);

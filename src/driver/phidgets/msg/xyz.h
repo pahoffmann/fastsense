@@ -8,7 +8,6 @@
 class XYZ {
 public:
     explicit XYZ() = default;
-
     inline const double& x() const { return data_[0]; }
     inline const double& y() const { return data_[1]; }
     inline const double& z() const { return data_[2]; }

@@ -2,17 +2,22 @@
 #define PHIDGETS_API_IMU_H
 
 #include "api/phidget.h"
+#include "msg/imu_msg.h"
+#include "../../util/ring_buffer.h"
 
 namespace phidgets {
 
 class Imu : public Phidget
 {
 public:
-    Imu();
+    Imu() = delete;
+
+    explicit Imu(ring_buffer<ImuMsg>& ringbuffer);
 
     virtual ~Imu() = default;
 
 private:
+    ring_buffer<ImuMsg>& data_buffer;
     // diagnostics
     bool is_connected_;
     bool is_calibrated_;
