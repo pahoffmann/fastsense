@@ -34,7 +34,10 @@
 #include <phidget21.h>
 #include <string>
 
-namespace phidgets {
+namespace fastsense
+{
+namespace driver
+{
 
 class Phidget
 {
@@ -84,12 +87,13 @@ protected:
 
 private:
     CPhidgetHandle handle_;
-    static int AttachHandler(CPhidgetHandle handle, void *userptr);
-    static int DetachHandler(CPhidgetHandle handle, void *userptr);
-    static int ErrorHandler(CPhidgetHandle handle, void *userptr, int ErrorCode,
-                            const char *unknown);
+    static int AttachHandler(CPhidgetHandle handle, void* userptr);
+    static int DetachHandler(CPhidgetHandle handle, void* userptr);
+    static int ErrorHandler(CPhidgetHandle handle, void* userptr, int ErrorCode,
+                            const char* unknown);
 };
 
+}  // namespace driver
 }  // namespace phidgets
 
 #endif  // PHIDGETS_API_PHIDGET_H

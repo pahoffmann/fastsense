@@ -1,18 +1,30 @@
-//
-// Created by julian on 8/17/20.
-//
+/**
+ * @file angular_velocity.h
+ * @author Julian Gaal
+ * @date 2020-08-17
+ */
 
-#ifndef SRC_ANGULAR_ACCELERATION_H
-#define SRC_ANGULAR_ACCELERATION_H
+#pragma once
 
 #include "../params.h"
 #include "xyz.h"
 
-class AngularVelocity : public XYZ {
-public:
+namespace fastsense
+{
+namespace driver
+{
+namespace msg
+{
+
+/**
+ * @brief Represents angular velocity data from imu
+ */
+struct AngularVelocity : public XYZ
+{
     AngularVelocity() = default;
     AngularVelocity(const double* angular_rate);
 };
 
-
-#endif //SRC_ANGULAR_ACCELERATION_H
+} // namespace msg
+} // namespace driver
+} // namespace fastsense

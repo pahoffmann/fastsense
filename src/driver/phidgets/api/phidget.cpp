@@ -1,9 +1,38 @@
-#include "phidget.h"
+/*
+ * Copyright (c) 2009, Tully Foote
+ * Copyright (c) 2011, Ivan Dryanovski
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
+ *
+ *     * Redistributions of source code must retain the above copyright
+ *       notice, this list of conditions and the following disclaimer.
+ *     * Redistributions in binary form must reproduce the above copyright
+ *       notice, this list of conditions and the following disclaimer in the
+ *       documentation and/or other materials provided with the distribution.
+ *     * Neither the name of the Willow Garage, Inc. nor the names of its
+ *       contributors may be used to endorse or promote products derived from
+ *       this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+ * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
+ * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
 
+#include "phidget.h"
 #include <stdexcept>
 #include <cstdio>
 
-namespace phidgets {
+using namespace fastsense::driver;
 
 Phidget::~Phidget()
 {
@@ -46,7 +75,7 @@ int Phidget::close()
 std::string Phidget::getDeviceType()
 {
     char a[1000];
-    const char *deviceptr = a;
+    const char* deviceptr = a;
     CPhidget_getDeviceType(handle_, &deviceptr);
     return std::string(deviceptr);
 }
@@ -54,7 +83,7 @@ std::string Phidget::getDeviceType()
 std::string Phidget::getDeviceName()
 {
     char a[1000];
-    const char *deviceptr = a;
+    const char* deviceptr = a;
     CPhidget_getDeviceName(handle_, &deviceptr);
     return std::string(deviceptr);
 }
@@ -62,7 +91,7 @@ std::string Phidget::getDeviceName()
 std::string Phidget::getDeviceLabel()
 {
     char a[1000];
-    const char *deviceptr = a;
+    const char* deviceptr = a;
     CPhidget_getDeviceType(handle_, &deviceptr);
     return std::string(deviceptr);
 }
@@ -70,7 +99,7 @@ std::string Phidget::getDeviceLabel()
 std::string Phidget::getLibraryVersion()
 {
     char a[1000];
-    const char *deviceptr = a;
+    const char* deviceptr = a;
     CPhidget_getLibraryVersion(&deviceptr);
     return std::string(deviceptr);
 }
@@ -92,7 +121,7 @@ int Phidget::getDeviceVersion()
 std::string Phidget::getErrorDescription(int errorCode)
 {
     char a[1000];
-    const char *errorPtr = a;
+    const char* errorPtr = a;
     CPhidget_getErrorDescription(errorCode, &errorPtr);
     return std::string(errorPtr);
 }
@@ -113,23 +142,21 @@ void Phidget::errorHandler(int error)
            getErrorDescription(error).c_str());
 }
 
-int Phidget::AttachHandler(CPhidgetHandle /* handle */, void *userptr)
+int Phidget::AttachHandler(CPhidgetHandle /* handle */, void* userptr)
 {
-    ((Phidget *)userptr)->attachHandler();
+    ((Phidget*)userptr)->attachHandler();
     return 0;
 }
 
-int Phidget::DetachHandler(CPhidgetHandle /* handle */, void *userptr)
+int Phidget::DetachHandler(CPhidgetHandle /* handle */, void* userptr)
 {
-    ((Phidget *)userptr)->detachHandler();
+    ((Phidget*)userptr)->detachHandler();
     return 0;
 }
 
-int Phidget::ErrorHandler(CPhidgetHandle /* handle */, void *userptr,
-                          int ErrorCode, const char * /* unknown */)
+int Phidget::ErrorHandler(CPhidgetHandle /* handle */, void* userptr,
+                          int ErrorCode, const char* /* unknown */)
 {
-    ((Phidget *)userptr)->errorHandler(ErrorCode);
+    ((Phidget*)userptr)->errorHandler(ErrorCode);
     return 0;
 }
-
-}  // namespace phidgets

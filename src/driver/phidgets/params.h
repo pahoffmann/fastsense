@@ -1,14 +1,19 @@
-//
-// Created by julian on 8/14/20.
-//
+/**
+ * @file params.h
+ * @author Julian Gaal
+ * @date 2020-08-14
+ */
 
-#ifndef PHIDGETS_PARAMS_H
-#define PHIDGETS_PARAMS_H
+#pragma once
 
 #include <cmath>
 
-namespace phidgets {
-namespace params {
+namespace fastsense
+{
+namespace driver
+{
+namespace params
+{
 
 static constexpr float G = 9.80665;
 static constexpr float MAX_TIMEDIFF_SECONDS = 0.1;
@@ -37,6 +42,5 @@ static constexpr double cc_T4_ = -0.03942;
 static constexpr double cc_T5_ = -0.05673;
 
 } // namespace params
+} // namespace driver
 } // namespace phidgets
-
-#endif //PHIDGETS_PARAMS_H

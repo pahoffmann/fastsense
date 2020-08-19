@@ -1,20 +1,46 @@
-//
-// Created by julian on 8/17/20.
-//
+/**
+ * @file xyz.h
+ * @author Julian Gaal
+ * @date 2020-08-17
+ */
 
-#ifndef SRC_XYZ_H
-#define SRC_XYZ_H
+#pragma once
 
-class XYZ {
+namespace fastsense
+{
+namespace driver
+{
+namespace msg
+{
+
+/**
+ * @brief represents a data point with x, y and z "coordinates"
+ */
+class XYZ
+{
 public:
     explicit XYZ() = default;
-    inline const double& x() const { return data_[0]; }
-    inline const double& y() const { return data_[1]; }
-    inline const double& z() const { return data_[2]; }
+
+    inline const double& x() const
+    {
+        return data_[0];
+    }
+
+    inline const double& y() const
+    {
+        return data_[1];
+    }
+
+    inline const double& z() const
+    {
+        return data_[2];
+    }
 
 protected:
+    /// actual data
     double data_[3];
 };
 
-
-#endif //SRC_XYZ_H
+} // namespace fastsense
+} // namespace driver
+} // namespace msg

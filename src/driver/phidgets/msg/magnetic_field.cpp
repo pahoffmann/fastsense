@@ -1,12 +1,17 @@
-//
-// Created by julian on 8/18/20.
-//
+/**
+ * @file magnetic_field.cpp
+ * @author Julian Gaal
+ * @date 2020-08-18
+ */
 
 #include <limits>
+#include <phidget21.h>
 #include "magnetic_field.h"
-#include "phidget21.h"
 
-MagneticField::MagneticField(const double *magneticField) : XYZ() {
+using namespace fastsense::driver::msg;
+
+MagneticField::MagneticField(const double* magneticField) : XYZ()
+{
     if (magneticField[0] != PUNK_DBL)
     {
         // device reports data in Gauss, multiply by 1e-4 to convert to Tesla

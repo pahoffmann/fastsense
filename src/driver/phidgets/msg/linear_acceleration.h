@@ -1,17 +1,29 @@
-//
-// Created by julian on 8/17/20.
-//
+/**
+ * @file linear_acceleration.h
+ * @author Julian Gaal
+ * @date 2020-08-18
+ */
 
-#ifndef SRC_LINEAR_ACCELERATION_H
-#define SRC_LINEAR_ACCELERATION_H
+#pragma once
 
 #include "xyz.h"
 
-class LinearAcceleration : public XYZ {
-public:
+namespace fastsense
+{
+namespace driver
+{
+namespace msg
+{
+
+/**
+ * @brief Represents linear acceleration data from imu
+ */
+struct LinearAcceleration : public XYZ
+{
     LinearAcceleration() = default;
     explicit LinearAcceleration(const double* acceleration);
 };
 
-
-#endif //SRC_LINEAR_ACCELERATION_H
+} // namespace fastsense
+} // namespace driver
+} // namespace msg

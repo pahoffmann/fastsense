@@ -1,3 +1,9 @@
+/**
+ * @file imu.cpp
+ * @author Julian Gaal
+ * @date 2020-08-11
+ */
+
 #include "imu.h"
 #include "params.h"
 #include "msg/imu_msg.h"
@@ -6,9 +12,11 @@
 #include <iostream>
 #include <cmath>
 
-namespace phidgets {
+using namespace fastsense::driver;
 
-Imu::Imu(ConcurrentRingBuffer<ImuMsg> &ringbuffer) : Phidget(), data_buffer(ringbuffer), imu_handle_(nullptr), is_calibrated_(false), init_compass_(false)
+// TODO detach handler? How to handle connected/disconnectedness
+
+Imu::Imu(ConcurrentRingBuffer<msg::ImuMsg>& ringbuffer) : Phidget(), data_buffer(ringbuffer), imu_handle_(nullptr), is_calibrated_(false), init_compass_(false)
 {
     initApi();
     initCovariance();
@@ -26,19 +34,18 @@ void Imu::zero()
     CPhidgetSpatial_zeroGyro(imu_handle_);
 }
 
-int Imu::SpatialDataHandler(CPhidgetSpatialHandle /* handle */, void *userptr,
-                            CPhidgetSpatial_SpatialEventDataHandle *data,
+void Imu::SpatialDataHandler(CPhidgetSpatialHandle /* handle */, void* userptr,
+                            CPhidgetSpatial_SpatialEventDataHandle* data,
                             int count)
 {
     for (int i = 0; i < count; ++i)
     {
         double ts = data[i]->timestamp.seconds +
                     (data[i]->timestamp.microseconds / 1000.0 / 1000.0);
-        ((Imu *)userptr)
-        ->dataHandler(data[i]->acceleration, data[i]->angularRate,
-                      data[i]->magneticField, ts);
+
+        ((Imu*)userptr)->dataHandler(data[i]->acceleration, data[i]->angularRate,
+                                     data[i]->magneticField, ts);
     }
-    return 0;
 }
 
 void Imu::setCompassCorrectionParameters(double cc_mag_field, double cc_offset0,
@@ -55,61 +62,69 @@ void Imu::setCompassCorrectionParameters(double cc_mag_field, double cc_offset0,
 
     if (ret != EPHIDGET_OK)
     {
-        throw std::runtime_error("Compass correction parameter error: " + Phidget::getErrorDescription(ret));
+        throw ::std::runtime_error("Compass correction parameter error: " + Phidget::getErrorDescription(ret));
     }
 }
 
-using namespace std::chrono_literals;
-
-// TODO detach handler? How to handle connected/disconnectedness
-
 void
-phidgets::Imu::dataHandler(const double *acceleration, const double *angularRate, const double *magneticField,
-                                   double timestamp) {
+Imu::dataHandler(const double* acceleration, const double* angularRate, const double* magneticField,
+                 double timestamp)
+{
     // Even during calibration, the device reports back zeroes, so force driver to wait until
     // after calibration
-    if (not is_calibrated_) return;
+    if (not is_calibrated_)
+    {
+        return;
+    }
 
-    ImuMsg msg(acceleration, angularRate, magneticField);
+    msg::ImuMsg msg(acceleration, angularRate, magneticField);
     data_buffer.push(msg);
 }
 
-void phidgets::Imu::attachHandler() {
+void Imu::attachHandler()
+{
     Phidget::attachHandler();
     // Set device params. This is in attachHandler(), since it has to be
     // repeated on reattachment.
     setDataRate(params::period_);
 }
 
-void phidgets::Imu::detachHandler() {
+void Imu::detachHandler()
+{
     Phidget::detachHandler();
 }
 
-void phidgets::Imu::errorHandler(int error) {
+void Imu::errorHandler(int error)
+{
     Phidget::errorHandler(error);
 }
 
-void phidgets::Imu::calibrate() {
+void Imu::calibrate()
+{
     zero();
     // The API call returns directly, so we "enforce" the recommended 2 sec
     // here. See: https://github.com/ros-drivers/phidgets_drivers/issues/40
+    using namespace ::std::chrono_literals;
     std::this_thread::sleep_for(2s);
     is_calibrated_ = true;
 }
 
-void phidgets::Imu::initDevice() {
+void Imu::initDevice()
+{
     openAndWaitForAttachment(-1, 10000);
 
     calibrate();
 
-    if (init_compass_) {
-        using namespace phidgets::params;
+    if (init_compass_)
+    {
+        using namespace fastsense::driver::params;
         Imu::setCompassCorrectionParameters(cc_mag_field_, cc_offset0_, cc_offset1_, cc_offset2_, cc_gain0_, cc_gain1_,
                                             cc_gain2_, cc_T0_, cc_T1_, cc_T2_, cc_T3_, cc_T4_, cc_T5_);
     }
 }
 
-void Imu::initApi() {
+void Imu::initApi()
+{
     // create the handle
     CPhidgetSpatial_create(&imu_handle_);
 
@@ -121,17 +136,18 @@ void Imu::initApi() {
 
     // register imu data callback
     CPhidgetSpatial_set_OnSpatialData_Handler(imu_handle_, SpatialDataHandler,
-                                              this);
+            this);
 }
 
-void Imu::initCovariance() {
+void Imu::initCovariance()
+{
     double ang_vel_var = params::angular_velocity_stdev_ * params::angular_velocity_stdev_;
     double lin_acc_var = params::linear_acceleration_stdev_ * params::linear_acceleration_stdev_;
 
     for (int i = 0; i < 3; ++i)
         for (int j = 0; j < 3; ++j)
         {
-            int idx = j*3 +i;
+            int idx = j * 3 + i;
 
             if (i == j)
             {
@@ -165,16 +181,17 @@ void Imu::initCovariance() {
         }
 }
 
-const std::array<double, 9> & Imu::getAngularVelocityCovariance() const {
+const std::array<double, 9>& Imu::getAngularVelocityCovariance() const
+{
     return angular_velocity_covariance_;
 }
 
-const std::array<double, 9> & Imu::getLinearAccelerationCovariance() const {
+const std::array<double, 9>& Imu::getLinearAccelerationCovariance() const
+{
     return linear_acceleration_covariance_;
 }
 
-const std::array<double, 9> & Imu::getMagneticFieldCovariance() const {
+const std::array<double, 9>& Imu::getMagneticFieldCovariance() const
+{
     return magnetic_field_covariance_;
 }
-
-}  // namespace phidgets

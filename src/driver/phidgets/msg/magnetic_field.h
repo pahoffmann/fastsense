@@ -1,17 +1,29 @@
-//
-// Created by julian on 8/18/20.
-//
+/**
+ * @file magnetic_field.h
+ * @author Julian Gaal
+ * @date 2020-08-18
+ */
 
-#ifndef SRC_MAGNETIC_FIELD_H
-#define SRC_MAGNETIC_FIELD_H
+#pragma once
 
 #include "xyz.h"
 
-class MagneticField : public XYZ {
-public:
+namespace fastsense
+{
+namespace driver
+{
+namespace msg
+{
+
+/**
+ * @brief Represents magnetic field data from imu
+ */
+struct MagneticField : public XYZ
+{
     MagneticField() = default;
     explicit MagneticField(const double* magneticField);
 };
 
-
-#endif //SRC_MAGNETIC_FIELD_H
+} // namespace fastsense
+} // namespace driver
+} // namespace msg

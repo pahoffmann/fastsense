@@ -1,9 +1,10 @@
-//
-// Created by julian on 8/17/20.
-//
+/**
+ * @file imu_msg.h
+ * @author Julian Gaal
+ * @date 2020-08-18
+ */
 
-#ifndef SRC_IMU_MSG_H
-#define SRC_IMU_MSG_H
+#pragma once
 
 #include "../params.h"
 #include "linear_acceleration.h"
@@ -13,8 +14,18 @@
 #include <cmath>
 #include <memory>
 
-class ImuMsg {
-public:
+namespace fastsense
+{
+namespace driver
+{
+namespace msg
+{
+
+/**
+ * @brief Represents data from imu, similar to ROS sensor_msgs/Imu
+ */
+struct ImuMsg
+{
     ImuMsg();
     ImuMsg(const double* acc, const double* ang, const double* magField);
     LinearAcceleration acc;
@@ -22,6 +33,8 @@ public:
     MagneticField mag;
 };
 
-std::ostream& operator<<(std::ostream& os, const ImuMsg& data);
+} // namespace msg
+} // namespace driver
+} // namespace fastsense
 
-#endif //SRC_IMU_MSG_H
+std::ostream& operator<<(std::ostream& os, const fastsense::driver::msg::ImuMsg& data);

@@ -1,8 +1,12 @@
-//
-// Created by julian on 8/17/20.
-//
+/**
+ * @file imu_msg.cpp
+ * @author Julian Gaal
+ * @date 2020-08-18
+ */
 
 #include "imu_msg.h"
+
+using namespace fastsense::driver::msg;
 
 ImuMsg::ImuMsg(const double* acceleration, const double* angular_rate, const double* magField) : acc(acceleration), ang(angular_rate), mag(magField)
 {}
