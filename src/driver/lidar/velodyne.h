@@ -6,7 +6,7 @@
 
 #pragma once
 
-#include <point_cloud.h>
+#include "point_cloud.h"
 #include <memory>
 #include <thread>
 #include <concurrent_ring_buffer.h>
