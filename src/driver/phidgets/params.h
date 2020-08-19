@@ -5,6 +5,8 @@
 #ifndef PHIDGETS_PARAMS_H
 #define PHIDGETS_PARAMS_H
 
+#include <cmath>
+
 namespace phidgets {
 namespace params {
 
@@ -13,6 +15,10 @@ static constexpr float MAX_TIMEDIFF_SECONDS = 0.1;
 
 static constexpr int serial_number_ = -1;
 static constexpr int period_ = 4;  // rate in ms
+
+static constexpr float angular_velocity_stdev_ = 0.02 * (M_PI / 180.0); // 0.02 deg/s resolution, as per manual
+static constexpr float linear_acceleration_stdev_ = 300.0 * 1e-6 * G; // 300 ug as per manual
+static constexpr float magnetic_field_stdev_ = 0.095 * (M_PI / 180.0); // 0.095°/s as per manual
 
 // compass correction params (see
 // http://www.phidgets.com/docs/1044_User_Guide)

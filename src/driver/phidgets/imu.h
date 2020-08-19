@@ -16,6 +16,11 @@ public:
 
     virtual ~Imu() = default;
 
+
+    const std::array<double, 9> & getAngularVelocityCovariance() const;
+    const std::array<double, 9> & getLinearAccelerationCovariance() const;
+    const std::array<double, 9> & getMagneticFieldCovariance() const;
+
 private:
     ring_buffer<ImuMsg>& data_buffer;
     // diagnostics
@@ -24,9 +29,9 @@ private:
     bool init_compass_;
     int error_number_;
 
-    double angular_velocity_stdev_;
-    double linear_acceleration_stdev_;
-    double magnetic_field_stdev_;
+    std::array<double, 9> angular_velocity_covariance_;
+    std::array<double, 9> linear_acceleration_covariance_;
+    std::array<double, 9> magnetic_field_covariance_;
 
     CPhidgetSpatialHandle imu_handle_;
 
@@ -52,6 +57,7 @@ private:
                                         double cc_T4, double cc_T5);
 
     void initApi();
+    void initCovariance();
 };
 
 }  // namespace phidgets

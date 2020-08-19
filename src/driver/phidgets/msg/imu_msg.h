@@ -7,7 +7,8 @@
 
 #include "../params.h"
 #include "linear_acceleration.h"
-#include "angular_acceleration.h"
+#include "angular_velocity.h"
+#include "magnetic_field.h"
 #include <iostream>
 #include <cmath>
 #include <memory>
@@ -15,9 +16,10 @@
 class ImuMsg {
 public:
     ImuMsg();
-    ImuMsg(const double* acc, const double* ang);
-    Acceleration acc;
-    AngularRate ang;
+    ImuMsg(const double* acc, const double* ang, const double* magField);
+    LinearAcceleration acc;
+    AngularVelocity ang;
+    MagneticField mag;
 };
 
 std::ostream& operator<<(std::ostream& os, const ImuMsg& data);

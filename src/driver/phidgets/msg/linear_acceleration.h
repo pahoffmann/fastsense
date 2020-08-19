@@ -7,10 +7,10 @@
 
 #include "xyz.h"
 
-class Acceleration : public XYZ {
+class LinearAcceleration : public XYZ {
 public:
-    Acceleration() = default;
-    explicit Acceleration(const double* acceleration);
+    LinearAcceleration() = default;
+    explicit LinearAcceleration(const double* acceleration);
 };
 
 

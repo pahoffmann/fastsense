@@ -11,6 +11,7 @@ namespace phidgets {
 Imu::Imu(ring_buffer<ImuMsg> &ringbuffer) : Phidget(), data_buffer(ringbuffer), imu_handle_(nullptr), is_calibrated_(false), init_compass_(false)
 {
     initApi();
+    initCovariance();
     initDevice();
 }
 
@@ -69,7 +70,7 @@ phidgets::Imu::dataHandler(const double *acceleration, const double *angularRate
     // after calibration
     if (not is_calibrated_) return;
 
-    ImuMsg msg(acceleration, angularRate);
+    ImuMsg msg(acceleration, angularRate, magneticField);
     data_buffer.push(msg);
 }
 
@@ -121,6 +122,59 @@ void Imu::initApi() {
     // register imu data callback
     CPhidgetSpatial_set_OnSpatialData_Handler(imu_handle_, SpatialDataHandler,
                                               this);
+}
+
+void Imu::initCovariance() {
+    double ang_vel_var = params::angular_velocity_stdev_ * params::angular_velocity_stdev_;
+    double lin_acc_var = params::linear_acceleration_stdev_ * params::linear_acceleration_stdev_;
+
+    for (int i = 0; i < 3; ++i)
+        for (int j = 0; j < 3; ++j)
+        {
+            int idx = j*3 +i;
+
+            if (i == j)
+            {
+                angular_velocity_covariance_[idx]    = ang_vel_var;
+                linear_acceleration_covariance_[idx] = lin_acc_var;
+            }
+            else
+            {
+                angular_velocity_covariance_[idx]    = 0.0;
+                linear_acceleration_covariance_[idx] = 0.0;
+            }
+        }
+
+    // build covariance matrix
+
+    double mag_field_var = params::magnetic_field_stdev_ * params::magnetic_field_stdev_;
+
+    for (int i = 0; i < 3; ++i)
+        for (int j = 0; j < 3; ++j)
+        {
+            int idx = j * 3 + i;
+
+            if (i == j)
+            {
+                magnetic_field_covariance_[idx] = mag_field_var;
+            }
+            else
+            {
+                magnetic_field_covariance_[idx] = 0.0;
+            }
+        }
+}
+
+const std::array<double, 9> & Imu::getAngularVelocityCovariance() const {
+    return angular_velocity_covariance_;
+}
+
+const std::array<double, 9> & Imu::getLinearAccelerationCovariance() const {
+    return linear_acceleration_covariance_;
+}
+
+const std::array<double, 9> & Imu::getMagneticFieldCovariance() const {
+    return magnetic_field_covariance_;
 }
 
 }  // namespace phidgets

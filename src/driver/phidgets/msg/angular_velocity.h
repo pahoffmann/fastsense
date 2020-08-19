@@ -8,10 +8,10 @@
 #include "../params.h"
 #include "xyz.h"
 
-class AngularRate : public XYZ {
+class AngularVelocity : public XYZ {
 public:
-    AngularRate() = default;
-    AngularRate(const double* angular_rate);
+    AngularVelocity() = default;
+    AngularVelocity(const double* angular_rate);
 };
 
 
