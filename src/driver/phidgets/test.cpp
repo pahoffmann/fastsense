@@ -1,9 +1,11 @@
 #include "imu.h"
 #include "msg/imu_msg.h"
-#include "../../util/ring_buffer.h"
+#include "../../util/concurrent_ring_buffer.h"
+
+using Buffer = ConcurrentRingBuffer<ImuMsg>;
 
 int main() {
-    auto& imu_buffer = ring_buffer<ImuMsg>::create_ring_buffer(100);
+    Buffer imu_buffer(1000);
     phidgets::Imu imu = phidgets::Imu(imu_buffer);
     while (true) {
         ImuMsg msg;

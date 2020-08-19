@@ -37,7 +37,7 @@ bool ConcurrentRingBuffer<T>::push_nb(const T& val, bool force)
 }
 
 template<typename T>
-void ConcurrentRingBuffer<T>::push(const T&)
+void ConcurrentRingBuffer<T>::push(const T& val)
 {
     std::unique_lock<std::mutex> lock(mutex);
     if (length == buffer.size())
@@ -45,7 +45,7 @@ void ConcurrentRingBuffer<T>::push(const T&)
         cvFull.wait(lock, [&] { return length < buffer.size(); });
     }
 
-    doPush();
+    doPush(val);
     cvEmpty.notify_one();
 }
 

@@ -3,7 +3,7 @@
 
 #include "api/phidget.h"
 #include "msg/imu_msg.h"
-#include "../../util/ring_buffer.h"
+#include "../../util/concurrent_ring_buffer.h"
 
 namespace phidgets {
 
@@ -12,7 +12,7 @@ class Imu : public Phidget
 public:
     Imu() = delete;
 
-    explicit Imu(ring_buffer<ImuMsg>& ringbuffer);
+    explicit Imu(ConcurrentRingBuffer<ImuMsg>& ringbuffer);
 
     virtual ~Imu() = default;
 
@@ -22,7 +22,7 @@ public:
     const std::array<double, 9> & getMagneticFieldCovariance() const;
 
 private:
-    ring_buffer<ImuMsg>& data_buffer;
+    ConcurrentRingBuffer<ImuMsg>& data_buffer;
     // diagnostics
     bool is_connected_;
     bool is_calibrated_;

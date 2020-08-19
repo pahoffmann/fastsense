@@ -8,7 +8,7 @@
 
 namespace phidgets {
 
-Imu::Imu(ring_buffer<ImuMsg> &ringbuffer) : Phidget(), data_buffer(ringbuffer), imu_handle_(nullptr), is_calibrated_(false), init_compass_(false)
+Imu::Imu(ConcurrentRingBuffer<ImuMsg> &ringbuffer) : Phidget(), data_buffer(ringbuffer), imu_handle_(nullptr), is_calibrated_(false), init_compass_(false)
 {
     initApi();
     initCovariance();
