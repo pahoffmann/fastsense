@@ -42,11 +42,15 @@ rebuild: clean software
 $(BUILD_DIR)/$(APP_NAME): $(OBJS_CORRECTED)
 	@echo "Link: $(APP_NAME)"
 	@$(MKDIR_P) $(dir $@)
-	@$(CXX) $(OBJS) -o $@ $(LDFLAGS)
+	@$(CXX) $(OBJS_CORRECTED) -o $@ $(LDFLAGS)
 
 # Compile software
-$(BUILD_DIR)/%.o: %.cpp
-	@echo "${SUBST}"
+$(BUILD_DIR)/%.o: ${REMOVE}%.cpp
+	@echo "Compile: $<"
+	@$(MKDIR_P) $(dir $@)
+	@$(CXX) $(CXXFLAGS) $< -o $@
+
+$(BUILD_DIR)/test.o: test.cpp
 	@echo "Compile: $<"
 	@$(MKDIR_P) $(dir $@)
 	@$(CXX) $(CXXFLAGS) $< -o $@
