@@ -17,13 +17,13 @@
 struct Point
 {
     /// X component
-    uint16_t x;
+    int16_t x;
 
     /// Y component
-    uint16_t y;
+    int16_t y;
 
     /// Z component
-    uint16_t z;
+    int16_t z;
 };
 
 /**

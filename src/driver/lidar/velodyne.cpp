@@ -62,21 +62,21 @@ constexpr float LASER_ID_TO_VERT_ANGLE[16] =
 /// Lookup table to get the offset of a laser.
 constexpr float LASER_ID_TO_OFFSET[16] =
 {
-    11.2f / 1000.f,
-    -0.7f / 1000.f,
-    9.7f / 1000.f,
-    -2.2f / 1000.f,
-    8.1f / 1000.f,
-    -3.7f / 1000.f,
-    6.6f / 1000.f,
-    -5.1f / 1000.f,
-    5.1f / 1000.f,
-    -6.6f / 1000.f,
-    3.7f / 1000.f,
-    2.2f / 1000.f,
-    -9.7f / 1000.f,
-    0.7f / 1000.f,
-    -11.2f / 1000.f
+    11.2f,
+    -0.7f,
+    9.7f,
+    -2.2f,
+    8.1f,
+    -3.7f,
+    6.6f,
+    -5.1f,
+    5.1f,
+    -6.6f,
+    3.7f,
+    2.2f,
+    -9.7f,
+    0.7f,
+    -11.2f
 };
 
 /// Lookup table to get ring of laser.
@@ -248,8 +248,8 @@ void VelodyneDriver::decodePacket()
             azLast = az_block;
 
             // allocate points for current block
-            size_t start_idx = currentScan->points.size();
-            currentScan->points.resize(start_idx + POINTS_IN_BLOCK);
+            size_t startIdx = currentScan->points.size();
+            currentScan->points.resize(startIdx + POINTS_IN_BLOCK);
 
             // calculate azimuth difference between current and next block for interpolation
             // last block uses previous difference for simplification
@@ -266,7 +266,7 @@ void VelodyneDriver::decodePacket()
             for (int p = 0; p < POINTS_IN_BLOCK; p++)
             {
                 // select point
-                Point& new_point = currentScan->points[LASER_ID_TO_RING[p % 16] + (p < 16 ? 0 : 16)];
+                Point& new_point = currentScan->points[startIdx + LASER_ID_TO_RING[p % 16] + (p < 16 ? 0 : 16)];
 
                 // interpolate azimuth (VLP-16 User Manual, Ch. 9.5)
                 float az;
@@ -288,11 +288,21 @@ void VelodyneDriver::decodePacket()
                 az = deg_to_rad(az);
 
                 // calculate XYZ and fill new point
-                float r = packet.blocks[b].points[p].distance * 0.002f - LASER_ID_TO_OFFSET[p % 16]; // 0.002 m
-                float cos_vertical = cos(LASER_ID_TO_VERT_ANGLE[p % 16]);
-                new_point.x = r * cos_vertical * sin(az);
-                new_point.y = r * cos_vertical * cos(az);
-                new_point.z = r * sin(LASER_ID_TO_VERT_ANGLE[p % 16]);
+                if (packet.blocks[b].points[p].distance > 0 && packet.blocks[b].points[p].distance <= std::numeric_limits<decltype(Point::x)>::max())
+                {
+                    float r = packet.blocks[b].points[p].distance * 2 - LASER_ID_TO_OFFSET[p % 16]; // 2 mm
+                    float cos_vertical = cos(LASER_ID_TO_VERT_ANGLE[p % 16]);
+                    new_point.x = r * cos_vertical * sin(az);
+                    new_point.y = r * cos_vertical * cos(az);
+                    new_point.z = r * sin(LASER_ID_TO_VERT_ANGLE[p % 16]);
+                }
+                else
+                {
+                    // out of range: set to zero
+                    new_point.x = 0;
+                    new_point.y = 0;
+                    new_point.z = 0;
+                }
             }
         }
     }
