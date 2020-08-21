@@ -10,7 +10,7 @@ SHELL := /bin/bash
 # Global
 BUILD_DIR := ./build
 APP_NAME := imu_test
-SRCS := $(wildcard ../../src/driver/phidgets/api/*.cpp) $(wildcard ../../src/driver/phidgets/msg/*.cpp) $(wildcard ../../src/driver/phidgets/*.cpp) test.cpp
+SRCS := $(wildcard ../../src/driver/imu/api/*.cpp) $(wildcard ../../src/driver/imu/msg/*.cpp) $(wildcard ../../src/driver/imu/*.cpp) test.cpp
 OBJS := $(SRCS:%.cpp=$(BUILD_DIR)/%.o)
 REMOVE = ../../src/driver/phidgets/
 OBJS_CORRECTED = $(subst $(REMOVE),, $(OBJS))
