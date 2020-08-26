@@ -34,7 +34,7 @@ void Imu::zero()
     CPhidgetSpatial_zeroGyro(imu_handle_);
 }
 
-void Imu::SpatialDataHandler(CPhidgetSpatialHandle /* handle */, void* userptr,
+int Imu::SpatialDataHandler(CPhidgetSpatialHandle /* handle */, void* userptr,
                             CPhidgetSpatial_SpatialEventDataHandle* data,
                             int count)
 {
@@ -46,6 +46,7 @@ void Imu::SpatialDataHandler(CPhidgetSpatialHandle /* handle */, void* userptr,
         ((Imu*)userptr)->dataHandler(data[i]->acceleration, data[i]->angularRate,
                                      data[i]->magneticField, ts);
     }
+    return 0;
 }
 
 void Imu::setCompassCorrectionParameters(double cc_mag_field, double cc_offset0,

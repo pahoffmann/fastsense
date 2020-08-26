@@ -86,7 +86,7 @@ private:
      * @param data incoming data
      * @param count how many sensor readings have been made
      */
-    static void SpatialDataHandler(CPhidgetSpatialHandle spatial, void* userptr,
+    static int SpatialDataHandler(CPhidgetSpatialHandle spatial, void* userptr,
                                   CPhidgetSpatial_SpatialEventDataHandle* data,
                                   int count);
 
