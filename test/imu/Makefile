@@ -12,7 +12,7 @@ BUILD_DIR := ./build
 APP_NAME := imu_test
 SRCS := $(wildcard ../../src/driver/imu/api/*.cpp) $(wildcard ../../src/driver/imu/msg/*.cpp) $(wildcard ../../src/driver/imu/*.cpp) test.cpp
 OBJS := $(SRCS:%.cpp=$(BUILD_DIR)/%.o)
-REMOVE = ../../src/driver/phidgets/
+REMOVE = ../../src/driver/imu/
 OBJS_CORRECTED = $(subst $(REMOVE),, $(OBJS))
 DEPS := $(OBJS_CORRECTED:.o=.d)
 

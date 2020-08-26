@@ -1,5 +1,5 @@
-#include "../../src/driver/phidgets/imu.h"
-#include "../../src/driver/phidgets/msg/imu_msg.h"
+#include "../../src/driver/imu/imu.h"
+#include "../../src/driver/imu/msg/imu_msg.h"
 #include "../../src/util/concurrent_ring_buffer.h"
 
 using namespace fastsense::driver;
