@@ -10,6 +10,10 @@
 #include <mutex>
 #include <condition_variable>
 
+namespace fastsense {
+
+namespace util {
+
 /**
  * @brief Ring buffer with multithreading support.
  *
@@ -102,5 +106,9 @@ private:
     /// Condition variable to wait on, if the ring bufer is full
     std::condition_variable cvFull;
 };
+
+} // namespace util
+
+} // namespace fastsense
 
 #include "concurrent_ring_buffer.tcc"

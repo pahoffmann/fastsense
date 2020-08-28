@@ -137,7 +137,7 @@ protected:
     float azLast;
 
     /// Buffer to write scans to
-    ConcurrentRingBuffer<PointCloud::ptr>::ptr scanBuffer;
+    fastsense::util::ConcurrentRingBuffer<PointCloud::ptr>::ptr scanBuffer;
 
     /// Current scan
     PointCloud::ptr currentScan;
