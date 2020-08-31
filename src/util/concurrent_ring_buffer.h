@@ -10,9 +10,11 @@
 #include <mutex>
 #include <condition_variable>
 
-namespace fastsense {
+namespace fastsense
+{
 
-namespace util {
+namespace util
+{
 
 /**
  * @brief Ring buffer with multithreading support.

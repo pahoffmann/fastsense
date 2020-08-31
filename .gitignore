@@ -44,3 +44,7 @@ v++*
 
 ### Astyle ###
 *.orig
+
+### ROS
+.catkin_workspace
+*devel*

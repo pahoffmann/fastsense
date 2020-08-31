@@ -27,9 +27,14 @@ LDFLAGS := -lpthread -lphidget21
 # Rules
 #
 
-.PHONY: all software clean
+.PHONY: all software clean fresh run
 
 all: software
+
+fresh: clean all
+
+run:
+	./build/$(APP_NAME)
 
 clean:
 	@rm -rf _x _vimage *.log build/*
