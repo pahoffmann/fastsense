@@ -12,22 +12,33 @@ VIVADO_HLS := vivado_hls
 
 # Global
 BUILD_DIR := ${CURDIR}/build
-APP_NAME := FastSense
+APP_NAME := FastSense.exe
 PLATFORM_DIR ?= ${CURDIR}/base_design/platform/FastSense_platform/export/FastSense_platform
 
 # Software
-SYSROOT := ${PLATFORM_DIR}/sw/FastSense_platform/linux_domain/sysroot/aarch64-xilinx-linux/
+SYSROOT := ${PLATFORM_DIR}/sw/FastSense_platform/linux_domain/sysroot/aarch64-xilinx-linux
 
-SRCS := src/vadd.cpp
+SRCS := src/vadd.cpp \
+	src/driver/lidar/velodyne.cpp \
+	$(wildcard src/driver/imu/msg/*.cpp) \
+	$(wildcard src/driver/imu/api/*.cpp) \
+	src/driver/imu/imu.cpp
+
 OBJS := $(SRCS:%.cpp=$(BUILD_DIR)/%.o)
 DEPS := $(OBJS:.o=.d)
 
-INC_DIRS := src
+INC_DIRS := src \
+	src/driver/lidar \
+	src/driver/phidgets \
+	src/driver/phidgets/api \
+	src/driver/phidgets/msg \
+	src/util
+
 INC_FLAGS := $(addprefix -I,$(INC_DIRS))
 CXX_STD := c++14
 CXXFLAGS := $(INC_FLAGS) -MMD -MP -D__USE_XOPEN2K8 -I${SYSROOT}/usr/include/xrt -I${XILINX_VIVADO}/include -I${SYSROOT}/usr/include -c -fmessage-length=0 -std=${CXX_STD} --sysroot=${SYSROOT}
 
-LDFLAGS := -lxilinxopencl -lpthread -lrt -lstdc++ -lgmp -lxrt_core -L${SYSROOT}/usr/lib/ --sysroot=${SYSROOT}
+LDFLAGS := -lxilinxopencl -lphidget21 -lpthread -lrt -lstdc++ -lgmp -lxrt_core -L${SYSROOT}/usr/lib/ --sysroot=${SYSROOT}
 
 # Hardware
 LINK_CFG := ${CURDIR}/link.cfg
@@ -74,7 +85,7 @@ $(BUILD_DIR)/%.o: %.cpp
 
 # Link hardware
 $(BUILD_DIR)/$(APP_NAME).xclbin: $(HW_OBJS) $(LINK_CFG)
-	@echo "Link hardawre: $(APP_NAME).xclbin"
+	@echo "Link hardware: $(APP_NAME).xclbin"
 	@$(MKDIR_P) $(dir $@)
 	@$(VXX) $(HW_OBJS) -o $@ $(VXXLDFLAGS)
 
@@ -91,7 +102,7 @@ hls_%: $(filter %$*.xo,$(HW_OBJS))
 	@$(VIVADO_HLS) -p _x/$*/$*/$*/
 
 format:
-	@astyle --project=.astylerc --recursive "src/*.c??" "src/*.h" 
+	@astyle -n --project=.astylerc --recursive "src/*.c??" "src/*.h"
 
 -include $(DEPS)
 -include $(HW_DEPS)
