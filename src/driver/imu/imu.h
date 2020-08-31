@@ -6,15 +6,13 @@
 
 #pragma once
 
-#include "api/phidget.h"
-#include "msg/imu_msg.h"
-#include "../../util/concurrent_ring_buffer.h"
+#include <driver/imu/api/phidget.h>
+#include <util/msg/imu_msg.h>
+#include <util/concurrent_ring_buffer.h>
 
 // TODO singleton
 
-namespace fastsense
-{
-namespace driver
+namespace fastsense::driver
 {
 
 /**
@@ -158,5 +156,4 @@ private:
     void initCovariance();
 };
 
-} // namespace driver
-} // namespace fastsense
+} // namespace fastsense::driver;

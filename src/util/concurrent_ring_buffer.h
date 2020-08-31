@@ -10,10 +10,7 @@
 #include <mutex>
 #include <condition_variable>
 
-namespace fastsense
-{
-
-namespace util
+namespace fastsense::util
 {
 
 /**
@@ -109,8 +106,6 @@ private:
     std::condition_variable cvFull;
 };
 
-} // namespace util
-
-} // namespace fastsense
+} // namespace fastsense::util
 
 #include "concurrent_ring_buffer.tcc"

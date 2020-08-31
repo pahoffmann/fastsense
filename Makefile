@@ -20,22 +20,18 @@ SYSROOT := ${PLATFORM_DIR}/sw/FastSense_platform/linux_domain/sysroot/aarch64-xi
 
 SRCS := src/vadd.cpp \
 	src/driver/lidar/velodyne.cpp \
-	$(wildcard src/driver/imu/msg/*.cpp) \
+	src/data/sensor_sync.cpp \
+	$(wildcard src/util/msg/*.cpp) \
 	$(wildcard src/driver/imu/api/*.cpp) \
 	src/driver/imu/imu.cpp
 
 OBJS := $(SRCS:%.cpp=$(BUILD_DIR)/%.o)
 DEPS := $(OBJS:.o=.d)
 
-INC_DIRS := src \
-	src/driver/lidar \
-	src/driver/phidgets \
-	src/driver/phidgets/api \
-	src/driver/phidgets/msg \
-	src/util
+INC_DIRS := src
 
 INC_FLAGS := $(addprefix -I,$(INC_DIRS))
-CXX_STD := c++14
+CXX_STD := c++17
 CXXFLAGS := $(INC_FLAGS) -MMD -MP -D__USE_XOPEN2K8 -I${SYSROOT}/usr/include/xrt -I${XILINX_VIVADO}/include -I${SYSROOT}/usr/include -c -fmessage-length=0 -std=${CXX_STD} --sysroot=${SYSROOT}
 
 LDFLAGS := -lxilinxopencl -lphidget21 -lpthread -lrt -lstdc++ -lgmp -lxrt_core -L${SYSROOT}/usr/lib/ --sysroot=${SYSROOT}
@@ -62,12 +58,12 @@ HW_DEPS_FLAGS := $(INC_FLAGS) -isystem ${XILINX_VIVADO}/include -MM -MP
 
 .PHONY: all software hardware clean hls_%
 
-all: software hardware format
+all: software hardware 
 
 clean: 
 	@rm -rf _x _vimage *.log build/*
 
-software: $(BUILD_DIR)/$(APP_NAME)
+software: $(BUILD_DIR)/$(APP_NAME) format
 
 hardware: $(BUILD_DIR)/$(APP_NAME).xclbin
 

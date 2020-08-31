@@ -4,9 +4,10 @@
  * @date 2020-08-11
  */
 
-#include "imu.h"
-#include "params.h"
-#include "msg/imu_msg.h"
+#include <driver/imu/imu.h>
+#include <util/params.h>
+#include <util/msg/imu_msg.h>
+
 #include <thread>
 #include <stdexcept>
 #include <iostream>
@@ -118,7 +119,7 @@ void Imu::initDevice()
 
     if (init_compass_)
     {
-        using namespace fastsense::driver::params;
+        using namespace fastsense::util::params;
         Imu::setCompassCorrectionParameters(cc_mag_field_, cc_offset0_, cc_offset1_, cc_offset2_, cc_gain0_, cc_gain1_,
                                             cc_gain2_, cc_T0_, cc_T1_, cc_T2_, cc_T3_, cc_T4_, cc_T5_);
     }

@@ -10,6 +10,9 @@
 #include <vector>
 #include <memory>
 
+namespace fastsense::util::msg
+{
+
 /**
  * @brief Represents a point with 16-bit X/Y/Z components
  *
@@ -40,3 +43,5 @@ public:
     std::vector<Point> points;
     uint16_t rings;
 };
+
+} // namespace fastsense::util::msg;

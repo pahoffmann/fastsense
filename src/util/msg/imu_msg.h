@@ -6,19 +6,15 @@
 
 #pragma once
 
-#include "../params.h"
-#include "linear_acceleration.h"
-#include "angular_velocity.h"
-#include "magnetic_field.h"
+#include <util/params.h>
+#include <util/msg/linear_acceleration.h>
+#include <util/msg/angular_velocity.h>
+#include <util/msg/magnetic_field.h>
 #include <iostream>
 #include <cmath>
 #include <memory>
 
-namespace fastsense
-{
-namespace driver
-{
-namespace msg
+namespace fastsense::util::msg
 {
 
 /**
@@ -33,8 +29,6 @@ struct ImuMsg
     MagneticField mag;
 };
 
-} // namespace msg
-} // namespace driver
-} // namespace fastsense
+} // namespace fastsense::util::msg
 
-std::ostream& operator<<(std::ostream& os, const fastsense::driver::msg::ImuMsg& data);
+std::ostream& operator<<(std::ostream& os, const fastsense::util::msg::ImuMsg& data);

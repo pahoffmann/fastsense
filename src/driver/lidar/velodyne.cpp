@@ -4,7 +4,7 @@
  * @date 2020-08-11
  */
 
-#include "velodyne.h"
+#include <driver/lidar/velodyne.h>
 
 #include <system_error>
 #include <cerrno>
@@ -19,6 +19,8 @@
 #include <poll.h>
 
 using namespace fastsense::driver;
+using fastsense::util::msg::Point;
+using fastsense::util::msg::PointCloud;
 
 // Magic constants of the sensor
 constexpr uint8_t PROD_ID_VLP16 = 0x22;
