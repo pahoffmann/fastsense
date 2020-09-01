@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.0.2)
 project(velodyne_test)
 
 ## Compile as C++11, supported in ROS Kinetic and newer
-add_compile_options(-std=c++11)
+add_compile_options(-std=c++17)
 
 set(FASTSENSE_DIR ../../../../fastsense)
 
@@ -17,13 +17,13 @@ catkin_package(
 
 include_directories(
   ${catkin_INCLUDE_DIRS}
-  ${FASTSENSE_DIR}/src/driver/lidar
-  ${FASTSENSE_DIR}/src/util
+  ${FASTSENSE_DIR}/src
 )
 
 add_executable(${PROJECT_NAME}_node
   src/velodyne_test_node.cpp
   ${FASTSENSE_DIR}/src/driver/lidar/velodyne.cpp
+  ${FASTSENSE_DIR}/src/util/time_stamp.cpp
 )
 
 target_link_libraries(${PROJECT_NAME}_node
