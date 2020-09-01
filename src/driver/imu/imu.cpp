@@ -7,6 +7,7 @@
 #include <driver/imu/imu.h>
 #include <util/params.h>
 #include <util/msg/imu_msg.h>
+#include <util/time_stamp.h>
 
 #include <thread>
 #include <stdexcept>
@@ -17,7 +18,7 @@ using namespace fastsense::driver;
 
 // TODO detach handler? How to handle connected/disconnectedness
 
-Imu::Imu(ConcurrentRingBuffer<msg::ImuMsg>& ringbuffer) : Phidget(), data_buffer(ringbuffer), imu_handle_(nullptr), is_calibrated_(false), init_compass_(false)
+Imu::Imu(ConcurrentRingBuffer<msg::ImuMsgStamped>& ringbuffer) : Phidget(), data_buffer(ringbuffer), imu_handle_(nullptr), is_calibrated_(false), init_compass_(false)
 {
     initApi();
     initCovariance();
@@ -80,7 +81,7 @@ Imu::dataHandler(const double* acceleration, const double* angularRate, const do
     }
 
     msg::ImuMsg msg(acceleration, angularRate, magneticField);
-    data_buffer.push(msg);
+    data_buffer.push(std::make_pair(msg, TimeStamp()));
 }
 
 void Imu::attachHandler()

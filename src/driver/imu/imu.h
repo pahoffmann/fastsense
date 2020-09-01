@@ -7,7 +7,7 @@
 #pragma once
 
 #include <driver/imu/api/phidget.h>
-#include <util/msg/imu_msg.h>
+#include <util/msg/msgs_stamped.h>
 #include <util/concurrent_ring_buffer.h>
 
 // TODO singleton
@@ -27,7 +27,7 @@ public:
      * Creates Imu instance
      * @param ringbuffer
      */
-    explicit Imu(ConcurrentRingBuffer<msg::ImuMsg>& ringbuffer);
+    explicit Imu(ConcurrentRingBuffer<msg::ImuMsgStamped>& ringbuffer);
 
     virtual ~Imu() = default;
 
@@ -51,7 +51,7 @@ public:
 
 private:
     /// buffer, in which imu readings are saved
-    ConcurrentRingBuffer<msg::ImuMsg>& data_buffer;
+    ConcurrentRingBuffer<msg::ImuMsgStamped>& data_buffer;
 
     /// whether or not imu is connected
     bool is_connected_;

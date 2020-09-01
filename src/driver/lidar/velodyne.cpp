@@ -5,7 +5,10 @@
  */
 
 #include <driver/lidar/velodyne.h>
+#include <util/time_stamp.h>
+#include <util/msg/msgs_stamped.h>
 
+#include <chrono>
 #include <system_error>
 #include <cerrno>
 #include <cstring>
@@ -21,6 +24,7 @@
 using namespace fastsense::driver;
 using fastsense::util::msg::Point;
 using fastsense::util::msg::PointCloud;
+using fastsense::util::msg::PointCloudStamped;
 
 // Magic constants of the sensor
 constexpr uint8_t PROD_ID_VLP16 = 0x22;
@@ -102,7 +106,7 @@ constexpr uint8_t LASER_ID_TO_RING[16] =
     0
 };
 
-VelodyneDriver::VelodyneDriver(const std::string& ipaddr, uint16_t port, const ConcurrentRingBuffer<PointCloud::ptr>::ptr& buffer) :
+VelodyneDriver::VelodyneDriver(const std::string& ipaddr, uint16_t port, const ConcurrentRingBuffer<PointCloudStamped>::ptr& buffer) :
     ipaddr(ipaddr),
     port(port),
     running(false),
@@ -162,11 +166,11 @@ void VelodyneDriver::stop()
     worker.join();
 }
 
-PointCloud::ptr VelodyneDriver::getScan()
+fastsense::util::msg::PointCloudStamped VelodyneDriver::getScan()
 {
-    PointCloud::ptr pc;
-    scanBuffer->pop(&pc);
-    return pc;
+    PointCloudStamped pcs;
+    scanBuffer->pop(&pcs);
+    return pcs;
 }
 
 void VelodyneDriver::receivePacket()
@@ -243,7 +247,8 @@ void VelodyneDriver::decodePacket()
             // add new scan to queue when azimuth overflows
             if (az_block < azLast)
             {
-                scanBuffer->push_nb(currentScan, true);
+                // TODO set new time point?
+                scanBuffer->push_nb(std::make_pair(currentScan, fastsense::util::TimeStamp()), true);
                 currentScan = std::make_shared<PointCloud>();
                 currentScan->rings = 16;
             }

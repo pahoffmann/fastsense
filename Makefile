@@ -21,6 +21,7 @@ SYSROOT := ${PLATFORM_DIR}/sw/FastSense_platform/linux_domain/sysroot/aarch64-xi
 SRCS := src/vadd.cpp \
 	src/driver/lidar/velodyne.cpp \
 	src/data/sensor_sync.cpp \
+	$(wildcard src/util/*.cpp) \
 	$(wildcard src/util/msg/*.cpp) \
 	$(wildcard src/driver/imu/api/*.cpp) \
 	src/driver/imu/imu.cpp
