@@ -36,7 +36,7 @@ using namespace fastsense::driver;
 
 Phidget::~Phidget()
 {
-    close(); // segfaults, why?
+    close(); // TODO segfaults, why?
     CPhidget_delete(handle_);
 }
 

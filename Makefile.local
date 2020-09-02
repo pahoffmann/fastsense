@@ -1,0 +1,62 @@
+#
+# Variables
+#
+
+# Tools
+CXX := g++
+MKDIR_P := mkdir -p
+SHELL := /bin/bash
+
+# Global
+BUILD_DIR := ${CURDIR}/test/build-local
+APP_NAME := test.exe
+
+SRCS := src/driver/lidar/velodyne.cpp \
+        src/data/sensor_sync.cpp \
+        $(wildcard src/util/*.cpp) \
+        $(wildcard src/util/msg/*.cpp) \
+        $(wildcard src/driver/imu/api/*.cpp) \
+        src/driver/imu/imu.cpp \
+        test/test.cpp
+
+OBJS := $(SRCS:%.cpp=$(BUILD_DIR)/%.o)
+DEPS := $(OBJS:.o=.d)
+
+INC_DIRS := src
+
+INC_FLAGS := $(addprefix -I,$(INC_DIRS))
+CXX_STD := c++17
+CXXFLAGS := $(INC_FLAGS) -c -fmessage-length=0 -std=${CXX_STD}
+
+LDFLAGS := -lphidget21 -lpthread -lstdc++
+
+.PHONY: all software format run
+
+all: software format
+
+clean: 
+	@rm -rf test/build-local/*
+
+software: $(BUILD_DIR)/$(APP_NAME)
+
+# Link software
+$(BUILD_DIR)/$(APP_NAME): $(OBJS)
+	@echo "Link: $(APP_NAME)"
+	@$(MKDIR_P) $(dir $@)
+	@$(CXX) $(OBJS) -o $@ $(LDFLAGS)
+
+# Compile software
+$(BUILD_DIR)/%.o: %.cpp
+	@echo "Compile: $<"
+	@$(MKDIR_P) $(dir $@)
+	@$(CXX) $(CXXFLAGS) $< -o $@
+
+format:
+	@echo "Formatting"
+	@astyle -n -q --project=.astylerc --recursive "src/*.c??" "src/*.h"
+
+run:
+	./test/build-local/test.exe
+
+-include $(DEPS)
+-include $(HW_DEPS)

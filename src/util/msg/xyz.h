@@ -6,11 +6,7 @@
 
 #pragma once
 
-namespace fastsense
-{
-namespace driver
-{
-namespace msg
+namespace fastsense::util::msg
 {
 
 /**
@@ -41,6 +37,4 @@ protected:
     double data_[3];
 };
 
-} // namespace fastsense
-} // namespace driver
-} // namespace msg
+} // namespace driver::util::msg

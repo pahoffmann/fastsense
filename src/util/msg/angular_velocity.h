@@ -9,11 +9,7 @@
 #include "../params.h"
 #include "xyz.h"
 
-namespace fastsense
-{
-namespace driver
-{
-namespace msg
+namespace fastsense::util::msg
 {
 
 /**
@@ -25,6 +21,4 @@ struct AngularVelocity : public XYZ
     AngularVelocity(const double* angular_rate);
 };
 
-} // namespace msg
-} // namespace driver
-} // namespace fastsense
+} // namespace fastsense::util::msg

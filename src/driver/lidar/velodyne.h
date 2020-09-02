@@ -6,14 +6,14 @@
 
 #pragma once
 
-#include "point_cloud.h"
+#include <util/process_thread.h>
+#include <util/msg/msgs_stamped.h>
+#include <util/concurrent_ring_buffer.h>
+
 #include <memory>
 #include <thread>
-#include <concurrent_ring_buffer.h>
 
-namespace fastsense
-{
-namespace driver
+namespace fastsense::driver
 {
 
 constexpr uint8_t POINTS_IN_BLOCK = 32;
@@ -65,7 +65,7 @@ static_assert(sizeof(VelodynePacket) == 1206);
  * A new Thread is started that receives, decodes and bundles the data as point clouds.
  *
  */
-class VelodyneDriver
+class VelodyneDriver : public ProcessThread
 {
 public:
     /**
@@ -75,7 +75,7 @@ public:
      * @param port Port for receiving the sensor data.
      * @param buffer Ring buffer for storing the sensor data and transfer to the next step.
      */
-    VelodyneDriver(const std::string& ipaddr, uint16_t port, const std::shared_ptr<ConcurrentRingBuffer<PointCloud::ptr>>& buffer);
+    VelodyneDriver(const std::string& ipaddr, uint16_t port, const std::shared_ptr<fastsense::util::ConcurrentRingBuffer<fastsense::util::msg::PointCloudStamped>>& buffer);
 
     /**
      * @brief Destroy the Velodyne Driver object.
@@ -87,20 +87,20 @@ public:
      * @brief Start receiver thread. The buffer will be cleared.
      *
      */
-    void start();
+    void start() override;
 
     /**
      * @brief Stop the receiver thread.
      *
      */
-    void stop();
+    void stop() override;
 
     /**
      * @brief Get the next scan.
      *
-     * @return PointCloud::ptr The next scan.
+     * @return PointCloudStamped The next scan with timestamp
      */
-    PointCloud::ptr getScan();
+    fastsense::util::msg::PointCloudStamped getScan();
 
 protected:
     /**
@@ -124,12 +124,6 @@ protected:
     /// Socket file descriptor
     int sockfd;
 
-    /// Worker thread
-    std::thread worker;
-
-    /// Flag if the thread is running
-    bool running;
-
     /// Current packet
     VelodynePacket packet;
 
@@ -137,11 +131,10 @@ protected:
     float azLast;
 
     /// Buffer to write scans to
-    fastsense::util::ConcurrentRingBuffer<PointCloud::ptr>::ptr scanBuffer;
+    fastsense::util::ConcurrentRingBuffer<fastsense::util::msg::PointCloudStamped>::ptr scanBuffer;
 
     /// Current scan
-    PointCloud::ptr currentScan;
+    fastsense::util::msg::PointCloud::ptr currentScan;
 };
 
-}
-}
+} // namespace fastsense::driver

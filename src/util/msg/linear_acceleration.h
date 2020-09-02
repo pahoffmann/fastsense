@@ -8,11 +8,7 @@
 
 #include "xyz.h"
 
-namespace fastsense
-{
-namespace driver
-{
-namespace msg
+namespace fastsense::util::msg
 {
 
 /**
@@ -24,6 +20,4 @@ struct LinearAcceleration : public XYZ
     explicit LinearAcceleration(const double* acceleration);
 };
 
-} // namespace fastsense
-} // namespace driver
-} // namespace msg
+} // namespace fastsense::util::msg
