@@ -13,11 +13,11 @@ namespace fastsense::util
 struct TimeStamp
 {
     TimeStamp();
-    void updateTime();
+    void reset();
 
     int operator-(const TimeStamp& t);
 
-    std::chrono::high_resolution_clock::time_point time;
+    std::chrono::steady_clock::time_point time;
 };
 
 } // namespace fastsense::util

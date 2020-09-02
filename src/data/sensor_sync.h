@@ -6,6 +6,7 @@
 
 #include <memory>
 
+#include <util/params.h>
 #include <util/process_thread.h>
 #include <util/msg/msgs_stamped.h>
 #include <util/concurrent_ring_buffer.h>
@@ -17,7 +18,7 @@ using ImuStampedBuffer = fastsense::util::ConcurrentRingBuffer<fastsense::util::
 using ImuStampedBufferPtr = std::shared_ptr<fastsense::util::ConcurrentRingBuffer<fastsense::util::msg::ImuMsgStamped>>;
 using PointCloudStampedBuffer = fastsense::util::ConcurrentRingBuffer<fastsense::util::msg::PointCloudStamped>;
 using PointCloudStampedBufferPtr = std::shared_ptr<PointCloudStampedBuffer>;
-using SyncedData = std::pair<fastsense::util::msg::ImuMsg::ptr, fastsense::util::msg::PointCloud::ptr>;
+using SyncedData = std::pair<fastsense::util::msg::ImuMsg, fastsense::util::msg::PointCloud::ptr>;
 using SyncedDataBuffer = fastsense::util::ConcurrentRingBuffer<SyncedData>;
 using SyncedDataBufferPtr = std::shared_ptr<SyncedDataBuffer>;
 
@@ -38,6 +39,7 @@ private:
     ImuStampedBufferPtr imu_buffer_;
     PointCloudStampedBufferPtr pointcloud_buffer_;
     SyncedDataBufferPtr synced_data_buffer_;
+    static constexpr int max_delay_ = fastsense::util::params::period_ / -2;
 };
 
 } // namespace fastsense::data
