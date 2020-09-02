@@ -68,6 +68,15 @@ public:
      */
     void clear();
 
+    /**
+     * @brief return buffer length
+     * @return buffer length
+     */
+    inline size_t getLength() const
+    {
+        return length;
+    }
+
     using ptr = std::shared_ptr<ConcurrentRingBuffer<T>>;
 
 private:

@@ -109,7 +109,6 @@ constexpr uint8_t LASER_ID_TO_RING[16] =
 VelodyneDriver::VelodyneDriver(const std::string& ipaddr, uint16_t port, const ConcurrentRingBuffer<PointCloudStamped>::ptr& buffer) :
     ipaddr(ipaddr),
     port(port),
-    running(false),
     azLast(0.f),
     scanBuffer(buffer)
 {

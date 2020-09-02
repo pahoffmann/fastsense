@@ -6,10 +6,12 @@
 
 #pragma once
 
+#include <util/process_thread.h>
 #include <util/msg/msgs_stamped.h>
+#include <util/concurrent_ring_buffer.h>
+
 #include <memory>
 #include <thread>
-#include <util/concurrent_ring_buffer.h>
 
 namespace fastsense::driver
 {
@@ -63,7 +65,7 @@ static_assert(sizeof(VelodynePacket) == 1206);
  * A new Thread is started that receives, decodes and bundles the data as point clouds.
  *
  */
-class VelodyneDriver
+class VelodyneDriver : public ProcessThread
 {
 public:
     /**
@@ -85,13 +87,13 @@ public:
      * @brief Start receiver thread. The buffer will be cleared.
      *
      */
-    void start();
+    void start() override;
 
     /**
      * @brief Stop the receiver thread.
      *
      */
-    void stop();
+    void stop() override;
 
     /**
      * @brief Get the next scan.
@@ -121,12 +123,6 @@ protected:
 
     /// Socket file descriptor
     int sockfd;
-
-    /// Worker thread
-    std::thread worker;
-
-    /// Flag if the thread is running
-    bool running;
 
     /// Current packet
     VelodynePacket packet;

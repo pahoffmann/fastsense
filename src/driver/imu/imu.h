@@ -8,9 +8,12 @@
 
 #include <driver/imu/api/phidget.h>
 #include <util/msg/msgs_stamped.h>
+#include <util/process_thread.h>
+#include <data/sensor_sync.h>
 #include <util/concurrent_ring_buffer.h>
 
 // TODO singleton
+// TODO start function
 
 namespace fastsense::driver
 {
@@ -18,7 +21,7 @@ namespace fastsense::driver
 /**
  * @brief implements driver phidgets imu 1044, phidgets library version 2.1.9.20190409
  */
-class Imu : public Phidget
+class Imu : public Phidget, public ProcessThread
 {
 public:
     Imu() = delete;
@@ -27,9 +30,20 @@ public:
      * Creates Imu instance
      * @param ringbuffer
      */
-    explicit Imu(ConcurrentRingBuffer<msg::ImuMsgStamped>& ringbuffer);
+    explicit Imu(fastsense::data::ImuStampedBufferPtr ringbuffer);
 
     virtual ~Imu() = default;
+
+    inline bool isCalibrated() const
+    {
+        return is_calibrated_;
+    }
+
+    void init();
+
+    void start() override;
+
+    void stop() override;
 
     /**
      * Getter for angular velocity covariance
@@ -51,7 +65,7 @@ public:
 
 private:
     /// buffer, in which imu readings are saved
-    ConcurrentRingBuffer<msg::ImuMsgStamped>& data_buffer;
+    fastsense::data::ImuStampedBufferPtr data_buffer;
 
     /// whether or not imu is connected
     bool is_connected_;

@@ -27,6 +27,8 @@ struct ImuMsg
     LinearAcceleration acc;
     AngularVelocity ang;
     MagneticField mag;
+
+    using ptr = std::shared_ptr<ImuMsg>;
 };
 
 } // namespace fastsense::util::msg

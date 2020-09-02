@@ -11,14 +11,37 @@
 
 #include <thread>
 #include <stdexcept>
-#include <iostream>
 #include <cmath>
+#include <driver/imu/imu.h>
+
 
 using namespace fastsense::driver;
 
+using fastsense::data::ImuStampedBufferPtr;
+
 // TODO detach handler? How to handle connected/disconnectedness
 
-Imu::Imu(ConcurrentRingBuffer<msg::ImuMsgStamped>& ringbuffer) : Phidget(), data_buffer(ringbuffer), imu_handle_(nullptr), is_calibrated_(false), init_compass_(false)
+Imu::Imu(ImuStampedBufferPtr ringbuffer) : Phidget(), ProcessThread(), data_buffer(ringbuffer), imu_handle_(nullptr), is_calibrated_(false), init_compass_(false)
+{
+}
+
+void fastsense::driver::Imu::start()
+{
+    if (not running)
+    {
+        running = true;
+        init();
+    }
+}
+
+void Imu::stop()
+{
+    // cleanup happens in Phidgets destructor
+    // TODO
+    running = false;
+}
+
+void Imu::init()
 {
     initApi();
     initCovariance();
@@ -81,7 +104,7 @@ Imu::dataHandler(const double* acceleration, const double* angularRate, const do
     }
 
     msg::ImuMsg msg(acceleration, angularRate, magneticField);
-    data_buffer.push(std::make_pair(msg, TimeStamp()));
+    data_buffer->push(std::make_pair(msg, TimeStamp()));
 }
 
 void Imu::attachHandler()
