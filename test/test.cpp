@@ -24,15 +24,14 @@ int main() {
     lidar.start();
     synchronizer.start();
 
-    while (true) {
-//        fs::data::SyncedData data;
-//        auto test = synchronizer.pop_nb(data);
+    auto start = fs::util::TimeStamp();
 
-        std::cout << "--\n"
-                  << "pcl buffer: " << pointcloud_buffer->getLength() << "\n"
-                  << "imu buffer: " << imu_buffer->getLength() << "\n"
-                  << "synced_data_buffer: " << synced_data_buffer->getLength() << "\n";
-//                  << "synced: " << (test ? "true" : "false") << "\n";
-     };
+    while (true) {
+        fs::data::SyncedData data;
+        synced_data_buffer->pop(&data);
+        std::cout << "fps: " << 1000.f/(fs::util::TimeStamp() - start) << "\n";
+        start.reset();
+     }
+
     return 0;
 }

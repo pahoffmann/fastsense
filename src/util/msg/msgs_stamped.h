@@ -7,7 +7,7 @@
 namespace fastsense::util::msg
 {
 
-using ImuMsgStamped = std::pair<fastsense::util::msg::ImuMsg, fastsense::util::TimeStamp>;
+using ImuMsgStamped = std::pair<ImuMsg, fastsense::util::TimeStamp>;
 using PointCloudStamped = std::pair<PointCloud::ptr, fastsense::util::TimeStamp>;
 
 }
