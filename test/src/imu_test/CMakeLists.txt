@@ -28,6 +28,7 @@ add_executable(${PROJECT_NAME}_node
   ${FASTSENSE_DIR}/src/util/msg/imu_msg.cpp
   ${FASTSENSE_DIR}/src/driver/imu/imu.cpp
   ${FASTSENSE_DIR}/src/util/time_stamp.cpp
+  ${FASTSENSE_DIR}/src/util/process_thread.cpp
   src/${PROJECT_NAME}_node.cpp
 )
 

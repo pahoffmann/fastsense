@@ -24,6 +24,7 @@ add_executable(${PROJECT_NAME}_node
   src/velodyne_test_node.cpp
   ${FASTSENSE_DIR}/src/driver/lidar/velodyne.cpp
   ${FASTSENSE_DIR}/src/util/time_stamp.cpp
+  ${FASTSENSE_DIR}/src/util/process_thread.cpp
 )
 
 target_link_libraries(${PROJECT_NAME}_node

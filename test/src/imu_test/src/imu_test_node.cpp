@@ -3,6 +3,7 @@
 //
 
 #include <imu.h>
+#include <data/sensor_sync.h>
 #include <util/msg/imu_msg.h>
 #include <util/msg/msgs_stamped.h>
 #include <util/concurrent_ring_buffer.h>
@@ -19,12 +20,13 @@ int main(int argc, char **argv)
     ros::Publisher imu_pub = n.advertise<sensor_msgs::Imu>("/imu/data_raw", 5);
     ros::Publisher mag_pub = n.advertise<sensor_msgs::MagneticField>("imu/mag", 5);
 
-    fs::util::ConcurrentRingBuffer<fs::util::msg::ImuMsgStamped> imu_buffer(100);
+    fs::data::ImuStampedBufferPtr imu_buffer = std::make_shared<fs::data::ImuStampedBuffer>(100);
     fs::driver::Imu imu(imu_buffer);
+    imu.start();
 
     while (ros::ok()) {
         fs::util::msg::ImuMsgStamped data_stamped;
-        imu_buffer.pop(&data_stamped);
+        imu_buffer->pop(&data_stamped);
 
 	    auto& [data, time] = data_stamped;
 

@@ -1,9 +1,6 @@
 #include <driver/lidar/velodyne.h>
 #include <util/msg/msgs_stamped.h>
 
-
-#include <iostream>
-
 #include <ros/ros.h>
 #include <sensor_msgs/PointCloud.h>
 #include <geometry_msgs/Point32.h>
