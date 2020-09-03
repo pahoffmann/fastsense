@@ -101,8 +101,8 @@ hls_%: $(filter %$*.xo,$(HW_OBJS))
 	@echo "Opening HLS for kernel $* ($<) "
 	@$(VIVADO_HLS) -p _x/$*/$*/$*/
 
-test:
-	make ENTRY_POINT=test/test.cpp APP_NAME=FastSense_test.exe software hardware
+test_sensor_sync:
+	make ENTRY_POINT=test/sensor_sync.cpp APP_NAME=FastSense_test_sensor_sync.exe software hardware
 
 format:
 	@echo "Formatting"
