@@ -8,7 +8,7 @@
 
 #include <iostream>
 
-using namespace FastSense::util::logging::sink;
+using namespace fastsense::util::logging::sink;
 
 void CoutSink::write(const std::string& msg)
 {

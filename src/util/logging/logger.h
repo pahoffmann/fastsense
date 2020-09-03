@@ -16,7 +16,7 @@
 
 #include "sink.h"
 
-namespace FastSense::util::logging
+namespace fastsense::util::logging
 {
 
 enum class LogLevel

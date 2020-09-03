@@ -9,7 +9,7 @@
 #include <string>
 #include <fstream>
 
-namespace FastSense::util::logging::sink
+namespace fastsense::util::logging::sink
 {
 
 class Sink

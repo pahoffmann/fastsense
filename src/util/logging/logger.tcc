@@ -6,7 +6,7 @@
 
 #pragma once
 
-namespace FastSense::util::logging
+namespace fastsense::util::logging
 {
 
 inline Logger::Logger() : currentLogLevel(LogLevel::Warning)

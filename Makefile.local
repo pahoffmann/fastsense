@@ -14,6 +14,7 @@ APP_NAME := test.exe
 SRCS := src/driver/lidar/velodyne.cpp \
         src/data/sensor_sync.cpp \
         $(wildcard src/util/*.cpp) \
+		$(wildcard src/util/logging/*.cpp) \
         $(wildcard src/util/msg/*.cpp) \
         $(wildcard src/driver/imu/api/*.cpp) \
         src/driver/imu/imu.cpp \
