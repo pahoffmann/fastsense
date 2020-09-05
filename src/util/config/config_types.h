@@ -15,7 +15,7 @@
 namespace fastsense::util::config
 {
 
-class ConfigContainer;
+class ConfigGroup;
 
 class ConfigEntryBase
 {
@@ -28,7 +28,7 @@ public:
     ConfigEntryBase& operator=(const ConfigEntryBase&) = delete;
     ConfigEntryBase& operator=(ConfigEntryBase&&) = delete;
 
-    virtual bool isContainer() = 0;
+    virtual bool isGroup() = 0;
     virtual void set(const boost::property_tree::ptree& val) = 0;
     virtual bool canSet(const boost::property_tree::ptree& val) = 0;
 };
@@ -40,11 +40,11 @@ class ConfigEntry : public ConfigEntryBase
     std::mutex mtx;
     EventHandlerList<void(T)> handlerList;
 public:
-    ConfigEntry(std::string name, ConfigContainer* parent);
+    ConfigEntry(std::string name, ConfigGroup* parent);
 
     T operator ()();
 
-    bool isContainer() override;
+    bool isGroup() override;
     void set(const boost::property_tree::ptree& val) override;
     bool canSet(const boost::property_tree::ptree& val) override;
 
@@ -52,9 +52,7 @@ public:
     void removeHandler(const typename EventHandlerList<void(T)>::handle_t& handle);
 };
 
-#define DECLARE_CONFIG_ENTRY(T, name) ConfigEntry<T> name{#name, this}
-
-class ConfigContainer : public ConfigEntryBase
+class ConfigGroup : public ConfigEntryBase
 {
     std::unordered_map<std::string, ConfigEntryBase*> entries;
     EventHandlerList<void()> handlerList;
@@ -66,7 +64,7 @@ protected:
     void registerConfigEntry(std::string name, ConfigEntryBase* entry);
 
 public:
-    ConfigContainer(std::string name, ConfigContainer* parent);
+    ConfigGroup(std::string name, ConfigGroup* parent);
 
     std::unordered_map<std::string, ConfigEntryBase*>::iterator begin();
 
@@ -74,7 +72,7 @@ public:
 
     ConfigEntryBase* operator[](const std::string& key);
 
-    bool isContainer() override;
+    bool isGroup() override;
     void set(const boost::property_tree::ptree& val) override;
     bool canSet(const boost::property_tree::ptree& val) override;
 
@@ -84,5 +82,8 @@ public:
 };
 
 }
+
+#define DECLARE_CONFIG_ENTRY(T, name) ConfigEntry<T> name{#name, this}
+#define DECLARE_CONFIG_GROUP(T, name) T name{#name, this}
 
 #include "config_types.tcc"

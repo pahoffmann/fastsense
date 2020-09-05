@@ -12,7 +12,7 @@ namespace fastsense::util::config
 {
 
 template<typename T>
-ConfigEntry<T>::ConfigEntry(std::string name, ConfigContainer* parent) : value(T())
+ConfigEntry<T>::ConfigEntry(std::string name, ConfigGroup* parent) : value(T())
 {
     if (parent)
     {
@@ -29,7 +29,7 @@ T ConfigEntry<T>::operator ()()
 }
 
 template<typename T>
-bool ConfigEntry<T>::isContainer()
+bool ConfigEntry<T>::isGroup()
 {
     return false;
 }
@@ -62,12 +62,12 @@ void ConfigEntry<T>::removeHandler(const typename EventHandlerList<void(T)>::han
     handlerList.remove(handle);
 }
 
-inline void ConfigContainer::registerConfigEntry(std::string name, ConfigEntryBase* entry)
+inline void ConfigGroup::registerConfigEntry(std::string name, ConfigEntryBase* entry)
 {
     entries.emplace(name, entry);
 }
 
-inline ConfigContainer::ConfigContainer(std::string name, ConfigContainer* parent)
+inline ConfigGroup::ConfigGroup(std::string name, ConfigGroup* parent)
 {
     if (parent)
     {
@@ -75,27 +75,27 @@ inline ConfigContainer::ConfigContainer(std::string name, ConfigContainer* paren
     }
 }
 
-inline std::unordered_map<std::string, ConfigEntryBase*>::iterator ConfigContainer::begin()
+inline std::unordered_map<std::string, ConfigEntryBase*>::iterator ConfigGroup::begin()
 {
     return entries.begin();
 }
 
-inline std::unordered_map<std::string, ConfigEntryBase*>::iterator ConfigContainer::end()
+inline std::unordered_map<std::string, ConfigEntryBase*>::iterator ConfigGroup::end()
 {
     return entries.end();
 }
 
-inline ConfigEntryBase* ConfigContainer::operator[](const std::string& key)
+inline ConfigEntryBase* ConfigGroup::operator[](const std::string& key)
 {
     return entries.at(key);
 }
 
-inline bool ConfigContainer::isContainer()
+inline bool ConfigGroup::isGroup()
 {
     return true;
 }
 
-inline void ConfigContainer::set(const boost::property_tree::ptree& val)
+inline void ConfigGroup::set(const boost::property_tree::ptree& val)
 {
     for (auto& item : val)
     {
@@ -105,7 +105,7 @@ inline void ConfigContainer::set(const boost::property_tree::ptree& val)
     handlerList.invoke();
 }
 
-inline bool ConfigContainer::canSet(const boost::property_tree::ptree& val)
+inline bool ConfigGroup::canSet(const boost::property_tree::ptree& val)
 {
     for (auto& item : val)
     {
@@ -118,7 +118,7 @@ inline bool ConfigContainer::canSet(const boost::property_tree::ptree& val)
         ConfigEntryBase* entry = entry_it->second;
         if (!entry->canSet(item.second))
         {
-            if (entry->isContainer())
+            if (entry->isGroup())
             {
                 fastsense::util::logging::Logger::error("Cannot set config entry in \"", item.first, "\"!");
             }
@@ -132,12 +132,12 @@ inline bool ConfigContainer::canSet(const boost::property_tree::ptree& val)
     return true;
 }
 
-inline EventHandlerList<void()>::handle_t ConfigContainer::addHandler(const std::function<void()>& handler)
+inline EventHandlerList<void()>::handle_t ConfigGroup::addHandler(const std::function<void()>& handler)
 {
     return handlerList.add(handler);
 }
 
-inline void ConfigContainer::removeHandler(const EventHandlerList<void()>::handle_t& handle)
+inline void ConfigGroup::removeHandler(const EventHandlerList<void()>::handle_t& handle)
 {
     handlerList.remove(handle);
 }

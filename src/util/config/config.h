@@ -11,19 +11,19 @@
 namespace fastsense::util::config
 {
 
-struct InnerConfig : public ConfigContainer
+struct InnerConfig : public ConfigGroup
 {
-    using ConfigContainer::ConfigContainer;
+    using ConfigGroup::ConfigGroup;
 
     DECLARE_CONFIG_ENTRY(size_t, test1);
     DECLARE_CONFIG_ENTRY(double, test2);
 };
 
-struct Config : public ConfigContainer
+struct Config : public ConfigGroup
 {
-    using ConfigContainer::ConfigContainer;
+    using ConfigGroup::ConfigGroup;
 
-    InnerConfig inner{"inner", this};
+    DECLARE_CONFIG_GROUP(InnerConfig, inner);
 
     DECLARE_CONFIG_ENTRY(float, blub);
     DECLARE_CONFIG_ENTRY(std::string, asdf);
