@@ -1,5 +1,5 @@
 /**
- * @file xyz.h
+ * @file xyz_buffer.h
  * @author Julian Gaal
  * @date 2020-08-17
  */
@@ -12,29 +12,31 @@ namespace fastsense::msg
 /**
  * @brief represents a data point with x, y and z "coordinates"
  */
-class XYZ
+template <typename T>
+class XYZBuffer
 {
 public:
-    explicit XYZ() = default;
+    explicit XYZBuffer() = default;
+    virtual ~XYZBuffer() = default;
 
-    inline const double& x() const
+    inline const T& x() const
     {
         return data_[0];
     }
 
-    inline const double& y() const
+    inline const T& y() const
     {
         return data_[1];
     }
 
-    inline const double& z() const
+    inline const T& z() const
     {
         return data_[2];
     }
 
 protected:
     /// actual data
-    double data_[3];
+    T data_[3];
 };
 
 } // namespace driver::msg

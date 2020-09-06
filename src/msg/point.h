@@ -13,12 +13,19 @@ namespace fastsense::msg
 {
 
 /**
- * @brief Represents angular velocity data from imu
+ * @brief Represents a point with 16-bit X/Y/Z components
+ *
  */
-struct AngularVelocity : public XYZBuffer<double>
+struct Point
 {
-    AngularVelocity() = default;
-    AngularVelocity(const double* angular_rate);
+    /// X component
+    int16_t x;
+
+    /// Y component
+    int16_t y;
+
+    /// Z component
+    int16_t z;
 };
 
 } // namespace fastsense::msg

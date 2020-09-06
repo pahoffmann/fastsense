@@ -10,7 +10,7 @@
 
 using namespace fastsense::msg;
 
-MagneticField::MagneticField(const double* magneticField) : XYZ()
+MagneticField::MagneticField(const double* magneticField) : XYZBuffer<double>()
 {
     if (magneticField[0] != PUNK_DBL)
     {
