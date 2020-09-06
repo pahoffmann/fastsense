@@ -60,12 +60,18 @@ HW_DEPS_FLAGS = $(INC_FLAGS) -isystem ${XILINX_VIVADO}/include -MM -MP
 # Rules
 #
 
-.PHONY: all software hardware clean hls_% test
+.PHONY: all software hardware clean hls_% test clean_software clean_ros_nodes
 
 all: software hardware 
 
 clean: 
 	@rm -rf _x _vimage *.log build/*
+
+clean_software:
+	@rm -rf build/*/*.{d,o}
+
+clean_ros_nodes:
+	@rm -rf test/build/* test/devel/*
 
 software: $(BUILD_DIR)/$(APP_NAME)
 
@@ -109,6 +115,9 @@ test_zmq_client:
 
 test_hdf5: 
 	make ENTRY_POINT=test/hdf5.cpp APP_NAME=FastSense_test_hdf5.exe software hardware
+
+ros_test_nodes:
+	@cd test && . /opt/ros/melodic/setup.bash && catkin_make -j4
 
 format:
 	@echo "Formatting"
