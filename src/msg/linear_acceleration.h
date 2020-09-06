@@ -6,24 +6,18 @@
 
 #pragma once
 
-#include "xyz.h"
+#include "xyz_buffer.h"
 
-namespace fastsense
-{
-namespace driver
-{
-namespace msg
+namespace fastsense::msg
 {
 
 /**
  * @brief Represents linear acceleration data from imu
  */
-struct LinearAcceleration : public XYZ
+struct LinearAcceleration : public XYZBuffer<double>
 {
     LinearAcceleration() = default;
     explicit LinearAcceleration(const double* acceleration);
 };
 
-} // namespace fastsense
-} // namespace driver
-} // namespace msg
+} // namespace fastsense::msg

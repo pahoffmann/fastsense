@@ -4,19 +4,44 @@
  * @date 2020-08-11
  */
 
-#include "imu.h"
-#include "params.h"
-#include "msg/imu_msg.h"
+#include <driver/imu/imu.h>
+#include <util/params.h>
+#include <msg/imu_msg.h>
+#include <util/time_stamp.h>
+
 #include <thread>
 #include <stdexcept>
-#include <iostream>
 #include <cmath>
+#include <driver/imu/imu.h>
+
 
 using namespace fastsense::driver;
 
+using fastsense::data::ImuStampedBufferPtr;
+
 // TODO detach handler? How to handle connected/disconnectedness
 
-Imu::Imu(ConcurrentRingBuffer<msg::ImuMsg>& ringbuffer) : Phidget(), data_buffer(ringbuffer), imu_handle_(nullptr), is_calibrated_(false), init_compass_(false)
+Imu::Imu(ImuStampedBufferPtr ringbuffer) : Phidget(), ProcessThread(), data_buffer(ringbuffer), imu_handle_(nullptr), is_calibrated_(false), init_compass_(false)
+{
+}
+
+void fastsense::driver::Imu::start()
+{
+    if (not running)
+    {
+        running = true;
+        init();
+    }
+}
+
+void Imu::stop()
+{
+    // cleanup happens in Phidgets destructor
+    // TODO
+    running = false;
+}
+
+void Imu::init()
 {
     initApi();
     initCovariance();
@@ -79,7 +104,7 @@ Imu::dataHandler(const double* acceleration, const double* angularRate, const do
     }
 
     msg::ImuMsg msg(acceleration, angularRate, magneticField);
-    data_buffer.push(msg);
+    data_buffer->push(std::make_pair(msg, TimeStamp()));
 }
 
 void Imu::attachHandler()
@@ -118,7 +143,7 @@ void Imu::initDevice()
 
     if (init_compass_)
     {
-        using namespace fastsense::driver::params;
+        using namespace fastsense::util::params;
         Imu::setCompassCorrectionParameters(cc_mag_field_, cc_offset0_, cc_offset1_, cc_offset2_, cc_gain0_, cc_gain1_,
                                             cc_gain2_, cc_T0_, cc_T1_, cc_T2_, cc_T3_, cc_T4_, cc_T5_);
     }

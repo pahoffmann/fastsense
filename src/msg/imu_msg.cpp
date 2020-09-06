@@ -4,9 +4,9 @@
  * @date 2020-08-18
  */
 
-#include "imu_msg.h"
+#include <msg/imu_msg.h>
 
-using namespace fastsense::driver::msg;
+using namespace fastsense::msg;
 
 ImuMsg::ImuMsg(const double* acceleration, const double* angular_rate, const double* magField) : acc(acceleration), ang(angular_rate), mag(magField)
 {}

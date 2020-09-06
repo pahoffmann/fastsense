@@ -6,25 +6,19 @@
 
 #pragma once
 
-#include "../params.h"
-#include "xyz.h"
+#include <util/params.h>
+#include <msg/xyz_buffer.h>
 
-namespace fastsense
-{
-namespace driver
-{
-namespace msg
+namespace fastsense::msg
 {
 
 /**
  * @brief Represents angular velocity data from imu
  */
-struct AngularVelocity : public XYZ
+struct AngularVelocity : public XYZBuffer<double>
 {
     AngularVelocity() = default;
     AngularVelocity(const double* angular_rate);
 };
 
-} // namespace msg
-} // namespace driver
-} // namespace fastsense
+} // namespace fastsense::msg

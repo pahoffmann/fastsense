@@ -6,11 +6,11 @@
 
 #include <limits>
 #include <phidget21.h>
-#include "magnetic_field.h"
+#include <msg/magnetic_field.h>
 
-using namespace fastsense::driver::msg;
+using namespace fastsense::msg;
 
-MagneticField::MagneticField(const double* magneticField) : XYZ()
+MagneticField::MagneticField(const double* magneticField) : XYZBuffer<double>()
 {
     if (magneticField[0] != PUNK_DBL)
     {

@@ -8,11 +8,7 @@
 
 #include <cmath>
 
-namespace fastsense
-{
-namespace driver
-{
-namespace params
+namespace fastsense::util::params
 {
 
 static constexpr float G = 9.80665;
@@ -41,6 +37,4 @@ static constexpr double cc_T3_ = -0.05038;
 static constexpr double cc_T4_ = -0.03942;
 static constexpr double cc_T5_ = -0.05673;
 
-} // namespace params
-} // namespace driver
-} // namespace phidgets
+} // namespace fastsense::util::params;

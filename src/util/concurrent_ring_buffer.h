@@ -10,10 +10,7 @@
 #include <mutex>
 #include <condition_variable>
 
-namespace fastsense
-{
-
-namespace util
+namespace fastsense::util
 {
 
 /**
@@ -71,6 +68,15 @@ public:
      */
     void clear();
 
+    /**
+     * @brief return buffer length
+     * @return buffer length
+     */
+    inline size_t getLength() const
+    {
+        return length;
+    }
+
     using ptr = std::shared_ptr<ConcurrentRingBuffer<T>>;
 
 private:
@@ -109,8 +115,6 @@ private:
     std::condition_variable cvFull;
 };
 
-} // namespace util
-
-} // namespace fastsense
+} // namespace fastsense::util
 
 #include "concurrent_ring_buffer.tcc"
