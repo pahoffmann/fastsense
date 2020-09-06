@@ -10,7 +10,7 @@
 #include <vector>
 #include <memory>
 
-namespace fastsense::util::msg
+namespace fastsense::msg
 {
 
 /**
@@ -44,4 +44,4 @@ public:
     uint16_t rings;
 };
 
-} // namespace fastsense::util::msg;
+} // namespace fastsense::msg;

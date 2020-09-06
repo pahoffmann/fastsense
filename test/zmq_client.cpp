@@ -2,7 +2,7 @@
 #include <iostream>
 
 #include <zmq.hpp>
-#include <util/msg/point_cloud.h>
+#include <msg/point_cloud.h>
 
 using fastsense::util::msg::Point;
 

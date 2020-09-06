@@ -6,9 +6,9 @@
 
 #include <limits>
 #include <phidget21.h>
-#include <util/msg/magnetic_field.h>
+#include <msg/magnetic_field.h>
 
-using namespace fastsense::util::msg;
+using namespace fastsense::msg;
 
 MagneticField::MagneticField(const double* magneticField) : XYZ()
 {

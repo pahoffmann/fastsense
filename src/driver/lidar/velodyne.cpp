@@ -6,7 +6,7 @@
 
 #include <driver/lidar/velodyne.h>
 #include <util/time_stamp.h>
-#include <util/msg/msgs_stamped.h>
+#include <msg/msgs_stamped.h>
 
 #include <chrono>
 #include <system_error>
@@ -22,9 +22,9 @@
 #include <poll.h>
 
 using namespace fastsense::driver;
-using fastsense::util::msg::Point;
-using fastsense::util::msg::PointCloud;
-using fastsense::util::msg::PointCloudStamped;
+using fastsense::msg::Point;
+using fastsense::msg::PointCloud;
+using fastsense::msg::PointCloudStamped;
 
 // Magic constants of the sensor
 constexpr uint8_t PROD_ID_VLP16 = 0x22;
@@ -165,7 +165,7 @@ void VelodyneDriver::stop()
     worker.join();
 }
 
-fastsense::util::msg::PointCloudStamped VelodyneDriver::getScan()
+fastsense::msg::PointCloudStamped VelodyneDriver::getScan()
 {
     PointCloudStamped pcs;
     scanBuffer->pop(&pcs);

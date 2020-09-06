@@ -4,10 +4,10 @@
  * @date 2020-08-17
  */
 
-#include <util/msg/angular_velocity.h>
+#include <msg/angular_velocity.h>
 #include <cmath>
 
-using namespace fastsense::util::msg;
+using namespace fastsense::msg;
 
 AngularVelocity::AngularVelocity(const double* angular_rate) : XYZ()
 {

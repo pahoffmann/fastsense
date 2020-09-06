@@ -8,7 +8,7 @@
 
 #include "xyz.h"
 
-namespace fastsense::util::msg
+namespace fastsense::msg
 {
 
 /**
@@ -20,4 +20,4 @@ struct LinearAcceleration : public XYZ
     explicit LinearAcceleration(const double* acceleration);
 };
 
-} // namespace fastsense::util::msg
+} // namespace fastsense::msg

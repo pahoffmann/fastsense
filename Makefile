@@ -25,7 +25,7 @@ SRCS = ${ENTRY_POINT} \
 	src/driver/lidar/velodyne.cpp \
 	src/data/sensor_sync.cpp \
 	$(wildcard src/util/*.cpp) \
-	$(wildcard src/util/msg/*.cpp) \
+	$(wildcard src/msg/*.cpp) \
 	$(wildcard src/driver/imu/api/*.cpp) \
 	src/driver/imu/imu.cpp
 

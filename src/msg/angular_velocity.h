@@ -6,10 +6,10 @@
 
 #pragma once
 
-#include "../params.h"
+#include <util/params.h>
 #include "xyz.h"
 
-namespace fastsense::util::msg
+namespace fastsense::msg
 {
 
 /**
@@ -21,4 +21,4 @@ struct AngularVelocity : public XYZ
     AngularVelocity(const double* angular_rate);
 };
 
-} // namespace fastsense::util::msg
+} // namespace fastsense::msg

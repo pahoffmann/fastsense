@@ -2,8 +2,8 @@
 // Created by julian on 8/31/20.
 //
 
-#include <util/msg/point_cloud.h>
-#include <util/msg/imu_msg.h>
+#include <msg/point_cloud.h>
+#include <msg/imu_msg.h>
 #include <util/time_stamp.h>
 #include <data/sensor_sync.h>
 #include <iostream>
@@ -11,10 +11,10 @@
 
 
 using namespace fastsense::data;
-using fastsense::util::msg::PointCloudStamped;
-using fastsense::util::msg::PointCloud;
-using fastsense::util::msg::ImuMsgStamped;
-using fastsense::util::msg::ImuMsg;
+using fastsense::msg::PointCloudStamped;
+using fastsense::msg::PointCloud;
+using fastsense::msg::ImuMsgStamped;
+using fastsense::msg::ImuMsg;
 using fastsense::util::TimeStamp;
 
 SensorSync::SensorSync(ImuStampedBufferPtr imu_buffer, PointCloudStampedBufferPtr pointcloud_buffer, SyncedDataBufferPtr synced_data_buffer)

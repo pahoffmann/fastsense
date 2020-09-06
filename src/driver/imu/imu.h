@@ -7,7 +7,7 @@
 #pragma once
 
 #include <driver/imu/api/phidget.h>
-#include <util/msg/msgs_stamped.h>
+#include <msg/msgs_stamped.h>
 #include <util/process_thread.h>
 #include <data/sensor_sync.h>
 #include <util/concurrent_ring_buffer.h>

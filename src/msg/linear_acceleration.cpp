@@ -4,10 +4,10 @@
  * @date 2020-08-18
  */
 
-#include <util/msg/linear_acceleration.h>
+#include <msg/linear_acceleration.h>
 #include <util/params.h>
 
-using namespace fastsense::util::msg;
+using namespace fastsense::msg;
 
 LinearAcceleration::LinearAcceleration(const double* acceleration) : XYZ()
 {

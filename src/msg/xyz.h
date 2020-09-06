@@ -6,7 +6,7 @@
 
 #pragma once
 
-namespace fastsense::util::msg
+namespace fastsense::msg
 {
 
 /**
@@ -37,4 +37,4 @@ protected:
     double data_[3];
 };
 
-} // namespace driver::util::msg
+} // namespace driver::msg

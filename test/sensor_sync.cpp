@@ -2,7 +2,7 @@
 #include <driver/lidar/velodyne.h>
 
 #include <util/time_stamp.h>
-#include <util/msg/msgs_stamped.h>
+#include <msg/msgs_stamped.h>
 #include <util/concurrent_ring_buffer.h>
 
 #include <data/sensor_sync.h>

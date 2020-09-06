@@ -8,7 +8,7 @@
 
 #include "xyz.h"
 
-namespace fastsense::util::msg
+namespace fastsense::msg
 {
 
 /**
@@ -20,4 +20,4 @@ struct MagneticField : public XYZ
     explicit MagneticField(const double* magneticField);
 };
 
-} // namespace fastsense::util::msg
+} // namespace fastsense::msg
