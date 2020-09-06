@@ -38,7 +38,7 @@ INC_FLAGS = $(addprefix -I,$(INC_DIRS))
 CXX_STD = c++17
 CXXFLAGS = $(INC_FLAGS) -MMD -MP -D__USE_XOPEN2K8 -I${SYSROOT}/usr/include/xrt -I${XILINX_VIVADO}/include -I${SYSROOT}/usr/include -c -fmessage-length=0 -std=${CXX_STD} --sysroot=${SYSROOT}
 
-LDFLAGS = -lxilinxopencl -lphidget21 -lpthread -lrt -lstdc++ -lgmp -lxrt_core -L${SYSROOT}/usr/lib/ --sysroot=${SYSROOT}
+LDFLAGS = -lxilinxopencl -lphidget21 -lzmq -lhdf5 -lpthread -lrt -lstdc++ -lgmp -lxrt_core -L${SYSROOT}/usr/lib/ --sysroot=${SYSROOT}
 
 # Hardware
 LINK_CFG = ${CURDIR}/link.cfg
@@ -67,7 +67,7 @@ all: software hardware
 clean: 
 	@rm -rf _x _vimage *.log build/*
 
-software: $(BUILD_DIR)/$(APP_NAME) format
+software: $(BUILD_DIR)/$(APP_NAME)
 
 hardware: $(BUILD_DIR)/$(APP_NAME).xclbin
 
@@ -103,6 +103,12 @@ hls_%: $(filter %$*.xo,$(HW_OBJS))
 
 test_sensor_sync:
 	make ENTRY_POINT=test/sensor_sync.cpp APP_NAME=FastSense_test_sensor_sync.exe software hardware
+
+test_zmq_client: 
+	make ENTRY_POINT=test/zmq_client.cpp APP_NAME=FastSense_test_zmq_client.exe software hardware
+
+test_hdf5: 
+	make ENTRY_POINT=test/hdf5.cpp APP_NAME=FastSense_test_hdf5.exe software hardware
 
 format:
 	@echo "Formatting"
