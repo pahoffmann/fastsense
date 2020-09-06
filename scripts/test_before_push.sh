@@ -14,6 +14,8 @@ echo "   done"
 
 sleep 1
 
+make clean_tests
+
 echo "-- Test target 'test_sensor_sync'"
 make test_sensor_sync HW_TARGET=sw_emu &> /dev/null
 
