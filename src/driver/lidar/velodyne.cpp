@@ -7,6 +7,7 @@
 #include <driver/lidar/velodyne.h>
 #include <util/time_stamp.h>
 #include <msg/msgs_stamped.h>
+#include <util/logging/logger.h>
 
 #include <chrono>
 #include <system_error>
@@ -22,9 +23,8 @@
 #include <poll.h>
 
 using namespace fastsense::driver;
-using fastsense::msg::Point;
-using fastsense::msg::PointCloud;
-using fastsense::msg::PointCloudStamped;
+using namespace fastsense::msg;
+using namespace fastsense::util::logging;
 
 // Magic constants of the sensor
 constexpr uint8_t PROD_ID_VLP16 = 0x22;
@@ -197,7 +197,7 @@ void VelodyneDriver::receivePacket()
             }
             else if (ret == 0)
             {
-                //std::cout << "Timeout!" << std::endl;
+                Logger::error("Timeout waiting for LIDAR data!");
             }
             else
             {

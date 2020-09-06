@@ -4,14 +4,19 @@
 #include <util/time_stamp.h>
 #include <msg/msgs_stamped.h>
 #include <util/concurrent_ring_buffer.h>
+#include <util/logging/logger.h>
 
 #include <data/sensor_sync.h>
 
 namespace fs = fastsense;
 using namespace fs::driver;
 using namespace fs::data;
+using namespace fs::util::logging;
 
 int main() {
+    Logger::addSink(std::make_shared<sink::CoutSink>());
+    Logger::setLoglevel(LogLevel::Debug);
+
     ImuStampedBufferPtr imu_buffer = std::make_shared<ImuStampedBuffer>(1000);
     PointCloudStampedBufferPtr pointcloud_buffer = std::make_shared<PointCloudStampedBuffer>(1000);
     SyncedDataBufferPtr synced_data_buffer = std::make_shared<SyncedDataBuffer>(1000);
@@ -20,8 +25,8 @@ int main() {
     VelodyneDriver lidar("", 2368, pointcloud_buffer);
     fs::data::SensorSync synchronizer(imu_buffer, pointcloud_buffer, synced_data_buffer);
 
-    imu.start();
     lidar.start();
+    imu.start();
     synchronizer.start();
 
     auto start = fs::util::TimeStamp();
@@ -29,7 +34,7 @@ int main() {
     while (true) {
         fs::data::SyncedData data;
         synced_data_buffer->pop(&data);
-        std::cout << "fps: " << 1000.f/(fs::util::TimeStamp() - start) << "\n";
+        Logger::info("fps: ", 1000.f/(fs::util::TimeStamp() - start));
         start.reset();
      }
 

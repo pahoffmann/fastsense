@@ -26,6 +26,7 @@ SRCS = ${ENTRY_POINT} \
 	src/data/sensor_sync.cpp \
 	$(wildcard src/util/*.cpp) \
 	$(wildcard src/msg/*.cpp) \
+	$(wildcard src/util/logging/*.cpp) \
 	$(wildcard src/driver/imu/api/*.cpp) \
 	src/driver/imu/imu.cpp
 
@@ -68,10 +69,13 @@ clean:
 	@rm -rf _x _vimage *.log build/*
 
 clean_software:
-	@rm -rf build/*/*.{d,o}
+	@rm -rf build/src/*/*.{d,o} build/src/driver/* build/src/util/*
 
 clean_ros_nodes:
 	@rm -rf test/build/* test/devel/*
+
+clean_tests:
+	@rm -rf test/build-local/*
 
 software: $(BUILD_DIR)/$(APP_NAME)
 
