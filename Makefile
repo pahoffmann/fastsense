@@ -34,7 +34,7 @@ SRCS = ${ENTRY_POINT} \
 OBJS = $(SRCS:%.cpp=$(BUILD_DIR)/%.o)
 DEPS = $(OBJS:.o=.d)
 
-INC_DIRS = src
+INC_DIRS = src ext/Catch2/single_include
 
 INC_FLAGS = $(addprefix -I,$(INC_DIRS))
 CXX_STD = c++17
@@ -126,6 +126,9 @@ ros_test_nodes:
 
 test_global_map:
 	make ENTRY_POINT=test/global_map.cpp APP_NAME=FastSense_test_global_map.exe software hardware
+
+run_global_map_test: test_global_map
+	@cd build/ && ./FastSense_test_global_map.exe
 
 format:
 	@echo "Formatting"
