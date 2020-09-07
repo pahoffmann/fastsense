@@ -12,8 +12,21 @@
 * Install board files in `base_design/board_files`: `cp -r base_design/board_files/* ${XILINX_VIVADO}/data/boards/board_files/`
 * run `make`
 
-## PhidgetsImu
-* run `phidgets.sh` (IF ON UBUNTU, FOR NOW)
+
+## Local Testing - Necessary Libraries
+
+This sections described necessary libraries to compile code onto an **Ubuntu host**, **not** cross-compiling with the generated base design and Xilinx tools. 
+
+### Communication System
+* `cppzmq`
+* `libzmq3-dev` (apt)
+
+### Global Map
+* `libhdf5-dev` (apt)
+* `HighFive` (clone this repo **--recursive**)
+
+## Imu
+* `libphidget21`: run `scripts/install/phidgets.sh` (IF ON UBUNTU, FOR NOW)
     * installs `libusb`
     * installs Phidgets C Driver
     * updates `udev` rules
