@@ -13,6 +13,8 @@
 #include <sstream>
 #include <utility>
 
+// TODO handle existing/missing folder, where hdf5 will write
+
 namespace fastsense::map {
 
 /**

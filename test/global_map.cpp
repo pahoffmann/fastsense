@@ -4,14 +4,15 @@
  * @author Juri Vana
  */
 
-#include <map/global_map.h>
+#define CATCH_CONFIG_MAIN
 #include <map/ring_buffer.h>
+#include "catch.hpp"
 
 using namespace fastsense::map;
 
-int main(int argc, char** argv)
+TEST_CASE("Test Global Map", "[]")
 {
-    std::shared_ptr<GlobalMap> gm_ptr(new GlobalMap("src/prototyping/tmp/test.h5", 0, 7)); 
+    std::shared_ptr<GlobalMap> gm_ptr(new GlobalMap("tmp/test.h5", 0, 7)); 
     auto& gm = *gm_ptr;
 
     RingBuffer<std::pair<float, float>> rb(5, 5, 5, gm_ptr);
@@ -35,7 +36,7 @@ int main(int argc, char** argv)
     rb.shift(24, 0, 0);
 
     // check file for the numbers
-    HighFive::File f("src/prototyping/tmp/test.h5", HighFive::File::OpenOrCreate);
+    HighFive::File f("tmp/test.h5", HighFive::File::OpenOrCreate);
     HighFive::Group g = f.getGroup("/map");
     HighFive::DataSet d = g.getDataSet("-1_0_0");
     std::vector<float> chunk;
@@ -49,6 +50,7 @@ int main(int argc, char** argv)
         }
         std::cout << std::endl;
     }
+
     std::cout << "weights:" << std::endl;
     for (int y = 15; y >= 0; y--)
     {
@@ -64,6 +66,7 @@ int main(int argc, char** argv)
     gm.savePose(144, 233, 377, 610, 987, 1597);
     g = f.getGroup("/poses");
     d = g.getDataSet("1");
+
     std::vector<float> pose;
     d.read(pose);
     for (int i = 0; i < pose.size(); i++)
@@ -71,4 +74,35 @@ int main(int argc, char** argv)
         std::cout << pose[i] << " ";
     }
     std::cout << std::endl;
+
+    SECTION("tsdf values") 
+    {
+        REQUIRE(chunk[(16*16*14+16*2)*2] == 0);
+        REQUIRE(chunk[(16*16*15+16*2)*2] == 1);
+        REQUIRE(chunk[(16*16*14+16*1)*2] == 2);
+        REQUIRE(chunk[(16*16*15+16*1)*2] == 3);
+        REQUIRE(chunk[(16*16*14+16*0)*2] == 4);
+        REQUIRE(chunk[(16*16*15+16*0)*2] == 5);
+    }
+
+    SECTION("weights") 
+    {
+        REQUIRE(chunk[(16*16*14+16*2)*2+1] == 0);
+        REQUIRE(chunk[(16*16*15+16*2)*2+1] == 1);
+        REQUIRE(chunk[(16*16*14+16*1)*2+1] == 1);
+        REQUIRE(chunk[(16*16*15+16*1)*2+1] == 2);
+        REQUIRE(chunk[(16*16*14+16*0)*2+1] == 3);
+        REQUIRE(chunk[(16*16*15+16*0)*2+1] == 5);
+    }
+
+    SECTION("poses") 
+    {
+        int i = 0;
+        REQUIRE(pose[i++] == 144);
+        REQUIRE(pose[i++] == 233);
+        REQUIRE(pose[i++] == 377);
+        REQUIRE(pose[i++] == 610);
+        REQUIRE(pose[i++] == 987);
+        REQUIRE(pose[i++] == 1597);
+    }
 }

@@ -23,13 +23,13 @@ SRCS = src/driver/lidar/velodyne.cpp \
 OBJS = $(SRCS:%.cpp=$(BUILD_DIR)/%.o)
 DEPS = $(OBJS:.o=.d)
 
-INC_DIRS = src
+INC_DIRS = src ext/HighFive/include /usr/include/hdf5/serial ext/Catch2/single_include
 
 INC_FLAGS = $(addprefix -I,$(INC_DIRS))
 CXX_STD = c++17
 CXXFLAGS = $(INC_FLAGS) -c -fmessage-length=0 -std=${CXX_STD}
 
-LDFLAGS = -lphidget21 -lpthread -lstdc++ -lzmq
+LDFLAGS = -lphidget21 -lpthread -lstdc++ -lzmq -lhdf5_serial
 
 .PHONY: all software format run
 
@@ -69,8 +69,10 @@ ros_test_nodes:
 	@cd test && . /opt/ros/melodic/setup.bash && catkin_make -j4
 
 test_global_map:
-	make -f Makefile.local ENTRY_POINT=test/global_map.cpp APP_NAME=test_global_map.exe software 
+	mkdir -p test/build-local/tmp && make -f Makefile.local ENTRY_POINT=test/global_map.cpp APP_NAME=test_global_map.exe software 
 
+run_global_map_test: test_global_map
+	cd test/build-local/ && ./test_global_map.exe 
 
 -include $(DEPS)
 -include $(HW_DEPS)
