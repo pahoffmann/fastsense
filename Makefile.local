@@ -10,19 +10,12 @@ SHELL = /bin/bash
 # Global
 BUILD_DIR = ${CURDIR}/test/build-local
 
-ifndef ENTRY_POINT
-$(error ENTRY_POINT is not set)
-endif
-
-ifndef APP_NAME
-$(error APP_NAME is not set)
-endif
-
 SRCS = src/driver/lidar/velodyne.cpp \
         src/data/sensor_sync.cpp \
         $(wildcard src/util/*.cpp) \
+		$(wildcard src/map/*.cpp) \
         $(wildcard src/msg/*.cpp) \
-	$(wildcard src/util/logging/*.cpp) \
+		$(wildcard src/util/logging/*.cpp) \
         $(wildcard src/driver/imu/api/*.cpp) \
         src/driver/imu/imu.cpp \
         ${ENTRY_POINT}
@@ -63,8 +56,21 @@ format:
 	@echo "Formatting"
 	@astyle -n -q --project=.astylerc --recursive "src/*.c??" "src/*.h"
 
-run:
-	./test/build-local/test.exe
+test_sensor_sync:
+	make -f Makefile.local ENTRY_POINT=test/sensor_sync.cpp APP_NAME=test_sensor_sync.exe software 
+
+test_zmq_client: 
+	make -f Makefile.local ENTRY_POINT=test/zmq_client.cpp APP_NAME=test_zmq_client.exe software 
+
+test_hdf5: 
+	make -f Makefile.local ENTRY_POINT=test/hdf5.cpp APP_NAME=test_hdf5.exe software 
+
+ros_test_nodes:
+	@cd test && . /opt/ros/melodic/setup.bash && catkin_make -j4
+
+test_global_map:
+	make -f Makefile.local ENTRY_POINT=test/global_map.cpp APP_NAME=test_global_map.exe software 
+
 
 -include $(DEPS)
 -include $(HW_DEPS)
