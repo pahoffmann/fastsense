@@ -24,6 +24,7 @@ ENTRY_POINT ?= src/vadd.cpp
 SRCS = ${ENTRY_POINT} \
 	src/driver/lidar/velodyne.cpp \
 	src/data/sensor_sync.cpp \
+	$(wildcard src/map/*.cpp) \
 	$(wildcard src/util/*.cpp) \
 	$(wildcard src/msg/*.cpp) \
 	$(wildcard src/util/logging/*.cpp) \
@@ -66,13 +67,13 @@ HW_DEPS_FLAGS = $(INC_FLAGS) -isystem ${XILINX_VIVADO}/include -MM -MP
 all: software hardware 
 
 clean: 
-	@rm -rf _x _vimage *.log build/*
+	@rm -rf _x _vimage *.log build/* test/*.log
 
 clean_software:
-	@rm -rf build/src/*/*.{d,o} build/src/driver/* build/src/util/*
+	@rm -rf build/src/*/*.{d,o} build/src/driver/* build/src/util/* test/*.log
 
 clean_ros_nodes:
-	@rm -rf test/build/* test/devel/*
+	@rm -rf test/build/* test/devel/* test/*.log
 
 clean_tests:
 	@rm -rf test/build-local/*
@@ -122,6 +123,9 @@ test_hdf5:
 
 ros_test_nodes:
 	@cd test && . /opt/ros/melodic/setup.bash && catkin_make -j4
+
+test_global_map:
+	make ENTRY_POINT=test/global_map.cpp APP_NAME=FastSense_test_global_map.exe software hardware
 
 format:
 	@echo "Formatting"
