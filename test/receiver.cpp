@@ -1,3 +1,5 @@
+#define CATCH_CONFIG_MAIN
+
 #include <string>
 #include <chrono>
 #include <thread>
@@ -7,17 +9,19 @@
 #include <msg/pose.h>
 #include <comm/receiver.h>
 
-using fastsense::msg::Pose;
+#include <catch2/catch.hpp>
 
-int main() 
+using fastsense::msg::Point;
+
+TEST_CASE("Receiver", "")
 {
-    Receiver<Pose> receiver(5555);
+    Receiver<Point> receiver(5555);
 
     for (;;) 
     {
         auto p = receiver.receive();
-        std::cout << p.x << "/" << p.y << "/" << p.z << "\n";
+        REQUIRE(p.x == 1);
+        REQUIRE(p.y == 2);
+        REQUIRE(p.z == 3);
     }
-
-    return 0;
 }
