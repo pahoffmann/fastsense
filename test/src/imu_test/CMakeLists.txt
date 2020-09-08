@@ -22,10 +22,10 @@ include_directories(
 
 add_executable(${PROJECT_NAME}_node
   ${FASTSENSE_DIR}/src/driver/imu/api/phidget.cpp
-  ${FASTSENSE_DIR}/src/util/msg/linear_acceleration.cpp
-  ${FASTSENSE_DIR}/src/util/msg/angular_velocity.cpp
-  ${FASTSENSE_DIR}/src/util/msg/magnetic_field.cpp
-  ${FASTSENSE_DIR}/src/util/msg/imu_msg.cpp
+  ${FASTSENSE_DIR}/src/msg/linear_acceleration.cpp
+  ${FASTSENSE_DIR}/src/msg/angular_velocity.cpp
+  ${FASTSENSE_DIR}/src/msg/magnetic_field.cpp
+  ${FASTSENSE_DIR}/src/msg/imu_msg.cpp
   ${FASTSENSE_DIR}/src/driver/imu/imu.cpp
   ${FASTSENSE_DIR}/src/util/time_stamp.cpp
   ${FASTSENSE_DIR}/src/util/process_thread.cpp

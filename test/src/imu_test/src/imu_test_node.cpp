@@ -4,8 +4,8 @@
 
 #include <imu.h>
 #include <data/sensor_sync.h>
-#include <util/msg/imu_msg.h>
-#include <util/msg/msgs_stamped.h>
+#include <msg/imu_msg.h>
+#include <msg/msgs_stamped.h>
 #include <util/concurrent_ring_buffer.h>
 #include <ros/ros.h>
 #include <sensor_msgs/Imu.h>
@@ -29,7 +29,7 @@ int main(int argc, char **argv)
     auto timestamp = fs::util::TimeStamp();
 
     while (ros::ok()) {
-        fs::util::msg::ImuMsgStamped data_stamped;
+        fs::msg::ImuMsgStamped data_stamped;
         imu_buffer->pop(&data_stamped);
         std::cout << fs::util::TimeStamp() - timestamp << "\n";
         timestamp = fs::util::TimeStamp();

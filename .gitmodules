@@ -1,3 +1,9 @@
 [submodule "base_design"]
 	path = base_design
 	url = https://gitlab.informatik.uni-osnabrueck.de/FastSense/base_design
+[submodule "ext/HighFive"]
+	path = ext/HighFive
+	url = https://github.com/BlueBrain/HighFive
+[submodule "ext/Catch2"]
+	path = ext/Catch2
+	url = https://github.com/catchorg/Catch2
