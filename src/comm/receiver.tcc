@@ -11,19 +11,17 @@ using namespace fastsense::comm;
 
 template <typename T>
 Receiver<T>::Receiver(int port, size_t threads) 
-    : context_(zmq::context_t(threads)), socket_({}), port_(port)
+    : context_(threads), socket_(context_, zmq::socket_type::pull), port_(port)
 {
-    // construct a REP (reply) socket and bind to interface
-    socket_ = zmq::socket_t(context_, zmq::socket_type::pull);
     std::string address = "tcp://*:" + std::to_string(port_);
     socket_.bind(address);
 }
 
 template <typename T>
-T Receiver<T>::receive(zmq::recv_flags flags) 
+T Receiver<T>::receive(zmq::recv_flags flag) 
 {
     zmq::message_t msg;
-    socket_.recv(msg, zmq::recv_flags::none);
+    socket_.recv(&msg, zmq::as_integer(flag));
 
     T target;
     memcpy(&target, msg.data(), sizeof(T));

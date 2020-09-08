@@ -1,6 +1,7 @@
 #pragma once
 
 #include <zmq.hpp>
+#include <comm/zmq_patch.h>
 #include <msg/point_cloud.h>
 
 namespace fastsense::comm {
