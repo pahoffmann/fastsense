@@ -37,7 +37,6 @@ void fastsense::driver::Imu::start()
 void Imu::stop()
 {
     // cleanup happens in Phidgets destructor
-    // TODO
     running = false;
 }
 
