@@ -30,3 +30,9 @@ This sections described necessary libraries to compile code onto an **Ubuntu hos
     * installs `libusb`
     * installs Phidgets C Driver
     * updates `udev` rules
+
+## TODO
+- [ ] singletons for sensors? 
+- [x] safe cl::Buffer wrapper
+- [x] safe cl::Kernel wrapper
+- [ ] Buffer as c++ container

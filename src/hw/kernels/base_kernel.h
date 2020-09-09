@@ -5,8 +5,6 @@
 
 namespace fastsense::kernels {
 
-// TODO saver setArg(s)
-
 class BaseKernel
 {
 private:
