@@ -52,7 +52,7 @@ INC_DIRS = src ext/Catch2/single_include ${SYSROOT}/usr/include/xrt ${XILINX_VIV
 
 INC_FLAGS = $(addprefix -I,$(INC_DIRS))
 CXX_STD = c++17
-GCCFLAGS = -Wall
+GCCFLAGS = -Wall -Wextra -Wnon-virtual-dtor -ansi -pedantic -Weffc++ -Wfatal-errors -O2 -ftree-loop-vectorize -fexceptions
 CXXFLAGS = $(INC_FLAGS) $(GCCFLAGS) -MMD -MP -D__USE_XOPEN2K8 -c -fmessage-length=0 -std=${CXX_STD} --sysroot=${SYSROOT}
 
 LDFLAGS = $(LIBS) --sysroot=${SYSROOT}
@@ -156,7 +156,7 @@ run_global_map_test: test_global_map
 	@cd build/ && ./FastSense_test_global_map.exe
 
 copy_binaries_to_board:
-	@scp build/sd_card/{BOOT.BIN,image.ub} build/{*.exe,*.xclbin} root@$(BOARD_ADDRESS):/mnt
+	@scp build/*.exe* root@$(BOARD_ADDRESS):/mnt
 
 format:
 	@echo "Formatting"
