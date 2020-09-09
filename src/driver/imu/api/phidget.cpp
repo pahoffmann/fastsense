@@ -34,6 +34,8 @@
 
 using namespace fastsense::driver;
 
+Phidget::Phidget() : handle_{} {}
+
 Phidget::~Phidget()
 {
     close(); // TODO segfaults, why?

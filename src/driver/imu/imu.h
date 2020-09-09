@@ -33,6 +33,19 @@ public:
     explicit Imu(fastsense::data::ImuStampedBufferPtr ringbuffer);
 
     virtual ~Imu() = default;
+    
+    /**
+     * @brief delete assignment operator because of pointer member variable
+     * 
+     * @return Imu& other imu
+     */
+    Imu& operator=(Imu&) = delete;
+
+    /**
+     * @brief delete copy constructor because of pointer member variable
+     * @param Imu& other imu
+     */
+    Imu(Imu&) = delete;
 
     /**
      * @brief Whether or not device has been calibrated
@@ -148,10 +161,9 @@ private:
      * @param acceleration linear acceleration
      * @param angularRate angular velocity
      * @param magneticField magnetic field
-     * @param timestamp timestamp in sec since initiation
      */
     void dataHandler(const double acceleration[3], const double angularRate[3],
-                     const double magneticField[3], double timestamp);
+                     const double magneticField[3]);
 
     /// handles attachment of imu
     void attachHandler() override;

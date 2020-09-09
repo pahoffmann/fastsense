@@ -13,11 +13,11 @@
 
 using fastsense::msg::Point;
 
-TEST_CASE("Receiver", "")
+TEST_CASE("Receive 10 Points", "")
 {
     Receiver<Point> receiver(5555);
 
-    for (;;) 
+    for (int i = 0; i < 10; i++) 
     {
         auto p = receiver.receive();
         REQUIRE(p.x == 1);
