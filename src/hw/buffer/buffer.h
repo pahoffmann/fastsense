@@ -30,19 +30,12 @@ private:
     /**
      * @brief unmap buffer: deattach virtual address from buffer
      */
-    void unmapMemory() 
-    {
-        queue_->enqueueUnmapMemObject(buffer_, virtual_address_);
-        queue_->finish();
-    }
+    void unmapMemory();
 
     /**
      * @brief map buffer: attach virtual address from buffer
      */
-    void mapMemory() 
-    {
-        virtual_address_ = static_cast<T*>(queue_->enqueueMapBuffer(buffer_, CL_TRUE, map_flag_, 0, size_in_bytes_));
-    }
+    void mapMemory();
 
 protected:
     /// Xilinx command queue
@@ -79,26 +72,18 @@ protected:
            cl::Context& context,
            size_t num_elements, 
            cl_mem_flags mem_flag, 
-           cl_map_flags map_flag) 
-        : queue_(queue), 
-          num_elements_(num_elements), 
-          size_in_bytes_(sizeof(T)*num_elements),
-          buffer_(context, mem_flag, size_in_bytes_),
-          mem_flag_(mem_flag),
-          map_flag_(map_flag),
-          virtual_address_(nullptr)
-    {
-        mapMemory();
-    }
+           cl_map_flags map_flag);
 
 public:
+    using value_type = T;
+    using reference = T&;
+    using const_reference = const T&;
+    using difference_type = ssize_t;
+    using size_type = size_t;
     /**
      * @brief Destroy the Buffer object and unmap memory
      */
-    ~Buffer()
-    {   
-        unmapMemory();
-    }
+    ~Buffer();
 
     /**
      * @brief delete assignment operator because of pointer member variable
@@ -118,40 +103,98 @@ public:
      * 
      * @return T* address to virtal address
      */
-    T* getVirtualAddress() 
-    { 
-        return virtual_address_; 
-    }
+    T* getVirtualAddress();
 
     /**
      * @brief Get the Buffer object
      * 
      * @return cl::Buffer& 
      */
-    cl::Buffer& getBuffer() 
-    { 
-        return buffer_; 
-    }
+    cl::Buffer& getBuffer();
     
     /**
      * @brief Return number of elements in buffer
      * 
      * @return size_t number or elements in buffer
      */
-    size_t size() 
-    { 
-        return num_elements_; 
-    }
+    size_t size();
     
     /**
      * @brief Return the size of the buffer in bytes
      * 
      * @return size_t size in bytes
      */
-    size_t sizeInBytes() 
-    { 
-        return sizeof(T) * num_elements_; 
-    }
+    size_t sizeInBytes();
+
+    // class iterator {
+    // public:
+    //     using value_type = T;
+    //     using reference = T&;
+    //     using const_reference = const T&;
+    //     using difference_type = ssize_t;
+    //     using size_type = size_t;
+    //     using pointer = T*;
+
+    //     iterator();
+    //     iterator(const fastsense::buffer::Buffer<T>::const_iterator&);
+    //     iterator(const iterator&);
+    //     ~iterator();
+
+    //     iterator& operator=(const iterator&);
+    //     bool operator==(const iterator&) const;
+    //     bool operator!=(const iterator&) const;
+    //     bool operator<(const iterator&) const;
+    //     bool operator>(const iterator&) const;
+    //     bool operator<=(const iterator&) const;
+    //     bool operator>=(const iterator&) const;
+
+    //     iterator& operator++();
+    //     iterator& operator--();
+    //     iterator& operator+=(size_type);
+    //     iterator operator+(size_type) const;
+    //     iterator& operator-=(size_type);            
+    //     iterator operator-(size_type) const;
+    //     difference_type operator-(iterator) const;
+
+    //     reference operator*() const;
+    //     pointer operator->() const;
+    //     reference operator[](size_type) const;
+    // };
+
+    // class const_iterator {
+    // public:
+    //     using value_type = T;
+    //     using reference = T&;
+    //     using const_reference = const T&;
+    //     using difference_type = ssize_t;
+    //     using size_type = size_t;
+    //     using pointer = T*;
+
+    //     const_iterator();
+    //     const_iterator(const const_iterator&);
+    //     const_iterator(const iterator&);
+    //     ~const_iterator();
+
+    //     const_iterator& operator=(const const_iterator&);
+    //     bool operator==(const const_iterator&) const;
+    //     bool operator!=(const const_iterator&) const;
+    //     bool operator<(const const_iterator&) const;
+    //     bool operator>(const const_iterator&) const;
+    //     bool operator<=(const const_iterator&) const;
+    //     bool operator>=(const const_iterator&) const;
+
+    //     const_iterator& operator++();
+    //     const_iterator& operator--();
+    //     const_iterator& operator+=(size_type);
+    //     const_iterator operator+(size_type) const;
+    //     const_iterator& operator-=(size_type);            
+    //     const_iterator operator-(size_type) const;
+    //     difference_type operator-(const_iterator) const;
+
+    //     reference operator*() const;
+    //     pointer operator->() const;
+    //     reference operator[](size_type) const;
+    // };
 };
 
 /**
@@ -201,3 +244,5 @@ public:
 };
 
 } // namespace fastsense::buffer
+
+#include "buffer.tcc"
