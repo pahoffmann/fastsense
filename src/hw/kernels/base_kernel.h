@@ -1,40 +1,30 @@
 #pragma once
 
 #include <CL/cl2.hpp>
+#include <hw/types.h>
 
 namespace fastsense::kernels {
 
-// TODO saver setArg(s)
-
-class BaseKernel : public cl::Kernel
+class BaseKernel
 {
 private:
     int narg_;
 protected:
-    template <typename ...T>
-    inline void setArgs(const T ...args) {
-        std::array<cl::Buffer, sizeof...(ArgsT)> const buffers {args...};
-
-        for (const auto& bf: buffers) {
-            setArg(narg_++, bf);
-        }
-    }
-
     template <typename T>
-    inline void setArg(const T arg) override {
-        setArg(narg_++, arg);
+    inline void setArg(const T arg) {
+        kernel_.setArg(narg_++, arg);
     }
 
-    template <typename T>
-    inline void setArg(int narg, const T arg) {
-        setArg(narg, arg);
-    }
+    void resetNArg() { narg_ = 0; }
 
-    // T* getVirtual
-
-    cl::Kernel kernel_;   
+    cl::Kernel kernel_;
+    fastsense::CommandQueuePtr cmd_q_;  
 public:
-    inline BaseKernel(const cl::Program& program, char* name) : kernel_(program, name), narg_(0) {}
+    inline BaseKernel(fastsense::CommandQueuePtr queue, const cl::Program& program, const char* name) 
+        :   narg_{0},
+            kernel_{program, name}, 
+            cmd_q_{queue} {}
+
     virtual ~BaseKernel() = default;
 };
 

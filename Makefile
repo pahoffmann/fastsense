@@ -22,7 +22,7 @@ BOARD_ADDRESS ?= 192.168.1.214
 SYSROOT = ${PLATFORM_DIR}/sw/FastSense_platform/linux_domain/sysroot/aarch64-xilinx-linux
 
 # Main entry point
-ENTRY_POINT ?= src/main.cpp
+ENTRY_POINT ?= src/example/example.cpp
 
 SRCS = ${ENTRY_POINT} \
 	src/driver/lidar/velodyne.cpp \
@@ -64,7 +64,7 @@ BUILD_CFG = ${CURDIR}/build.cfg
 HW_TARGET ?= hw
 HW_PLATFORM = ${PLATFORM_DIR}/FastSense_platform.xpfm
 
-HW_SRCS = src/krnl_main.cpp
+HW_SRCS = src/hw/kernels/hls/krnl_vadd.cpp
 HW_OBJS = $(HW_SRCS:%.cpp=$(BUILD_DIR)/%.xo)
 HW_DEPS = $(HW_OBJS:.xo=.d)
 
