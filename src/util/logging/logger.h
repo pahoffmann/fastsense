@@ -58,6 +58,19 @@ class Logger
     std::vector<std::shared_ptr<sink::Sink>> sinks;
 
 public:
+    /**
+     * @brief delete assignment operator because of pointer member variable
+     * 
+     * @return Logger& other Buffer
+     */
+    Logger& operator=(Logger&) = delete;
+
+    /**
+     * @brief delete copy constructor because of pointer member variable
+     * @param Logger& other buffer
+     */
+    Logger(Logger&) = delete;
+
     template<typename ...Args>
     static void debug(const Args& ...args);
 

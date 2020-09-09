@@ -109,8 +109,11 @@ constexpr uint8_t LASER_ID_TO_RING[16] =
 VelodyneDriver::VelodyneDriver(const std::string& ipaddr, uint16_t port, const ConcurrentRingBuffer<PointCloudStamped>::ptr& buffer) :
     ipaddr(ipaddr),
     port(port),
+    sockfd({}),
+    packet({}),
     azLast(0.f),
-    scanBuffer(buffer)
+    scanBuffer(buffer),
+    currentScan(std::make_shared<PointCloud>())
 {
     // open socket
     sockfd = socket(PF_INET, SOCK_DGRAM, 0);

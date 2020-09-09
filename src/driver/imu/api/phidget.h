@@ -42,8 +42,21 @@ namespace driver
 class Phidget
 {
 public:
-    Phidget() = default;
+    Phidget();
     virtual ~Phidget();
+
+    /**
+     * @brief delete assignment operator because of pointer member variable
+     * 
+     * @return Phidget& other Phidget
+     */
+    Phidget& operator=(Phidget&) = delete;
+
+    /**
+     * @brief delete copy constructor because of pointer member variable
+     * @param Phidget& other Phidget
+     */
+    Phidget(Phidget&) = delete;
 
     /**@brief Open a connection to a Phidget
      * @param serial_number The serial number of the phidget to which to attach

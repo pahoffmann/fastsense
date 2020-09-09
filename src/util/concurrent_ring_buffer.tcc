@@ -13,7 +13,10 @@ ConcurrentRingBuffer<T>::ConcurrentRingBuffer(size_t size) :
     buffer(size),
     length(0),
     pushIdx(0),
-    popIdx(0)
+    popIdx(0),
+    mutex({}),
+    cvEmpty({}),
+    cvFull({})
 {
 }
 
