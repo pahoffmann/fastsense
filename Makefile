@@ -33,6 +33,7 @@ SRCS = ${ENTRY_POINT} \
 	$(wildcard src/map/*.cpp) \
 	$(wildcard src/util/*.cpp) \
 	$(wildcard src/msg/*.cpp) \
+	$(wildcard src/hw/*.cpp) \
 	$(wildcard src/util/logging/*.cpp) \
 	$(wildcard src/driver/imu/api/*.cpp) \
 	src/driver/imu/imu.cpp
@@ -82,7 +83,7 @@ HW_DEPS_FLAGS = $(INC_FLAGS) -isystem ${XILINX_VIVADO}/include -MM -MP
 
 .PHONY: all software hardware clean hls_% test clean_software clean_ros_nodes
 
-all: software hardware 
+all: software hardware  
 
 test: test_sensor_sync test_zmq test_global_map
 

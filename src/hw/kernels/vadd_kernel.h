@@ -3,6 +3,7 @@
 #include "base_kernel.h"
 
 #include <hw/buffer/buffer.h>
+#include <hw/fpga_program.h>
 #include <iostream>
 
 namespace fastsense::kernels {
@@ -10,7 +11,7 @@ namespace fastsense::kernels {
 class VaddKernel : public BaseKernel
 {
 public:
-    VaddKernel(CommandQueuePtr queue, const cl::Program& program) : BaseKernel(queue, program, "krnl_vadd") {}
+    VaddKernel(CommandQueuePtr queue, const hw::FPGAProgram& program) : BaseKernel(queue, program.getProgram(), "krnl_vadd") {}
     ~VaddKernel() = default;
 
     void run(buffer::InputBuffer<int>& inbuffer_a, buffer::InputBuffer<int>& inbuffer_b, buffer::OutputBuffer<int>& outbuf, int data_size)
