@@ -17,6 +17,9 @@ PLATFORM_DIR ?= ${CURDIR}/base_design/platform/FastSense_platform/export/FastSen
 
 # SSH
 BOARD_ADDRESS ?= 192.168.1.214
+USER ?= gjulian
+FPGA_SERVER ?= fgpa1
+FGPA_SERVER_HOME ?= /home/student/g
 
 # Software
 SYSROOT = ${PLATFORM_DIR}/sw/FastSense_platform/linux_domain/sysroot/aarch64-xilinx-linux
@@ -157,6 +160,10 @@ run_global_map_test: test_global_map
 
 copy_binaries_to_board:
 	@scp build/*.exe* root@$(BOARD_ADDRESS):/mnt
+
+rsync:
+	@echo 'syning fastsense: to "$(USER)@$(FPGA_SERVER).informatik.uos.de:$(FGPA_SERVER_HOME)/$(USER)/fastsense"'
+	@rsync -azP ./ $(USER)@$(FPGA_SERVER).informatik.uos.de:$(FGPA_SERVER_HOME)/$(USER)/fastsense
 
 format:
 	@echo "Formatting"
