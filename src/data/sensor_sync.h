@@ -8,17 +8,17 @@
 
 #include <util/params.h>
 #include <util/process_thread.h>
-#include <util/msg/msgs_stamped.h>
+#include <msg/msgs_stamped.h>
 #include <util/concurrent_ring_buffer.h>
 
 namespace fastsense::data
 {
 
-using ImuStampedBuffer = fastsense::util::ConcurrentRingBuffer<fastsense::util::msg::ImuMsgStamped>;
-using ImuStampedBufferPtr = std::shared_ptr<fastsense::util::ConcurrentRingBuffer<fastsense::util::msg::ImuMsgStamped>>;
-using PointCloudStampedBuffer = fastsense::util::ConcurrentRingBuffer<fastsense::util::msg::PointCloudStamped>;
+using ImuStampedBuffer = fastsense::util::ConcurrentRingBuffer<fastsense::msg::ImuMsgStamped>;
+using ImuStampedBufferPtr = std::shared_ptr<fastsense::util::ConcurrentRingBuffer<fastsense::msg::ImuMsgStamped>>;
+using PointCloudStampedBuffer = fastsense::util::ConcurrentRingBuffer<fastsense::msg::PointCloudStamped>;
 using PointCloudStampedBufferPtr = std::shared_ptr<PointCloudStampedBuffer>;
-using SyncedData = std::pair<fastsense::util::msg::ImuMsg, fastsense::util::msg::PointCloud::ptr>;
+using SyncedData = std::pair<fastsense::msg::ImuMsg, fastsense::msg::PointCloud::ptr>;
 using SyncedDataBuffer = fastsense::util::ConcurrentRingBuffer<SyncedData>;
 using SyncedDataBufferPtr = std::shared_ptr<SyncedDataBuffer>;
 

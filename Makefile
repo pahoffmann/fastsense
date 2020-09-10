@@ -24,23 +24,24 @@ ENTRY_POINT ?= src/vadd.cpp
 SRCS = ${ENTRY_POINT} \
 	src/driver/lidar/velodyne.cpp \
 	src/data/sensor_sync.cpp \
+	$(wildcard src/map/*.cpp) \
 	$(wildcard src/util/*.cpp) \
+	$(wildcard src/msg/*.cpp) \
 	$(wildcard src/util/config/*.cpp) \
 	$(wildcard src/util/logging/*.cpp) \
-	$(wildcard src/util/msg/*.cpp) \
 	$(wildcard src/driver/imu/api/*.cpp) \
 	src/driver/imu/imu.cpp
 
 OBJS = $(SRCS:%.cpp=$(BUILD_DIR)/%.o)
 DEPS = $(OBJS:.o=.d)
 
-INC_DIRS = src
+INC_DIRS = src ext/Catch2/single_include
 
 INC_FLAGS = $(addprefix -I,$(INC_DIRS))
 CXX_STD = c++17
 CXXFLAGS = $(INC_FLAGS) -MMD -MP -D__USE_XOPEN2K8 -I${SYSROOT}/usr/include/xrt -I${XILINX_VIVADO}/include -I${SYSROOT}/usr/include -c -fmessage-length=0 -std=${CXX_STD} --sysroot=${SYSROOT}
 
-LDFLAGS = -lxilinxopencl -lphidget21 -lpthread -lrt -lstdc++ -lgmp -lxrt_core -L${SYSROOT}/usr/lib/ --sysroot=${SYSROOT}
+LDFLAGS = -lxilinxopencl -lphidget21 -lzmq -lhdf5 -lpthread -lrt -lstdc++ -lgmp -lxrt_core -L${SYSROOT}/usr/lib/ --sysroot=${SYSROOT}
 
 # Hardware
 LINK_CFG = ${CURDIR}/link.cfg
@@ -62,14 +63,23 @@ HW_DEPS_FLAGS = $(INC_FLAGS) -isystem ${XILINX_VIVADO}/include -MM -MP
 # Rules
 #
 
-.PHONY: all software hardware clean hls_% test
+.PHONY: all software hardware clean hls_% test clean_software clean_ros_nodes
 
 all: software hardware 
 
 clean: 
-	@rm -rf _x _vimage *.log build/*
+	@rm -rf _x _vimage *.log build/* test/*.log
 
-software: $(BUILD_DIR)/$(APP_NAME) format
+clean_software:
+	@rm -rf build/src/*/*.{d,o} build/src/driver/* build/src/util/* test/*.log
+
+clean_ros_nodes:
+	@rm -rf test/build/* test/devel/* test/*.log
+
+clean_tests:
+	@rm -rf test/build-local/*
+
+software: $(BUILD_DIR)/$(APP_NAME)
 
 hardware: $(BUILD_DIR)/$(APP_NAME).xclbin
 
@@ -103,8 +113,23 @@ hls_%: $(filter %$*.xo,$(HW_OBJS))
 	@echo "Opening HLS for kernel $* ($<) "
 	@$(VIVADO_HLS) -p _x/$*/$*/$*/
 
-test:
-	make ENTRY_POINT=test/test.cpp APP_NAME=FastSense_test.exe software hardware
+test_sensor_sync:
+	make ENTRY_POINT=test/sensor_sync.cpp APP_NAME=FastSense_test_sensor_sync.exe software hardware
+
+test_zmq_client: 
+	make ENTRY_POINT=test/zmq_client.cpp APP_NAME=FastSense_test_zmq_client.exe software hardware
+
+test_hdf5: 
+	make ENTRY_POINT=test/hdf5.cpp APP_NAME=FastSense_test_hdf5.exe software hardware
+
+ros_test_nodes:
+	@cd test && . /opt/ros/melodic/setup.bash && catkin_make -j4
+
+test_global_map:
+	make ENTRY_POINT=test/global_map.cpp APP_NAME=FastSense_test_global_map.exe software hardware
+
+run_global_map_test: test_global_map
+	@cd build/ && ./FastSense_test_global_map.exe
 
 format:
 	@echo "Formatting"

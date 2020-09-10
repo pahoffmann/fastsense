@@ -7,14 +7,14 @@
 #pragma once
 
 #include <util/params.h>
-#include <util/msg/linear_acceleration.h>
-#include <util/msg/angular_velocity.h>
-#include <util/msg/magnetic_field.h>
+#include <msg/linear_acceleration.h>
+#include <msg/angular_velocity.h>
+#include <msg/magnetic_field.h>
 #include <iostream>
 #include <cmath>
 #include <memory>
 
-namespace fastsense::util::msg
+namespace fastsense::msg
 {
 
 /**
@@ -31,6 +31,6 @@ struct ImuMsg
     using ptr = std::shared_ptr<ImuMsg>;
 };
 
-} // namespace fastsense::util::msg
+} // namespace fastsense::msg
 
-std::ostream& operator<<(std::ostream& os, const fastsense::util::msg::ImuMsg& data);
+std::ostream& operator<<(std::ostream& os, const fastsense::msg::ImuMsg& data);

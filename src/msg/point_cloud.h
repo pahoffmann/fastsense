@@ -10,24 +10,10 @@
 #include <vector>
 #include <memory>
 
-namespace fastsense::util::msg
+#include <msg/point.h>
+
+namespace fastsense::msg
 {
-
-/**
- * @brief Represents a point with 16-bit X/Y/Z components
- *
- */
-struct Point
-{
-    /// X component
-    int16_t x;
-
-    /// Y component
-    int16_t y;
-
-    /// Z component
-    int16_t z;
-};
 
 /**
  * @brief A point cloud with fixed rings
@@ -44,4 +30,4 @@ public:
     uint16_t rings;
 };
 
-} // namespace fastsense::util::msg;
+} // namespace fastsense::msg;

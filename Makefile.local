@@ -3,34 +3,34 @@
 #
 
 # Tools
-CXX := g++
-MKDIR_P := mkdir -p
-SHELL := /bin/bash
+CXX = g++
+MKDIR_P = mkdir -p
+SHELL = /bin/bash
 
 # Global
-BUILD_DIR := ${CURDIR}/test/build-local
-APP_NAME := test.exe
+BUILD_DIR = ${CURDIR}/test/build-local
 
-SRCS := src/driver/lidar/velodyne.cpp \
+SRCS = src/driver/lidar/velodyne.cpp \
 		src/data/sensor_sync.cpp \
 		$(wildcard src/util/*.cpp) \
+		$(wildcard src/map/*.cpp) \
+		$(wildcard src/msg/*.cpp) \
 		$(wildcard src/util/config/*.cpp) \
 		$(wildcard src/util/logging/*.cpp) \
-		$(wildcard src/util/msg/*.cpp) \
 		$(wildcard src/driver/imu/api/*.cpp) \
 		src/driver/imu/imu.cpp \
-		test/test.cpp
+		${ENTRY_POINT}
 
-OBJS := $(SRCS:%.cpp=$(BUILD_DIR)/%.o)
-DEPS := $(OBJS:.o=.d)
+OBJS = $(SRCS:%.cpp=$(BUILD_DIR)/%.o)
+DEPS = $(OBJS:.o=.d)
 
-INC_DIRS := src
+INC_DIRS = src ext/HighFive/include /usr/include/hdf5/serial ext/Catch2/single_include
 
-INC_FLAGS := $(addprefix -I,$(INC_DIRS))
-CXX_STD := c++17
-CXXFLAGS := $(INC_FLAGS) -MMD -MP -c -fmessage-length=0 -std=${CXX_STD}
+INC_FLAGS = $(addprefix -I,$(INC_DIRS))
+CXX_STD = c++17
+CXXFLAGS = $(INC_FLAGS) -MMD -MP -c -fmessage-length=0 -std=${CXX_STD}
 
-LDFLAGS := -lphidget21 -lpthread -lstdc++
+LDFLAGS = -lphidget21 -lpthread -lstdc++ -lzmq -lhdf5_serial
 
 .PHONY: all software format run
 
@@ -57,8 +57,23 @@ format:
 	@echo "Formatting"
 	@astyle -n -q --project=.astylerc --recursive "src/*.c??" "src/*.h"
 
-run: $(BUILD_DIR)/$(APP_NAME)
-	@$(BUILD_DIR)/$(APP_NAME)
+test_sensor_sync:
+	make -f Makefile.local ENTRY_POINT=test/sensor_sync.cpp APP_NAME=test_sensor_sync.exe software 
+
+test_zmq_client: 
+	make -f Makefile.local ENTRY_POINT=test/zmq_client.cpp APP_NAME=test_zmq_client.exe software 
+
+test_hdf5: 
+	make -f Makefile.local ENTRY_POINT=test/hdf5.cpp APP_NAME=test_hdf5.exe software 
+
+ros_test_nodes:
+	@cd test && . /opt/ros/melodic/setup.bash && catkin_make -j4
+
+test_global_map:
+	mkdir -p test/build-local/tmp && make -f Makefile.local ENTRY_POINT=test/global_map.cpp APP_NAME=test_global_map.exe software 
+
+run_global_map_test: test_global_map
+	cd test/build-local/ && ./test_global_map.exe 
 
 -include $(DEPS)
 -include $(HW_DEPS)

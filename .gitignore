@@ -1,4 +1,7 @@
 build/*
+test/build/*
+test/build-local/*
+
 _*
 v++*
 *.log

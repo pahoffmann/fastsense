@@ -7,7 +7,7 @@
 #pragma once
 
 #include <util/process_thread.h>
-#include <util/msg/msgs_stamped.h>
+#include <msg/msgs_stamped.h>
 #include <util/concurrent_ring_buffer.h>
 
 #include <memory>
@@ -75,7 +75,7 @@ public:
      * @param port Port for receiving the sensor data.
      * @param buffer Ring buffer for storing the sensor data and transfer to the next step.
      */
-    VelodyneDriver(const std::string& ipaddr, uint16_t port, const std::shared_ptr<fastsense::util::ConcurrentRingBuffer<fastsense::util::msg::PointCloudStamped>>& buffer);
+    VelodyneDriver(const std::string& ipaddr, uint16_t port, const std::shared_ptr<fastsense::util::ConcurrentRingBuffer<fastsense::msg::PointCloudStamped>>& buffer);
 
     /**
      * @brief Destroy the Velodyne Driver object.
@@ -100,7 +100,7 @@ public:
      *
      * @return PointCloudStamped The next scan with timestamp
      */
-    fastsense::util::msg::PointCloudStamped getScan();
+    fastsense::msg::PointCloudStamped getScan();
 
 protected:
     /**
@@ -131,10 +131,10 @@ protected:
     float azLast;
 
     /// Buffer to write scans to
-    fastsense::util::ConcurrentRingBuffer<fastsense::util::msg::PointCloudStamped>::ptr scanBuffer;
+    fastsense::util::ConcurrentRingBuffer<fastsense::msg::PointCloudStamped>::ptr scanBuffer;
 
     /// Current scan
-    fastsense::util::msg::PointCloud::ptr currentScan;
+    fastsense::msg::PointCloud::ptr currentScan;
 };
 
 } // namespace fastsense::driver

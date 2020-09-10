@@ -6,7 +6,7 @@
 
 #include <driver/imu/imu.h>
 #include <util/params.h>
-#include <util/msg/imu_msg.h>
+#include <msg/imu_msg.h>
 #include <util/time_stamp.h>
 
 #include <thread>
