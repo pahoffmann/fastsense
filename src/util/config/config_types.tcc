@@ -51,15 +51,23 @@ bool ConfigEntry<T>::canSet(const boost::property_tree::ptree& val)
 }
 
 template<typename T>
-typename EventHandlerList<void(T)>::handle_t ConfigEntry<T>::addHandler(const std::function<void(T)>& handler)
+boost::property_tree::ptree ConfigEntry<T>::getNode()
+{
+    boost::property_tree::ptree node;
+    node.put_value(value);
+    return node;
+}
+
+template<typename T>
+EventHandlerHandle<void(T)> ConfigEntry<T>::addHandler(const std::function<void(T)>& handler)
 {
     return handlerList.add(handler);
 }
 
 template<typename T>
-void ConfigEntry<T>::removeHandler(const typename EventHandlerList<void(T)>::handle_t& handle)
+void ConfigEntry<T>::removeHandler(EventHandlerHandle<void(T)>&& handle)
 {
-    handlerList.remove(handle);
+    handlerList.remove(std::move(handle));
 }
 
 inline void ConfigGroup::registerConfigEntry(std::string name, ConfigEntryBase* entry)
@@ -73,21 +81,6 @@ inline ConfigGroup::ConfigGroup(std::string name, ConfigGroup* parent)
     {
         parent->registerConfigEntry(name, this);
     }
-}
-
-inline std::unordered_map<std::string, ConfigEntryBase*>::iterator ConfigGroup::begin()
-{
-    return entries.begin();
-}
-
-inline std::unordered_map<std::string, ConfigEntryBase*>::iterator ConfigGroup::end()
-{
-    return entries.end();
-}
-
-inline ConfigEntryBase* ConfigGroup::operator[](const std::string& key)
-{
-    return entries.at(key);
 }
 
 inline bool ConfigGroup::isGroup()
@@ -132,14 +125,26 @@ inline bool ConfigGroup::canSet(const boost::property_tree::ptree& val)
     return true;
 }
 
-inline EventHandlerList<void()>::handle_t ConfigGroup::addHandler(const std::function<void()>& handler)
+inline boost::property_tree::ptree ConfigGroup::getNode()
+{
+    boost::property_tree::ptree node;
+
+    for (auto& entry : entries)
+    {
+        node.put_child(entry.first, entry.second->getNode());
+    }
+
+    return node;
+}
+
+inline EventHandlerHandle<void()> ConfigGroup::addHandler(const std::function<void()>& handler)
 {
     return handlerList.add(handler);
 }
 
-inline void ConfigGroup::removeHandler(const EventHandlerList<void()>::handle_t& handle)
+inline void ConfigGroup::removeHandler(EventHandlerHandle<void()>&& handle)
 {
-    handlerList.remove(handle);
+    handlerList.remove(std::move(handle));
 }
 
 }

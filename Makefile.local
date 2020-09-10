@@ -75,5 +75,11 @@ test_global_map:
 run_global_map_test: test_global_map
 	cd test/build-local/ && ./test_global_map.exe 
 
+test_config:
+	make -f Makefile.local ENTRY_POINT=test/config.cpp APP_NAME=test_config.exe software
+
+run_test_config: test_config
+	cd test/build-local/ && ./test_config.exe
+
 -include $(DEPS)
 -include $(HW_DEPS)
