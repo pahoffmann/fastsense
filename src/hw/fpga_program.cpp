@@ -58,13 +58,14 @@ void FPGAProgram::initDevices()
         {
             devices_.clear();
             platform.getDevices(CL_DEVICE_TYPE_ACCELERATOR, &devices_);
+            if (devices_.size())
+            {
+                return;
+            }
         }
     }
 
-    if (not devices_.size())
-    {
-        throw std::runtime_error("Error: Unable to find Target Device");
-    }
+    throw std::runtime_error("Error: Unable to find Target Device");
 }
 
 void FPGAProgram::initContext()

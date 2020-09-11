@@ -36,7 +36,7 @@ int main() {
         synced_data_buffer->pop(&data);
         Logger::info("fps: ", 1000.f/(fs::util::TimeStamp() - start));
         start.reset();
-     }
+    }
 
     return 0;
 }

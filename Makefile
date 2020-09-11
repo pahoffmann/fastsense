@@ -90,8 +90,9 @@ test: test_sensor_sync test_zmq test_global_map
 clean: 
 	@rm -rf _x _vimage *.log build/* test/*.log
 
+# TODO why does build/src/*/*.{o,d} not work
 clean_software:
-	@rm -rf build/src/*/*.{d,o} build/src/driver/* build/src/util/* test/*.log
+	@rm -rf build/src/driver/* build/src/util/* build/src/hw/* build/src/example/* build/src/map/* build/src/hw/* test/*.log
 
 clean_ros_nodes:
 	@rm -rf test/build/* test/devel/* test/*.log
@@ -160,7 +161,7 @@ run_global_map_test: test_global_map
 	@cd build/ && ./FastSense_test_global_map.exe
 
 copy_binaries_to_board:
-	@scp build/*.exe* root@$(BOARD_ADDRESS):/mnt
+	@scp build/*.exe* student@$(BOARD_ADDRESS):/mnt
 
 rsync:
 	@echo 'syning fastsense: to "$(USER)@$(FPGA_SERVER).informatik.uos.de:$(FGPA_SERVER_HOME)/$(USER)/fastsense"'
