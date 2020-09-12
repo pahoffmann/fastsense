@@ -68,7 +68,7 @@ BUILD_CFG = ${CURDIR}/build.cfg
 HW_TARGET ?= hw
 HW_PLATFORM = ${PLATFORM_DIR}/FastSense_platform.xpfm
 
-HW_SRCS = src/hw/kernels/hls/krnl_vadd.cpp
+HW_SRCS = src/example/krnl_vadd.cpp
 HW_OBJS = $(HW_SRCS:%.cpp=$(BUILD_DIR)/%.xo)
 HW_DEPS = $(HW_OBJS:.xo=.d)
 
