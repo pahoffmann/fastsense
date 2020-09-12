@@ -60,7 +60,7 @@ class Logger
 public:
     /**
      * @brief delete assignment operator because of pointer member variable
-     * 
+     *
      * @return Logger& other Buffer
      */
     Logger& operator=(Logger&) = delete;

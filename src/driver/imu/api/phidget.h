@@ -47,7 +47,7 @@ public:
 
     /**
      * @brief delete assignment operator because of pointer member variable
-     * 
+     *
      * @return Phidget& other Phidget
      */
     Phidget& operator=(Phidget&) = delete;

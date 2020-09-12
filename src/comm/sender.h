@@ -4,10 +4,12 @@
 #include <comm/zmq_patch.h>
 #include <string>
 
-namespace fastsense::comm {
+namespace fastsense::comm
+{
 
 template <typename T>
-class Sender {
+class Sender
+{
 public:
     Sender(std::string addr, size_t threads = 1);
     void send(T* data);
