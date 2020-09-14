@@ -5,14 +5,14 @@
 #include <msg/pose.h>
 #include <comm/sender.h>
 
-using fastsense::msg::Pose;
+using fastsense::msg::Point;
 using fastsense::comm::Sender;
 
 int main()
 {
-    Sender<Pose> sender("localhost:5555");
+    Sender<Point> sender("localhost:5555");
     
-    Pose p;
+    Point p;
     p.x = 1;
     p.y = 2;
     p.z = 3;

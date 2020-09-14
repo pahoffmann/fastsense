@@ -34,15 +34,45 @@ public:
 
     virtual ~Imu() = default;
 
+    /**
+     * @brief delete assignment operator because of pointer member variable
+     *
+     * @return Imu& other imu
+     */
+    Imu& operator=(Imu&) = delete;
+
+    /**
+     * @brief delete copy constructor because of pointer member variable
+     * @param Imu& other imu
+     */
+    Imu(Imu&) = delete;
+
+    /**
+     * @brief Whether or not device has been calibrated
+     *
+     * @return true if device has been calibrated
+     * @return false if device has NOT been calibrated
+     */
     inline bool isCalibrated() const
     {
         return is_calibrated_;
     }
 
-    void init();
-
+    /**
+     * @brief Starts Imu thread
+     * **NOTE** in contrast to velodyne driver, libphidget ALREADY listens to data coming from driver
+     * from separate thread. This function only serves to provide the same api for all sensors
+     */
     void start() override;
 
+    /**
+     * @brief Stops Imu
+     * **NOTE** in contrast to velodyne driver, libphidget ALREADY listens to data coming from driver
+     * from separate thread. This function only serves to provide the same api for all sensors and does not
+     * ACTUALLY deattach device from linux
+     *
+     */
+    // TODO workaround?
     void stop() override;
 
     /**
@@ -76,9 +106,6 @@ private:
     /// whether or not to init compass with custom params defined in params.h
     bool init_compass_;
 
-    /// TODO
-    int error_number_;
-
     /// angular velocity covariance
     std::array<double, 9> angular_velocity_covariance_;
 
@@ -102,8 +129,6 @@ private:
                                   CPhidgetSpatial_SpatialEventDataHandle* data,
                                   int count);
 
-//    bool use_imu_time_; // TODO check if necessary! Or only to do with ROS?
-
     /// calibrate gyro
     void zero();
 
@@ -117,19 +142,28 @@ private:
     void calibrate();
 
     /**
-     * Initialize imu
+     * @brief Initialize Imu
+     * calls initDevice(), initApi() and initCovariance()
      */
+    void init();
+
+    /// initialize phidget device
     void initDevice();
+
+    /// initiate libphigdet api
+    void initApi();
+
+    /// initialize covariance matrices
+    void initCovariance();
 
     /**
      * Datahandler, which gets raw data from libphidget
      * @param acceleration linear acceleration
      * @param angularRate angular velocity
      * @param magneticField magnetic field
-     * @param timestamp timestamp in sec since initiation
      */
     void dataHandler(const double acceleration[3], const double angularRate[3],
-                     const double magneticField[3], double timestamp);
+                     const double magneticField[3]);
 
     /// handles attachment of imu
     void attachHandler() override;
@@ -162,12 +196,6 @@ private:
                                         double cc_gain2, double cc_T0,
                                         double cc_T1, double cc_T2, double cc_T3,
                                         double cc_T4, double cc_T5);
-
-    /// initiate libphigdet api
-    void initApi();
-
-    /// initialize covariance matrices
-    void initCovariance();
 };
 
 } // namespace fastsense::driver;

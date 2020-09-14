@@ -21,9 +21,18 @@ using fastsense::data::ImuStampedBufferPtr;
 
 // TODO detach handler? How to handle connected/disconnectedness
 
-Imu::Imu(ImuStampedBufferPtr ringbuffer) : Phidget(), ProcessThread(), data_buffer(ringbuffer), imu_handle_(nullptr), is_calibrated_(false), init_compass_(false)
-{
-}
+Imu::Imu(ImuStampedBufferPtr ringbuffer)
+    :   Phidget(),
+        ProcessThread(),
+        data_buffer(ringbuffer),
+        is_connected_(false),
+        is_calibrated_(false),
+        init_compass_(false),
+        angular_velocity_covariance_({}),
+linear_acceleration_covariance_({}),
+magnetic_field_covariance_({}),
+imu_handle_(nullptr)
+{}
 
 void fastsense::driver::Imu::start()
 {
@@ -37,7 +46,6 @@ void fastsense::driver::Imu::start()
 void Imu::stop()
 {
     // cleanup happens in Phidgets destructor
-    // TODO
     running = false;
 }
 
@@ -50,11 +58,21 @@ void Imu::init()
 
 void Imu::setDataRate(int rate)
 {
+    if (not imu_handle_)
+    {
+        throw std::runtime_error("Can't set rate: Imu not initialized");
+    }
+
     CPhidgetSpatial_setDataRate(imu_handle_, rate);
 }
 
 void Imu::zero()
 {
+    if (not imu_handle_)
+    {
+        throw std::runtime_error("Can't set zero: Imu not initialized");
+    }
+
     // zero (calibrate) gyro
     CPhidgetSpatial_zeroGyro(imu_handle_);
 }
@@ -65,11 +83,8 @@ int Imu::SpatialDataHandler(CPhidgetSpatialHandle /* handle */, void* userptr,
 {
     for (int i = 0; i < count; ++i)
     {
-        double ts = data[i]->timestamp.seconds +
-                    (data[i]->timestamp.microseconds / 1000.0 / 1000.0);
-
         ((Imu*)userptr)->dataHandler(data[i]->acceleration, data[i]->angularRate,
-                                     data[i]->magneticField, ts);
+                                     data[i]->magneticField);
     }
     return 0;
 }
@@ -93,8 +108,7 @@ void Imu::setCompassCorrectionParameters(double cc_mag_field, double cc_offset0,
 }
 
 void
-Imu::dataHandler(const double* acceleration, const double* angularRate, const double* magneticField,
-                 double timestamp)
+Imu::dataHandler(const double* acceleration, const double* angularRate, const double* magneticField)
 {
     // Even during calibration, the device reports back zeroes, so force driver to wait until
     // after calibration
