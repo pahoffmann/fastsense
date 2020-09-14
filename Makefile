@@ -33,6 +33,7 @@ SRCS = ${ENTRY_POINT} \
 	$(wildcard src/map/*.cpp) \
 	$(wildcard src/util/*.cpp) \
 	$(wildcard src/msg/*.cpp) \
+	$(wildcard src/util/config/*.cpp) \
 	$(wildcard src/hw/*.cpp) \
 	$(wildcard src/util/logging/*.cpp) \
 	$(wildcard src/driver/imu/api/*.cpp) \

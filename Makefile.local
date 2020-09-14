@@ -11,14 +11,15 @@ SHELL = /bin/bash
 BUILD_DIR = ${CURDIR}/test/build-local
 
 SRCS = src/driver/lidar/velodyne.cpp \
-        src/data/sensor_sync.cpp \
-        $(wildcard src/util/*.cpp) \
+		src/data/sensor_sync.cpp \
+		$(wildcard src/util/*.cpp) \
 		$(wildcard src/map/*.cpp) \
-        $(wildcard src/msg/*.cpp) \
+		$(wildcard src/msg/*.cpp) \
+		$(wildcard src/util/config/*.cpp) \
 		$(wildcard src/util/logging/*.cpp) \
-        $(wildcard src/driver/imu/api/*.cpp) \
-        src/driver/imu/imu.cpp \
-        ${ENTRY_POINT}
+		$(wildcard src/driver/imu/api/*.cpp) \
+		src/driver/imu/imu.cpp \
+		${ENTRY_POINT}
 
 OBJS = $(SRCS:%.cpp=$(BUILD_DIR)/%.o)
 DEPS = $(OBJS:.o=.d)
@@ -27,7 +28,7 @@ INC_DIRS = src ext/HighFive/include /usr/include/hdf5/serial ext/Catch2/single_i
 
 INC_FLAGS = $(addprefix -I,$(INC_DIRS))
 CXX_STD = c++17
-CXXFLAGS = $(INC_FLAGS) -c -fmessage-length=0 -std=${CXX_STD}
+CXXFLAGS = $(INC_FLAGS) -MMD -MP -c -fmessage-length=0 -std=${CXX_STD}
 
 LDFLAGS = -lphidget21 -lpthread -lstdc++ -lzmq -lhdf5_serial
 
@@ -73,6 +74,12 @@ test_global_map:
 
 run_global_map_test: test_global_map
 	cd test/build-local/ && ./test_global_map.exe 
+
+test_config:
+	make -f Makefile.local ENTRY_POINT=test/config.cpp APP_NAME=test_config.exe software
+
+run_test_config: test_config
+	cd test/build-local/ && ./test_config.exe
 
 -include $(DEPS)
 -include $(HW_DEPS)
