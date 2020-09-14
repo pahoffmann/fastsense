@@ -2,17 +2,18 @@
 
 #include <msg/xyz_buffer.h>
 
-namespace fastsense::msg {
+namespace fastsense::msg
+{
 
 struct Quaternion : public XYZBuffer<double>
 {
-  Quaternion() = delete;
+    Quaternion() = delete;
 
-  Quaternion(double x, double y, double z, double w);
+    Quaternion(double x, double y, double z, double w);
 
-  ~Quaternion() = default;
+    ~Quaternion() = default;
 
-  double w;
+    double w;
 };
 
 } // namespace fastsense::msg

@@ -9,13 +9,13 @@
 using namespace fastsense::map;
 
 GlobalMap::GlobalMap(std::string name, float initialTsdfValue, float initialWeight)
-    : file(name, HighFive::File::OpenOrCreate | HighFive::File::Truncate), // Truncate clears already existing file
-      initialTsdfValue(initialTsdfValue),
-      initialWeight(initialWeight),
-      activeChunks(0),
-      tags(0),
-      ages(0),
-      numPoses(0)
+    : file{name, HighFive::File::OpenOrCreate | HighFive::File::Truncate}, // Truncate clears already existing file
+      initialTsdfValue{initialTsdfValue},
+      initialWeight{initialWeight},
+      activeChunks{0},
+      tags{0},
+      ages{0},
+      numPoses{0}
 {
     if (!file.exist("/map"))
     {
@@ -112,7 +112,7 @@ std::vector<float>& GlobalMap::activateChunk(std::string tag)
     }
     // update ages
     int age = ages[index];
-    for (int i = 0; i < ages.size(); i++)
+    for (size_t i = 0; i < ages.size(); i++)
     {
         if (ages[i] < age)
         {

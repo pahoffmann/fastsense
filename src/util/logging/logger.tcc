@@ -9,7 +9,7 @@
 namespace fastsense::util::logging
 {
 
-inline Logger::Logger() : currentLogLevel(LogLevel::Warning)
+inline Logger::Logger() : mtx({}), currentLogLevel(LogLevel::Warning), sinks({})
 {
 }
 

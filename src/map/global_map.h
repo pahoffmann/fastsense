@@ -15,7 +15,8 @@
 
 // TODO handle existing/missing folder, where hdf5 will write
 
-namespace fastsense::map {
+namespace fastsense::map
+{
 
 /**
  * Global map containing containing truncated signed distance function (tsdf) values and weights.

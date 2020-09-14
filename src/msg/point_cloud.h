@@ -25,6 +25,8 @@ namespace fastsense::msg
 class PointCloud
 {
 public:
+    PointCloud() : points{}, rings{} {}
+    ~PointCloud() = default;
     using ptr = std::shared_ptr<PointCloud>;
     std::vector<Point> points;
     uint16_t rings;

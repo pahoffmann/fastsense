@@ -44,7 +44,7 @@ ALL TIMES.
 #include <stdlib.h>
 #include <fstream>
 #include <iostream>
-#include "vadd.h"
+#include <hw/opencl.h>
 
 static const int DATA_SIZE = 4096;
 

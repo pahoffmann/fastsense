@@ -6,7 +6,7 @@
 
 #define CATCH_CONFIG_MAIN
 #include <map/ring_buffer.h>
-#include "catch.hpp"
+#include <catch2/catch.hpp>
 
 using namespace fastsense::map;
 
