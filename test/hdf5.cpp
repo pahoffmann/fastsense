@@ -1,9 +1,11 @@
 #include <highfive/H5File.hpp>
 #include <vector>
+#include "catch2_config.h"
 
 using namespace HighFive;
 
-int main() {
+TEST_CASE("HighFive/HDF5 working", "[hdf5][HighFive]")
+{
     // we create a new hdf5 file
     File file("/tmp/new_file.h5", File::ReadWrite | File::Create | File::Truncate);
 

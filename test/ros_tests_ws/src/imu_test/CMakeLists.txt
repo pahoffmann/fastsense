@@ -12,7 +12,7 @@ find_package(catkin REQUIRED COMPONENTS
 
 catkin_package()
 
-set(FASTSENSE_DIR ../../../../fastsense)
+set(FASTSENSE_DIR ../../../../../fastsense)
 
 include_directories(
   ${catkin_INCLUDE_DIRS}

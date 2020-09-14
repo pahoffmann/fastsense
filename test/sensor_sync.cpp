@@ -8,12 +8,15 @@
 
 #include <data/sensor_sync.h>
 
+#include "catch2_config.h"
+
 namespace fs = fastsense;
 using namespace fs::driver;
 using namespace fs::data;
 using namespace fs::util::logging;
 
-int main() {
+TEST_CASE("sync sensor data", "[!hide][SensorSyncData")
+{
     Logger::addSink(std::make_shared<sink::CoutSink>());
     Logger::setLoglevel(LogLevel::Debug);
 
@@ -31,12 +34,11 @@ int main() {
 
     auto start = fs::util::TimeStamp();
 
-    while (true) {
+    while (true)
+    {
         fs::data::SyncedData data;
         synced_data_buffer->pop(&data);
-        Logger::info("fps: ", 1000.f/(fs::util::TimeStamp() - start));
+        Logger::info("fps: ", 1000.f / (fs::util::TimeStamp() - start));
         start.reset();
     }
-
-    return 0;
 }

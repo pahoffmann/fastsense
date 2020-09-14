@@ -1,5 +1,10 @@
-#define CATCH_CONFIG_MAIN
-#include <catch2/catch.hpp>
+/**
+ * @file config.cpp
+ * @author Marcel Flottmann
+ * @date 2020-09-11
+ */
+
+#include "catch2_config.h"
 
 #include <util/config/config_manager.h>
 
@@ -75,7 +80,7 @@ TEST_CASE("load configuration", "[ConfigManager]")
 
     SECTION("load file")
     {
-        TestConfigManager::loadFile("../config.json");
+        TestConfigManager::loadFile("config.json");
         REQUIRE(TestConfigManager::config().subGroup.myInt() == 1234);
         REQUIRE(TestConfigManager::config().subGroup.myString() == "Hello File!");
         REQUIRE(TestConfigManager::config().myFloat() == 2.5f);

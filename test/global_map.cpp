@@ -4,16 +4,14 @@
  * @author Juri Vana
  */
 
-#define CATCH_CONFIG_MAIN
 #include <map/ring_buffer.h>
-#include <catch2/catch.hpp>
+#include "catch2_config.h"
 
 using namespace fastsense::map;
 
-TEST_CASE("Test Global Map", "[]")
+TEST_CASE("Test Global Map", "[GlobalMap]")
 {
-    std::shared_ptr<GlobalMap> gm_ptr(new GlobalMap("tmp/test.h5", 0, 7)); 
-    auto& gm = *gm_ptr;
+    std::shared_ptr<GlobalMap> gm_ptr = std::make_shared<GlobalMap>("tmp/test.h5", 0, 7);
 
     RingBuffer<std::pair<float, float>> rb(5, 5, 5, gm_ptr);
 
@@ -62,8 +60,8 @@ TEST_CASE("Test Global Map", "[]")
     }
 
     // test pose
-    gm.savePose(8, 13, 21, 34, 55, 89);
-    gm.savePose(144, 233, 377, 610, 987, 1597);
+    gm_ptr->savePose(8, 13, 21, 34, 55, 89);
+    gm_ptr->savePose(144, 233, 377, 610, 987, 1597);
     g = f.getGroup("/poses");
     d = g.getDataSet("1");
 
@@ -75,27 +73,27 @@ TEST_CASE("Test Global Map", "[]")
     }
     std::cout << std::endl;
 
-    SECTION("tsdf values") 
+    SECTION("tsdf values")
     {
-        REQUIRE(chunk[(16*16*14+16*2)*2] == 0);
-        REQUIRE(chunk[(16*16*15+16*2)*2] == 1);
-        REQUIRE(chunk[(16*16*14+16*1)*2] == 2);
-        REQUIRE(chunk[(16*16*15+16*1)*2] == 3);
-        REQUIRE(chunk[(16*16*14+16*0)*2] == 4);
-        REQUIRE(chunk[(16*16*15+16*0)*2] == 5);
+        REQUIRE(chunk[(16 * 16 * 14 + 16 * 2) * 2] == 0);
+        REQUIRE(chunk[(16 * 16 * 15 + 16 * 2) * 2] == 1);
+        REQUIRE(chunk[(16 * 16 * 14 + 16 * 1) * 2] == 2);
+        REQUIRE(chunk[(16 * 16 * 15 + 16 * 1) * 2] == 3);
+        REQUIRE(chunk[(16 * 16 * 14 + 16 * 0) * 2] == 4);
+        REQUIRE(chunk[(16 * 16 * 15 + 16 * 0) * 2] == 5);
     }
 
-    SECTION("weights") 
+    SECTION("weights")
     {
-        REQUIRE(chunk[(16*16*14+16*2)*2+1] == 0);
-        REQUIRE(chunk[(16*16*15+16*2)*2+1] == 1);
-        REQUIRE(chunk[(16*16*14+16*1)*2+1] == 1);
-        REQUIRE(chunk[(16*16*15+16*1)*2+1] == 2);
-        REQUIRE(chunk[(16*16*14+16*0)*2+1] == 3);
-        REQUIRE(chunk[(16*16*15+16*0)*2+1] == 5);
+        REQUIRE(chunk[(16 * 16 * 14 + 16 * 2) * 2 + 1] == 0);
+        REQUIRE(chunk[(16 * 16 * 15 + 16 * 2) * 2 + 1] == 1);
+        REQUIRE(chunk[(16 * 16 * 14 + 16 * 1) * 2 + 1] == 1);
+        REQUIRE(chunk[(16 * 16 * 15 + 16 * 1) * 2 + 1] == 2);
+        REQUIRE(chunk[(16 * 16 * 14 + 16 * 0) * 2 + 1] == 3);
+        REQUIRE(chunk[(16 * 16 * 15 + 16 * 0) * 2 + 1] == 5);
     }
 
-    SECTION("poses") 
+    SECTION("poses")
     {
         int i = 0;
         REQUIRE(pose[i++] == 144);

@@ -16,7 +16,7 @@
 
 namespace fs = fastsense;
 
-int main(int argc, char **argv)
+int main(int argc, char** argv)
 {
     ros::init(argc, argv, "talker");
     ros::NodeHandle n;
@@ -28,13 +28,14 @@ int main(int argc, char **argv)
     imu.start();
     auto timestamp = fs::util::TimeStamp();
 
-    while (ros::ok()) {
+    while (ros::ok())
+    {
         fs::msg::ImuMsgStamped data_stamped;
         imu_buffer->pop(&data_stamped);
         std::cout << fs::util::TimeStamp() - timestamp << "\n";
         timestamp = fs::util::TimeStamp();
 
-//	    auto& [data, time] = data_stamped;
+//      auto& [data, time] = data_stamped;
 
 //        std::cout << data << "\n--\n";
 //
