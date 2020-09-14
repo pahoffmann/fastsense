@@ -11,6 +11,7 @@
 #include <cassert>
 
 #include <hw/types.h>
+#include <hw/fpga_manager.h>
 
 // because xilinx missed this: Host -> Device, CL_MIGRATE_MEM_OBJECT_HOST defined in cl.h
 #define CL_MIGRATE_MEM_OBJECT_DEVICE                  (0 << 0)
@@ -96,20 +97,18 @@ protected:
      * @brief Construct a new Buffer object
      *
      * @param queue program command queue
-     * @param context program context
      * @param num_elements number of elements in buffer
      * @param mem_flag sets type of buffer: read or write
      * @param map_flag sets type of virtual address buffer: read or write
      */
     Buffer(const CommandQueuePtr& queue,
-           const cl::Context& context,
            size_t num_elements,
            cl_mem_flags mem_flag,
            cl_map_flags map_flag)
         : queue_{queue},
           num_elements_{num_elements},
           size_in_bytes_{sizeof(T) * num_elements},
-          buffer_{context, mem_flag, size_in_bytes_},
+          buffer_{fastsense::hw::FPGAManager::getContext(), mem_flag, size_in_bytes_},
           mem_flag_{mem_flag},
           map_flag_{map_flag},
           virtual_address_{nullptr}
@@ -370,11 +369,10 @@ public:
      * @brief Construct a new Input Buffer object
      *
      * @param queue
-     * @param context
      * @param num_elements
      */
-    InputBuffer(const CommandQueuePtr& queue, const cl::Context& context, size_t num_elements)
-        :   Buffer<T>(queue, context, num_elements, CL_MEM_READ_ONLY, CL_MAP_WRITE)
+    InputBuffer(const CommandQueuePtr& queue, size_t num_elements)
+        :   Buffer<T>(queue, num_elements, CL_MEM_READ_ONLY, CL_MAP_WRITE)
     {}
 
     ~InputBuffer() = default;
@@ -399,8 +397,14 @@ public:
     OutputBuffer() : Buffer<T>()
     {}
 
-    OutputBuffer(const CommandQueuePtr& queue, const cl::Context& context, size_t num_elements)
-        :   Buffer<T>(queue, context, num_elements, CL_MEM_WRITE_ONLY, CL_MAP_READ)
+    /**
+     * @brief Construct a new Output Buffer object
+     *
+     * @param queue
+     * @param num_elements
+     */
+    OutputBuffer(const CommandQueuePtr& queue, size_t num_elements)
+        :   Buffer<T>(queue, num_elements, CL_MEM_WRITE_ONLY, CL_MAP_READ)
     {}
 
     ~OutputBuffer() = default;
@@ -429,11 +433,10 @@ public:
      * @brief Construct a new Input Output Buffer object
      *
      * @param queue
-     * @param context
      * @param num_elements
      */
-    InputOutputBuffer(const CommandQueuePtr& queue, const cl::Context& context, size_t num_elements)
-        :   Buffer<T>(queue, context, num_elements, CL_MEM_READ_WRITE, CL_MAP_READ | CL_MAP_WRITE)
+    InputOutputBuffer(const CommandQueuePtr& queue, size_t num_elements)
+        :   Buffer<T>(queue, num_elements, CL_MEM_READ_WRITE, CL_MAP_READ | CL_MAP_WRITE)
     {}
 
     ~InputOutputBuffer() = default;

@@ -7,7 +7,6 @@
 #pragma once
 
 #include <hw/opencl.h>
-#include <hw/buffer/buffer.h>
 #include <hw/types.h>
 #include <fstream>
 
@@ -17,26 +16,31 @@ namespace fastsense::hw
 class FPGAManager
 {
 public:
-    explicit FPGAManager(const char* xclbin_filename);
     ~FPGAManager() = default;
 
     FPGAManager(const FPGAManager&) = delete;
     FPGAManager& operator=(const FPGAManager&) = delete;
 
-    const cl::Device& getDevice() const;
-    const cl::Context& getContext();
-    const cl::Program& getProgram() const;
+    static void loadXCLBIN(const std::string& xclbin_filename);
 
-    CommandQueuePtr createCommandQueue();
+    static const cl::Device& getDevice();
+    static const cl::Context& getContext();
+    static const cl::Program& getProgram();
+
+    static CommandQueuePtr createCommandQueue();
 
 private:
+    FPGAManager();
+
+    static FPGAManager& inst();
+
     std::vector<cl::Device> devices_;
     cl::Context context_;
     cl::Program program_;
 
     void initDevices();
     void initContext();
-    void loadProgram(const char* xclbin_filename);
+    void loadProgram(const std::string& xclbin_filename);
 };
 
 } // namespace fastsense::hw

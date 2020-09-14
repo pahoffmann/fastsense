@@ -88,7 +88,7 @@ all: software hardware
 test: test_sensor_sync test_zmq test_global_map
 
 clean: 
-	@rm -rf _x _vimage *.log build/* test/*.log
+	@rm -rf _x .Xil _vimage *.log build/* test/*.log pl_script.sh start_simulation.sh
 
 # TODO why does build/src/*/*.{o,d} not work
 clean_software:
@@ -127,12 +127,15 @@ $(BUILD_DIR)/%.xo: %.cpp $(BUILD_CFG)
 	@echo "Compile kernel: $<"
 	@$(MKDIR_P) $(dir $@)
 	@$(HOST_CXX) $< $(HW_DEPS_FLAGS) -MF $(@:.xo=.d) -MT $@
-	@$(VXX) $(VXXFLAGS) $< -o $@ -k $(notdir $*)
+	@$(VXX) $(VXXFLAGS) $< -o $@ -k $(notdir $*) > $<.out || cat $<.out
 
 # Open HLS GUI for kernel
 hls_%: $(filter %$*.xo,$(HW_OBJS))
 	@echo "Opening HLS for kernel $* ($<) "
 	@$(VIVADO_HLS) -p _x/$*/$*/$*/
+
+emconfig.json:
+	emconfigutil -f $(HW_PLATFORM)
 
 test_sensor_sync:
 	make ENTRY_POINT=test/sensor_sync.cpp APP_NAME=FastSense_test_sensor_sync.exe software

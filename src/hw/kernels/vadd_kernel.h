@@ -20,8 +20,8 @@ class VaddKernel : public BaseKernel
     std::vector<cl::Event> executeEvents;
     std::vector<cl::Event> postEvents;
 public:
-    VaddKernel(const CommandQueuePtr& queue, const cl::Program program)
-        : BaseKernel(queue, program, "krnl_vadd"),
+    VaddKernel(const CommandQueuePtr& queue)
+        : BaseKernel(queue, "krnl_vadd"),
           preEvents(1),
           executeEvents(1),
           postEvents(1)

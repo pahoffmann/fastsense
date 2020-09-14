@@ -12,33 +12,43 @@
 using namespace fastsense::hw;
 using namespace fastsense::util::logging;
 
-FPGAManager::FPGAManager(const char* xclbin_filename)
-    :   devices_{},
-        context_{},
-        program_{}
+FPGAManager::FPGAManager()
+    : devices_{},
+      context_{},
+      program_{}
 {
-    initDevices();
-    initContext();
-    loadProgram(xclbin_filename);
 }
 
-const cl::Device& FPGAManager::getDevice() const
+void FPGAManager::loadXCLBIN(const std::string& xclbin_filename)
 {
-    if (not devices_.size())
+    inst().initDevices();
+    inst().initContext();
+    inst().loadProgram(xclbin_filename);
+}
+
+FPGAManager& FPGAManager::inst()
+{
+    static FPGAManager manager;
+    return manager;
+}
+
+const cl::Device& FPGAManager::getDevice()
+{
+    if (not inst().devices_.size())
     {
         throw std::runtime_error("Error: Unable to init Context. No devices found");
     }
-    return devices_[0];
+    return inst().devices_[0];
 }
 
 const cl::Context& FPGAManager::getContext()
 {
-    return context_;
+    return inst().context_;
 }
 
-const cl::Program& FPGAManager::getProgram() const
+const cl::Program& FPGAManager::getProgram()
 {
-    return program_;
+    return inst().program_;
 }
 
 fastsense::CommandQueuePtr FPGAManager::createCommandQueue()
@@ -83,7 +93,7 @@ void FPGAManager::initContext()
     context_ = cl::Context(devices_);
 }
 
-void FPGAManager::loadProgram(const char* xclbin_filename)
+void FPGAManager::loadProgram(const std::string& xclbin_filename)
 {
     Logger::info("Loading ", xclbin_filename);
 

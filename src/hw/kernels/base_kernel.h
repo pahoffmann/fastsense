@@ -7,6 +7,7 @@
 
 #include <hw/opencl.h>
 #include <hw/types.h>
+#include <hw/fpga_manager.h>
 
 namespace fastsense::kernels
 {
@@ -30,9 +31,9 @@ protected:
     cl::Kernel kernel_;
     fastsense::CommandQueuePtr cmd_q_;
 public:
-    inline BaseKernel(const fastsense::CommandQueuePtr& queue, const cl::Program& program, const char* name)
+    inline BaseKernel(const fastsense::CommandQueuePtr& queue, const char* name)
         :   narg_{0},
-            kernel_{program, name},
+            kernel_{fastsense::hw::FPGAManager::getProgram(), name},
             cmd_q_{queue} {}
 
     virtual ~BaseKernel() = default;
