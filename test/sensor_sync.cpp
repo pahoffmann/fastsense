@@ -5,7 +5,6 @@
 #include <msg/msgs_stamped.h>
 #include <util/concurrent_ring_buffer.h>
 #include <util/logging/logger.h>
-#include <util/config/config_manager.h>
 
 #include <data/sensor_sync.h>
 
@@ -13,17 +12,10 @@ namespace fs = fastsense;
 using namespace fs::driver;
 using namespace fs::data;
 using namespace fs::util::logging;
-using namespace fs::util::config;
 
 int main() {
     Logger::addSink(std::make_shared<sink::CoutSink>());
     Logger::setLoglevel(LogLevel::Debug);
-
-    ConfigManager cm;
-    cm.get().inner.addHandler([]{ Logger::info("inner updated"); });
-    cm.load("test.json");
-
-    std::cout << cm.get().asdf() << std::endl;
 
     ImuStampedBufferPtr imu_buffer = std::make_shared<ImuStampedBuffer>(1000);
     PointCloudStampedBufferPtr pointcloud_buffer = std::make_shared<PointCloudStampedBuffer>(1000);
