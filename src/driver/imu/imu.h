@@ -33,10 +33,10 @@ public:
     explicit Imu(fastsense::data::ImuStampedBufferPtr ringbuffer);
 
     virtual ~Imu() = default;
-    
+
     /**
      * @brief delete assignment operator because of pointer member variable
-     * 
+     *
      * @return Imu& other imu
      */
     Imu& operator=(Imu&) = delete;
@@ -49,7 +49,7 @@ public:
 
     /**
      * @brief Whether or not device has been calibrated
-     * 
+     *
      * @return true if device has been calibrated
      * @return false if device has NOT been calibrated
      */
@@ -59,20 +59,20 @@ public:
     }
 
     /**
-     * @brief Starts Imu thread 
-     * **NOTE** in contrast to velodyne driver, libphidget ALREADY listens to data coming from driver 
+     * @brief Starts Imu thread
+     * **NOTE** in contrast to velodyne driver, libphidget ALREADY listens to data coming from driver
      * from separate thread. This function only serves to provide the same api for all sensors
      */
     void start() override;
 
     /**
-     * @brief Stops Imu 
-     * **NOTE** in contrast to velodyne driver, libphidget ALREADY listens to data coming from driver 
+     * @brief Stops Imu
+     * **NOTE** in contrast to velodyne driver, libphidget ALREADY listens to data coming from driver
      * from separate thread. This function only serves to provide the same api for all sensors and does not
-     * ACTUALLY deattach device from linux 
-     * 
+     * ACTUALLY deattach device from linux
+     *
      */
-    // TODO workaround? 
+    // TODO workaround?
     void stop() override;
 
     /**

@@ -8,7 +8,8 @@
 
 #include <map/global_map.h>
 
-namespace fastsense::map {
+namespace fastsense::map
+{
 
 /**
  * Three dimensional array that can be shifted without needing to copy every entry.
@@ -122,7 +123,7 @@ public:
 
     /**
      * Checks if x, y and z are within the current range
-     * 
+     *
      * @param x x-coordinate to check
      * @param y y-coordinate to check
      * @param z z-coordinate to check

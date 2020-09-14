@@ -21,17 +21,17 @@ using fastsense::data::ImuStampedBufferPtr;
 
 // TODO detach handler? How to handle connected/disconnectedness
 
-Imu::Imu(ImuStampedBufferPtr ringbuffer) 
-    :   Phidget(), 
-        ProcessThread(), 
-        data_buffer(ringbuffer), 
+Imu::Imu(ImuStampedBufferPtr ringbuffer)
+    :   Phidget(),
+        ProcessThread(),
+        data_buffer(ringbuffer),
         is_connected_(false),
         is_calibrated_(false),
         init_compass_(false),
         angular_velocity_covariance_({}),
-        linear_acceleration_covariance_({}),
-        magnetic_field_covariance_({}),
-        imu_handle_(nullptr)
+linear_acceleration_covariance_({}),
+magnetic_field_covariance_({}),
+imu_handle_(nullptr)
 {}
 
 void fastsense::driver::Imu::start()
@@ -58,7 +58,7 @@ void Imu::init()
 
 void Imu::setDataRate(int rate)
 {
-    if (not imu_handle_) 
+    if (not imu_handle_)
     {
         throw std::runtime_error("Can't set rate: Imu not initialized");
     }
@@ -68,7 +68,7 @@ void Imu::setDataRate(int rate)
 
 void Imu::zero()
 {
-    if (not imu_handle_) 
+    if (not imu_handle_)
     {
         throw std::runtime_error("Can't set zero: Imu not initialized");
     }
