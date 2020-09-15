@@ -25,7 +25,7 @@ TEST_CASE("sync sensor data", "[!hide][SensorSyncData")
     SyncedDataBufferPtr synced_data_buffer = std::make_shared<SyncedDataBuffer>(1000);
 
     Imu imu(imu_buffer);
-    VelodyneDriver lidar("", 2368, pointcloud_buffer);
+    VelodyneDriver lidar(2368, pointcloud_buffer);
     fs::data::SensorSync synchronizer(imu_buffer, pointcloud_buffer, synced_data_buffer);
 
     lidar.start();

@@ -30,7 +30,7 @@ public:
      * Creates Imu instance
      * @param ringbuffer
      */
-    explicit Imu(fastsense::data::ImuStampedBufferPtr ringbuffer);
+    explicit Imu(const fastsense::data::ImuStampedBufferPtr& ringbuffer);
 
     virtual ~Imu() = default;
 

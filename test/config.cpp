@@ -131,7 +131,7 @@ TEST_CASE("export configuration", "[ConfigManager]")
 TEST_CASE("configuration event handler", "[ConfigManager]")
 {
     bool handlerCalled = false;
-    auto handle = TestConfigManager::config().myFloat.addHandler([&](float f)
+    auto handle = TestConfigManager::config().myFloat.addHandler([&](float /*unused*/)
     {
         handlerCalled = true;
     });

@@ -75,7 +75,7 @@ inline void ConfigGroup::registerConfigEntry(std::string name, ConfigEntryBase* 
     entries.emplace(name, entry);
 }
 
-inline ConfigGroup::ConfigGroup(std::string name, ConfigGroup* parent)
+inline ConfigGroup::ConfigGroup(std::string name, ConfigGroup* parent) : entries{}, handlerList{}
 {
     if (parent)
     {

@@ -23,12 +23,13 @@ APP_XCLBIN = $(BUILD_DIR)/$(APP_NAME).xclbin
 SYSROOT = $(PLATFORM_DIR)/sw/FastSense_platform/linux_domain/sysroot/aarch64-xilinx-linux
 
 # Main entry point sources
-ENTRY_POINT_SRCS = src/example/example.cpp
+ENTRY_POINT_SRCS ?= src/main.cpp
 ENTRY_POINT_OBJS = $(ENTRY_POINT_SRCS:%.cpp=$(BUILD_DIR)/%.o)
 ENTRY_POINT_DEPS = $(ENTRY_POINT_OBJS:.o=.d)
 
 # Software sources
-SW_SRCS = src/driver/lidar/velodyne.cpp \
+SW_SRCS = src/Application.cpp \
+	src/driver/lidar/velodyne.cpp \
 	src/data/sensor_sync.cpp \
 	$(wildcard src/map/*.cpp) \
 	$(wildcard src/util/*.cpp) \
@@ -67,7 +68,7 @@ INC_DIRS = \
 
 INC_FLAGS = $(addprefix -I,$(INC_DIRS))
 CXX_STD = c++17
-GCCFLAGS = -Wall -Wextra -Wnon-virtual-dtor -ansi -pedantic -Weffc++ -Wfatal-errors -O2 -ftree-loop-vectorize -fexceptions
+GCCFLAGS = -Wall -Wextra -Wnon-virtual-dtor -ansi -pedantic -Wfatal-errors -O2 -ftree-loop-vectorize -fexceptions
 CXXFLAGS = $(INC_FLAGS) $(GCCFLAGS) -MMD -MP -D__USE_XOPEN2K8 -c -fmessage-length=0 -std=$(CXX_STD) --sysroot=$(SYSROOT)
 
 LDFLAGS = $(LIBS) --sysroot=$(SYSROOT)
