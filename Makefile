@@ -158,10 +158,14 @@ copy_binaries_to_board:
 	@rsync --ignore-missing-args -r $(APP_EXE) $(APP_XCLBIN) student@$(BOARD_ADDRESS):
 
 copy_binaries_to_qemu:
-	@rsync --ignore-missing-args -r -e "ssh -p 2222" $(APP_EXE) $(APP_XCLBIN) student@localhost:/mnt
+	xsct -eval "set filelist {"build/FastSense.exe" "/mnt/FastSense.exe" "build/FastSense.xclbin" "/mnt/FastSense.xclbin"}; source copy_to_qemu.tcl"
 
+copy_test_to_qemu:
+	xsct -eval 'set filelist {"build/FastSense_test.exe" "/mnt/FastSense_test.exe" "build/FastSense.xclbin" "/mnt/FastSense.xclbin" "test/config.json" "/mnt/config.json"}; source copy_to_qemu.tcl'
+
+# Add for each port to forward "-redir tcp:localport::vmport" as --qemu-args
 start_emulator:
-	launch_emulator -no-reboot -runtime ocl -t sw_emu -forward-port 1440 1534 -qemu-args "-redir tcp:2222::22"
+	launch_emulator -no-reboot -runtime ocl -t sw_emu -forward-port 1440 1534 -qemu-args "-redir udp:2368::2368"
 
 rsync:
 	@echo 'syning fastsense: to "$(USER)@$(FPGA_SERVER).informatik.uos.de:$(FGPA_SERVER_HOME)/$(USER)/fastsense"'

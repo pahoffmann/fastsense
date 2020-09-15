@@ -11,7 +11,7 @@ using namespace fastsense::map;
 
 TEST_CASE("Test Global Map", "[GlobalMap]")
 {
-    std::shared_ptr<GlobalMap> gm_ptr = std::make_shared<GlobalMap>("tmp/test.h5", 0, 7);
+    std::shared_ptr<GlobalMap> gm_ptr = std::make_shared<GlobalMap>("GloabalMapTest.h5", 0, 7);
 
     RingBuffer<std::pair<float, float>> rb(5, 5, 5, gm_ptr);
 
@@ -34,7 +34,7 @@ TEST_CASE("Test Global Map", "[GlobalMap]")
     rb.shift(24, 0, 0);
 
     // check file for the numbers
-    HighFive::File f("tmp/test.h5", HighFive::File::OpenOrCreate);
+    HighFive::File f("GloabalMapTest.h5", HighFive::File::OpenOrCreate);
     HighFive::Group g = f.getGroup("/map");
     HighFive::DataSet d = g.getDataSet("-1_0_0");
     std::vector<float> chunk;

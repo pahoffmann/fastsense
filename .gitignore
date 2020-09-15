@@ -9,6 +9,7 @@ v++*
 
 start_simulation.sh
 pl_script.sh
+qemu-*
 
 ### CLion ###
 *.idea

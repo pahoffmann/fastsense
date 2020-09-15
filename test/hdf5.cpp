@@ -7,7 +7,7 @@ using namespace HighFive;
 TEST_CASE("HighFive/HDF5 working", "[hdf5][HighFive]")
 {
     // we create a new hdf5 file
-    File file("/tmp/new_file.h5", File::ReadWrite | File::Create | File::Truncate);
+    File file("/tmp/HighFiveTest.h5", File::ReadWrite | File::Create | File::Truncate);
 
     std::vector<int> data(50, 1);
 
