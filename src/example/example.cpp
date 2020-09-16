@@ -4,7 +4,6 @@
  * @date 2020-08-09
  */
 
-#define CATCH_CONFIG_MAIN
 
 #include <stdlib.h>
 #include <fstream>
@@ -15,6 +14,7 @@
 #include <hw/types.h>
 #include <hw/fpga_manager.h>
 
+#define CATCH_CONFIG_MAIN
 #include <catch2/catch.hpp>
 
 namespace fs = fastsense;
@@ -27,7 +27,7 @@ static const std::string error_message =
 
 TEST_CASE("Test krnl_vadd.cpp", "")
 {
-    const char* xclbinFilename = "FastSense.exe.xclbin";
+    const char* xclbinFilename = "FastSense.xclbin";
 
     fs::hw::FPGAManager::loadXCLBIN(xclbinFilename);
 

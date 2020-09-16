@@ -1,5 +1,3 @@
-#define CATCH_CONFIG_MAIN
-
 #include <string>
 #include <chrono>
 #include <thread>
@@ -9,15 +7,15 @@
 #include <msg/pose.h>
 #include <comm/receiver.h>
 
-#include <catch2/catch.hpp>
+#include "catch2_config.h"
 
 using fastsense::msg::Point;
 
-TEST_CASE("Receive 10 Points", "")
+TEST_CASE("Receive 10 Points", "[!hide]")
 {
     Receiver<Point> receiver(5555);
 
-    for (int i = 0; i < 10; i++) 
+    for (int i = 0; i < 10; i++)
     {
         auto p = receiver.receive();
         REQUIRE(p.x == 1);

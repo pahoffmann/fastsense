@@ -71,11 +71,10 @@ public:
     /**
      * @brief Construct a new Velodyne Driver object.
      *
-     * @param ipaddr IP address of the sensor.
      * @param port Port for receiving the sensor data.
      * @param buffer Ring buffer for storing the sensor data and transfer to the next step.
      */
-    VelodyneDriver(const std::string& ipaddr, uint16_t port, const std::shared_ptr<fastsense::util::ConcurrentRingBuffer<fastsense::msg::PointCloudStamped>>& buffer);
+    VelodyneDriver(uint16_t port, const std::shared_ptr<fastsense::util::ConcurrentRingBuffer<fastsense::msg::PointCloudStamped>>& buffer);
 
     /**
      * @brief Destroy the Velodyne Driver object.
@@ -114,9 +113,6 @@ protected:
      *
      */
     void decodePacket();
-
-    /// IP address of the sensor
-    std::string ipaddr;
 
     /// Port for receiving data
     uint16_t port;

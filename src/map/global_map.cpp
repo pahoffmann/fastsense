@@ -12,9 +12,9 @@ GlobalMap::GlobalMap(std::string name, float initialTsdfValue, float initialWeig
     : file{name, HighFive::File::OpenOrCreate | HighFive::File::Truncate}, // Truncate clears already existing file
       initialTsdfValue{initialTsdfValue},
       initialWeight{initialWeight},
-      activeChunks{0},
-      tags{0},
-      ages{0},
+      activeChunks{},
+      tags{},
+      ages{},
       numPoses{0}
 {
     if (!file.exist("/map"))

@@ -7,6 +7,10 @@ v++*
 *.log
 .vscode
 
+start_simulation.sh
+pl_script.sh
+qemu-*
+
 ### CLion ###
 *.idea
 */build/*
@@ -50,4 +54,5 @@ v++*
 
 ### ROS
 .catkin_workspace
-*devel*
+test/ros_tests_ws/devel
+test/ros_tests_ws/build

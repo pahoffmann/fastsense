@@ -21,7 +21,7 @@ using fastsense::data::ImuStampedBufferPtr;
 
 // TODO detach handler? How to handle connected/disconnectedness
 
-Imu::Imu(ImuStampedBufferPtr ringbuffer)
+Imu::Imu(const ImuStampedBufferPtr& ringbuffer)
     :   Phidget(),
         ProcessThread(),
         data_buffer(ringbuffer),

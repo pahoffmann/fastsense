@@ -36,7 +36,7 @@ class FileSink : public Sink
 private:
     std::ofstream file;
 public:
-    explicit FileSink(const std::string& filename);
+    explicit FileSink(const std::string& filename, std::ios_base::openmode mode = std::ios_base::app);
     ~FileSink() = default;
 
     void write(const std::string& msg) override;

@@ -66,6 +66,9 @@ class EventHandlerList
     /// Mutex to access list
     std::mutex mtx;
 public:
+    EventHandlerList() = default;
+    ~EventHandlerList() = default;
+    
     /**
      * @brief Add event handler
      *

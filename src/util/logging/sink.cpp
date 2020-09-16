@@ -15,7 +15,7 @@ void CoutSink::write(const std::string& msg)
     std::cout << msg;
 }
 
-FileSink::FileSink(const std::string& filename) : file(filename, std::ios_base::app)
+FileSink::FileSink(const std::string& filename, std::ios_base::openmode mode) : file(filename, mode)
 {
 }
 

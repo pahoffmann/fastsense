@@ -4,7 +4,7 @@ project(velodyne_test)
 ## Compile as C++11, supported in ROS Kinetic and newer
 add_compile_options(-std=c++17)
 
-set(FASTSENSE_DIR ../../../../fastsense)
+set(FASTSENSE_DIR ../../../../../fastsense)
 
 find_package(catkin REQUIRED COMPONENTS
   roscpp

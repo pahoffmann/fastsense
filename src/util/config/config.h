@@ -11,22 +11,35 @@
 namespace fastsense::util::config
 {
 
-struct InnerConfig : public ConfigGroup
+struct ImuConfig : public ConfigGroup
 {
     using ConfigGroup::ConfigGroup;
 
-    DECLARE_CONFIG_ENTRY(size_t, test1);
-    DECLARE_CONFIG_ENTRY(double, test2);
+    DECLARE_CONFIG_ENTRY(size_t, bufferSize);
+};
+
+struct LidarConfig : public ConfigGroup
+{
+    using ConfigGroup::ConfigGroup;
+
+    DECLARE_CONFIG_ENTRY(size_t, bufferSize);
+    DECLARE_CONFIG_ENTRY(uint16_t, port);
+};
+
+struct SensorSyncConfig : public ConfigGroup
+{
+    using ConfigGroup::ConfigGroup;
+
+    DECLARE_CONFIG_ENTRY(size_t, bufferSize);
 };
 
 struct Config : public ConfigGroup
 {
     using ConfigGroup::ConfigGroup;
 
-    DECLARE_CONFIG_GROUP(InnerConfig, inner);
-
-    DECLARE_CONFIG_ENTRY(float, blub);
-    DECLARE_CONFIG_ENTRY(std::string, asdf);
+    DECLARE_CONFIG_GROUP(ImuConfig, imu);
+    DECLARE_CONFIG_GROUP(LidarConfig, lidar);
+    DECLARE_CONFIG_GROUP(SensorSyncConfig, sensorSync);
 };
 
 }
