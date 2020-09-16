@@ -31,6 +31,7 @@ SRCS = ${ENTRY_POINT} \
 	src/driver/lidar/velodyne.cpp \
 	src/data/sensor_sync.cpp \
 	$(wildcard src/map/*.cpp) \
+	$(wildcard src/tsdf/*.cpp) \
 	$(wildcard src/util/*.cpp) \
 	$(wildcard src/msg/*.cpp) \
 	$(wildcard src/util/config/*.cpp) \
@@ -161,8 +162,14 @@ ros_test_nodes:
 test_global_map:
 	make ENTRY_POINT=test/global_map.cpp APP_NAME=FastSense_test_global_map.exe software
 
+test_tsdf_values:
+	make ENTRY_POINT=test/tsdf_values.cpp APP_NAME=FastSense_test_tsdf_values.exe software
+
 run_global_map_test: test_global_map
 	@cd build/ && ./FastSense_test_global_map.exe
+
+run_tsdf_values_test: test_tsdf_values
+	@cd build/ && ./FastSense_test_tsdf_values.exe
 
 copy_binaries_to_board:
 	@scp build/*.exe* student@$(BOARD_ADDRESS):/mnt
