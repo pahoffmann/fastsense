@@ -5,7 +5,7 @@
  * @author Marc Eisoldt (meisoldt)
  */
 
-#include "prototyping/tsdf_values/NeighborsBase.h"
+#include <tsdf/NeighborsBase.h>
 
 #include <vector>
 
@@ -52,4 +52,4 @@ private:
 
 } // namespace fastsense::tsdf
 
-#include "prototyping/tsdf_values/ScanOrderNeighbors.tcc"
+#include <tsdf/ScanOrderNeighbors.tcc>

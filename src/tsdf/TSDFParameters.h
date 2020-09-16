@@ -7,7 +7,6 @@
 
 // ROS stuff
 #include <ros/ros.h>
-#include <prototyping/TSDFConfig.h>
 
 #include <iostream>
 
@@ -87,9 +86,6 @@ public:
     /// Get the total size of the map in grid units
     size_t getTotalSize() const {return total_size_;}
 
-    /// Load the neccessary parameters from a given NodeHandle considering the parameter server
-    void load(const ros::NodeHandle& n);
-
     template<typename S, typename V>
     friend std::ostream& operator<<(std::ostream& os, const TSDFParameters<S, V>& params);
 
@@ -151,4 +147,4 @@ std::ostream& operator<<(std::ostream& os, const TSDFParameters<SCALAR_T, VEC_T>
 
 } // namespace fastsense::tsdf
 
-#include <prototyping/tsdf_values/TSDFParameters.tcc>
+#include <tsdf/TSDFParameters.tcc>

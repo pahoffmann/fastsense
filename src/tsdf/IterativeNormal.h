@@ -5,7 +5,7 @@
  * @author Marc Eisoldt (meisoldt)
  */
 
-#include "prototyping/tsdf_values/FittingNormalBase.h"
+#include <tsdf/FittingNormalBase.h>
 
 #include <vector>
 
@@ -46,4 +46,4 @@ public:
 
 } // namespace fastsense::tsdf
 
-#include <prototyping/tsdf_values/IterativeNormal.tcc>
+#include <tsdf/IterativeNormal.tcc>

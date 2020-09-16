@@ -5,8 +5,8 @@
  * @author Marc Eisoldt (meisoldt)
  */
 
-#include <prototyping/types.h>
-#include <prototyping/ring_buffer/ring_buffer.h>
+#include <util/types.h>
+#include <map/ring_buffer.h>
 
 namespace fastsense::tsdf
 {

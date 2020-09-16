@@ -5,7 +5,7 @@
  * @author Marc Eisoldt (meisoldt)
  */
 
-#include "prototyping/tsdf_values/FittingNormalBase.h"
+#include <tsdf/FittingNormalBase.h>
 
 namespace fastsense::tsdf
 {
@@ -51,4 +51,4 @@ private:
 
 } // namespace fastsense::tsdf
 
-#include <prototyping/tsdf_values/RANSACNormal.tcc>
+#include <tsdf/RANSACNormal.tcc>

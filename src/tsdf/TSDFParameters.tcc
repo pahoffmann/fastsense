@@ -1,41 +1,6 @@
 using namespace fastsense::tsdf;
 
 template<typename SCALAR_T, typename VEC_T>
-void TSDFParameters<SCALAR_T, VEC_T>::load(const ros::NodeHandle& n)
-{
-    SCALAR_T map_size_x = map_size_.x();
-    SCALAR_T map_size_y = map_size_.y();
-    SCALAR_T map_size_z = map_size_.z();
-
-    if(n.hasParam("max_distance"))
-    {   
-        n.getParam("max_distance", max_distance_);
-    }
-
-    if(n.hasParam("map_resolution"))
-    {
-        n.getParam("map_resolution", map_resolution_);
-    }
-
-    if(n.hasParam("map_size/x"))
-    {
-        n.getParam("map_size/x", map_size_x);
-    }
-
-    if(n.hasParam("map_size/y"))
-    {
-        n.getParam("map_size/y", map_size_y);
-    }
-
-    if(n.hasParam("map_size/z"))
-    {
-        n.getParam("map_size/z", map_size_z);
-    }
-
-    setMapSize(VEC_T(map_size_x, map_size_y, map_size_z));
-}
-
-template<typename SCALAR_T, typename VEC_T>
 void TSDFParameters<SCALAR_T, VEC_T>::updateMap()
 {
     scanner_pos_ = map_size_ / 2 / map_resolution_;
