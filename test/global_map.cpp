@@ -4,16 +4,18 @@
  * @author Juri Vana
  */
 
-#include <map/ring_buffer.h>
+#include <map/local_map.h>
+#include <hw/fpga_manager.h>
 #include "catch2_config.h"
 
 using namespace fastsense::map;
+using namespace fastsense::hw;
 
 TEST_CASE("Test Global Map", "[GlobalMap]")
 {
     std::shared_ptr<GlobalMap> gm_ptr = std::make_shared<GlobalMap>("GloabalMapTest.h5", 0, 7);
-
-    RingBuffer<std::pair<float, float>> rb(5, 5, 5, gm_ptr);
+    auto commandQueue = FPGAManager::createCommandQueue();
+    LocalMap<std::pair<float, float>> localMap{5, 5, 5, gm_ptr, commandQueue};
 
     // write some tsdf values and weights into one corner of the ring buffer,
     // that will be written to the file as one chunk
@@ -23,15 +25,15 @@ TEST_CASE("Test Global Map", "[GlobalMap]")
     std::pair<float, float> p3(3, 2);
     std::pair<float, float> p4(4, 3);
     std::pair<float, float> p5(5, 5);
-    rb.value(-2, 2, 0) = p0;
-    rb.value(-1, 2, 0) = p1;
-    rb.value(-2, 1, 0) = p2;
-    rb.value(-1, 1, 0) = p3;
-    rb.value(-2, 0, 0) = p4;
-    rb.value(-1, 0, 0) = p5;
+    localMap.value(-2, 2, 0) = p0;
+    localMap.value(-1, 2, 0) = p1;
+    localMap.value(-2, 1, 0) = p2;
+    localMap.value(-1, 1, 0) = p3;
+    localMap.value(-2, 0, 0) = p4;
+    localMap.value(-1, 0, 0) = p5;
 
     // shift so that the chunk gets unloaded
-    rb.shift(24, 0, 0);
+    localMap.shift(24, 0, 0);
 
     // check file for the numbers
     HighFive::File f("GloabalMapTest.h5", HighFive::File::OpenOrCreate);
@@ -67,7 +69,7 @@ TEST_CASE("Test Global Map", "[GlobalMap]")
 
     std::vector<float> pose;
     d.read(pose);
-    for (int i = 0; i < pose.size(); i++)
+    for (size_t i = 0; i < pose.size(); i++)
     {
         std::cout << pose[i] << " ";
     }

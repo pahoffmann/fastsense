@@ -17,8 +17,9 @@ int main( int argc, char* argv[] )
 {
     auto logSink = std::make_shared<sink::FileSink>("test.log");
     Logger::addSink(logSink);
+    Logger::setLoglevel(LogLevel::Debug);
 
-    FPGAManager::loadXCLBIN("FastSense.xclbin");
+    FPGAManager::loadXCLBIN("FastSense_test.xclbin");
 
     int result = Catch::Session().run(argc, argv);
 
