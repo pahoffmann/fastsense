@@ -1,4 +1,7 @@
-using namespace fastsense::tsdf;
+#pragma once
+
+namespace fastsense::tsdf
+{
 
 template<typename SCALAR_T, typename VEC_T>
 void TSDFParameters<SCALAR_T, VEC_T>::updateMap()
@@ -29,3 +32,5 @@ std::ostream& operator<<(std::ostream& os, const TSDFParameters<SCALAR_T, VEC_T>
        << "\tmap_grid_size_z: " << params.map_grid_size_z_ << '\n'
        << "\ttotal_size: "       << params.total_size_      << std::endl;
 }
+
+} // namespace fastsense::tsdf

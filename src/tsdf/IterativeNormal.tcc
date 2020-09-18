@@ -1,9 +1,12 @@
+#pragma once
+
 /**
  * @author Malte Hillmann (mhillmann)
  * @author Marc Eisoldt (meisoldt)
  */
 
-using namespace fastsense::tsdf;
+namespace fastsense::tsdf
+{
 
 template<typename POINT_T, typename SET_T>
 POINT_T IterativeNormal<POINT_T, SET_T>::operator()(const unsigned short query_ring, const size_t query_index, const SET_T& points) const
@@ -84,3 +87,5 @@ POINT_T IterativeNormal<POINT_T, SET_T>::operator()(const unsigned short query_r
 
     return POINT_T(dir_x, dir_y, dir_z).normalized();
 }
+
+} // namespace fastsense::tsdf

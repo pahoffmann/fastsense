@@ -1,3 +1,5 @@
+#pragma once
+
 #include <algorithm>
 
 /**
@@ -5,7 +7,8 @@
  * @author Marc Eisoldt (meisoldt)
  */
 
-using namespace fastsense::tsdf;
+namespace fastsense::tsdf
+{
 
 template<typename POINT_T, typename SET_T>
 std::vector<POINT_T> ScanOrderNeighbors<POINT_T, SET_T>::operator()(const unsigned short query_ring, const size_t query_index, const SET_T& points) const
@@ -32,3 +35,5 @@ std::vector<POINT_T> ScanOrderNeighbors<POINT_T, SET_T>::operator()(const unsign
 
     return neighbors;
 }
+
+} // namespace fastsense::tsdf
