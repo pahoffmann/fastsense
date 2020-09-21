@@ -16,15 +16,17 @@
  */
 
 
-#include <ros/ros.h>
-#include <sensor_msgs/PointCloud2.h>
-#include <sensor_msgs/Imu.h>
-#include <ros/time.h>
+// #include <ros/ros.h>
+// #include <sensor_msgs/PointCloud2.h>
+// #include <sensor_msgs/Imu.h>
+// #include <ros/time.h>
 
-#include <prototyping/REGConfig.h>
+//#include <prototyping/REGConfig.h>
 
-#include <prototyping/ring_buffer/ring_buffer.h>
-#include <prototyping/types.h>
+//#include <prototyping/ring_buffer/ring_buffer.h>
+//#include <prototyping/types.h>
+
+#include <hw/map/local_map.h>
 
 #include <cmath>
 #include <mutex>
@@ -36,6 +38,8 @@
 #ifndef REGISTRATION_H_
 #define REGISTRATION_H_
 
+namespace fastsense::registation
+{
 
 /**
  * @brief
@@ -157,5 +161,8 @@ public:
      */
     static void transform_point_cloud(ScanPoints_t<Vector3>& in_cloud, const Matrix4x4& transform);
 };
+
+
+} //namespace fastsense
 
 #endif
