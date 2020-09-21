@@ -1,8 +1,30 @@
 #pragma once
 
-#include <util/time_stamp.h>
-#include <msg/msgs_stamped.h>
-#include <map/local_map.h>
+/**
+ * @file registration.h
+ * @author Patrick Hoffmann
+ * @author Adrian Nitschmann
+ * @author Pascal Buschermöhle
+ * @author Malte Hillmann
+ * @author Marc Eisoldt
+ * @brief
+ * @version 0.1
+ * @date 2020-08-24
+ *
+ * @copyright Copyright (c) 2020
+ *
+ */
+
+
+#include <ros/ros.h>
+#include <sensor_msgs/PointCloud2.h>
+#include <sensor_msgs/Imu.h>
+#include <ros/time.h>
+
+#include <prototyping/REGConfig.h>
+
+#include <prototyping/ring_buffer/ring_buffer.h>
+#include <prototyping/types.h>
 
 #include <cmath>
 #include <mutex>
@@ -30,7 +52,7 @@ private:
     typedef Eigen::Matrix<float, 4, 4> Matrix4x4; //transform matrix
     typedef Eigen::Matrix<float, 3, 3> Matrix3x3; //rotation matrix
 
-    /*struct Point
+    struct Point
     {
         float x;
         float y;
@@ -39,7 +61,7 @@ private:
         float intensity;
         short ring;
         char fill2[10];
-    };*/
+    };
 
     int max_iterations_;
     double weighting_constant_;
@@ -47,11 +69,9 @@ private:
     double it_weight_gradient_;
 
     std::mutex mutex_;
-    //ros::Publisher marker_pub_;
+    ros::Publisher marker_pub_;
     Matrix4x4 global_transform_; //used to store the transform since the last registration (right now calculated using the angular velocities by the IMU)
-    //ros::Time imu_time_;
-    fastsense::util::TimeStamp imu_time_;
-
+    ros::Time imu_time_;
     
     /**
      * @brief transforms xi vector 6x1 (angular and linear velocity) to transformation matrix 4x4
@@ -81,7 +101,7 @@ public:
         global_transform_.setIdentity();
     }
 
-    //Registration(const ros::NodeHandle& n);
+    Registration(const ros::NodeHandle& n);
 
     /**
      * Destructor of the ring buffer.
@@ -89,7 +109,7 @@ public:
      */
     virtual ~Registration();
 
-    //void load_params(const ros::NodeHandle& n);
+    void load_params(const ros::NodeHandle& n);
 
     float calc_weight(float x) const 
     {
@@ -117,8 +137,7 @@ public:
      *
      * @param imu
      */
-    //void update_imu_data(const sensor_msgs::Imu& imu);
-    void update_imu_data(const fastsense::msg::ImuMsgStamped imu);
+    void update_imu_data(const sensor_msgs::Imu& imu);
 
 
     /**
@@ -127,7 +146,7 @@ public:
      * @param config
      * @param level
      */
-    //void dynamic_reconfigure_callback(prototyping::REGConfig& config, uint32_t level);
+    void dynamic_reconfigure_callback(prototyping::REGConfig& config, uint32_t level);
 
     /**
      * @brief Transforms a given pointcloud with the transform and stores it inside the out_cloud

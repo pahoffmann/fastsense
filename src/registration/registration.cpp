@@ -14,11 +14,9 @@
 
 #include "prototyping/registration/registration.h"
 
-
-
-Registration::Registration()
+Registration::Registration(const ros::NodeHandle& n) : Registration()
 {
-    global_transform_.setIdentity();
+    load_params(n);
 }
 
 Registration::~Registration()
@@ -26,11 +24,37 @@ Registration::~Registration()
     // Currently not necessary, because all member variablesare of a memory save type
 }
 
+void Registration::load_params(const ros::NodeHandle& n)
+{
+    if(n.hasParam("registration/max_iterations"))
+    {   
+        n.getParam("registration/max_iterations", max_iterations_);
+    }
+
+    if(n.hasParam("registration/weighting_constant"))
+    {
+        n.getParam("registration/weighting_constant", weighting_constant_);
+    }
+
+    if(n.hasParam("registration/it_weight_offset"))
+    {
+        n.getParam("registration/it_weight_offset", it_weight_offset_);
+    }
+
+    if(n.hasParam("registration/it_weight_gradient"))
+    {
+        n.getParam("registration/it_weight_gradient", it_weight_gradient_);
+    }
+}
+
 void Registration::dynamic_reconfigure_callback(prototyping::REGConfig& config, uint32_t level)
 {
     mutex_.lock();
 
-    this->config = config;
+    max_iterations_ = config.max_iterations;
+    weighting_constant_ = config.weighting_constant;
+    it_weight_offset_ = config.it_weight_offset;
+    it_weight_gradient_ = config.it_weight_gradient;
 
     mutex_.unlock();
 
@@ -146,7 +170,7 @@ Registration::Matrix4x4 Registration::register_cloud(const RingBuffer<std::pair<
 
     Matrix4x4 next_transform = cur_transform;
 
-    auto alpha = config.it_weight_offset;
+    auto alpha = it_weight_offset_;
 
     double previous_errors[4] = {0, 0, 0, 0};
     double error = 0.0;
@@ -173,7 +197,7 @@ Registration::Matrix4x4 Registration::register_cloud(const RingBuffer<std::pair<
         Matrix6x1 jacobi;
         Eigen::Vector4f extended;
 
-        for (int i = 0; i < config.max_iterations && !finished; i++)
+        for (int i = 0; i < max_iterations_ && !finished; i++)
         {
             local_h = Matrix6x6::Zero();
             local_g = Matrix6x1::Zero();
@@ -264,14 +288,14 @@ Registration::Matrix4x4 Registration::register_cloud(const RingBuffer<std::pair<
                 //convert xi into transform matrix T
                 next_transform = xi_to_transform(xi);
 
-                alpha += config.it_weight_gradient;
+                alpha += it_weight_gradient_;
 
-                cur_transform = cur_transform * next_transform; //update transform
+                cur_transform = next_transform * cur_transform; //update transform
 
                 error /= count;
                 if (fabs(error - previous_errors[2]) < epsilon && fabs(error - previous_errors[0]) < epsilon)
                 {
-                    std::cout << "Stopped after " << i << " / " << config.max_iterations << " Iterations" << std::endl;
+                    std::cout << "Stopped after " << i << " / " << max_iterations_ << " Iterations" << std::endl;
                     finished = true;
                 }
                 for (int e = 1; e < 4; e++)
