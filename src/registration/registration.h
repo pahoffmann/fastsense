@@ -1,6 +1,8 @@
+#pragma once
+
 #include <util/time_stamp.h>
 #include <msg/msgs_stamped.h>
-#include <map/ring_buffer.h>
+#include <map/local_map.h>
 
 #include <cmath>
 #include <mutex>
