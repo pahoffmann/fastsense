@@ -41,7 +41,7 @@
 #ifndef REGISTRATION_H_
 #define REGISTRATION_H_
 
-namespace fastsense::registation
+namespace fastsense::registration
 {
 
 /**
@@ -78,6 +78,7 @@ private:
     std::mutex mutex_;
     Matrix4x4 global_transform_; //used to store the transform since the last registration (right now calculated using the angular velocities by the IMU)
     fastsense::util::TimeStamp imu_time_;
+    bool first_imu_msg_;
     
     /**
      * @brief transforms xi vector 6x1 (angular and linear velocity) to transformation matrix 4x4
@@ -102,12 +103,11 @@ public:
     max_iterations_(max_iterations),
     weighting_constant_(weighting_constant),
     it_weight_offset_(it_weight_offset),
-    it_weight_gradient_(it_weight_gradient) 
+    it_weight_gradient_(it_weight_gradient),
+    first_imu_msg_(true)
     {
         global_transform_.setIdentity();
     }
-
-    Registration();
 
     /**
      * Destructor of the ring buffer.

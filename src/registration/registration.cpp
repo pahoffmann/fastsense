@@ -12,54 +12,15 @@
  */
 
 
-#include "prototyping/registration/registration.h"
+#include "registration.h"
 
-Registration::Registration(const ros::NodeHandle& n) : Registration()
-{
-    load_params(n);
-}
+using namespace fastsense::registration;
 
 Registration::~Registration()
 {
     // Currently not necessary, because all member variablesare of a memory save type
 }
 
-void Registration::load_params(const ros::NodeHandle& n)
-{
-    if(n.hasParam("registration/max_iterations"))
-    {   
-        n.getParam("registration/max_iterations", max_iterations_);
-    }
-
-    if(n.hasParam("registration/weighting_constant"))
-    {
-        n.getParam("registration/weighting_constant", weighting_constant_);
-    }
-
-    if(n.hasParam("registration/it_weight_offset"))
-    {
-        n.getParam("registration/it_weight_offset", it_weight_offset_);
-    }
-
-    if(n.hasParam("registration/it_weight_gradient"))
-    {
-        n.getParam("registration/it_weight_gradient", it_weight_gradient_);
-    }
-}
-
-void Registration::dynamic_reconfigure_callback(prototyping::REGConfig& config, uint32_t level)
-{
-    mutex_.lock();
-
-    max_iterations_ = config.max_iterations;
-    weighting_constant_ = config.weighting_constant;
-    it_weight_offset_ = config.it_weight_offset;
-    it_weight_gradient_ = config.it_weight_gradient;
-
-    mutex_.unlock();
-
-    ROS_INFO_STREAM("Parameters have changed:");
-}
 
 void Registration::transform_point_cloud(ScanPoints_t<Vector3>& in_cloud, const Matrix4x4& transform)
 {
@@ -110,15 +71,15 @@ float Registration::filter_value(const std::pair<float, float>& buf_entry)
     return buf_entry.first;
 }
 
-float Registration::interpolate(const RingBuffer<std::pair<float, float>>& buffer, const Vector3& point)
+float Registration::interpolate(const fastsense::map::LocalMap<std::pair<float, float>>& localmap, const Vector3& point)
 {
     int buf_x = (int)std::floor(point.x());
     int buf_y = (int)std::floor(point.y());
     int buf_z = (int)std::floor(point.z());
 
-    return interpolate(buffer, point, buf_x, buf_y, buf_z);
+    return interpolate(localmap, point, buf_x, buf_y, buf_z);
 }
-float Registration::interpolate(const RingBuffer<std::pair<float, float>>& buffer, const Vector3& point, int buf_x, int buf_y, int buf_z)
+float Registration::interpolate(const fastsense::map::LocalMap<std::pair<float, float>>& localmap, const Vector3& point, int buf_x, int buf_y, int buf_z)
 {
     // TSDF values must be calculated for a corner not the center of the grid
 
@@ -133,14 +94,14 @@ float Registration::interpolate(const RingBuffer<std::pair<float, float>>& buffe
 
     try
     {
-        c000 = filter_value(buffer.value(buf_x, buf_y, buf_z));
-        c100 = filter_value(buffer.value(buf_x + 1, buf_y, buf_z));
-        c010 = filter_value(buffer.value(buf_x, buf_y + 1, buf_z));
-        c110 = filter_value(buffer.value(buf_x + 1, buf_y + 1, buf_z));
-        c001 = filter_value(buffer.value(buf_x, buf_y, buf_z + 1));
-        c101 = filter_value(buffer.value(buf_x + 1, buf_y, buf_z + 1));
-        c011 = filter_value(buffer.value(buf_x, buf_y + 1, buf_z + 1));
-        c111 = filter_value(buffer.value(buf_x + 1, buf_y + 1, buf_z + 1));
+        c000 = filter_value(localmap.value(buf_x, buf_y, buf_z));
+        c100 = filter_value(localmap.value(buf_x + 1, buf_y, buf_z));
+        c010 = filter_value(localmap.value(buf_x, buf_y + 1, buf_z));
+        c110 = filter_value(localmap.value(buf_x + 1, buf_y + 1, buf_z));
+        c001 = filter_value(localmap.value(buf_x, buf_y, buf_z + 1));
+        c101 = filter_value(localmap.value(buf_x + 1, buf_y, buf_z + 1));
+        c011 = filter_value(localmap.value(buf_x, buf_y + 1, buf_z + 1));
+        c111 = filter_value(localmap.value(buf_x + 1, buf_y + 1, buf_z + 1));
     }
     catch (int)
     {
@@ -161,7 +122,7 @@ float Registration::interpolate(const RingBuffer<std::pair<float, float>>& buffe
            tx * ty * tz * c111;
 }
 
-Registration::Matrix4x4 Registration::register_cloud(const RingBuffer<std::pair<float, float>>& buffer, ScanPoints_t<Vector3>& cloud)
+Registration::Matrix4x4 Registration::register_cloud(const fastsense::map::LocalMap<std::pair<float, float>>& localmap, ScanPoints_t<Vector3>& cloud)
 {
     mutex_.lock();
     Matrix4x4 cur_transform = global_transform_; //transform used to register the pcl
@@ -225,18 +186,18 @@ Registration::Matrix4x4 Registration::register_cloud(const RingBuffer<std::pair<
 
                     try
                     {
-                        const auto& current = buffer.value(buf_x, buf_y, buf_z);
+                        const auto& current = localmap.value(buf_x, buf_y, buf_z);
                         if (current.second == 0.0)
                         {
                             continue;
                         }
 
-                        const auto& x_next = buffer.value(buf_x + 1, buf_y, buf_z);
-                        const auto& x_last = buffer.value(buf_x - 1, buf_y, buf_z);
-                        const auto& y_next = buffer.value(buf_x, buf_y + 1, buf_z);
-                        const auto& y_last = buffer.value(buf_x, buf_y - 1, buf_z);
-                        const auto& z_next = buffer.value(buf_x, buf_y, buf_z + 1);
-                        const auto& z_last = buffer.value(buf_x, buf_y, buf_z - 1);
+                        const auto& x_next = localmap.value(buf_x + 1, buf_y, buf_z);
+                        const auto& x_last = localmap.value(buf_x - 1, buf_y, buf_z);
+                        const auto& y_next = localmap.value(buf_x, buf_y + 1, buf_z);
+                        const auto& y_last = localmap.value(buf_x, buf_y - 1, buf_z);
+                        const auto& z_next = localmap.value(buf_x, buf_y, buf_z + 1);
+                        const auto& z_last = localmap.value(buf_x, buf_y, buf_z - 1);
 
                         gradient = Matrix3x1::Zero();
 
@@ -325,19 +286,28 @@ Registration::Matrix4x4 Registration::register_cloud(const RingBuffer<std::pair<
  * TODO: auslagern in andere Klasse
  * TODO: determine weather the queue of the pcl callback might be a probl.
  */
-void Registration::update_imu_data(const sensor_msgs::Imu& imu)
+void Registration::update_imu_data(const fastsense::msg::ImuMsgStamped& imu)
 {
-    if (imu_time_.toSec() == 0)
-    {
-        imu_time_ = imu.header.stamp;
+    if(first_imu_msg_ == true){
+        imu_time_ = imu.second;
+        first_imu_msg_ = false;
         return;
     }
 
-    ros::Duration acc_time = imu.header.stamp - imu_time_;
+    /*if (imu_time_.toSec() == 0)
+    {
+        imu_time_ = imu.header.stamp;
+        return;
+    }*/
 
-    Vector3 ang_vel(imu.angular_velocity.x, imu.angular_velocity.y, imu.angular_velocity.z);
+    float acc_time = std::chrono::duration_cast<std::chrono::seconds>(imu.second.time - imu_time_.time).count();
 
-    Vector3 orientation = ang_vel * acc_time.toSec(); //in radiants [rad, rad, rad]
+    //ros::Duration acc_time = imu.header.stamp - imu_time_;
+
+    Vector3 ang_vel(imu.first.ang.x(), imu.first.ang.y(), imu.first.ang.z());
+    //Vector3 ang_vel(imu.angular_velocity.x, imu.angular_velocity.y, imu.angular_velocity.z);
+
+    Vector3 orientation = ang_vel * acc_time; //in radiants [rad, rad, rad]
     auto rotation = Eigen::AngleAxisf(orientation.x(), Vector3::UnitX())
                     * Eigen::AngleAxisf(orientation.y(), Vector3::UnitY())
                     * Eigen::AngleAxisf(orientation.z(), Vector3::UnitZ());
@@ -349,5 +319,5 @@ void Registration::update_imu_data(const sensor_msgs::Imu& imu)
     global_transform_ *= local_transform; //combine/update transforms
     mutex_.unlock();
 
-    imu_time_ = imu.header.stamp;
+    imu_time_ = imu.second;
 }
