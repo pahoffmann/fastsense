@@ -59,17 +59,6 @@ private:
     typedef Eigen::Matrix<float, 4, 4> Matrix4x4; //transform matrix
     typedef Eigen::Matrix<float, 3, 3> Matrix3x3; //rotation matrix
 
-    struct Point
-    {
-        float x;
-        float y;
-        float z;
-        char fill[4];
-        float intensity;
-        short ring;
-        char fill2[10];
-    };
-
     int max_iterations_;
     double weighting_constant_;
     double it_weight_offset_;
