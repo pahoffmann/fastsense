@@ -222,7 +222,7 @@ Registration::Matrix4x4 Registration::register_cloud(const fastsense::map::Local
                         local_error += fabs(current.first);
                         local_count++;
                     }
-                    catch (std::out_of_range)
+                    catch (const std::out_of_range&)
                     {
                     }
                 }

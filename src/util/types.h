@@ -4,7 +4,7 @@
  * @author Malte Hillmann (mhillmann)
  */
 
-#include <Eigen/Dense>
+#include <eigen3/Eigen/Dense>
 
 #include <vector>
 

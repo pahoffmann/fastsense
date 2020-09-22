@@ -14,10 +14,9 @@
 #include <hw/kernels/vadd_kernel.h>
 #include <hw/types.h>
 #include <hw/fpga_manager.h>
-#include "registration.h"
+#include <registration/registration.h>
 
-#define CATCH_CONFIG_MAIN
-#include <catch2/catch.hpp>
+#include "catch2_config.h"
 
 namespace fastsense::registration{
 
