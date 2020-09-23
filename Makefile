@@ -18,6 +18,7 @@ PLATFORM_DIR ?= $(CURDIR)/base_design/platform/FastSense_platform/export/FastSen
 APP_EXE = $(BUILD_DIR)/$(APP_NAME).exe
 APP_TEST_EXE = $(BUILD_DIR)/$(APP_NAME)_test.exe
 APP_XCLBIN = $(BUILD_DIR)/$(APP_NAME).xclbin
+APP_TEST_XCLBIN = $(BUILD_DIR)/$(APP_NAME)_test.xclbin
 
 # Software
 SYSROOT = $(PLATFORM_DIR)/sw/FastSense_platform/linux_domain/sysroot/aarch64-xilinx-linux
@@ -69,8 +70,9 @@ INC_DIRS = \
 
 INC_FLAGS = $(addprefix -I,$(INC_DIRS))
 CXX_STD = c++17
-GCCFLAGS = -Wall -Wextra -Wnon-virtual-dtor -ansi -pedantic -Wfatal-errors -O2 -ftree-loop-vectorize -fexceptions
-CXXFLAGS = $(INC_FLAGS) $(GCCFLAGS) -MMD -MP -D__USE_XOPEN2K8 -c -fmessage-length=0 -std=$(CXX_STD) --sysroot=$(SYSROOT)
+CXX_OPTFGLAGS ?= -O2 -ftree-loop-vectorize
+GCCFLAGS = -Wall -Wextra -Wnon-virtual-dtor -ansi -pedantic -Wfatal-errors  -fexceptions -Wno-unknown-pragmas
+CXXFLAGS = $(INC_FLAGS) $(GCCFLAGS) $(CXX_OPTFGLAGS) -MMD -MP -D__USE_XOPEN2K8 -c -fmessage-length=0 -std=$(CXX_STD) --sysroot=$(SYSROOT)
 
 LDFLAGS = $(LIBS) --sysroot=$(SYSROOT)
 
@@ -85,10 +87,17 @@ HW_SRCS = src/example/krnl_vadd.cpp
 HW_OBJS = $(HW_SRCS:%.cpp=$(BUILD_DIR)/%.xo)
 HW_DEPS = $(HW_OBJS:.xo=.d)
 
-VXXFLAGS = -t $(HW_TARGET) -f $(HW_PLATFORM) -c $(INC_FLAGS) --config $(BUILD_CFG)
+HW_TEST_SRCS =
+HW_TEST_OBJS = $(HW_TEST_SRCS:%.cpp=$(BUILD_DIR)/%.xo)
+HW_TEST_DEPS = $(HW_TEST_OBJS:.xo=.d)
+
+HW_INC_DIRS = src
+HW_INC_FLAGS = $(addprefix -I,$(HW_INC_DIRS))
+
+VXXFLAGS = -t $(HW_TARGET) -f $(HW_PLATFORM) -c $(HW_INC_FLAGS) --config $(BUILD_CFG)
 VXXLDFLAGS = -t $(HW_TARGET) -f $(HW_PLATFORM) --config $(LINK_CFG) --link
 
-HW_DEPS_FLAGS = $(INC_FLAGS) -isystem $(XILINX_VIVADO)/include -MM -MP
+HW_DEPS_FLAGS = $(HW_INC_FLAGS) -isystem $(XILINX_VIVADO)/include -MM -MP
 
 #
 # Rules
@@ -98,9 +107,11 @@ HW_DEPS_FLAGS = $(INC_FLAGS) -isystem $(XILINX_VIVADO)/include -MM -MP
 
 all: software hardware
 
+test: test_software test_hardware
+
 clean:
 	@rm -rf _x .Xil _vimage *.log pl_script.sh start_simulation.sh
-	@rm -rf build/*
+	@rm -rf build/* build/.Xil
 
 clean_software:
 	@rm -rf $(SW_OBJS) $(ENTRY_POINT_OBJS) $(SW_DEPS) $(ENTRY_POINT_DEPS) $(APP_EXE)
@@ -116,9 +127,11 @@ clean_ros_nodes:
 
 software: $(APP_EXE)
 
-test: $(APP_TEST_EXE)
-
 hardware: $(APP_XCLBIN)
+
+test_software: $(APP_TEST_EXE)
+
+test_hardware: $(APP_TEST_XCLBIN)
 
 # Link software
 $(APP_EXE): $(ENTRY_POINT_OBJS) $(SW_OBJS)
@@ -126,7 +139,7 @@ $(APP_EXE): $(ENTRY_POINT_OBJS) $(SW_OBJS)
 	@$(MKDIR_P) $(dir $@)
 	@$(CXX) $(ENTRY_POINT_OBJS) $(SW_OBJS) -o $@ $(LDFLAGS)
 
-# Link test
+# Link test software
 $(APP_TEST_EXE): $(TEST_OBJS) $(SW_OBJS)
 	@echo "Link: $(APP_TEST_EXE)"
 	@$(MKDIR_P) $(dir $@)
@@ -142,17 +155,23 @@ $(BUILD_DIR)/%.o: %.cpp
 $(APP_XCLBIN): $(HW_OBJS) $(LINK_CFG)
 	@echo "Link hardware: $(APP_XCLBIN)"
 	@$(MKDIR_P) $(dir $@)
-	@$(VXX) $(HW_OBJS) -o $@ $(VXXLDFLAGS) > $<.out || cat $<.out
+	@$(VXX) $(HW_OBJS) -o $@ $(VXXLDFLAGS) > $<.out || (cat $<.out && false)
+
+# Link test hardware
+$(APP_TEST_XCLBIN): $(HW_OBJS) $(HW_TEST_OBJS) $(LINK_CFG)
+	@echo "Link hardware: $(APP_TEST_XCLBIN)"
+	@$(MKDIR_P) $(dir $@)
+	@$(VXX) $(HW_OBJS) $(HW_TEST_OBJS) -o $@ $(VXXLDFLAGS) > $<.out || (cat $<.out && false)
 
 # Compile kernels
 $(BUILD_DIR)/%.xo: %.cpp $(BUILD_CFG)
 	@echo "Compile kernel: $<"
 	@$(MKDIR_P) $(dir $@)
 	@$(HOST_CXX) $< $(HW_DEPS_FLAGS) -MF $(@:.xo=.d) -MT $@
-	@$(VXX) $(VXXFLAGS) $< -o $@ -k $(notdir $*) > $<.out || cat $<.out
+	@$(VXX) $(VXXFLAGS) $< -o $@ -k $(notdir $*) > $<.out || (cat $<.out && false)
 
 # Open HLS GUI for kernel
-hls_%: $(filter %$*.xo,$(HW_OBJS))
+hls_%: $(filter %$*.xo,$(HW_OBJS) $(HW_TEST_OBJS))
 	@echo "Opening HLS for kernel $* ($<) "
 	@$(VIVADO_HLS) -p _x/$*/$*/$*/
 
@@ -163,7 +182,7 @@ copy_binaries_to_qemu:
 	xsct -eval "set filelist {"build/FastSense.exe" "/mnt/FastSense.exe" "build/FastSense.xclbin" "/mnt/FastSense.xclbin"}; source copy_to_qemu.tcl"
 
 copy_test_to_qemu:
-	xsct -eval 'set filelist {"build/FastSense_test.exe" "/mnt/FastSense_test.exe" "build/FastSense.xclbin" "/mnt/FastSense.xclbin" "test/config.json" "/mnt/config.json"}; source copy_to_qemu.tcl'
+	xsct -eval 'set filelist {"build/FastSense_test.exe" "/mnt/FastSense_test.exe" "build/FastSense_test.xclbin" "/mnt/FastSense_test.xclbin" "test/config.json" "/mnt/config.json"}; source copy_to_qemu.tcl'
 
 # Add for each port to forward "-redir tcp:localport::vmport" as --qemu-args
 start_emulator:
@@ -181,3 +200,4 @@ format:
 -include $(SW_DEPS)
 -include $(TEST_DEPS)
 -include $(HW_DEPS)
+-include $(HW_TEST_DEPS)

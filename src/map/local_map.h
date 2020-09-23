@@ -7,6 +7,8 @@
 #pragma once
 
 #include <map/global_map.h>
+#include <hw/buffer/buffer.h>
+#include <map/local_map_hw.h>
 
 namespace fastsense::map
 {
@@ -21,7 +23,7 @@ namespace fastsense::map
  * Otherwise the function shift will not work.
  */
 template<typename T>
-class RingBuffer
+class LocalMap
 {
 
 private:
@@ -35,7 +37,7 @@ private:
     int sizeZ;
 
     /// Actual data of the ring buffer.
-    T* data;
+    buffer::InputOutputBuffer<T> data;
 
     /// Position of the center of the cuboid in global coordinates.
     int posX;
@@ -71,13 +73,13 @@ public:
      * @param sZ Side length of the ring buffer in the z direction
      * @param map Pointer to the global map
      */
-    RingBuffer(unsigned int sX, unsigned int sY, unsigned int sZ, std::shared_ptr<GlobalMap> map);
+    LocalMap(unsigned int sX, unsigned int sY, unsigned int sZ, const std::shared_ptr<GlobalMap>& map, const CommandQueuePtr& queue);
 
     /**
      * Destructor of the ring buffer.
      * Deletes the array in particular.
      */
-    virtual ~RingBuffer();
+    virtual ~LocalMap();
 
     /**
      * Returns a value from the ring buffer per reference.
@@ -131,8 +133,11 @@ public:
      */
     bool inBounds(int x, int y, int z) const;
 
+    const buffer::InputOutputBuffer<T>& getBuffer() const;
+    
+    LocalMapHW getHardwareRepresentation() const;
 };
 
 } // namespace fastsense::map
 
-#include "ring_buffer.tcc"
+#include "local_map.tcc"

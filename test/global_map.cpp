@@ -1,19 +1,21 @@
 /**
- * @file test_global_map.cpp
+ * @file global_map.cpp
  * @author Steffen Hinderink
  * @author Juri Vana
  */
 
-#include <map/ring_buffer.h>
+#include <map/local_map.h>
+#include <hw/fpga_manager.h>
 #include "catch2_config.h"
 
 using namespace fastsense::map;
+using namespace fastsense::hw;
 
-TEST_CASE("Test Global Map", "[GlobalMap]")
+TEST_CASE("Test Map", "[Map]")
 {
-    std::shared_ptr<GlobalMap> gm_ptr = std::make_shared<GlobalMap>("GloabalMapTest.h5", 0, 7);
-
-    RingBuffer<std::pair<float, float>> rb(5, 5, 5, gm_ptr);
+    std::shared_ptr<GlobalMap> gm_ptr = std::make_shared<GlobalMap>("MapTest.h5", 0, 7);
+    auto commandQueue = FPGAManager::createCommandQueue();
+    LocalMap<std::pair<float, float>> localMap{5, 5, 5, gm_ptr, commandQueue};
 
     // write some tsdf values and weights into one corner of the ring buffer,
     // that will be written to the file as one chunk
@@ -23,22 +25,58 @@ TEST_CASE("Test Global Map", "[GlobalMap]")
     std::pair<float, float> p3(3, 2);
     std::pair<float, float> p4(4, 3);
     std::pair<float, float> p5(5, 5);
-    rb.value(-2, 2, 0) = p0;
-    rb.value(-1, 2, 0) = p1;
-    rb.value(-2, 1, 0) = p2;
-    rb.value(-1, 1, 0) = p3;
-    rb.value(-2, 0, 0) = p4;
-    rb.value(-1, 0, 0) = p5;
+    localMap.value(-2, 2, 0) = p0;
+    localMap.value(-1, 2, 0) = p1;
+    localMap.value(-2, 1, 0) = p2;
+    localMap.value(-1, 1, 0) = p3;
+    localMap.value(-2, 0, 0) = p4;
+    localMap.value(-1, 0, 0) = p5;
+
+    int pos[3];
+    localMap.getPos(pos);
+    int size[3];
+    localMap.getSize(size);
+    SECTION("local map")
+    {
+        // test getter
+        REQUIRE(pos[0] == 0 && pos[1] == 0 && pos[2] == 0);
+        REQUIRE(size[0] == 5 && size[1] == 5 && size[2] == 5);
+        // test inBounds
+        REQUIRE(localMap.inBounds(0, 2, -2));
+        REQUIRE(!localMap.inBounds(22, 0, 0));
+        // test default values
+        REQUIRE(localMap.value(0, 0, 0).first == 0);
+        REQUIRE(localMap.value(0, 0, 0).second == 7);
+        // test value access
+        REQUIRE(localMap.value(-1, 2, 0).first == 1);
+        REQUIRE(localMap.value(-1, 2, 0).second == 1);
+    }
 
     // shift so that the chunk gets unloaded
-    rb.shift(24, 0, 0);
+    localMap.shift(24, 0, 0);
+
+    localMap.getPos(pos);
+    SECTION("local map shift")
+    {
+        // test getter
+        REQUIRE(pos[0] == 24 && pos[1] == 0 && pos[2] == 0);
+        REQUIRE(size[0] == 5 && size[1] == 5 && size[2] == 5);
+        // test inBounds
+        REQUIRE(!localMap.inBounds(0, 2, -2));
+        REQUIRE(localMap.inBounds(22, 0, 0));
+        // test values
+        REQUIRE(localMap.value(24, 0, 0).first == 0);
+        REQUIRE(localMap.value(24, 0, 0).second == 7);
+    }
 
     // check file for the numbers
-    HighFive::File f("GloabalMapTest.h5", HighFive::File::OpenOrCreate);
+    HighFive::File f("MapTest.h5", HighFive::File::OpenOrCreate);
     HighFive::Group g = f.getGroup("/map");
     HighFive::DataSet d = g.getDataSet("-1_0_0");
     std::vector<float> chunk;
     d.read(chunk);
+
+    /*
     std::cout << "tsdf values:" << std::endl;
     for (int y = 15; y >= 0; y--)
     {
@@ -58,6 +96,7 @@ TEST_CASE("Test Global Map", "[GlobalMap]")
         }
         std::cout << std::endl;
     }
+    */
 
     // test pose
     gm_ptr->savePose(8, 13, 21, 34, 55, 89);
@@ -67,13 +106,16 @@ TEST_CASE("Test Global Map", "[GlobalMap]")
 
     std::vector<float> pose;
     d.read(pose);
-    for (int i = 0; i < pose.size(); i++)
+
+    /*
+    for (size_t i = 0; i < pose.size(); i++)
     {
         std::cout << pose[i] << " ";
     }
     std::cout << std::endl;
+    */
 
-    SECTION("tsdf values")
+    SECTION("global map tsdf values")
     {
         REQUIRE(chunk[(16 * 16 * 14 + 16 * 2) * 2] == 0);
         REQUIRE(chunk[(16 * 16 * 15 + 16 * 2) * 2] == 1);
@@ -83,7 +125,7 @@ TEST_CASE("Test Global Map", "[GlobalMap]")
         REQUIRE(chunk[(16 * 16 * 15 + 16 * 0) * 2] == 5);
     }
 
-    SECTION("weights")
+    SECTION("global map weights")
     {
         REQUIRE(chunk[(16 * 16 * 14 + 16 * 2) * 2 + 1] == 0);
         REQUIRE(chunk[(16 * 16 * 15 + 16 * 2) * 2 + 1] == 1);
@@ -93,7 +135,7 @@ TEST_CASE("Test Global Map", "[GlobalMap]")
         REQUIRE(chunk[(16 * 16 * 15 + 16 * 0) * 2 + 1] == 5);
     }
 
-    SECTION("poses")
+    SECTION("global map poses")
     {
         int i = 0;
         REQUIRE(pose[i++] == 144);

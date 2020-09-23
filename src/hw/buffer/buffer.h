@@ -291,7 +291,7 @@ public:
      *
      * @return cl::Buffer&
      */
-    cl::Buffer& getBuffer()
+    const cl::Buffer& getBuffer() const
     {
         return buffer_;
     }
@@ -301,7 +301,7 @@ public:
      *
      * @return size_t size in bytes
      */
-    size_t sizeInBytes()
+    size_t sizeInBytes() const
     {
         return num_elements_ * sizeof(T);
     }
