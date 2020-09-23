@@ -30,6 +30,7 @@
 #include <util/types.h>
 #include <util/time_stamp.h>
 #include <msg/msgs_stamped.h>
+#include <msg/point.h>
 
 #include <cmath>
 #include <mutex>
@@ -119,7 +120,7 @@ public:
      * @param cloud
      * @return Matrix4x4
      */
-    Matrix4x4 register_cloud(const fastsense::map::LocalMap<std::pair<float, float>>& localmap, ScanPoints_t<Vector3>& cloud);
+    Matrix4x4 register_cloud(const fastsense::map::LocalMap<std::pair<float, float>>& localmap, vector<fastsense::msg::Point>& cloud);
 
     /**
      * @brief Updates the IMU data used by the registration method
@@ -135,7 +136,7 @@ public:
      * @param out_cloud
      * @param transform
      */
-    static void transform_point_cloud(ScanPoints_t<Vector3>& in_cloud, const Matrix4x4& transform);
+    static void transform_point_cloud(vector<fastsense::msg::Point>& in_cloud, const Matrix4x4& transform);
 };
 
 

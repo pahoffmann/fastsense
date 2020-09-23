@@ -22,20 +22,22 @@ Registration::~Registration()
 }
 
 
-//todo: auslagern in hw, could spare some time -> pcl_transform_kernel
-void Registration::transform_point_cloud(ScanPoints_t<Vector3>& in_cloud, const Matrix4x4& transform)
+//todo: check whether data exchange has a negative consequences regarding the runtime
+//TODO: test functionality
+void Registration::transform_point_cloud(vector<fastsense::msg::Point>& in_cloud, const Matrix4x4& transform)
 {
     #pragma omp parallel for schedule(static) collapse(2)
-    for (auto ring = 0u; ring < in_cloud.size(); ++ring)
+    
+    for (auto index = 0u; index < in_cloud.size(); ++index)
     {
-        for (auto index = 0u; index < in_cloud[0].size(); ++index)
-        {
-            Eigen::Vector4f v;
-            auto& point = in_cloud[ring][index];
+        Eigen::Vector4f v;
+        fastsense::msg::Point& point = in_cloud[index];
 
-            v << point, 1.0f;
-            point = (transform * v).block<3, 1>(0, 0);
-        }
+        v << point.x, point.y, point.z, 1.0f;
+        v = transform * v;
+        point.x = v.x;
+        point.y = v.y;
+        point.z = v.z;
     }
 }
 
@@ -72,7 +74,7 @@ float Registration::filter_value(const std::pair<float, float>& buf_entry)
     return buf_entry.first;
 }
 
-Registration::Matrix4x4 Registration::register_cloud(const fastsense::map::LocalMap<std::pair<float, float>>& localmap, ScanPoints_t<Vector3>& cloud)
+Registration::Matrix4x4 Registration::register_cloud(const fastsense::map::LocalMap<std::pair<float, float>>& localmap, vector<fastsense::msg::Point>& cloud)
 {
     mutex_.lock();
     Matrix4x4 cur_transform = global_transform_; //transform used to register the pcl
@@ -87,7 +89,7 @@ Registration::Matrix4x4 Registration::register_cloud(const fastsense::map::Local
     double error = 0.0;
     int count = 0;
     const double epsilon = 0.0001; // TODO: make parameter?
-    const size_t width = cloud[0].size();
+    const size_t width = cloud.size();
 
     bool finished = false;
 
@@ -123,63 +125,66 @@ Registration::Matrix4x4 Registration::register_cloud(const fastsense::map::Local
             #pragma omp for schedule(static) nowait
             for (size_t i = 0; i < width; i++)
             {
-                for (size_t ring = 0; ring < cloud.size(); ring++)
+                fastsense::msg::Point& point_tmp = cloud[i];
+
+                if (std::isnan(point.x))
                 {
-                    Vector3& point = cloud[ring][i];
-                    if (std::isnan(point.x()))
+                    continue;
+                }
+
+                // apply transform from previous iteration/IMU
+                extended << point.x, point.y, point.z, 1.0f;
+                extended = next_transform * extended;
+                point.x = extended.x;
+                point.y = extended.y;
+                point.z = extended.z;
+
+                int buf_x = (int)std::floor(point.x);
+                int buf_y = (int)std::floor(point.y);
+                int buf_z = (int)std::floor(point.z);
+
+                try
+                {
+                    const auto& current = localmap.value(buf_x, buf_y, buf_z);
+                    if (current.second == 0.0)
                     {
                         continue;
                     }
 
-                    // apply transform from previous iteration/IMU
-                    extended << point, 1.0f;
-                    point = (next_transform * extended).block<3, 1>(0, 0);
+                    const auto& x_next = localmap.value(buf_x + 1, buf_y, buf_z);
+                    const auto& x_last = localmap.value(buf_x - 1, buf_y, buf_z);
+                    const auto& y_next = localmap.value(buf_x, buf_y + 1, buf_z);
+                    const auto& y_last = localmap.value(buf_x, buf_y - 1, buf_z);
+                    const auto& z_next = localmap.value(buf_x, buf_y, buf_z + 1);
+                    const auto& z_last = localmap.value(buf_x, buf_y, buf_z - 1);
 
-                    int buf_x = (int)std::floor(point.x());
-                    int buf_y = (int)std::floor(point.y());
-                    int buf_z = (int)std::floor(point.z());
+                    gradient = Matrix3x1::Zero();
 
-                    try
+                    if (x_next.second != 0.0 && x_last.second != 0.0 && !((x_next.first > 0.0 && x_last.first < 0.0) || (x_next.first < 0.0 && x_last.first > 0.0)))
                     {
-                        const auto& current = localmap.value(buf_x, buf_y, buf_z);
-                        if (current.second == 0.0)
-                        {
-                            continue;
-                        }
-
-                        const auto& x_next = localmap.value(buf_x + 1, buf_y, buf_z);
-                        const auto& x_last = localmap.value(buf_x - 1, buf_y, buf_z);
-                        const auto& y_next = localmap.value(buf_x, buf_y + 1, buf_z);
-                        const auto& y_last = localmap.value(buf_x, buf_y - 1, buf_z);
-                        const auto& z_next = localmap.value(buf_x, buf_y, buf_z + 1);
-                        const auto& z_last = localmap.value(buf_x, buf_y, buf_z - 1);
-
-                        gradient = Matrix3x1::Zero();
-
-                        if (x_next.second != 0.0 && x_last.second != 0.0 && !((x_next.first > 0.0 && x_last.first < 0.0) || (x_next.first < 0.0 && x_last.first > 0.0)))
-                        {
-                            gradient.x() = (x_next.first - x_last.first) / 2;
-                        }
-                        if (y_next.second != 0.0 && y_last.second != 0.0 && !((y_next.first > 0.0 && y_last.first < 0.0) || (y_next.first < 0.0 && y_last.first > 0.0)))
-                        {
-                            gradient.y() = (y_next.first - y_last.first) / 2;
-                        }
-                        if (z_next.second != 0.0 && z_last.second != 0.0 && !((z_next.first > 0.0 && z_last.first < 0.0) || (z_next.first < 0.0 && z_last.first > 0.0)))
-                        {
-                            gradient.z() = (z_next.first - z_last.first) / 2;
-                        }
-
-                        jacobi << point.cross(gradient), gradient;
-
-                        auto weight = calc_weight(current.first);
-                        local_h += weight * jacobi * jacobi.transpose();
-                        local_g += weight * jacobi * current.first;
-                        local_error += fabs(current.first);
-                        local_count++;
+                        gradient.x() = (x_next.first - x_last.first) / 2;
                     }
-                    catch (const std::out_of_range&)
+                    if (y_next.second != 0.0 && y_last.second != 0.0 && !((y_next.first > 0.0 && y_last.first < 0.0) || (y_next.first < 0.0 && y_last.first > 0.0)))
                     {
+                        gradient.y() = (y_next.first - y_last.first) / 2;
                     }
+                    if (z_next.second != 0.0 && z_last.second != 0.0 && !((z_next.first > 0.0 && z_last.first < 0.0) || (z_next.first < 0.0 && z_last.first > 0.0)))
+                    {
+                        gradient.z() = (z_next.first - z_last.first) / 2;
+                    }
+                    
+                    Vector3 cross_vec; //TODO: remove this lul
+                    cross_vec << point.x, point.y, point.z;
+                    jacobi << cross_vec.cross(gradient), gradient;
+
+                    auto weight = calc_weight(current.first);
+                    local_h += weight * jacobi * jacobi.transpose();
+                    local_g += weight * jacobi * current.first;
+                    local_error += fabs(current.first);
+                    local_count++;
+                }
+                catch (const std::out_of_range&)
+                {
                 }
             }
             // write local results back into shared variables
