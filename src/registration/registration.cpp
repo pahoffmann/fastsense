@@ -22,6 +22,7 @@ Registration::~Registration()
 }
 
 
+//todo: auslagern in hw, could spare some time -> pcl_transform_kernel
 void Registration::transform_point_cloud(ScanPoints_t<Vector3>& in_cloud, const Matrix4x4& transform)
 {
     #pragma omp parallel for schedule(static) collapse(2)
@@ -165,6 +166,9 @@ Registration::Matrix4x4 Registration::register_cloud(const fastsense::map::Local
             local_error = 0.0;
             local_count = 0;
 
+            //STOP SW IMPLEMENTATION
+            //BEGIN HW IMPLEMENTATION
+
             #pragma omp for schedule(static) nowait
             for (size_t i = 0; i < width; i++)
             {
@@ -236,9 +240,11 @@ Registration::Matrix4x4 Registration::register_cloud(const fastsense::map::Local
                 count += local_count;
             }
 
-            // wait for all threads to finish
+
+            //RESUME SOFTWARE IMPLEMENTATION 
+            // wait for all threads to finish //here should be the exit point of the hw communication, after which the data is being used.
             #pragma omp barrier
-            // only execute on a single thread, all others wait
+            // only execute on a single thread, all others wait - use the data coming from hw to calculate diff things.
             #pragma omp single
             {
                 // W Matrix
