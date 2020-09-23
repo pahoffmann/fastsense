@@ -5,7 +5,7 @@
  * @author Marc Eisoldt (meisoldt)
  */
 
-#include "prototyping/tsdf_values/NormalBase.h"
+#include <tsdf/NormalBase.h>
 
 namespace fastsense::tsdf
 {
@@ -57,4 +57,4 @@ private:
 
 } // namespace fastsense::tsdf
 
-#include "prototyping/tsdf_values/AverageNormal.tcc"
+#include <tsdf/AverageNormal.tcc>

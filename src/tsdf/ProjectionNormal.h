@@ -5,7 +5,7 @@
  * @author Marc Eisoldt (meisoldt)
  */
 
-#include "prototyping/tsdf_values/NormalBase.h"
+#include <tsdf/NormalBase.h>
 
 namespace fastsense::tsdf
 {

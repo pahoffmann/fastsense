@@ -5,8 +5,8 @@
  * @author Marc Eisoldt (meisoldt)
  */
 
-#include "prototyping/tsdf_values/NormalBase.h"
-#include "prototyping/tsdf_values/NeighborsBase.h"
+#include <tsdf/NormalBase.h>
+#include <tsdf/NeighborsBase.h>
 
 #include <memory>
 

@@ -151,4 +151,4 @@ std::ostream& operator<<(std::ostream& os, const TSDFParameters<SCALAR_T, VEC_T>
 
 } // namespace fastsense::tsdf
 
-#include <prototyping/tsdf_values/TSDFParameters.tcc>
+#include <tsdf/TSDFParameters.tcc>

@@ -7,9 +7,9 @@
  * @copyright Copyright (c) 2020
  * 
  */
-#define CATCH_CONFIG_MAIN
-#include <catch2/catch.hpp>
-#include <tsdf_values/ProjectionNormal.h>
+//#define CATCH_CONFIG_MAIN
+#include "catch2_config.h"
+#include <tsdf/ProjectionNormal.h>
 
 using namespace fastsense::tsdf;
 
