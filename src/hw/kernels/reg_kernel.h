@@ -20,16 +20,17 @@ class VaddKernel : public BaseKernel
     std::vector<cl::Event> executeEvents;
     std::vector<cl::Event> postEvents;
 public:
-    VaddKernel(const CommandQueuePtr& queue)
-        : BaseKernel(queue, "krnl_vadd"),
+    regKernel(const CommandQueuePtr& queue)
+        : BaseKernel(queue, "krnl_reg"),
           preEvents(1),
           executeEvents(1),
           postEvents(1)
     {}
-    ~VaddKernel() = default;
+    ~regKernel() = default;
 
 
     //todo: determine parameters for the kernel.
+    // localmap - marcel? - pointcloud
     void run(buffer::InputBuffer<int>& inbuffer_a, buffer::InputBuffer<int>& inbuffer_b, buffer::OutputBuffer<int>& outbuf, int data_size)
     {
         resetNArg();
