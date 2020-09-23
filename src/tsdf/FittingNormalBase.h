@@ -10,6 +10,9 @@
 
 #include <memory>
 
+namespace fastsense::tsdf
+{
+
 /**
  * @brief Base class for determining the normals by fitting a plane in a neighborhood of points
  * 
@@ -31,3 +34,5 @@ protected:
     /// Represents how neighbors of a point should be determined
     std::shared_ptr<NeighborsBase<POINT_T, SET_T, NEIGHBOR_T>> neighbors_;
 };
+
+} // namespace fastsense::tsdf

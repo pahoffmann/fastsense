@@ -1,3 +1,5 @@
+#pragma once
+
 /**
  * @author Malte Hillmann (mhillmann)
  * @author Marc Eisoldt (meisoldt)
@@ -6,7 +8,8 @@
 #include <set>
 #include <queue>
 
-using namespace fastsense::tsdf;
+namespace fastsense::tsdf
+{
 
 template<typename POINT_T, typename SET_T>
 std::vector<POINT_T> PriorityNeighbors<POINT_T, SET_T>::operator()(const unsigned short query_ring, const size_t query_index, const SET_T& points) const
@@ -106,3 +109,5 @@ std::vector<POINT_T> PriorityNeighbors<POINT_T, SET_T>::operator()(const unsigne
     result_points.resize(i);
     return result_points;
 }
+
+} // namespace fastsense::tsdf

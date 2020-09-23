@@ -20,6 +20,8 @@
 
 #include <omp.h>
 
+using namespace fastsense::tsdf;
+
 /// Weight calculation object
 std::unique_ptr<WeightingBase<float>> weighting_base_(nullptr);
 

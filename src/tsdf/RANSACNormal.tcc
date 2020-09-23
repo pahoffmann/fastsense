@@ -1,3 +1,5 @@
+#pragma once
+
 /**
  * @author Malte Hillmann (mhillmann)
  * @author Marc Eisoldt (meisoldt)
@@ -7,7 +9,8 @@
 #include <set>
 #include <iostream>
 
-using namespace fastsense::tsdf;
+namespace fastsense::tsdf
+{
 
 template<typename POINT_T, typename SET_T>
 POINT_T RANSACNormal<POINT_T, SET_T>::operator()(const unsigned short query_ring, const size_t query_index, const SET_T& points) const
@@ -90,3 +93,5 @@ POINT_T RANSACNormal<POINT_T, SET_T>::operator()(const unsigned short query_ring
 
     return bestNorm;
 }
+
+} // namespace fastsense::tsdf
