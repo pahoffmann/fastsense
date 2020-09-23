@@ -15,15 +15,16 @@
 #include <hw/types.h>
 #include <hw/fpga_manager.h>
 #include <registration/registration.h>
-#include <util/types.h>
+#include <msg/point.h>
+#include <map/local_map.h>
 
 #include "catch2_config.h"
+
+#include <eigen3/Eigen/Dense>
 
 
 namespace fastsense::registration{
 
-
-typedef 
 static const int DATA_SIZE = 4096;
 
 static const std::string error_message =
@@ -72,23 +73,63 @@ TEST_CASE("Test Registration", "")
 
 
     // create pcl from velodyne sample, create local map, transform pcl and see what the reconstruction can do.
+
+    std::vector<fastsense::msg::Point> cloud;
+    fastsense::registration::Registration reg;
+    fastsense::map::local_map local_map;
+
+    //todo: read cloud using marcs stuff
+
+    //todo: calc tsdf and add to local_map
+        
     SECTION("Test Translation")
     {
         float tx, ty, tz = 0.0f;
-        Mat4 translation_mat;
+        Eigen::Matrix4f translation_mat;
         translation_mat << 1, 0, 0, tx,
                            0, 1, 0, ty,
                            0, 0, 1, tz,
                            0, 0, 0, 1;
+        
+        transform_point_cloud(cloud, translation_mat);
+
+        reg.register_cloud(local_map, cloud);
+        
+        
     }
     SECTION("Test Rotation")
     {
         float rx = 20.0 * (M_PI/180); //radiants
-        Mat4 translation_mat_y;
+        Eigen::Matrix4f translation_mat_y;
         translation_mat_y << cos(rx),     0, sin(rx), 0,
                            0,           1, 0,       0,
                            -1* sin(rx), 0, cos(rx), 0,
                            0,           0, 0,       1;
+
+    }
+}
+
+
+/**
+ * @brief Helper function
+ * 
+ * @param in_cloud 
+ * @param transform 
+ */
+void transform_point_cloud(vector<fastsense::msg::Point>& in_cloud, const Matrix4x4& transform)
+{
+    #pragma omp parallel for schedule(static) collapse(2)
+    
+    for (auto index = 0u; index < in_cloud.size(); ++index)
+    {
+        Eigen::Vector4f v;
+        fastsense::msg::Point& point = in_cloud[index];
+
+        v << point.x, point.y, point.z, 1.0f;
+        v = transform * v;
+        point.x = v.x;
+        point.y = v.y;
+        point.z = v.z;
     }
 }
 
