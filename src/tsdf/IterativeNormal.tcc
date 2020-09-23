@@ -25,7 +25,7 @@ POINT_T IterativeNormal<POINT_T, SET_T>::operator()(const unsigned short query_r
     //z
     float zz = 0.0;
 
-    for (int j = 0; j < numPoints; j++)
+    for (size_t j = 0; j < numPoints; j++)
     {
         auto r = neighbors[j] - queryPoint;
 

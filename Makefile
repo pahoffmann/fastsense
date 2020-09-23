@@ -59,7 +59,8 @@ LIBS = \
 	-lstdc++ \
 	-lgmp \
 	-lxrt_core \
-	-L$(SYSROOT)/usr/lib/
+	-L$(SYSROOT)/usr/lib/ \
+	-fopenmp
 
 INC_DIRS = \
 	src \

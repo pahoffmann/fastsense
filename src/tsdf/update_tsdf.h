@@ -5,8 +5,8 @@
  * @author Marc Eisoldt (meisoldt)
  */
 
-#include <types.h>
-#include <ring_buffer/ring_buffer.h>
+#include <util/types.h>
+#include <map/local_map.h>
 
 namespace fastsense::tsdf
 {
@@ -31,7 +31,7 @@ enum TsdfCalculation
  */
 void update_tsdf(const ScanPoints_t<Vector3>& scan_points,
                  const Vector3& scanner_pos,
-                 RingBuffer<std::pair<float, float>>& buffer,
+                 fastsense::map::LocalMap<std::pair<float, float>>& buffer,
                  TsdfCalculation tsdf_method,
                  float tau,
                  float max_weight);

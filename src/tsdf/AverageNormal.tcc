@@ -18,7 +18,7 @@ POINT_T AverageNormal<POINT_T, SET_T>::operator()(const unsigned short query_rin
     POINT_T right = point;
     int up_cnt = 0, down_cnt = 0, left_cnt = 1, right_cnt = 1;
     int index;
-    for (int di = 0; di < neighbor_range_; di++)
+    for (auto di = 0u; di < neighbor_range_; di++)
     {
         if (di % 2 == 0)
         {

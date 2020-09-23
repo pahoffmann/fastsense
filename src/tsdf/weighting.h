@@ -26,6 +26,11 @@ public:
      * @return T Weight for the correspinding tsdf grid
      */
     virtual T operator()(const T d) const = 0;
+
+    virtual ~WeightingBase()
+    {
+        
+    }
 };
 
 /**

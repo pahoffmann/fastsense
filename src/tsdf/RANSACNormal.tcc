@@ -25,8 +25,8 @@ POINT_T RANSACNormal<POINT_T, SET_T>::operator()(const unsigned short query_ring
 
     float bestdist = std::numeric_limits<float>::max();
 
-    int iterations              = 0;
-    int nonimproving_iterations = 0;
+    unsigned int iterations              = 0;
+    unsigned int nonimproving_iterations = 0;
 
     std::default_random_engine generator;
     std::uniform_int_distribution<unsigned long> distribution(0, numPoints - 1);

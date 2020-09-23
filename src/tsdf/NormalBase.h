@@ -28,6 +28,11 @@ public:
      * @return The normal of the given point based on a given point set
      */
     virtual POINT_T operator()(const unsigned short query_ring, const size_t query_index, const SET_T& points) const = 0;
+
+    virtual ~NormalBase()
+    {
+        
+    }
 };
 
 } // namespace fastsense::tsdf

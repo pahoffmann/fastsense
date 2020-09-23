@@ -10,6 +10,7 @@
 //#define CATCH_CONFIG_MAIN
 #include "catch2_config.h"
 #include <tsdf/ProjectionNormal.h>
+#include <tsdf/update_tsdf.h>
 #include <iostream>
 
 using namespace fastsense::tsdf;

@@ -29,6 +29,11 @@ public:
      * @return The Neighbors of the given point based on a given point set
      */
     virtual NEIGHBORS_T operator()(const unsigned short query_ring, const size_t query_index, const SET_T& points) const = 0;
+
+    virtual ~NeighborsBase()
+    {
+
+    }
 };
 
 } // namespace fastsense::tsdf

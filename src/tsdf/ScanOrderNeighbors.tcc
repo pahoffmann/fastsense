@@ -15,7 +15,7 @@ std::vector<POINT_T> ScanOrderNeighbors<POINT_T, SET_T>::operator()(const unsign
     int max_ring = points.size() - 1;
     size_t width = points[0].size();
     size_t first_ring = query_ring > neighbor_rings_ ? query_ring - neighbor_rings_ : 0;
-    size_t last_ring = std::min(query_ring + neighbor_rings_, max_ring);
+    //size_t last_ring = std::min(query_ring + neighbor_rings_, max_ring);
     for (int dr = first_ring; dr <= max_ring; dr++)
     {
         for (int di = -neighbor_range_; di <= neighbor_range_; di++)
