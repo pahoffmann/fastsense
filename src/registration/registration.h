@@ -78,10 +78,6 @@ private:
 
     static inline float filter_value(const std::pair<float, float>& buf_entry);
 
-    static inline float interpolate(const fastsense::map::LocalMap<std::pair<float, float>>& localmap, const Vector3& point);
-
-    static inline float interpolate(const fastsense::map::LocalMap<std::pair<float, float>>& localmap, const Vector3& point, int buf_x, int buf_y, int buf_z);
-
 public:
 
     /**

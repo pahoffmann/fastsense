@@ -72,57 +72,6 @@ float Registration::filter_value(const std::pair<float, float>& buf_entry)
     return buf_entry.first;
 }
 
-float Registration::interpolate(const fastsense::map::LocalMap<std::pair<float, float>>& localmap, const Vector3& point)
-{
-    int buf_x = (int)std::floor(point.x());
-    int buf_y = (int)std::floor(point.y());
-    int buf_z = (int)std::floor(point.z());
-
-    return interpolate(localmap, point, buf_x, buf_y, buf_z);
-}
-float Registration::interpolate(const fastsense::map::LocalMap<std::pair<float, float>>& localmap, const Vector3& point, int buf_x, int buf_y, int buf_z)
-{
-    // TSDF values must be calculated for a corner not the center of the grid
-
-    float c000;
-    float c100;
-    float c010;
-    float c110;
-    float c001;
-    float c101;
-    float c011;
-    float c111;
-
-    try
-    {
-        c000 = filter_value(localmap.value(buf_x, buf_y, buf_z));
-        c100 = filter_value(localmap.value(buf_x + 1, buf_y, buf_z));
-        c010 = filter_value(localmap.value(buf_x, buf_y + 1, buf_z));
-        c110 = filter_value(localmap.value(buf_x + 1, buf_y + 1, buf_z));
-        c001 = filter_value(localmap.value(buf_x, buf_y, buf_z + 1));
-        c101 = filter_value(localmap.value(buf_x + 1, buf_y, buf_z + 1));
-        c011 = filter_value(localmap.value(buf_x, buf_y + 1, buf_z + 1));
-        c111 = filter_value(localmap.value(buf_x + 1, buf_y + 1, buf_z + 1));
-    }
-    catch (int)
-    {
-        throw;
-    }
-
-    float tx = point.x() - buf_x;
-    float ty = point.y() - buf_y;
-    float tz = point.z() - buf_z;
-
-    return (1.0 - tx) * (1.0 - ty) * (1.0 - tz) * c000 +
-           tx * (1.0 - ty) * (1.0 - tz) * c100 +
-           (1.0 - tx) * ty * (1.0 - tz) * c010 +
-           tx * ty * (1.0 - tz) * c000 +
-           (1.0 - tx) * (1.0 - ty) * tz * c001 +
-           tx * (1.0 - ty) * tz * c101 +
-           (1.0 - tx) * ty * tz * c011 +
-           tx * ty * tz * c111;
-}
-
 Registration::Matrix4x4 Registration::register_cloud(const fastsense::map::LocalMap<std::pair<float, float>>& localmap, ScanPoints_t<Vector3>& cloud)
 {
     mutex_.lock();
@@ -168,6 +117,8 @@ Registration::Matrix4x4 Registration::register_cloud(const fastsense::map::Local
 
             //STOP SW IMPLEMENTATION
             //BEGIN HW IMPLEMENTATION
+
+            //kernel, run, wait
 
             #pragma omp for schedule(static) nowait
             for (size_t i = 0; i < width; i++)
