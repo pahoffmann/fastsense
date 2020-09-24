@@ -24,7 +24,7 @@ Registration::~Registration()
 
 //todo: check whether data exchange has a negative consequences regarding the runtime
 //TODO: test functionality
-void Registration::transform_point_cloud(vector<fastsense::msg::Point>& in_cloud, const Matrix4x4& transform)
+void Registration::transform_point_cloud(std::vector<fastsense::msg::Point>& in_cloud, const Matrix4x4& transform)
 {
     #pragma omp parallel for schedule(static) collapse(2)
     
@@ -35,9 +35,9 @@ void Registration::transform_point_cloud(vector<fastsense::msg::Point>& in_cloud
 
         v << point.x, point.y, point.z, 1.0f;
         v = transform * v;
-        point.x = v.x;
-        point.y = v.y;
-        point.z = v.z;
+        point.x = v.x();
+        point.y = v.y();
+        point.z = v.z();
     }
 }
 
@@ -74,7 +74,7 @@ float Registration::filter_value(const std::pair<float, float>& buf_entry)
     return buf_entry.first;
 }
 
-Registration::Matrix4x4 Registration::register_cloud(const fastsense::map::LocalMap<std::pair<float, float>>& localmap, vector<fastsense::msg::Point>& cloud)
+Registration::Matrix4x4 Registration::register_cloud(const fastsense::map::LocalMap<std::pair<int, int>>& localmap, std::vector<fastsense::msg::Point>& cloud)
 {
     mutex_.lock();
     Matrix4x4 cur_transform = global_transform_; //transform used to register the pcl
@@ -125,7 +125,7 @@ Registration::Matrix4x4 Registration::register_cloud(const fastsense::map::Local
             #pragma omp for schedule(static) nowait
             for (size_t i = 0; i < width; i++)
             {
-                fastsense::msg::Point& point_tmp = cloud[i];
+                fastsense::msg::Point& point = cloud[i];
 
                 if (std::isnan(point.x))
                 {
@@ -135,9 +135,9 @@ Registration::Matrix4x4 Registration::register_cloud(const fastsense::map::Local
                 // apply transform from previous iteration/IMU
                 extended << point.x, point.y, point.z, 1.0f;
                 extended = next_transform * extended;
-                point.x = extended.x;
-                point.y = extended.y;
-                point.z = extended.z;
+                point.x = extended.x();
+                point.y = extended.y();
+                point.z = extended.z();
 
                 int buf_x = (int)std::floor(point.x);
                 int buf_y = (int)std::floor(point.y);

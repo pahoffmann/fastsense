@@ -37,7 +37,7 @@ TEST_CASE("Test Registration", "")
 
     // fs::hw::FPGAManager::loadXCLBIN(xclbinFilename);
 
-    // fs::CommandQueuePtr q = fs::hw::FPGAManager::createCommandQueue();
+    
 
     // // These commands will allocate memory on the Device. The cl::Buffer objects can
     // // be used to reference the memory locations on the device.
@@ -74,9 +74,12 @@ TEST_CASE("Test Registration", "")
 
     // create pcl from velodyne sample, create local map, transform pcl and see what the reconstruction can do.
 
+    fastsense::CommandQueuePtr q = fastsense::hw::FPGAManager::createCommandQueue();
+
     std::vector<fastsense::msg::Point> cloud;
     fastsense::registration::Registration reg;
-    fastsense::map::local_map local_map;
+    std::shared_ptr<fastsense::map::GlobalMap> global_map_ptr(new fastsense::map::GlobalMap("test_global_map", 0.0, 0.0));
+    fastsense::map::LocalMap<std::pair<int, int>> local_map(5, 5, 5, global_map_ptr, q);
 
     //todo: read cloud using marcs stuff
 
@@ -91,7 +94,7 @@ TEST_CASE("Test Registration", "")
                            0, 0, 1, tz,
                            0, 0, 0, 1;
         
-        transform_point_cloud(cloud, translation_mat);
+        reg.transform_point_cloud(cloud, translation_mat);
 
         reg.register_cloud(local_map, cloud);
         
@@ -116,7 +119,7 @@ TEST_CASE("Test Registration", "")
  * @param in_cloud 
  * @param transform 
  */
-void transform_point_cloud(vector<fastsense::msg::Point>& in_cloud, const Matrix4x4& transform)
+void transform_point_cloud(std::vector<fastsense::msg::Point>& in_cloud, const Eigen::Matrix4f& transform)
 {
     #pragma omp parallel for schedule(static) collapse(2)
     
@@ -127,9 +130,9 @@ void transform_point_cloud(vector<fastsense::msg::Point>& in_cloud, const Matrix
 
         v << point.x, point.y, point.z, 1.0f;
         v = transform * v;
-        point.x = v.x;
-        point.y = v.y;
-        point.z = v.z;
+        point.x = v.x();
+        point.y = v.y();
+        point.z = v.z();
     }
 }
 

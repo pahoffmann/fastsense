@@ -120,7 +120,7 @@ public:
      * @param cloud
      * @return Matrix4x4
      */
-    Matrix4x4 register_cloud(const fastsense::map::LocalMap<std::pair<float, float>>& localmap, vector<fastsense::msg::Point>& cloud);
+    Matrix4x4 register_cloud(const fastsense::map::LocalMap<std::pair<int, int>>& localmap, std::vector<fastsense::msg::Point>& cloud);
 
     /**
      * @brief Updates the IMU data used by the registration method
@@ -136,7 +136,7 @@ public:
      * @param out_cloud
      * @param transform
      */
-    static void transform_point_cloud(vector<fastsense::msg::Point>& in_cloud, const Matrix4x4& transform);
+    static void transform_point_cloud(std::vector<fastsense::msg::Point>& in_cloud, const Matrix4x4& transform);
 };
 
 
