@@ -4,10 +4,12 @@
  * @date 2020-09-06
  */
 
+#pragma once
+
 #include <zmq.hpp>
 #include <cassert>
 
-using namespace fastsense::comm;
+namespace fastsense::comm {
 
 template <typename T>
 Receiver<T>::Receiver(int port, size_t threads) 
@@ -27,3 +29,5 @@ T Receiver<T>::receive(zmq::recv_flags flag)
     memcpy(&target, msg.data(), sizeof(T));
     return target;
 }
+
+} // namespace fastsense::comm
