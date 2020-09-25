@@ -55,8 +55,6 @@ LIBS = \
 	-lhdf5 \
 	-lpthread \
 	-lrt \
-	-lstdc++ \
-	-lgmp \
 	-lxrt_core \
 	-L$(SYSROOT)/usr/lib/
 
@@ -77,9 +75,12 @@ LDFLAGS = $(LIBS) --sysroot=$(SYSROOT)
 
 # Hardware
 LINK_CFG = $(CURDIR)/link.cfg
+LINK_TEST_CFG = $(CURDIR)/link_test.cfg
 BUILD_CFG = $(CURDIR)/build.cfg
+PACKAGE_CFG = $(CURDIR)/package.cfg
+PACKAGE_TEST_CFG = $(CURDIR)/package_test.cfg
 
-HW_TARGET ?= hw
+HW_TARGET ?= sw_emu
 HW_PLATFORM = $(PLATFORM_DIR)/FastSense_platform.xpfm
 
 HW_SRCS = src/example/krnl_vadd.cpp
@@ -109,8 +110,9 @@ all: software hardware
 test: test_software test_hardware
 
 clean:
-	@rm -rf _x .Xil _vimage *.log pl_script.sh start_simulation.sh
+	@rm -rf _x .Xil *.log *.jou pl_script.sh start_simulation.sh
 	@rm -rf build/* build/.Xil
+	@rm -rf emulation emulation_test hw_image
 
 clean_software:
 	@rm -rf $(SW_OBJS) $(ENTRY_POINT_OBJS) $(SW_DEPS) $(ENTRY_POINT_DEPS) $(APP_EXE)
@@ -119,7 +121,7 @@ clean_test:
 	@rm -rf $(TEST_OBJS) $(SW_OBJS) $(TEST_DEPS) $(SW_DEPS) $(APP_TEST_EXE)
 
 clean_hardware:
-	@rm -rf $(HW_OBJS) $(HW_DEPS) $(APP_XCLBIN) _vimage
+	@rm -rf $(HW_OBJS) $(HW_DEPS) $(APP_XCLBIN)
 
 clean_ros_nodes:
 	@rm -rf test/build/* test/devel/* test/*.log
@@ -154,20 +156,33 @@ $(BUILD_DIR)/%.o: %.cpp
 $(APP_XCLBIN): $(HW_OBJS) $(LINK_CFG)
 	@echo "Link hardware: $(APP_XCLBIN)"
 	@$(MKDIR_P) $(dir $@)
-	@$(VXX) $(HW_OBJS) -o $@ $(VXXLDFLAGS) > $<.out || (cat $<.out && false)
+	@$(VXX) $(HW_OBJS) -o $@ $(VXXLDFLAGS) > $@.out || (cat $@.out && false)
 
 # Link test hardware
 $(APP_TEST_XCLBIN): $(HW_OBJS) $(HW_TEST_OBJS) $(LINK_CFG)
 	@echo "Link hardware: $(APP_TEST_XCLBIN)"
 	@$(MKDIR_P) $(dir $@)
-	@$(VXX) $(HW_OBJS) $(HW_TEST_OBJS) -o $@ $(VXXLDFLAGS) > $<.out || (cat $<.out && false)
+	@$(VXX) $(HW_OBJS) $(HW_TEST_OBJS) -o $@ $(VXXLDFLAGS) --config $(LINK_TEST_CFG) > $@.out || (cat $@.out && false)
 
 # Compile kernels
 $(BUILD_DIR)/%.xo: %.cpp $(BUILD_CFG)
 	@echo "Compile kernel: $<"
 	@$(MKDIR_P) $(dir $@)
 	@$(HOST_CXX) $< $(HW_DEPS_FLAGS) -MF $(@:.xo=.d) -MT $@
-	@$(VXX) $(VXXFLAGS) $< -o $@ -k $(notdir $*) > $<.out || (cat $<.out && false)
+	@$(VXX) $(VXXFLAGS) $< -o $@ -k $(notdir $*) > $@.out || (cat $@.out && false)
+
+package: $(APP_XCLBIN) $(APP_EXE) $(PACKAGE_CFG)
+	$(VXX) -p -t $(HW_TARGET) -f $(HW_PLATFORM) --config $(PACKAGE_CFG) $<
+
+package_test: $(APP_TEST_XCLBIN) $(APP_TEST_EXE) $(PACKAGE_TEST_CFG) $(BUILD_DIR)/emconfig.json
+ifeq ($(HW_TARGET), sw_emu)
+	$(VXX) -p -t $(HW_TARGET) -f $(HW_PLATFORM) --config $(PACKAGE_TEST_CFG) $<
+else
+	@echo "HW_TARGET must be sw_emu to run in emulator"
+endif
+
+$(BUILD_DIR)/emconfig.json:
+	emconfigutil -f $(HW_PLATFORM) --od $(BUILD_DIR)
 
 # Open HLS GUI for kernel
 hls_%: $(filter %$*.xo,$(HW_OBJS) $(HW_TEST_OBJS))
@@ -184,8 +199,9 @@ copy_test_to_qemu:
 	xsct -eval 'set filelist {"build/FastSense_test.exe" "/mnt/FastSense_test.exe" "build/FastSense_test.xclbin" "/mnt/FastSense_test.xclbin" "test/config.json" "/mnt/config.json"}; source copy_to_qemu.tcl'
 
 # Add for each port to forward "-redir tcp:localport::vmport" as --qemu-args
-start_emulator:
-	launch_emulator -no-reboot -runtime ocl -t sw_emu -forward-port 1440 1534 -qemu-args "-redir udp:2368::2368"
+start_emulator_test: package_test
+	emulation_test/launch_sw_emu.sh -forward-port 1440 1534
+# -qemu-args "-netdev user,id=net0,hostfwd=tcp::2368-:2368"
 
 rsync:
 	@echo 'syning fastsense: to "$(USER)@$(FPGA_SERVER).informatik.uos.de:$(FGPA_SERVER_HOME)/$(USER)/fastsense"'
