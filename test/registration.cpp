@@ -23,6 +23,8 @@
 #include <eigen3/Eigen/Dense>
 
 
+using fastsense::msg::Point;
+
 namespace fastsense::registration{
 
 static const int DATA_SIZE = 4096;
@@ -74,66 +76,70 @@ TEST_CASE("Test Registration", "")
 
     // create pcl from velodyne sample, create local map, transform pcl and see what the reconstruction can do.
 
-    fastsense::CommandQueuePtr q = fastsense::hw::FPGAManager::createCommandQueue();
+        fastsense::CommandQueuePtr q = fastsense::hw::FPGAManager::createCommandQueue();
 
-    std::vector<fastsense::msg::Point> cloud;
-    fastsense::registration::Registration reg;
-    std::shared_ptr<fastsense::map::GlobalMap> global_map_ptr(new fastsense::map::GlobalMap("test_global_map", 0.0, 0.0));
-    fastsense::map::LocalMap<std::pair<int, int>> local_map(5, 5, 5, global_map_ptr, q);
+        std::vector<fastsense::msg::Point> cloud(5);
+        std::vector<fastsense::msg::Point> result(5);
+        fastsense::registration::Registration reg;
+        std::shared_ptr<fastsense::map::GlobalMap> global_map_ptr(new fastsense::map::GlobalMap("test_global_map", 0.0, 0.0));
+        fastsense::map::LocalMap<std::pair<int, int>> local_map(5, 5, 5, global_map_ptr, q);
 
-    //todo: read cloud using marcs stuff
+        //todo: read cloud using marcs stuff
 
-    //todo: calc tsdf and add to local_map
-        
-    SECTION("Test Translation")
-    {
-        float tx, ty, tz = 0.0f;
-        Eigen::Matrix4f translation_mat;
-        translation_mat << 1, 0, 0, tx,
-                           0, 1, 0, ty,
-                           0, 0, 1, tz,
-                           0, 0, 0, 1;
-        
-        reg.transform_point_cloud(cloud, translation_mat);
+        //todo: calc tsdf and add to local_map
+            
+        SECTION("Test Translation")
+        {
+            float tx = 2.0f; 
+            float ty = 2.0f;
+            float tz = 2.0f;
+            Eigen::Matrix4f translation_mat;
+            translation_mat << 1, 0, 0, tx,
+                            0, 1, 0, ty,
+                            0, 0, 1, tz,
+                            0, 0, 0, 1;
+            
+            cloud[0] = fastsense::msg::Point{1, 1, 1};
+            cloud[1] = fastsense::msg::Point{0, 0, 0};
+            cloud[2] = fastsense::msg::Point{5, 3, 1};
+            cloud[3] = fastsense::msg::Point{540, 244, 124};
+            cloud[4] = fastsense::msg::Point{1, 0, 0};
 
-        reg.register_cloud(local_map, cloud);
-        
-        
+            reg.transform_point_cloud(cloud, translation_mat);
+
+            result[0] = fastsense::msg::Point{3, 3, 3};
+            result[1] = fastsense::msg::Point{2, 2, 2};
+            result[2] = fastsense::msg::Point{7, 5, 3};
+            result[3] = fastsense::msg::Point{542, 246, 126};
+            result[4] = fastsense::msg::Point{3, 2, 2};
+
+            for(auto i = 0; i < cloud.size(); i++){
+                REQUIRE(cloud[i].x == result[i].x);
+                REQUIRE(cloud[i].y == result[i].y);
+                REQUIRE(cloud[i].z == result[i].z);
+            }
+            //reg.register_cloud(local_map, cloud);
+        }
+        SECTION("Test Rotation")
+        {
+            float rx = 90 * (M_PI/180); //radiants
+            Eigen::Matrix4f translation_mat_y;
+            translation_mat_y << cos(rx),     0, sin(rx), 0,
+                            0,           1, 0,       0,
+                            -1* sin(rx), 0, cos(rx), 0,
+                            0,           0, 0,       1;
+
+            cloud[0] = Point{1000, 1000, 1000};
+
+            std::cout << translation_mat_y;
+
+            reg.transform_point_cloud(cloud, translation_mat_y);
+
+            result[0] = Point{1000, 1000, -1000};
+
+            REQUIRE(cloud[0].x == result[0].x);
+            REQUIRE(cloud[0].y == result[0].y);
+            REQUIRE(cloud[0].z == result[0].z);
+        }
     }
-    SECTION("Test Rotation")
-    {
-        float rx = 20.0 * (M_PI/180); //radiants
-        Eigen::Matrix4f translation_mat_y;
-        translation_mat_y << cos(rx),     0, sin(rx), 0,
-                           0,           1, 0,       0,
-                           -1* sin(rx), 0, cos(rx), 0,
-                           0,           0, 0,       1;
-
-    }
-}
-
-
-/**
- * @brief Helper function
- * 
- * @param in_cloud 
- * @param transform 
- */
-void transform_point_cloud(std::vector<fastsense::msg::Point>& in_cloud, const Eigen::Matrix4f& transform)
-{
-    #pragma omp parallel for schedule(static) collapse(2)
-    
-    for (auto index = 0u; index < in_cloud.size(); ++index)
-    {
-        Eigen::Vector4f v;
-        fastsense::msg::Point& point = in_cloud[index];
-
-        v << point.x, point.y, point.z, 1.0f;
-        v = transform * v;
-        point.x = v.x();
-        point.y = v.y();
-        point.z = v.z();
-    }
-}
-
 } //namespace fastsense:: registration

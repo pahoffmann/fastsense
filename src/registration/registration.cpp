@@ -26,8 +26,6 @@ Registration::~Registration()
 //TODO: test functionality
 void Registration::transform_point_cloud(std::vector<fastsense::msg::Point>& in_cloud, const Matrix4x4& transform)
 {
-    #pragma omp parallel for schedule(static) collapse(2)
-    
     for (auto index = 0u; index < in_cloud.size(); ++index)
     {
         Eigen::Vector4f v;
@@ -35,9 +33,9 @@ void Registration::transform_point_cloud(std::vector<fastsense::msg::Point>& in_
 
         v << point.x, point.y, point.z, 1.0f;
         v = transform * v;
-        point.x = v.x();
-        point.y = v.y();
-        point.z = v.z();
+        point.x = std::round(v.x());
+        point.y = std::round(v.y());
+        point.z = std::round(v.z());
     }
 }
 
