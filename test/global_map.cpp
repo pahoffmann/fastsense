@@ -39,8 +39,12 @@ TEST_CASE("Test Map", "[Map]")
     SECTION("local map")
     {
         // test getter
-        REQUIRE(pos[0] == 0 && pos[1] == 0 && pos[2] == 0);
-        REQUIRE(size[0] == 5 && size[1] == 5 && size[2] == 5);
+        REQUIRE(pos[0] == 0);
+        REQUIRE(pos[1] == 0);
+        REQUIRE(pos[2] == 0);
+        REQUIRE(size[0] == 5);
+        REQUIRE(size[1] == 5);
+        REQUIRE(size[2] == 5);
         // test inBounds
         REQUIRE(localMap.inBounds(0, 2, -2));
         REQUIRE(!localMap.inBounds(22, 0, 0));
@@ -59,8 +63,12 @@ TEST_CASE("Test Map", "[Map]")
     SECTION("local map shift")
     {
         // test getter
-        REQUIRE(pos[0] == 24 && pos[1] == 0 && pos[2] == 0);
-        REQUIRE(size[0] == 5 && size[1] == 5 && size[2] == 5);
+        REQUIRE(pos[0] == 24);
+        REQUIRE(pos[1] == 0);
+        REQUIRE(pos[2] == 0);
+        REQUIRE(size[0] == 5);
+        REQUIRE(size[1] == 5);
+        REQUIRE(size[2] == 5);
         // test inBounds
         REQUIRE(!localMap.inBounds(0, 2, -2));
         REQUIRE(localMap.inBounds(22, 0, 0));
