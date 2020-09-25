@@ -6,7 +6,7 @@
 
 #pragma once
 
-using namespace fastsense::util;
+namespace fastsense::util{
 
 template<typename T>
 ConcurrentRingBuffer<T>::ConcurrentRingBuffer(size_t size) :
@@ -117,4 +117,6 @@ void ConcurrentRingBuffer<T>::doPop(T* val)
     {
         popIdx = 0;
     }
+}
+
 }

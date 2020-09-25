@@ -17,6 +17,7 @@
 #include <registration/registration.h>
 #include <msg/point.h>
 #include <map/local_map.h>
+#include <util/pcd/PCDFile.h>
 
 #include "catch2_config.h"
 
@@ -78,8 +79,11 @@ TEST_CASE("Test Registration", "")
 
         fastsense::CommandQueuePtr q = fastsense::hw::FPGAManager::createCommandQueue();
 
+        //test pointcloud transform 
         std::vector<fastsense::msg::Point> cloud(5);
         std::vector<fastsense::msg::Point> result(5);
+
+        //test registration
         fastsense::registration::Registration reg;
         std::shared_ptr<fastsense::map::GlobalMap> global_map_ptr(new fastsense::map::GlobalMap("test_global_map", 0.0, 0.0));
         fastsense::map::LocalMap<std::pair<int, int>> local_map(5, 5, 5, global_map_ptr, q);
@@ -88,7 +92,7 @@ TEST_CASE("Test Registration", "")
 
         //todo: calc tsdf and add to local_map
             
-        SECTION("Test Translation")
+        SECTION("Test Transform PCL")
         {
             float tx = 2.0f; 
             float ty = 2.0f;
@@ -119,9 +123,7 @@ TEST_CASE("Test Registration", "")
                 REQUIRE(cloud[i].z == result[i].z);
             }
             //reg.register_cloud(local_map, cloud);
-        }
-        SECTION("Test Rotation")
-        {
+
             float rx = 90 * (M_PI/180); //radiants
             Eigen::Matrix4f translation_mat_y;
             translation_mat_y << cos(rx),     0, sin(rx), 0,
@@ -131,8 +133,6 @@ TEST_CASE("Test Registration", "")
 
             cloud[0] = Point{1000, 1000, 1000};
 
-            std::cout << translation_mat_y;
-
             reg.transform_point_cloud(cloud, translation_mat_y);
 
             result[0] = Point{1000, 1000, -1000};
@@ -140,6 +140,32 @@ TEST_CASE("Test Registration", "")
             REQUIRE(cloud[0].x == result[0].x);
             REQUIRE(cloud[0].y == result[0].y);
             REQUIRE(cloud[0].z == result[0].z);
+
+        }
+        SECTION("Test Registration Translation")
+        {
+            // Initialize temporary testing variables
+            global_map_ptr.reset(new fastsense::map::GlobalMap("test_global_map", 0.0, 0.0));
+
+            std::vector<std::vector<fastsense::msg::Point>> points;
+            unsigned int num_points;
+            PCDFile<fastsense::msg::Point> file("");
+            file.readPoints(points, num_points);
+
+            for(auto ring = 0u; ring < points.size(); ++ring)
+            {
+                for(const auto& point : points[ring])
+                {
+                    
+                }
+            }
+            
+            //todo: scans need to be processed before put in registration?
+            //preprocess_scan_global(model, scan_points, params_.getMapResolution(), Mat4::Identity());
+            
+            //todo: update tsdf
+            //update_tsdf(scan_points, Vector3::Zero(), *buffer_ptr_, TsdfCalculation::PROJECTION_INTER, params_.getTau(), max_weight_);
         }
     }
+
 } //namespace fastsense:: registration
