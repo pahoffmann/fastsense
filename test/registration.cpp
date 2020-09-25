@@ -99,9 +99,9 @@ TEST_CASE("Test Registration", "")
             float tz = 2.0f;
             Eigen::Matrix4f translation_mat;
             translation_mat << 1, 0, 0, tx,
-                            0, 1, 0, ty,
-                            0, 0, 1, tz,
-                            0, 0, 0, 1;
+                               0, 1, 0, ty,
+                               0, 0, 1, tz,
+                               0, 0, 0, 1;
             
             cloud[0] = Point{1, 1, 1};
             cloud[1] = Point{0, 0, 0};
@@ -177,9 +177,9 @@ TEST_CASE("Test Registration", "")
 
             Eigen::Matrix4f translation_mat;
             translation_mat << 1, 0, 0, tx,
-                            0, 1, 0, ty,
-                            0, 0, 1, tz,
-                            0, 0, 0, 1;
+                               0, 1, 0, ty,
+                               0, 0, 1, tz,
+                               0, 0, 0, 1;
 
             reg.transform_point_cloud(points_pretransformed, translation_mat);
 
