@@ -99,19 +99,19 @@ TEST_CASE("Test Registration", "")
                             0, 0, 1, tz,
                             0, 0, 0, 1;
             
-            cloud[0] = fastsense::msg::Point{1, 1, 1};
-            cloud[1] = fastsense::msg::Point{0, 0, 0};
-            cloud[2] = fastsense::msg::Point{5, 3, 1};
-            cloud[3] = fastsense::msg::Point{540, 244, 124};
-            cloud[4] = fastsense::msg::Point{1, 0, 0};
+            cloud[0] = Point{1, 1, 1};
+            cloud[1] = Point{0, 0, 0};
+            cloud[2] = Point{5, 3, 1};
+            cloud[3] = Point{540, 244, 124};
+            cloud[4] = Point{1, 0, 0};
 
             reg.transform_point_cloud(cloud, translation_mat);
 
-            result[0] = fastsense::msg::Point{3, 3, 3};
-            result[1] = fastsense::msg::Point{2, 2, 2};
-            result[2] = fastsense::msg::Point{7, 5, 3};
-            result[3] = fastsense::msg::Point{542, 246, 126};
-            result[4] = fastsense::msg::Point{3, 2, 2};
+            result[0] = Point{3, 3, 3};
+            result[1] = Point{2, 2, 2};
+            result[2] = Point{7, 5, 3};
+            result[3] = Point{542, 246, 126};
+            result[4] = Point{3, 2, 2};
 
             for(auto i = 0; i < cloud.size(); i++){
                 REQUIRE(cloud[i].x == result[i].x);
