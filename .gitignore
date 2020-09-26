@@ -10,12 +10,8 @@ v++*
 .vscode
 .Xil/
 
-emulation/
-emulation_test/
-pl_script.sh
-qemu-*
-
-hw_image/
+app_image/
+test_image/
 
 ### CLion ###
 *.idea
