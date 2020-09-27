@@ -1,15 +1,17 @@
-build/*
-test/build/*
-test/build-local/*
+build/
+test/build/
+test/build-local/
 
 _*
 v++*
 *.log
+*.jou
+.ipcache/
 .vscode
+.Xil/
 
-start_simulation.sh
-pl_script.sh
-qemu-*
+app_image/
+test_image/
 
 ### CLion ###
 *.idea
