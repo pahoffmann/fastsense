@@ -1,7 +1,6 @@
 #pragma once
 
 #include <zmq.hpp>
-#include <comm/zmq_patch.h>
 #include <string>
 
 namespace fastsense::comm

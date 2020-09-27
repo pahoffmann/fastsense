@@ -1,5 +1,7 @@
+#pragma once
 
-using namespace fastsense::comm;
+namespace fastsense::comm
+{
 
 template <typename T>
 Sender<T>::Sender(std::string addr, size_t threads) 
@@ -11,4 +13,6 @@ Sender<T>::Sender(std::string addr, size_t threads)
 template <typename T>
 void Sender<T>::send(T* data) {
     socket_.send(data, sizeof(T));
+}
+
 }
