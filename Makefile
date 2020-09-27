@@ -2,6 +2,8 @@
 # Variables
 #
 
+PERCENT = %
+
 # Tools
 CXX = $(XILINX_VITIS)/gnu/aarch64/lin/aarch64-linux/bin/aarch64-linux-gnu-g++
 VXX = $(XILINX_VITIS)/bin/v++
@@ -190,8 +192,9 @@ $(BUILD_DIR)/emconfig.json:
 	emconfigutil -f $(HW_PLATFORM) --od $(BUILD_DIR)
 
 # Open HLS GUI for kernel
-hls_%: $(filter %$*.xo,$(HW_OBJS) $(HW_TEST_OBJS))
-	@echo "Opening HLS for kernel $* ($<) "
+.SECONDEXPANSION:
+hls_%: $$(filter $$(PERCENT)$$*.xo,$$(HW_OBJS) $$(HW_TEST_OBJS))
+	@echo "Opening HLS for kernel $* ($^)"
 	@$(VITIS_HLS) -p _x/$*/$*/$*/
 
 open_vivado:
