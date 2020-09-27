@@ -8,8 +8,11 @@
 #include <hw/fpga_manager.h>
 #include "catch2_config.h"
 
+#include "kernels/local_map_test_kernel.h"
+
 using namespace fastsense::map;
 using namespace fastsense::hw;
+using namespace fastsense::kernels;
 
 TEST_CASE("Test Map", "[Map]")
 {
@@ -36,38 +39,46 @@ TEST_CASE("Test Map", "[Map]")
     localMap.getPos(pos);
     int size[3];
     localMap.getSize(size);
-    SECTION("local map")
-    {
-        // test getter
-        REQUIRE(pos[0] == 0 && pos[1] == 0 && pos[2] == 0);
-        REQUIRE(size[0] == 5 && size[1] == 5 && size[2] == 5);
-        // test inBounds
-        REQUIRE(localMap.inBounds(0, 2, -2));
-        REQUIRE(!localMap.inBounds(22, 0, 0));
-        // test default values
-        REQUIRE(localMap.value(0, 0, 0).first == 0);
-        REQUIRE(localMap.value(0, 0, 0).second == 7);
-        // test value access
-        REQUIRE(localMap.value(-1, 2, 0).first == 1);
-        REQUIRE(localMap.value(-1, 2, 0).second == 1);
-    }
+
+    // test getter
+    REQUIRE(pos[0] == 0);
+    REQUIRE(pos[1] == 0);
+    REQUIRE(pos[2] == 0);
+    REQUIRE(size[0] == 5);
+    REQUIRE(size[1] == 5);
+    REQUIRE(size[2] == 5);
+    // test inBounds
+    REQUIRE(localMap.inBounds(0, 2, -2));
+    REQUIRE(!localMap.inBounds(22, 0, 0));
+    // test default values
+    REQUIRE(localMap.value(0, 0, 0).first == 0);
+    REQUIRE(localMap.value(0, 0, 0).second == 7);
+    // test value access
+    REQUIRE(localMap.value(-1, 2, 0).first == 1);
+    REQUIRE(localMap.value(-1, 2, 0).second == 1);
+
+    auto q = FPGAManager::createCommandQueue();
+    LocalMapTestKernel krnl{q};
+    krnl.run(localMap);
+    krnl.waitComplete();
 
     // shift so that the chunk gets unloaded
     localMap.shift(24, 0, 0);
 
     localMap.getPos(pos);
-    SECTION("local map shift")
-    {
-        // test getter
-        REQUIRE(pos[0] == 24 && pos[1] == 0 && pos[2] == 0);
-        REQUIRE(size[0] == 5 && size[1] == 5 && size[2] == 5);
-        // test inBounds
-        REQUIRE(!localMap.inBounds(0, 2, -2));
-        REQUIRE(localMap.inBounds(22, 0, 0));
-        // test values
-        REQUIRE(localMap.value(24, 0, 0).first == 0);
-        REQUIRE(localMap.value(24, 0, 0).second == 7);
-    }
+    // test getter
+    REQUIRE(pos[0] == 24);
+    REQUIRE(pos[1] == 0);
+    REQUIRE(pos[2] == 0);
+    REQUIRE(size[0] == 5);
+    REQUIRE(size[1] == 5);
+    REQUIRE(size[2] == 5);
+    // test inBounds
+    REQUIRE(!localMap.inBounds(0, 2, -2));
+    REQUIRE(localMap.inBounds(22, 0, 0));
+    // test values
+    REQUIRE(localMap.value(24, 0, 0).first == 0);
+    REQUIRE(localMap.value(24, 0, 0).second == 7);
 
     // check file for the numbers
     HighFive::File f("MapTest.h5", HighFive::File::OpenOrCreate);
@@ -115,34 +126,25 @@ TEST_CASE("Test Map", "[Map]")
     std::cout << std::endl;
     */
 
-    SECTION("global map tsdf values")
-    {
-        REQUIRE(chunk[(16 * 16 * 14 + 16 * 2) * 2] == 0);
-        REQUIRE(chunk[(16 * 16 * 15 + 16 * 2) * 2] == 1);
-        REQUIRE(chunk[(16 * 16 * 14 + 16 * 1) * 2] == 2);
-        REQUIRE(chunk[(16 * 16 * 15 + 16 * 1) * 2] == 3);
-        REQUIRE(chunk[(16 * 16 * 14 + 16 * 0) * 2] == 4);
-        REQUIRE(chunk[(16 * 16 * 15 + 16 * 0) * 2] == 5);
-    }
+    REQUIRE(chunk[(16 * 16 * 14 + 16 * 2) * 2] == 0 * 2);
+    REQUIRE(chunk[(16 * 16 * 15 + 16 * 2) * 2] == 1 * 2);
+    REQUIRE(chunk[(16 * 16 * 14 + 16 * 1) * 2] == 2 * 2);
+    REQUIRE(chunk[(16 * 16 * 15 + 16 * 1) * 2] == 3 * 2);
+    REQUIRE(chunk[(16 * 16 * 14 + 16 * 0) * 2] == 4 * 2);
+    REQUIRE(chunk[(16 * 16 * 15 + 16 * 0) * 2] == 5 * 2);
 
-    SECTION("global map weights")
-    {
-        REQUIRE(chunk[(16 * 16 * 14 + 16 * 2) * 2 + 1] == 0);
-        REQUIRE(chunk[(16 * 16 * 15 + 16 * 2) * 2 + 1] == 1);
-        REQUIRE(chunk[(16 * 16 * 14 + 16 * 1) * 2 + 1] == 1);
-        REQUIRE(chunk[(16 * 16 * 15 + 16 * 1) * 2 + 1] == 2);
-        REQUIRE(chunk[(16 * 16 * 14 + 16 * 0) * 2 + 1] == 3);
-        REQUIRE(chunk[(16 * 16 * 15 + 16 * 0) * 2 + 1] == 5);
-    }
+    REQUIRE(chunk[(16 * 16 * 14 + 16 * 2) * 2 + 1] == 0 * 0.5f);
+    REQUIRE(chunk[(16 * 16 * 15 + 16 * 2) * 2 + 1] == 1 * 0.5f);
+    REQUIRE(chunk[(16 * 16 * 14 + 16 * 1) * 2 + 1] == 1 * 0.5f);
+    REQUIRE(chunk[(16 * 16 * 15 + 16 * 1) * 2 + 1] == 2 * 0.5f);
+    REQUIRE(chunk[(16 * 16 * 14 + 16 * 0) * 2 + 1] == 3 * 0.5f);
+    REQUIRE(chunk[(16 * 16 * 15 + 16 * 0) * 2 + 1] == 5 * 0.5f);
 
-    SECTION("global map poses")
-    {
-        int i = 0;
-        REQUIRE(pose[i++] == 144);
-        REQUIRE(pose[i++] == 233);
-        REQUIRE(pose[i++] == 377);
-        REQUIRE(pose[i++] == 610);
-        REQUIRE(pose[i++] == 987);
-        REQUIRE(pose[i++] == 1597);
-    }
+    int i = 0;
+    REQUIRE(pose[i++] == 144);
+    REQUIRE(pose[i++] == 233);
+    REQUIRE(pose[i++] == 377);
+    REQUIRE(pose[i++] == 610);
+    REQUIRE(pose[i++] == 987);
+    REQUIRE(pose[i++] == 1597);
 }
