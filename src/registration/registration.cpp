@@ -72,7 +72,7 @@ float Registration::filter_value(const std::pair<float, float>& buf_entry)
     return buf_entry.first;
 }
 
-Registration::Matrix4x4 Registration::register_cloud(const fastsense::map::LocalMap<std::pair<int, int>>& localmap, std::vector<fastsense::msg::Point>& cloud)
+Registration::Matrix4x4 Registration::register_cloud(fastsense::map::LocalMap<std::pair<int, int>>& localmap, std::vector<fastsense::msg::Point>& cloud)
 {
     mutex_.lock();
     Matrix4x4 cur_transform = global_transform_; //transform used to register the pcl
@@ -119,6 +119,24 @@ Registration::Matrix4x4 Registration::register_cloud(const fastsense::map::Local
             //BEGIN HW IMPLEMENTATION
 
             //kernel, run, wait
+
+            fastsense::CommandQueuePtr q = fastsense::hw::FPGAManager::createCommandQueue();
+            fastsense::kernels::RegKernel krnl{q};
+
+            fastsense::buffer::InputBuffer<fastsense::msg::Point> buffer_scan{q, cloud.size()};
+
+            //Output size: local_h matrix (6x6) + local_g matrix (6x1) + local_error (int) + local_count (int)
+            // 36 + 6 + 1 + 1 = 44
+            fastsense::buffer::OutputBuffer<int> buffer_output{q, 44};
+
+            //Write scan points into buffer
+            for(int i = 0; i < cloud.size(); i++){
+                buffer_scan[i] = cloud[i];
+            }
+
+            krnl.run(localmap, buffer_scan, buffer_output, cloud.size());
+            krnl.waitComplete();
+
 
             #pragma omp for schedule(static) nowait
             for (size_t i = 0; i < width; i++)
