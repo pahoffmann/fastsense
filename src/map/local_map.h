@@ -9,9 +9,14 @@
 #include <map/global_map.h>
 #include <hw/buffer/buffer.h>
 #include <map/local_map_hw.h>
+#include <util/xyz_buffer.h>
 
 namespace fastsense::map
 {
+
+using LocalMapSize = util::XYZBuffer<int>;
+using LocalMapPos = util::XYZBuffer<int>;
+using LocalMapOffset = util::XYZBuffer<int>;
 
 /**
  * Three dimensional array that can be shifted without needing to copy every entry.
@@ -32,20 +37,16 @@ private:
      * Side lengths of the ring buffer. They are always odd, so that there is a central cell.
      * The ring buffer contains sizeX * sizeY * sizeZ values.
      */
-    int sizeX;
-    int sizeY;
-    int sizeZ;
+    LocalMapSize size_;
 
     /// Actual data of the ring buffer.
-    buffer::InputOutputBuffer<T> data;
+    buffer::InputOutputBuffer<T> data_;
 
-    /// Position of the center of the cuboid in global coordinates.
-    int posX;
-    int posY;
-    int posZ;
+    /// Position (x,y,z) of the center of the cuboid in global coordinates.
+    LocalMapPos pos_;
 
     /**
-     * Offset of the data in the ring.
+     * Offset (x,y,z) of the data in the ring.
      * Each variable is the index of the center of the cuboid in the data array in its dimension.
      *
      * If size = 5, pos = 1 (-> indices range from -1 to 3) and offset = 3 (in one dimension),
@@ -54,12 +55,10 @@ private:
      *          ^
      *       offset
      */
-    int offsetX;
-    int offsetY;
-    int offsetZ;
+    LocalMapOffset offset_;
 
     /// Pointer to the global map in which the values outside of the buffer are stored
-    std::shared_ptr<GlobalMap> map;
+    std::shared_ptr<GlobalMap> map_;
 
 public:
 
@@ -75,11 +74,13 @@ public:
      */
     LocalMap(unsigned int sX, unsigned int sY, unsigned int sZ, const std::shared_ptr<GlobalMap>& map, const CommandQueuePtr& queue);
 
+    LocalMap();
+
     /**
      * Destructor of the ring buffer.
      * Deletes the array in particular.
      */
-    virtual ~LocalMap();
+    virtual ~LocalMap() = default;
 
     /**
      * Returns a value from the ring buffer per reference.
@@ -113,6 +114,10 @@ public:
      */
     void getPos(int* pos) const;
 
+    LocalMapSize getSize() const;
+
+    LocalMapPos getPos() const;
+
     /**
      * Shifts the ring buffer, so that a new position is the center of the cuboid.
      * Entries, that stay in the buffer, stay in place.
@@ -134,7 +139,7 @@ public:
     bool inBounds(int x, int y, int z) const;
 
     const buffer::InputOutputBuffer<T>& getBuffer() const;
-    
+
     LocalMapHW getHardwareRepresentation() const;
 };
 

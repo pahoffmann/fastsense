@@ -1,7 +1,6 @@
 #pragma once
 
 #include <zmq.hpp>
-#include <comm/zmq_patch.h>
 #include <msg/point_cloud.h>
 
 namespace fastsense::comm
@@ -14,6 +13,8 @@ public:
     Receiver(int port, size_t threads = 1);
     virtual ~Receiver() = default;
     T receive(zmq::recv_flags flags = zmq::recv_flags::none);
+    void receive(T& target, zmq::recv_flags flag = zmq::recv_flags::none);
+    
     inline int getPort() const
     {
         return port_;

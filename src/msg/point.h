@@ -7,7 +7,6 @@
 #pragma once
 
 #include <util/params.h>
-#include <msg/xyz_buffer.h>
 
 namespace fastsense::msg
 {

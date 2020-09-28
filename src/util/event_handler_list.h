@@ -68,7 +68,7 @@ class EventHandlerList
 public:
     EventHandlerList() = default;
     ~EventHandlerList() = default;
-    
+
     /**
      * @brief Add event handler
      *

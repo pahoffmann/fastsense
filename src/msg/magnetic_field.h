@@ -6,7 +6,7 @@
 
 #pragma once
 
-#include "xyz_buffer.h"
+#include <util/xyz_buffer.h>
 
 namespace fastsense::msg
 {
@@ -14,7 +14,7 @@ namespace fastsense::msg
 /**
  * @brief Represents magnetic field data from imu
  */
-struct MagneticField : public XYZBuffer<double>
+struct MagneticField : public util::XYZBuffer<double>
 {
     MagneticField() = default;
     explicit MagneticField(const double* magneticField);

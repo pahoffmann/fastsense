@@ -2,13 +2,16 @@
 # Variables
 #
 
+PERCENT = %
+
 # Tools
 CXX = $(XILINX_VITIS)/gnu/aarch64/lin/aarch64-linux/bin/aarch64-linux-gnu-g++
 VXX = $(XILINX_VITIS)/bin/v++
 HOST_CXX = g++
 MKDIR_P = mkdir -p
 SHELL = /bin/bash
-VIVADO_HLS = vivado_hls
+VITIS_HLS = vitis_hls
+VIVADO = vivado
 
 # Global
 BUILD_DIR = $(CURDIR)/build
@@ -19,6 +22,12 @@ APP_EXE = $(BUILD_DIR)/$(APP_NAME).exe
 APP_TEST_EXE = $(BUILD_DIR)/$(APP_NAME)_test.exe
 APP_XCLBIN = $(BUILD_DIR)/$(APP_NAME).xclbin
 APP_TEST_XCLBIN = $(BUILD_DIR)/$(APP_NAME)_test.xclbin
+
+APP_IMAGE_PATH = $(CURDIR)/app_image
+TEST_IMAGE_PATH = $(CURDIR)/test_image
+
+# Add for each port to forward ",hostfwd=<tcp/udp>:<hostport>-::<vmport>"
+QEMU_ARGS = -qemu-args "-netdev user,id=eth0,hostfwd=udp::2368-:2368,hostfwd=tcp::1440-:1534"
 
 # Software
 SYSROOT = $(PLATFORM_DIR)/sw/FastSense_platform/linux_domain/sysroot/aarch64-xilinx-linux
@@ -33,6 +42,7 @@ SW_SRCS = src/Application.cpp \
 	src/driver/lidar/velodyne.cpp \
 	src/data/sensor_sync.cpp \
 	$(wildcard src/map/*.cpp) \
+	$(wildcard src/tsdf/*.cpp) \
 	$(wildcard src/util/*.cpp) \
 	$(wildcard src/msg/*.cpp) \
 	$(wildcard src/util/config/*.cpp) \
@@ -55,10 +65,8 @@ LIBS = \
 	-lhdf5 \
 	-lpthread \
 	-lrt \
-	-lstdc++ \
-	-lgmp \
 	-lxrt_core \
-	-L$(SYSROOT)/usr/lib/
+	-L$(SYSROOT)/usr/lib/ \
 
 INC_DIRS = \
 	src \
@@ -77,16 +85,19 @@ LDFLAGS = $(LIBS) --sysroot=$(SYSROOT)
 
 # Hardware
 LINK_CFG = $(CURDIR)/link.cfg
+LINK_TEST_CFG = $(CURDIR)/link_test.cfg
 BUILD_CFG = $(CURDIR)/build.cfg
+PACKAGE_CFG = $(CURDIR)/package.cfg
+PACKAGE_TEST_CFG = $(CURDIR)/package_test.cfg
 
-HW_TARGET ?= hw
+HW_TARGET ?= sw_emu
 HW_PLATFORM = $(PLATFORM_DIR)/FastSense_platform.xpfm
 
 HW_SRCS = src/example/krnl_vadd.cpp
 HW_OBJS = $(HW_SRCS:%.cpp=$(BUILD_DIR)/%.xo)
 HW_DEPS = $(HW_OBJS:.xo=.d)
 
-HW_TEST_SRCS =
+HW_TEST_SRCS = test/kernels/krnl_local_map_test.cpp
 HW_TEST_OBJS = $(HW_TEST_SRCS:%.cpp=$(BUILD_DIR)/%.xo)
 HW_TEST_DEPS = $(HW_TEST_OBJS:.xo=.d)
 
@@ -109,8 +120,9 @@ all: software hardware
 test: test_software test_hardware
 
 clean:
-	@rm -rf _x .Xil _vimage *.log pl_script.sh start_simulation.sh
+	@rm -rf _x .Xil *.log *.jou pl_script.sh start_simulation.sh
 	@rm -rf build/* build/.Xil
+	@rm -rf app_image test_image
 
 clean_software:
 	@rm -rf $(SW_OBJS) $(ENTRY_POINT_OBJS) $(SW_DEPS) $(ENTRY_POINT_DEPS) $(APP_EXE)
@@ -119,7 +131,7 @@ clean_test:
 	@rm -rf $(TEST_OBJS) $(SW_OBJS) $(TEST_DEPS) $(SW_DEPS) $(APP_TEST_EXE)
 
 clean_hardware:
-	@rm -rf $(HW_OBJS) $(HW_DEPS) $(APP_XCLBIN) _vimage
+	@rm -rf $(HW_OBJS) $(HW_DEPS) $(APP_XCLBIN)
 
 clean_ros_nodes:
 	@rm -rf test/build/* test/devel/* test/*.log
@@ -154,38 +166,58 @@ $(BUILD_DIR)/%.o: %.cpp
 $(APP_XCLBIN): $(HW_OBJS) $(LINK_CFG)
 	@echo "Link hardware: $(APP_XCLBIN)"
 	@$(MKDIR_P) $(dir $@)
-	@$(VXX) $(HW_OBJS) -o $@ $(VXXLDFLAGS) > $<.out || (cat $<.out && false)
+	@$(VXX) $(HW_OBJS) -o $@ $(VXXLDFLAGS) > $@.out || (cat $@.out && false)
 
 # Link test hardware
-$(APP_TEST_XCLBIN): $(HW_OBJS) $(HW_TEST_OBJS) $(LINK_CFG)
+$(APP_TEST_XCLBIN): $(HW_OBJS) $(HW_TEST_OBJS) $(LINK_CFG) $(LINK_TEST_CFG)
 	@echo "Link hardware: $(APP_TEST_XCLBIN)"
 	@$(MKDIR_P) $(dir $@)
-	@$(VXX) $(HW_OBJS) $(HW_TEST_OBJS) -o $@ $(VXXLDFLAGS) > $<.out || (cat $<.out && false)
+	@$(VXX) $(HW_OBJS) $(HW_TEST_OBJS) -o $@ $(VXXLDFLAGS) --config $(LINK_TEST_CFG) > $@.out || (cat $@.out && false)
 
 # Compile kernels
 $(BUILD_DIR)/%.xo: %.cpp $(BUILD_CFG)
 	@echo "Compile kernel: $<"
 	@$(MKDIR_P) $(dir $@)
 	@$(HOST_CXX) $< $(HW_DEPS_FLAGS) -MF $(@:.xo=.d) -MT $@
-	@$(VXX) $(VXXFLAGS) $< -o $@ -k $(notdir $*) > $<.out || (cat $<.out && false)
+	@$(VXX) $(VXXFLAGS) $< -o $@ -k $(notdir $*) > $@.out || (cat $@.out && false)
+
+# Package SD card image
+package: $(APP_XCLBIN) $(APP_EXE) $(PACKAGE_CFG) $(BUILD_DIR)/emconfig.json
+	$(VXX) -p -t $(HW_TARGET) -f $(HW_PLATFORM) --config $(PACKAGE_CFG) $<
+
+# Package SD card image for tests
+package_test: $(APP_TEST_XCLBIN) $(APP_TEST_EXE) $(PACKAGE_TEST_CFG) $(BUILD_DIR)/emconfig.json
+	$(VXX) -p -t $(HW_TARGET) -f $(HW_PLATFORM) --config $(PACKAGE_TEST_CFG) $<
+
+$(BUILD_DIR)/emconfig.json:
+	emconfigutil -f $(HW_PLATFORM) --od $(BUILD_DIR)
 
 # Open HLS GUI for kernel
-hls_%: $(filter %$*.xo,$(HW_OBJS) $(HW_TEST_OBJS))
-	@echo "Opening HLS for kernel $* ($<) "
-	@$(VIVADO_HLS) -p _x/$*/$*/$*/
+.SECONDEXPANSION:
+hls_%: $$(filter $$(PERCENT)$$*.xo,$$(HW_OBJS) $$(HW_TEST_OBJS))
+	@echo "Opening HLS for kernel $* ($^)"
+	@$(VITIS_HLS) -p _x/$*/$*/$*/
+
+open_vivado:
+	@echo "Opening Vivado"
+	@cd _x/link/vivado/vpl && $(VIVADO) -source openprj.tcl
 
 copy_binaries_to_board:
 	@rsync --ignore-missing-args -r $(APP_EXE) $(APP_XCLBIN) student@$(BOARD_ADDRESS):
 
 copy_binaries_to_qemu:
-	xsct -eval "set filelist {"build/FastSense.exe" "/mnt/FastSense.exe" "build/FastSense.xclbin" "/mnt/FastSense.xclbin"}; source copy_to_qemu.tcl"
+	xsct -eval "set filelist {"build/FastSense.exe" "/mnt/FastSense.exe" "build/FastSense.xclbin" "/mnt/FastSense.xclbin" "runtime_data/config.json" "/mnt/config.json"}; source copy_to_qemu.tcl"
 
 copy_test_to_qemu:
-	xsct -eval 'set filelist {"build/FastSense_test.exe" "/mnt/FastSense_test.exe" "build/FastSense_test.xclbin" "/mnt/FastSense_test.xclbin" "test/config.json" "/mnt/config.json"}; source copy_to_qemu.tcl'
+	xsct -eval 'set filelist {"build/FastSense_test.exe" "/mnt/FastSense_test.exe" "build/FastSense_test.xclbin" "/mnt/FastSense_test.xclbin" "test_data/config.json" "/mnt/config.json"}; source copy_to_qemu.tcl'
 
-# Add for each port to forward "-redir tcp:localport::vmport" as --qemu-args
-start_emulator:
-	launch_emulator -no-reboot -runtime ocl -t sw_emu -forward-port 1440 1534 -qemu-args "-redir udp:2368::2368"
+start_emulator: package
+	sed -i 's/ $$\*/ "$$@"/g' $(APP_IMAGE_PATH)/launch_sw_emu.sh
+	$(APP_IMAGE_PATH)/launch_sw_emu.sh $(QEMU_ARGS)
+
+start_emulator_test: package_test
+	sed -i 's/ $$\*/ "$$@"/g' $(TEST_IMAGE_PATH)/launch_sw_emu.sh
+	$(TEST_IMAGE_PATH)/launch_sw_emu.sh $(QEMU_ARGS)
 
 rsync:
 	@echo 'syning fastsense: to "$(USER)@$(FPGA_SERVER).informatik.uos.de:$(FGPA_SERVER_HOME)/$(USER)/fastsense"'

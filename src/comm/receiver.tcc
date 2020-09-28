@@ -3,11 +3,7 @@
  * @author Julian Gaal
  * @date 2020-09-06
  */
-
 #pragma once
-
-#include <zmq.hpp>
-#include <cassert>
 
 namespace fastsense::comm {
 
@@ -23,11 +19,20 @@ template <typename T>
 T Receiver<T>::receive(zmq::recv_flags flag) 
 {
     zmq::message_t msg;
-    socket_.recv(&msg, zmq::as_integer(flag));
+    socket_.recv(msg, flag);
 
     T target;
     memcpy(&target, msg.data(), sizeof(T));
     return target;
+}
+
+template <typename T>
+void Receiver<T>::receive(T& target, zmq::recv_flags flag) 
+{
+    zmq::message_t msg;
+    socket_.recv(msg, flag);
+
+    memcpy(&target, msg.data(), sizeof(T));
 }
 
 } // namespace fastsense::comm

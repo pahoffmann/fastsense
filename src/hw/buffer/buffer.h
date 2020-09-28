@@ -279,7 +279,7 @@ public:
     /**
      * @brief Get the virtual address that buffer was mapped to
      *
-     * @return T* address to virtal address
+     * @return T* address to virtual address
      */
     T* getVirtualAddress()
     {

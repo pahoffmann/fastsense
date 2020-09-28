@@ -67,5 +67,16 @@ int Application::run()
     }
 
     Logger::info("Stopping Application...");
+
+    while (true) {
+        // Iteration done
+        // * TSDF berechnet
+        // * Werte in Buffer
+        // * Erstelle local map mit diesen Werten
+        auto& buffer = local_map.getBuffer();
+        std::array<std::pair<float, float>> tsdf_values(buffer.size());
+        std::copy(buffer.begin(), buffer.end(), tsdf_values.begin());
+    }
+
     return 0;
 }

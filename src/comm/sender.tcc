@@ -1,6 +1,13 @@
+/**
+ * @file sender.tcc
+ * @author Julian Gaal
+ * @date 2020-09-06
+ */
+
 #pragma once
 
-namespace fastsense::comm {
+namespace fastsense::comm
+{
 
 template <typename T>
 Sender<T>::Sender(std::string addr, size_t threads) 

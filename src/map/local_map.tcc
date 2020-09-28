@@ -14,33 +14,24 @@ namespace fastsense::map
 {
 
 template<typename T>
-LocalMap<T>::LocalMap(unsigned int sX, unsigned int sY, unsigned int sZ, const std::shared_ptr<GlobalMap>& map, const CommandQueuePtr& queue)
-    : sizeX{sX % 2 == 1 ? sX : sX + 1},
-      sizeY{sY % 2 == 1 ? sY : sY + 1},
-      sizeZ{sZ % 2 == 1 ? sZ : sZ + 1},
-      data{queue, sizeX * sizeY * sizeZ},
-      posX{0},
-      posY{0},
-      posZ{0},
-      offsetX{sizeX / 2},
-      offsetY{sizeY / 2},
-      offsetZ{sizeZ / 2},
-      map{map}
+LocalMap<T>::LocalMap(unsigned int sX, unsigned int sY, unsigned int sZ, const std::shared_ptr<GlobalMap>& map_, const CommandQueuePtr& queue)
+    : size_{sX % 2 == 1 ? sX : sX + 1,
+            sY % 2 == 1 ? sY : sY + 1,
+            sZ % 2 == 1 ? sZ : sZ + 1},
+      data_{queue, size_.x() * size_.y() * size_.z()},
+      pos_{0},
+      offset_{size_.x() / 2, size_.y() / 2, size_.z() / 2},
+      map_{map}
 {
     if (sX % 2 || sY % 2 || sZ % 2)
     {
-        fastsense::util::logging::Logger::warning("Changed LocalMap size from even (", sX, ", ", sY, ", ", sZ, ") to odd (", sizeX, ", ", sizeY, ", ", sizeZ, ")");
+        fastsense::util::logging::Logger::warning("Changed LocalMap size from even (", sX, ", ", sY, ", ", sZ, ") to odd (", size_.x(), ", ", size_.y(), ", ", size_.z(), ")");
     }
 
-    for (size_t i = 0; i < sizeX * sizeY * sizeZ; i++)
+    for (size_t i = 0; i < size_.x() * size_.y() * size_.z(); i++)
     {
-        data[i] = map->getValue(i / sizeZ / sizeY % sizeX - offsetX, i / sizeZ % sizeY - offsetY, i % sizeZ - offsetZ);
+        data_[i] = map_->getValue(i / size_.z() / size_.y() % size_.x() - offset_.x(), i / size_.z() % size_.y() - offset_.y(), i % size_.z() - offset_.z());
     }
-}
-
-template<typename T>
-LocalMap<T>::~LocalMap()
-{
 }
 
 template<typename T>
@@ -50,9 +41,9 @@ T& LocalMap<T>::value(int x, int y, int z)
     {
         throw std::out_of_range("Index out of bounds");
     }
-    return data[((x - posX + offsetX + sizeX) % sizeX) * sizeY * sizeZ +
-                                              ((y - posY + offsetY + sizeY) % sizeY) * sizeZ +
-                                              (z - posZ + offsetZ + sizeZ) % sizeZ];
+    return data_[((x - pos_.x() + offset_.x() + size_.x()) % size_.x()) * size_.y() * size_.z() +
+                                              ((y - pos_.y() + offset_.y() + size_.y()) % size_.y()) * size_.z() +
+                                              (z - pos_.z() + offset_.z() + size_.z()) % size_.z()];
 }
 
 template<typename T>
@@ -62,142 +53,150 @@ const T& LocalMap<T>::value(int x, int y, int z) const
     {
         throw std::out_of_range("Index out of bounds");
     }
-    return data[((x - posX + offsetX + sizeX) % sizeX) * sizeY * sizeZ +
-                                              ((y - posY + offsetY + sizeY) % sizeY) * sizeZ +
-                                              (z - posZ + offsetZ + sizeZ) % sizeZ];
+    return data_[((x - pos_.x() + offset_.x() + size_.x()) % size_.x()) * size_.y() * size_.z() +
+                                              ((y - pos_.y() + offset_.y() + size_.y()) % size_.y()) * size_.z() +
+                                              (z - pos_.z() + offset_.z() + size_.z()) % size_.z()];
 }
 
 template<typename T>
 void LocalMap<T>::getSize(int* size) const
 {
-    size[0] = sizeX;
-    size[1] = sizeY;
-    size[2] = sizeZ;
+    memcpy(size, size_.getData(), sizeof(size_));
 }
 
 template<typename T>
 void LocalMap<T>::getPos(int* pos) const
 {
-    pos[0] = posX;
-    pos[1] = posY;
-    pos[2] = posZ;
+    memcpy(pos, pos_.getData(), sizeof(pos_));
+}
+
+template<typename T>
+LocalMapSize LocalMap<T>::getSize() const
+{
+    return size_.getData();
+}
+
+template<typename T>
+LocalMapPos LocalMap<T>::getPos() const
+{
+    return pos_.getData();
 }
 
 template<typename T>
 bool LocalMap<T>::inBounds(int x, int y, int z) const
 {
-    return abs(x - posX) <= sizeX / 2 && abs(y - posY) <= sizeY / 2 && abs(z - posZ) <= sizeZ / 2;
+    return abs(x - pos_.x()) <= size_.x() / 2 && abs(y - pos_.y()) <= size_.y() / 2 && abs(z - pos_.z()) <= size_.z() / 2;
 }
 
 template<typename T>
 void LocalMap<T>::shift(int x, int y, int z)
 {
     // x
-    int diffX = x - posX;
+    int diffX = x - pos_.x();
     for (int i = 0; i < abs(diffX); i++)
     {
         // step x
-        for (int j = posY - sizeY / 2; j <= posY + sizeY / 2; j++)
+        for (int j = pos_.y() - size_.y() / 2; j <= pos_.y() + size_.y() / 2; j++)
         {
-            for (int k = posZ - sizeZ / 2; k <= posZ + sizeZ / 2; k++)
+            for (int k = pos_.z() - size_.z() / 2; k <= pos_.z() + size_.z() / 2; k++)
             {
                 if (diffX > 0)
                 {
                     // step forward
-                    T& inout = value(posX - sizeX / 2, j, k);
-                    map->setValue(posX - sizeX / 2, j, k, inout);
-                    inout = map->getValue(posX + sizeX / 2 + 1, j, k);
+                    T& inout = value(pos_.x() - size_.x() / 2, j, k);
+                    map_->setValue(pos_.x() - size_.x() / 2, j, k, inout);
+                    inout = map_->getValue(pos_.x() + size_.x() / 2 + 1, j, k);
                 }
                 else
                 {
                     // step backwards
-                    T& inout = value(posX + sizeX / 2, j, k);
-                    map->setValue(posX + sizeX / 2, j, k, inout);
-                    inout = map->getValue(posX - sizeX / 2 - 1, j, k);
+                    T& inout = value(pos_.x() + size_.x() / 2, j, k);
+                    map_->setValue(pos_.x() + size_.x() / 2, j, k, inout);
+                    inout = map_->getValue(pos_.x() - size_.x() / 2 - 1, j, k);
                 }
             }
         }
-        posX = diffX > 0 ? posX + 1 : posX - 1;
-        offsetX = diffX > 0 ? (offsetX + 1) % sizeX : (offsetX - 1 + sizeX) % sizeX;
+        pos_.x() = diffX > 0 ? pos_.x() + 1 : pos_.x() - 1;
+        offset_.x() = diffX > 0 ? (offset_.x() + 1) % size_.x() : (offset_.x() - 1 + size_.x()) % size_.x();
     }
 
     // y
-    int diffY = y - posY;
+    int diffY = y - pos_.y();
     for (int i = 0; i < abs(diffY); i++)
     {
         // step y
-        for (int j = posX - sizeX / 2; j <= posX + sizeX / 2; j++)
+        for (int j = pos_.x() - size_.x() / 2; j <= pos_.x() + size_.x() / 2; j++)
         {
-            for (int k = posZ - sizeZ / 2; k <= posZ + sizeZ / 2; k++)
+            for (int k = pos_.z() - size_.z() / 2; k <= pos_.z() + size_.z() / 2; k++)
             {
                 if (diffY > 0)
                 {
                     // step forward
-                    T& inout = value(j, posY - sizeY / 2, k);
-                    map->setValue(j, posY - sizeY / 2, k, inout);
-                    inout = map->getValue(j, posY + sizeY / 2 + 1, k);
+                    T& inout = value(j, pos_.y() - size_.y() / 2, k);
+                    map_->setValue(j, pos_.y() - size_.y() / 2, k, inout);
+                    inout = map_->getValue(j, pos_.y() + size_.y() / 2 + 1, k);
                 }
                 else
                 {
                     // step backwards
-                    T& inout = value(j, posY + sizeY / 2, k);
-                    map->setValue(j, posY + sizeY / 2, k, inout);
-                    inout = map->getValue(j, posY - sizeY / 2 - 1, k);
+                    T& inout = value(j, pos_.y() + size_.y() / 2, k);
+                    map_->setValue(j, pos_.y() + size_.y() / 2, k, inout);
+                    inout = map_->getValue(j, pos_.y() - size_.y() / 2 - 1, k);
                 }
             }
         }
-        posY = diffY > 0 ? posY + 1 : posY - 1;
-        offsetY = diffY > 0 ? (offsetY + 1) % sizeY : (offsetY - 1 + sizeY) % sizeY;
+        pos_.y() = diffY > 0 ? pos_.y() + 1 : pos_.y() - 1;
+        offset_.y() = diffY > 0 ? (offset_.y() + 1) % size_.y() : (offset_.y() - 1 + size_.y()) % size_.y();
     }
 
     // z
-    int diffZ = z - posZ;
+    int diffZ = z - pos_.z();
     for (int i = 0; i < abs(diffZ); i++)
     {
         // step z
-        for (int j = posX - sizeX / 2; j <= posX + sizeX / 2; j++)
+        for (int j = pos_.x() - size_.x() / 2; j <= pos_.x() + size_.x() / 2; j++)
         {
-            for (int k = posY - sizeY / 2; k <= posY + sizeY / 2; k++)
+            for (int k = pos_.y() - size_.y() / 2; k <= pos_.y() + size_.y() / 2; k++)
             {
                 if (diffZ > 0)
                 {
                     // step forward
-                    T& inout = value(j, k, posZ - sizeZ / 2);
-                    map->setValue(j, k, posZ - sizeZ / 2, inout);
-                    inout = map->getValue(j, k, posZ + sizeZ / 2 + 1);
+                    T& inout = value(j, k, pos_.z() - size_.z() / 2);
+                    map_->setValue(j, k, pos_.z() - size_.z() / 2, inout);
+                    inout = map_->getValue(j, k, pos_.z() + size_.z() / 2 + 1);
                 }
                 else
                 {
                     // step backwards
-                    T& inout = value(j, k, posZ + sizeZ / 2);
-                    map->setValue(j, k, posZ + sizeZ / 2, inout);
-                    inout = map->getValue(j, k, posZ - sizeZ / 2 - 1);
+                    T& inout = value(j, k, pos_.z() + size_.z() / 2);
+                    map_->setValue(j, k, pos_.z() + size_.z() / 2, inout);
+                    inout = map_->getValue(j, k, pos_.z() - size_.z() / 2 - 1);
                 }
             }
         }
-        posZ = diffZ > 0 ? posZ + 1 : posZ - 1;
-        offsetZ = diffZ > 0 ? (offsetZ + 1) % sizeZ : (offsetZ - 1 + sizeZ) % sizeZ;
+        pos_.z() = diffZ > 0 ? pos_.z() + 1 : pos_.z() - 1;
+        offset_.z() = diffZ > 0 ? (offset_.z() + 1) % size_.z() : (offset_.z() - 1 + size_.z()) % size_.z();
     }
 }
 
 template<typename T>
 const buffer::InputOutputBuffer<T>& LocalMap<T>::getBuffer() const
 {
-    return data;
+    return data_;
 }
 
 template<typename T>
 LocalMapHW LocalMap<T>::getHardwareRepresentation() const
 {
-    return {sizeX,
-            sizeY,
-            sizeZ,
-            posX,
-            posY,
-            posZ,
-            offsetX,
-            offsetY,
-            offsetZ};
+    return {size_.x(),
+            size_.y(),
+            size_.z(),
+            pos_.x(),
+            pos_.y(),
+            pos_.z(),
+            offset_.x(),
+            offset_.y(),
+            offset_.z()};
 }
 
 }

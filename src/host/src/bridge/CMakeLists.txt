@@ -1,0 +1,40 @@
+cmake_minimum_required(VERSION 3.0.2)
+project(bridge)
+
+add_compile_options(-std=c++17)
+
+find_package(catkin REQUIRED COMPONENTS
+  roscpp
+  sensor_msgs
+  visualization_msgs
+)
+
+find_package(ZeroMQ 4.3.2 REQUIRED)
+find_package(cppzmq 4.4.1 REQUIRED)
+find_package(OpenMP REQUIRED)
+find_package(HDF5 REQUIRED COMPONENTS CXX C HL)
+
+set(FASTSENSE_DIR ../../../../../fastsense)                               
+set(OpenMP_FLAGS ${OpenMP_CXX_FLAGS})
+set(OpenMP_LIBS gomp)
+set(HIGHFIVE_EXAMPLES FALSE CACHE INTERNAL "")
+set(HIGHFIVE_UNIT_TESTS FALSE CACHE INTERNAL "")
+
+add_subdirectory(${FASTSENSE_DIR}/ext/HighFive ${CMAKE_CURRENT_BINARY_DIR}/HighFive)
+
+catkin_package()
+
+add_executable(tsdf_bridge src/tsdf_bridge.cpp)
+
+target_include_directories(tsdf_bridge PRIVATE
+  ${FASTSENSE_DIR}/src
+  ${FASTSENSE_DIR}/ext/HighFive/include 
+  include
+  ${catkin_INCLUDE_DIRS}
+  ${HDF5_INCLUDE_DIRS}
+)
+
+target_link_libraries(tsdf_bridge
+  ${catkin_LIBRARIES}
+  libzmq
+)

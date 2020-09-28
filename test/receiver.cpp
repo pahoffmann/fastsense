@@ -10,6 +10,7 @@
 #include "catch2_config.h"
 
 using fastsense::msg::Point;
+using namespace fastsense::comm;
 
 TEST_CASE("Receive 10 Points", "[!hide]")
 {

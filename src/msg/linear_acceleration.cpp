@@ -9,7 +9,7 @@
 
 using namespace fastsense::msg;
 
-LinearAcceleration::LinearAcceleration(const double* acceleration) : XYZBuffer<double>()
+LinearAcceleration::LinearAcceleration(const double* acceleration) : util::XYZBuffer<double>()
 {
     data_[0] = -acceleration[0] * fastsense::util::params::G;
     data_[1] = -acceleration[1] * fastsense::util::params::G;

@@ -6,7 +6,12 @@
 
 #pragma once
 
-namespace fastsense::msg
+#include <cassert>
+
+// TODO operator * - + / = 
+// TODO length of buffer
+
+namespace fastsense::util
 {
 
 /**
@@ -17,6 +22,11 @@ class XYZBuffer
 {
 public:
     explicit XYZBuffer() = default;
+
+    XYZBuffer(T val) : data_{val, val, val} {}
+
+    XYZBuffer(T valX, T valY, T valZ) : data_{valX, valY, valZ} {}
+
     virtual ~XYZBuffer() = default;
 
     inline const T& x() const
@@ -32,6 +42,18 @@ public:
     inline const T& z() const
     {
         return data_[2];
+    }
+
+    inline T at(size_t index) const 
+    {
+        assert(index <= 2);
+
+        return data_[index];
+    }
+
+    inline T* getData() const
+    {
+        return data_;
     }
 
 protected:

@@ -7,7 +7,7 @@
 #pragma once
 
 #include <util/params.h>
-#include <msg/xyz_buffer.h>
+#include <util/xyz_buffer.h>
 
 namespace fastsense::msg
 {
@@ -15,7 +15,7 @@ namespace fastsense::msg
 /**
  * @brief Represents angular velocity data from imu
  */
-struct AngularVelocity : public XYZBuffer<double>
+struct AngularVelocity : public util::XYZBuffer<double>
 {
     AngularVelocity() = default;
     AngularVelocity(const double* angular_rate);

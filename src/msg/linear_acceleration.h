@@ -6,7 +6,7 @@
 
 #pragma once
 
-#include "xyz_buffer.h"
+#include <util/xyz_buffer.h>
 
 namespace fastsense::msg
 {
@@ -14,7 +14,7 @@ namespace fastsense::msg
 /**
  * @brief Represents linear acceleration data from imu
  */
-struct LinearAcceleration : public XYZBuffer<double>
+struct LinearAcceleration : public util::XYZBuffer<double>
 {
     LinearAcceleration() = default;
     explicit LinearAcceleration(const double* acceleration);
