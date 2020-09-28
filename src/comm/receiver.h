@@ -13,12 +13,13 @@ public:
     Receiver(int port, size_t threads = 1);
     virtual ~Receiver() = default;
     T receive(zmq::recv_flags flags = zmq::recv_flags::none);
-    void receive(T& target, zmq::recv_flags flag = zmq::recv_flags::none);
+    zmq::recv_result_t receive(T& target, zmq::recv_flags flag = zmq::recv_flags::none);
     
     inline int getPort() const
     {
         return port_;
     }
+    
 private:
     zmq::context_t context_;
     zmq::socket_t socket_;

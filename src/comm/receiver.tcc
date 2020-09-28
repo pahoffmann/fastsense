@@ -27,12 +27,16 @@ T Receiver<T>::receive(zmq::recv_flags flag)
 }
 
 template <typename T>
-void Receiver<T>::receive(T& target, zmq::recv_flags flag) 
+zmq::recv_result_t Receiver<T>::receive(T& target, zmq::recv_flags flag) 
 {
     zmq::message_t msg;
-    socket_.recv(msg, flag);
+    if (auto bytes_recv = socket_.recv(msg, flag))
+    {
+        memcpy(&target, msg.data(), sizeof(T));
+        return *bytes_recv;
+    }
 
-    memcpy(&target, msg.data(), sizeof(T));
+    return std::nullopt;
 }
 
 } // namespace fastsense::comm

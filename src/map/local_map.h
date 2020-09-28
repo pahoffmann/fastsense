@@ -1,5 +1,5 @@
 /**
- * @file ring_buffer.h
+ * @file local_map.h
  * @author Steffen Hinderink
  * @author Juri Vana
  */
@@ -13,10 +13,6 @@
 
 namespace fastsense::map
 {
-
-using LocalMapSize = util::XYZBuffer<int>;
-using LocalMapPos = util::XYZBuffer<int>;
-using LocalMapOffset = util::XYZBuffer<int>;
 
 /**
  * Three dimensional array that can be shifted without needing to copy every entry.
@@ -37,13 +33,13 @@ private:
      * Side lengths of the ring buffer. They are always odd, so that there is a central cell.
      * The ring buffer contains sizeX * sizeY * sizeZ values.
      */
-    LocalMapSize size_;
+    util::LocalMapSize size_;
 
     /// Actual data of the ring buffer.
     buffer::InputOutputBuffer<T> data_;
 
     /// Position (x,y,z) of the center of the cuboid in global coordinates.
-    LocalMapPos pos_;
+    util::LocalMapPos pos_;
 
     /**
      * Offset (x,y,z) of the data in the ring.
@@ -55,7 +51,7 @@ private:
      *          ^
      *       offset
      */
-    LocalMapOffset offset_;
+    util::LocalMapOffset offset_;
 
     /// Pointer to the global map in which the values outside of the buffer are stored
     std::shared_ptr<GlobalMap> map_;

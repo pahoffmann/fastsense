@@ -14,10 +14,10 @@ namespace fastsense::map
 {
 
 template<typename T>
-LocalMap<T>::LocalMap(unsigned int sX, unsigned int sY, unsigned int sZ, const std::shared_ptr<GlobalMap>& map_, const CommandQueuePtr& queue)
-    : size_{sX % 2 == 1 ? sX : sX + 1,
-            sY % 2 == 1 ? sY : sY + 1,
-            sZ % 2 == 1 ? sZ : sZ + 1},
+LocalMap<T>::LocalMap(unsigned int sX, unsigned int sY, unsigned int sZ, const std::shared_ptr<GlobalMap>& map, const CommandQueuePtr& queue)
+    : size_{(sX % 2 == 1 ? sX : sX + 1),
+            (sY % 2 == 1 ? sY : sY + 1),
+            (sZ % 2 == 1 ? sZ : sZ + 1)},
       data_{queue, size_.x() * size_.y() * size_.z()},
       pos_{0},
       offset_{size_.x() / 2, size_.y() / 2, size_.z() / 2},

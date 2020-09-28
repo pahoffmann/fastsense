@@ -61,4 +61,9 @@ protected:
     T data_[3];
 };
 
-} // namespace driver::msg
+
+using LocalMapSize = util::XYZBuffer<int>;
+using LocalMapPos = util::XYZBuffer<int>;
+using LocalMapOffset = util::XYZBuffer<int>;
+
+} // namespace driver::util

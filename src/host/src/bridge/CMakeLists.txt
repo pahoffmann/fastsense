@@ -26,6 +26,8 @@ catkin_package()
 
 add_executable(tsdf_bridge src/tsdf_bridge.cpp)
 
+target_compile_options(tsdf_bridge PRIVATE ${OpenMP_FLAGS})
+
 target_include_directories(tsdf_bridge PRIVATE
   ${FASTSENSE_DIR}/src
   ${FASTSENSE_DIR}/ext/HighFive/include 
@@ -37,4 +39,5 @@ target_include_directories(tsdf_bridge PRIVATE
 target_link_libraries(tsdf_bridge
   ${catkin_LIBRARIES}
   libzmq
+  ${OpenMP_LIBS}
 )

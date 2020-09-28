@@ -7,6 +7,7 @@
 #pragma once
 
 #include <tsdf/TSDFParameters.h>
+#include <vector>
 
 namespace fastsense::comm 
 {
@@ -15,10 +16,10 @@ struct TSDFBridgeMessage
 {
     float tau_;
     float map_resolution_;
-    fastsense::map::LocalMapSize size_;
-    fastsense::map::LocalMapPos pos_;
-    fastsense::map::LocalMapOffset offset_;
-    std::array<std::pair<float, float>> tsdf_data_;
+    fastsense::util::LocalMapSize size_;
+    fastsense::util::LocalMapPos pos_;
+    fastsense::util::LocalMapOffset offset_;
+    std::vector<std::pair<float, float>> tsdf_data_;
 };
 
 } // namespace fastsense::comm
