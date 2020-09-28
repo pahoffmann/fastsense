@@ -25,6 +25,7 @@
 
 
 using fastsense::msg::Point;
+using fastsense::util::PCDFile;
 
 namespace fastsense::registration{
 

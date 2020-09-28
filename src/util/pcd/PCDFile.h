@@ -4,8 +4,6 @@
  * @author Marc Eisoldt (meisoldt)
  */
 
-namespace fastsense::util {
-
 #include <string>
 #include <vector>
 
@@ -15,6 +13,8 @@ namespace fastsense::util {
 #include <memory>
 
 #include <util/types.h>
+
+namespace fastsense::util {
 
 template<typename VEC_T>
 class PCDFile
@@ -31,6 +31,6 @@ private:
     std::string name_;
 };
 
-#include "PCDFile.tcc"
-
 } //namespace fastsense::util
+
+#include "PCDFile.tcc"
