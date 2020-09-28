@@ -147,7 +147,7 @@ TEST_CASE("Test Registration", "")
         SECTION("Test Registration Translation")
         {
             // Initialize temporary testing variables
-            //global_map_ptr.reset(new fastsense::map::GlobalMap("test_global_map_translation", 0.0, 0.0));
+            global_map_ptr.reset(new fastsense::map::GlobalMap("test_global_map_translation", 0.0, 0.0));
             
             std::vector<fastsense::msg::Point> points_pretransformed;
             std::vector<std::vector<fastsense::msg::Point>> points;
@@ -203,14 +203,84 @@ TEST_CASE("Test Registration", "")
 
             int max_offset = 10; //10mm maximum difference 
 
-            REQUIRE(std::abs(transform_mat(0,3) - tx) < max_offset); //x translation smaller than offset
-            REQUIRE(std::abs(transform_mat(1,3) - ty) < max_offset); //y translation smaller than offset
-            REQUIRE(std::abs(transform_mat(2,3) - tz) < max_offset); //z translation smaller than offset
+            // REQUIRE(std::abs(transform_mat(0,3) - tx) < max_offset); //x translation smaller than offset
+            // REQUIRE(std::abs(transform_mat(1,3) - ty) < max_offset); //y translation smaller than offset
+            // REQUIRE(std::abs(transform_mat(2,3) - tz) < max_offset); //z translation smaller than offset
+
+            for (size_t i = 0; i < 4; i++)
+            {
+                for (size_t j = 0; i < 4; i++)
+                {
+                    REQUIRE(std::abs(translation_mat(i, j) - transform_mat(i, j)) < max_offset); //x translation smaller than offset    
+                }
+                
+            }
 
         }
         SECTION("Registration test Rotation")
         {
-            ///todo
+            // Initialize temporary testing variables
+            global_map_ptr.reset(new fastsense::map::GlobalMap("test_global_map_rotation", 0.0, 0.0));
+            
+            std::vector<fastsense::msg::Point> points_pretransformed;
+            std::vector<std::vector<fastsense::msg::Point>> points;
+            unsigned int num_points;
+            fastsense::util::PCDFile<fastsense::msg::Point> file("");
+            file.readPoints(points, num_points);
+
+            // for(auto ring = 0u; ring < points.size(); ++ring)
+            // {
+            //     for(const auto& point : points[ring])
+            //     {
+            //         fastsense::msg::Point transformed_p;
+            //         transformed_p.x = point.x * 1000; //m to mm
+            //         transformed_p.y = point.y * 1000; //m to mm
+            //         transformed_p.z = point.z * 1000; //m to mm
+            //         points_pretransformed.push_back(transformed_p);
+            //     }
+            // }
+
+            ScanPoints_t<Eigen::Vector3f> scan_points; 
+            //points_transformed now holds the pretransformed (in mm) points from the pcd
+            for(auto ring = 0u; ring < points.size(); ++ring)
+            {
+                for(const auto& point : points[ring])
+                {
+                    Eigen::Vector3f transformed_p;
+                    transformed_p.x() = point.x * 1000; //m to mm
+                    transformed_p.y() = point.y * 1000; //m to mm
+                    transformed_p.z() = point.z * 1000; //m to mm
+                    scan_points[ring].push_back(transformed_p);
+                }
+            }
+
+            float tau = 10;
+            float max_weight = 10;
+            //calc tsdf values for the points from the pcd and store them in the local map
+            fastsense::tsdf::update_tsdf(scan_points, Vector3::Zero(), local_map, fastsense::tsdf::TsdfCalculation::PROJECTION_INTER, tau, max_weight);
+
+            float rx = 30 * (M_PI/180); //radiants
+            Eigen::Matrix4f rotation_mat_y;
+            rotation_mat_y << cos(rx),     0, sin(rx), 0,
+                            0,           1, 0,       0,
+                            -1* sin(rx), 0, cos(rx), 0,
+                            0,           0, 0,       1;
+
+
+            reg.transform_point_cloud(points_pretransformed, rotation_mat_y);
+
+            Eigen::Matrix4f transform_mat = reg.register_cloud(local_map, points_pretransformed);
+
+            int max_offset = 1; //10mm maximum difference 
+
+            for (size_t i = 0; i < 4; i++)
+            {
+                for (size_t j = 0; i < 4; i++)
+                {
+                    REQUIRE(std::abs(rotation_mat_y(i, j) - transform_mat(i, j)) < max_offset); //x translation smaller than offset    
+                }
+                
+            }
         }
     }
 
