@@ -31,6 +31,8 @@ std::ostream& operator<<(std::ostream& os, const TSDFParameters<SCALAR_T, VEC_T>
        << "\tmap_grid_size_y: " << params.map_grid_size_y_ << '\n'
        << "\tmap_grid_size_z: " << params.map_grid_size_z_ << '\n'
        << "\ttotal_size: "       << params.total_size_      << std::endl;
+    return os; 
+    // TODO ask 
 }
 
 } // namespace fastsense::tsdf

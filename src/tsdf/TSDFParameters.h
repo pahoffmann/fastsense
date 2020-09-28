@@ -5,9 +5,6 @@
  * @author Marc Eisoldt (meisoldt)
  */
 
-// ROS stuff
-#include <ros/ros.h>
-
 #include <iostream>
 
 namespace fastsense::tsdf

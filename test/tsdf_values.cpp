@@ -7,7 +7,6 @@
  * @copyright Copyright (c) 2020
  * 
  */
-//#define CATCH_CONFIG_MAIN
 #include "catch2_config.h"
 #include <tsdf/ProjectionNormal.h>
 #include <tsdf/update_tsdf.h>
@@ -16,7 +15,6 @@
 using namespace fastsense::tsdf;
 using namespace fastsense::map;
 using namespace fastsense::hw;
-//using namespace fastsense::kernels;
 
 TEST_CASE("Test TSDF Values", "[]")
 {

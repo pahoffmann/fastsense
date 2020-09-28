@@ -7,6 +7,7 @@
 #include "Application.h"
 #include <util/config/config_manager.h>
 #include <util/logging/logger.h>
+#include <comm/bridge_messages.h>
 #include <csignal>
 #include <cstring>
 
@@ -73,9 +74,11 @@ int Application::run()
         // * TSDF berechnet
         // * Werte in Buffer
         // * Erstelle local map mit diesen Werten
-        auto& buffer = local_map.getBuffer();
-        std::array<std::pair<float, float>> tsdf_values(buffer.size());
-        std::copy(buffer.begin(), buffer.end(), tsdf_values.begin());
+        // auto& buffer = local_map.getBuffer();
+        // std::vector<std::pair<float, float>> tsdf_values(buffer.size());
+        // std::copy(buffer.begin(), buffer.end(), tsdf_values.begin());
+        // comm::TSDFBridgeMessage msg { .map_resolution_ }
+        // Sender.send(msg)
     }
 
     return 0;

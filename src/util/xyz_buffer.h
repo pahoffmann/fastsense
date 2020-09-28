@@ -6,7 +6,7 @@
 
 #pragma once
 
-#include <cassert>
+#include <stdexcept>
 
 // TODO operator * - + / = 
 // TODO length of buffer
@@ -34,7 +34,17 @@ public:
         return data_[0];
     }
 
+    inline T& x()
+    {
+        return data_[0];
+    }
+
     inline const T& y() const
+    {
+        return data_[1];
+    }
+
+    inline T& y()
     {
         return data_[1];
     }
@@ -44,16 +54,40 @@ public:
         return data_[2];
     }
 
+    inline T& z()
+    {
+        return data_[2];
+    }
+
     inline T at(size_t index) const 
     {
-        assert(index <= 2);
+        if (index > 2)
+        {
+            throw std::out_of_range("Can't access xyz buffer at " + index);
+        }
 
         return data_[index];
     }
 
-    inline T* getData() const
+    inline const T* getData() const
     {
         return data_;
+    }
+
+    XYZBuffer<T>& operator+=(const T& rhs)
+    {
+      x() += rhs;
+      y() += rhs;
+      z() += rhs;
+      return *this;
+    }
+
+    XYZBuffer<T>& operator+=(const XYZBuffer<T>& rhs)
+    {
+      x() += rhs.x();
+      y() += rhs.y();
+      z() += rhs.z();
+      return *this;
     }
 
 protected:

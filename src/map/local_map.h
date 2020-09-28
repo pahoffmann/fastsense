@@ -110,9 +110,9 @@ public:
      */
     void getPos(int* pos) const;
 
-    LocalMapSize getSize() const;
+    util::LocalMapSize getSize() const;
 
-    LocalMapPos getPos() const;
+    util::LocalMapPos getPos() const;
 
     /**
      * Shifts the ring buffer, so that a new position is the center of the cuboid.

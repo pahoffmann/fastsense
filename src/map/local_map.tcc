@@ -71,15 +71,15 @@ void LocalMap<T>::getPos(int* pos) const
 }
 
 template<typename T>
-LocalMapSize LocalMap<T>::getSize() const
+util::LocalMapSize LocalMap<T>::getSize() const
 {
-    return size_.getData();
+    return size_;
 }
 
 template<typename T>
-LocalMapPos LocalMap<T>::getPos() const
+util::LocalMapPos LocalMap<T>::getPos() const
 {
-    return pos_.getData();
+    return pos_;
 }
 
 template<typename T>

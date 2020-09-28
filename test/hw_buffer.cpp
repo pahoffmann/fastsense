@@ -1,0 +1,32 @@
+/**
+ * @file hw_buffer.cpp
+ * @author Julian Gaal
+ * @date 2020-09-28
+ */
+
+#include "catch2_config.h"
+#include "Application.h"
+#include <util/config/config_manager.h>
+#include <util/logging/logger.h>
+#include <msg/imu_msg.h>
+
+using namespace fastsense;
+using namespace fastsense::util::config;
+using namespace fastsense::msg;
+
+TEST_CASE("Test Buffer STL Container", "[]")
+{   
+    constexpr size_t buffer_size = 5;
+    data::ImuStampedBufferPtr imuBuffer{std::make_shared<data::ImuStampedBuffer>(buffer_size)};
+    
+    for (size_t i = 0; i < buffer_size*2; i++)
+    {
+        ImuMsg imu_msg{};
+
+    }
+
+    SECTION("Test #1")
+    {
+
+    }
+}
