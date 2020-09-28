@@ -14,7 +14,7 @@ find_package(cppzmq 4.4.1 REQUIRED)
 find_package(OpenMP REQUIRED)
 find_package(HDF5 REQUIRED COMPONENTS CXX C HL)
 
-set(FASTSENSE_DIR ../../../../../fastsense)                               
+set(FASTSENSE_DIR ../../../../fastsense)                               
 set(OpenMP_FLAGS ${OpenMP_CXX_FLAGS})
 set(OpenMP_LIBS gomp)
 set(HIGHFIVE_EXAMPLES FALSE CACHE INTERNAL "")
