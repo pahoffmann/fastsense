@@ -42,6 +42,7 @@ SW_SRCS = src/Application.cpp \
 	src/driver/lidar/velodyne.cpp \
 	src/data/sensor_sync.cpp \
 	$(wildcard src/map/*.cpp) \
+	$(wildcard src/tsdf/*.cpp) \
 	$(wildcard src/util/*.cpp) \
 	$(wildcard src/msg/*.cpp) \
 	$(wildcard src/util/config/*.cpp) \
@@ -65,7 +66,7 @@ LIBS = \
 	-lpthread \
 	-lrt \
 	-lxrt_core \
-	-L$(SYSROOT)/usr/lib/
+	-L$(SYSROOT)/usr/lib/ \
 
 INC_DIRS = \
 	src \
