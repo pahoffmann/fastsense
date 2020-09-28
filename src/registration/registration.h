@@ -31,7 +31,7 @@
 #include <util/time_stamp.h>
 #include <msg/msgs_stamped.h>
 #include <msg/point.h>
-#include <hw/kernels/reg_kernel.h>
+//#include <hw/kernels/reg_kernel.h>
 
 
 #include <cmath>

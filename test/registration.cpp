@@ -78,24 +78,15 @@ TEST_CASE("Test Registration", "")
 
 
     // create pcl from velodyne sample, create local map, transform pcl and see what the reconstruction can do.
-
-        fastsense::CommandQueuePtr q = fastsense::hw::FPGAManager::createCommandQueue();
-
-        //test pointcloud transform 
-        std::vector<fastsense::msg::Point> cloud(5);
-        std::vector<fastsense::msg::Point> result(5);
-
-        //test registration
-        fastsense::registration::Registration reg;
-        std::shared_ptr<fastsense::map::GlobalMap> global_map_ptr(new fastsense::map::GlobalMap("test_global_map", 0.0, 0.0));
-        fastsense::map::LocalMap<std::pair<float, float>> local_map(5, 5, 5, global_map_ptr, q);
         
-        //todo: read cloud using marcs stuff
-
-        //todo: calc tsdf and add to local_map
-            
         SECTION("Test Transform PCL")
         {
+            //test pointcloud transform 
+            std::vector<fastsense::msg::Point> cloud(5);
+            std::vector<fastsense::msg::Point> result(5);
+
+            fastsense::registration::Registration reg(1);
+
             float tx = 2.0f; 
             float ty = 2.0f;
             float tz = 2.0f;
@@ -144,51 +135,66 @@ TEST_CASE("Test Registration", "")
             REQUIRE(cloud[0].z == result[0].z);
 
         }
+
         SECTION("Test Registration Translation")
         {
+            fastsense::CommandQueuePtr q = fastsense::hw::FPGAManager::createCommandQueue();
+
+            //test registration
+            fastsense::registration::Registration reg(1);
+            std::shared_ptr<fastsense::map::GlobalMap> global_map_ptr(new fastsense::map::GlobalMap("test_global_map", 0.0, 0.0));
+            
+            fastsense::map::LocalMap<std::pair<float, float>> local_map(20 * 10, 20 * 10, 5 * 10, global_map_ptr, q);
+
+
             // Initialize temporary testing variables
             global_map_ptr.reset(new fastsense::map::GlobalMap("test_global_map_translation", 0.0, 0.0));
             
             std::vector<fastsense::msg::Point> points_pretransformed;
             std::vector<std::vector<fastsense::msg::Point>> points;
             unsigned int num_points;
-            fastsense::util::PCDFile<fastsense::msg::Point> file("");
+            
+            fastsense::util::PCDFile<fastsense::msg::Point> file("sim_cloud.pcd");
+
             file.readPoints(points, num_points);
 
-            // for(auto ring = 0u; ring < points.size(); ++ring)
-            // {
-            //     for(const auto& point : points[ring])
-            //     {
-            //         fastsense::msg::Point transformed_p;
-            //         transformed_p.x = point.x * 1000; //m to mm
-            //         transformed_p.y = point.y * 1000; //m to mm
-            //         transformed_p.z = point.z * 1000; //m to mm
-            //         points_pretransformed.push_back(transformed_p);
-            //     }
-            // }
+            for(auto ring = 0u; ring < points.size(); ++ring)
+            {
+                for(const auto& point : points[ring])
+                {
+                    fastsense::msg::Point transformed_p;
+                    transformed_p.x = point.x * 10; //m to mm
+                    transformed_p.y = point.y * 10; //m to mm
+                    transformed_p.z = point.z * 10; //m to mm
+                    points_pretransformed.push_back(transformed_p);
+                }
+            }
 
-            ScanPoints_t<Eigen::Vector3f> scan_points; 
+            ScanPoints_t<Eigen::Vector3f> scan_points(points.size()); 
             //points_transformed now holds the pretransformed (in mm) points from the pcd
             for(auto ring = 0u; ring < points.size(); ++ring)
             {
                 for(const auto& point : points[ring])
                 {
                     Eigen::Vector3f transformed_p;
-                    transformed_p.x() = point.x * 1000; //m to mm
-                    transformed_p.y() = point.y * 1000; //m to mm
-                    transformed_p.z() = point.z * 1000; //m to mm
+                    transformed_p.x() = point.x * 10; //m to mm
+                    transformed_p.y() = point.y * 10; //m to mm
+                    transformed_p.z() = point.z * 10; //m to mm
                     scan_points[ring].push_back(transformed_p);
                 }
+
+
             }
 
             float tau = 10;
             float max_weight = 10;
             //calc tsdf values for the points from the pcd and store them in the local map
+
             fastsense::tsdf::update_tsdf(scan_points, Vector3::Zero(), local_map, fastsense::tsdf::TsdfCalculation::PROJECTION_INTER, tau, max_weight);
 
-            //translate 20cm in x and y direction
-            int tx = 200; 
-            int ty = 200;
+            //translate 50cm in x and y direction
+            int tx = 5; 
+            int ty = 5;
             int tz = 0;
 
             Eigen::Matrix4f translation_mat;
@@ -201,7 +207,9 @@ TEST_CASE("Test Registration", "")
 
             Eigen::Matrix4f transform_mat = reg.register_cloud(local_map, points_pretransformed);
 
-            int max_offset = 10; //10mm maximum difference 
+            //std::cout << transform_mat << std::endl;
+
+            int max_offset = 1; // 10cm maximum difference 
 
             // REQUIRE(std::abs(transform_mat(0,3) - tx) < max_offset); //x translation smaller than offset
             // REQUIRE(std::abs(transform_mat(1,3) - ty) < max_offset); //y translation smaller than offset
@@ -215,41 +223,50 @@ TEST_CASE("Test Registration", "")
                 }
                 
             }
-
         }
+        
         SECTION("Registration test Rotation")
         {
+            fastsense::CommandQueuePtr q = fastsense::hw::FPGAManager::createCommandQueue();
+
+            //test registration
+            fastsense::registration::Registration reg(1);
+            std::shared_ptr<fastsense::map::GlobalMap> global_map_ptr(new fastsense::map::GlobalMap("test_global_map", 0.0, 0.0));
+            
+            fastsense::map::LocalMap<std::pair<float, float>> local_map(20 * 10, 20 * 10, 5 * 10, global_map_ptr, q);
+
+
             // Initialize temporary testing variables
             global_map_ptr.reset(new fastsense::map::GlobalMap("test_global_map_rotation", 0.0, 0.0));
             
             std::vector<fastsense::msg::Point> points_pretransformed;
             std::vector<std::vector<fastsense::msg::Point>> points;
             unsigned int num_points;
-            fastsense::util::PCDFile<fastsense::msg::Point> file("");
+            fastsense::util::PCDFile<fastsense::msg::Point> file("sim_cloud.pcd");
             file.readPoints(points, num_points);
 
-            // for(auto ring = 0u; ring < points.size(); ++ring)
-            // {
-            //     for(const auto& point : points[ring])
-            //     {
-            //         fastsense::msg::Point transformed_p;
-            //         transformed_p.x = point.x * 1000; //m to mm
-            //         transformed_p.y = point.y * 1000; //m to mm
-            //         transformed_p.z = point.z * 1000; //m to mm
-            //         points_pretransformed.push_back(transformed_p);
-            //     }
-            // }
+            for(auto ring = 0u; ring < points.size(); ++ring)
+            {
+                for(const auto& point : points[ring])
+                {
+                    fastsense::msg::Point transformed_p;
+                    transformed_p.x = point.x * 10; //m to mm
+                    transformed_p.y = point.y * 10; //m to mm
+                    transformed_p.z = point.z * 10; //m to mm
+                    points_pretransformed.push_back(transformed_p);
+                }
+            }
 
-            ScanPoints_t<Eigen::Vector3f> scan_points; 
+            ScanPoints_t<Eigen::Vector3f> scan_points(points.size()); 
             //points_transformed now holds the pretransformed (in mm) points from the pcd
             for(auto ring = 0u; ring < points.size(); ++ring)
             {
                 for(const auto& point : points[ring])
                 {
                     Eigen::Vector3f transformed_p;
-                    transformed_p.x() = point.x * 1000; //m to mm
-                    transformed_p.y() = point.y * 1000; //m to mm
-                    transformed_p.z() = point.z * 1000; //m to mm
+                    transformed_p.x() = point.x * 10; //m to mm
+                    transformed_p.y() = point.y * 10; //m to mm
+                    transformed_p.z() = point.z * 10; //m to mm
                     scan_points[ring].push_back(transformed_p);
                 }
             }
@@ -259,7 +276,7 @@ TEST_CASE("Test Registration", "")
             //calc tsdf values for the points from the pcd and store them in the local map
             fastsense::tsdf::update_tsdf(scan_points, Vector3::Zero(), local_map, fastsense::tsdf::TsdfCalculation::PROJECTION_INTER, tau, max_weight);
 
-            float rx = 30 * (M_PI/180); //radiants
+            float rx = 10 * (M_PI/180); //radiants
             Eigen::Matrix4f rotation_mat_y;
             rotation_mat_y << cos(rx),     0, sin(rx), 0,
                             0,           1, 0,       0,

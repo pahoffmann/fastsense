@@ -97,7 +97,7 @@ Registration::Matrix4x4 Registration::register_cloud(fastsense::map::LocalMap<st
 
     // instead of splitting and joining threads twice per iteration, stay in a
     // multithreaded environment and guard the appropriate places with #pragma omp single
-    #pragma omp parallel
+    //#pragma omp parallel
     {
         Matrix6x6 local_h;
         Matrix6x1 local_g;
@@ -120,7 +120,7 @@ Registration::Matrix4x4 Registration::register_cloud(fastsense::map::LocalMap<st
 
             //kernel, run, wait
 
-            fastsense::CommandQueuePtr q = fastsense::hw::FPGAManager::createCommandQueue();
+            /*fastsense::CommandQueuePtr q = fastsense::hw::FPGAManager::createCommandQueue();
             fastsense::kernels::RegKernel krnl{q};
 
             fastsense::buffer::InputBuffer<fastsense::msg::Point> buffer_scan{q, cloud.size()};
@@ -137,8 +137,9 @@ Registration::Matrix4x4 Registration::register_cloud(fastsense::map::LocalMap<st
             //krnl.run(localmap, buffer_scan, buffer_output, cloud.size());
             //krnl.waitComplete();
 
+            */
 
-            #pragma omp for schedule(static) nowait
+            //#pragma omp for schedule(static) nowait
             for (size_t i = 0; i < width; i++)
             {
                 fastsense::msg::Point& point = cloud[i];
@@ -201,10 +202,11 @@ Registration::Matrix4x4 Registration::register_cloud(fastsense::map::LocalMap<st
                 }
                 catch (const std::out_of_range&)
                 {
+                    std::cout << "FAIL: " << point.x << " " << point.y << " " << point.z << std::endl;
                 }
             }
             // write local results back into shared variables
-            #pragma omp critical
+            //#pragma omp critical
             {
                 h += local_h;
                 g += local_g;
@@ -215,14 +217,16 @@ Registration::Matrix4x4 Registration::register_cloud(fastsense::map::LocalMap<st
 
             //RESUME SOFTWARE IMPLEMENTATION 
             // wait for all threads to finish //here should be the exit point of the hw communication, after which the data is being used.
-            #pragma omp barrier
+            //#pragma omp barrier
             // only execute on a single thread, all others wait - use the data coming from hw to calculate diff things.
-            #pragma omp single
+            //#pragma omp single
             {
                 // W Matrix
                 h += alpha * count * Matrix6x6::Identity();
 
-                xi = -h.inverse() * g; //-h.completeOrthogonalDecomposition().pseudoInverse() * g;
+                //std::cout << -h.completeOrthogonalDecomposition().pseudoInverse() * g << std::endl << std::endl;
+
+                xi = -h.completeOrthogonalDecomposition().pseudoInverse() * g; //-h.completeOrthogonalDecomposition().pseudoInverse() * g;
 
                 //convert xi into transform matrix T
                 next_transform = xi_to_transform(xi);
