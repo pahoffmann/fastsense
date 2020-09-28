@@ -1,5 +1,5 @@
 /**
- * @file main.cpp
+ * @file registration.cpp
  * @author Patrick
  * @date 2020-08-09
  * Test file used to test the registration implementation
@@ -88,7 +88,7 @@ TEST_CASE("Test Registration", "")
         fastsense::registration::Registration reg;
         std::shared_ptr<fastsense::map::GlobalMap> global_map_ptr(new fastsense::map::GlobalMap("test_global_map", 0.0, 0.0));
         fastsense::map::LocalMap<std::pair<int, int>> local_map(5, 5, 5, global_map_ptr, q);
-
+        
         //todo: read cloud using marcs stuff
 
         //todo: calc tsdf and add to local_map
@@ -147,11 +147,11 @@ TEST_CASE("Test Registration", "")
         {
             // Initialize temporary testing variables
             global_map_ptr.reset(new fastsense::map::GlobalMap("test_global_map", 0.0, 0.0));
-
+            
             std::vector<fastsense::msg::Point> points_pretransformed;
             std::vector<std::vector<fastsense::msg::Point>> points;
             unsigned int num_points;
-            PCDFile<fastsense::msg::Point> file("");
+            fastsense::util::PCDFile<fastsense::msg::Point> file("");
             file.readPoints(points, num_points);
 
             for(auto ring = 0u; ring < points.size(); ++ring)
