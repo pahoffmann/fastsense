@@ -54,5 +54,7 @@ qemu-*
 
 ### ROS
 .catkin_workspace
+*devel*
+*build*
 test/ros_tests_ws/devel
 test/ros_tests_ws/build
