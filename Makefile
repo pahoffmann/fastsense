@@ -67,7 +67,6 @@ LIBS = \
 	-lrt \
 	-lxrt_core \
 	-L$(SYSROOT)/usr/lib/ \
-	-fopenmp
 
 INC_DIRS = \
 	src \

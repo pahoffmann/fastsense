@@ -20,7 +20,7 @@ using namespace fastsense::hw;
 
 TEST_CASE("Test TSDF Values", "[]")
 {
-    SECTION("TSDF Generation")
+    /*SECTION("TSDF Generation")
     {
         // TODO
 
@@ -63,5 +63,5 @@ TEST_CASE("Test TSDF Values", "[]")
     SECTION("Complete scan")
     {
         // TODO
-    }
+    }*/
 }
