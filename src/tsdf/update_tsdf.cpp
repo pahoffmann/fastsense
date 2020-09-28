@@ -18,16 +18,14 @@
 #include <unordered_set>
 #include <utility>
 
-#include <omp.h>
-
-using namespace fastsense::tsdf;
+//#include <omp.h>
 
 /// Weight calculation object
-std::unique_ptr<WeightingBase<float>> weighting_base_(nullptr);
+std::unique_ptr<fastsense::tsdf::WeightingBase<float>> weighting_base_(nullptr);
 
 // Normal calculation objects
-std::unique_ptr<NormalBase<Vector3, ScanPoints_t<Vector3>>> normal_base_(nullptr);
-std::shared_ptr<NeighborsBase<Vector3, ScanPoints_t<Vector3>, std::vector<Vector3>>> neighbors_base_(nullptr);
+std::unique_ptr<fastsense::tsdf::NormalBase<Vector3, ScanPoints_t<Vector3>>> normal_base_(nullptr);
+std::shared_ptr<fastsense::tsdf::NeighborsBase<Vector3, ScanPoints_t<Vector3>, std::vector<Vector3>>> neighbors_base_(nullptr);
 
 using Point = Eigen::Vector3i;
 using Map = std::unordered_map<Point, std::pair<float, float>>;
@@ -43,6 +41,9 @@ template<> struct hash<Point>
     }
 };
 }
+
+namespace fastsense::tsdf
+{
 
 Point to_point(const Vector3& vec)
 {
@@ -87,17 +88,19 @@ void update_tsdf(const ScanPoints_t<Vector3>& scan_points,
     float angle = 30.0 / scan_points.size(); // TODO: Scanner FoV as Parameter
     float dz_per_distance = std::tan(angle / 180 * M_PI) / 2.0;
 
-    int thread_count = omp_get_max_threads();
+    //int thread_count = omp_get_max_threads();
+    int thread_count = 1;
 
     std::vector<Map> values(thread_count);
-
-    #pragma omp parallel num_threads(thread_count)
+    
+    //#pragma omp parallel num_threads(thread_count)
     {
-        int current_thread = omp_get_thread_num();
+        //int current_thread = omp_get_thread_num();
+        int current_thread = 0;
         Map& local_values = values[current_thread];
         std::unordered_set<Point> visited;
 
-        #pragma omp for schedule(static)
+        //#pragma omp for schedule(static)
         for (size_t i = 0; i < width; i++)
         {
             for (size_t ring = 0; ring < scan_points.size(); ring++)
@@ -161,6 +164,7 @@ void update_tsdf(const ScanPoints_t<Vector3>& scan_points,
                     }
 
                     visited.clear();
+
                     for (float len_a = -delta_ab; len_a <= delta_ab; len_a += 0.5)
                     {
                         for (float len_b = -delta_ab; len_b <= delta_ab; len_b += 0.5)
@@ -211,6 +215,7 @@ void update_tsdf(const ScanPoints_t<Vector3>& scan_points,
                 else
                 {
                     Point prev(0, 0, 0);
+
                     for (float len = 1; len <= distance + tau; len += 0.5)
                     {
                         Vector3 proj = scanner_pos + direction_vector * len;
@@ -228,7 +233,9 @@ void update_tsdf(const ScanPoints_t<Vector3>& scan_points,
                         // use the distance to the center of the cell, since 'proj' can be anywhere in the cell
                         Vector3 target_center = index.cast<float>() + Vector3::Constant(0.5);
                         float value = (point - target_center).norm();
+
                         value = std::min(value, tau);
+
                         if (len > distance)
                         {
                             value = -value;
@@ -268,7 +275,7 @@ void update_tsdf(const ScanPoints_t<Vector3>& scan_points,
         }
 
         // wait for all threads to fill their local_values
-        #pragma omp barrier
+        //#pragma omp barrier
 
         for (auto& map_entry : local_values)
         {
@@ -300,3 +307,5 @@ void update_tsdf(const ScanPoints_t<Vector3>& scan_points,
         }
     }
 }
+
+} // namespace fastsense::tsdf
