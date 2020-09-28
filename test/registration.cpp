@@ -18,6 +18,7 @@
 #include <msg/point.h>
 #include <map/local_map.h>
 #include <util/pcd/PCDFile.h>
+#include <tsdf/update_tsdf.h>
 
 #include "catch2_config.h"
 
@@ -87,7 +88,7 @@ TEST_CASE("Test Registration", "")
         //test registration
         fastsense::registration::Registration reg;
         std::shared_ptr<fastsense::map::GlobalMap> global_map_ptr(new fastsense::map::GlobalMap("test_global_map", 0.0, 0.0));
-        fastsense::map::LocalMap<std::pair<int, int>> local_map(5, 5, 5, global_map_ptr, q);
+        fastsense::map::LocalMap<std::pair<float, float>> local_map(5, 5, 5, global_map_ptr, q);
         
         //todo: read cloud using marcs stuff
 
@@ -146,7 +147,7 @@ TEST_CASE("Test Registration", "")
         SECTION("Test Registration Translation")
         {
             // Initialize temporary testing variables
-            global_map_ptr.reset(new fastsense::map::GlobalMap("test_global_map", 0.0, 0.0));
+            //global_map_ptr.reset(new fastsense::map::GlobalMap("test_global_map_translation", 0.0, 0.0));
             
             std::vector<fastsense::msg::Point> points_pretransformed;
             std::vector<std::vector<fastsense::msg::Point>> points;
@@ -154,22 +155,36 @@ TEST_CASE("Test Registration", "")
             fastsense::util::PCDFile<fastsense::msg::Point> file("");
             file.readPoints(points, num_points);
 
+            // for(auto ring = 0u; ring < points.size(); ++ring)
+            // {
+            //     for(const auto& point : points[ring])
+            //     {
+            //         fastsense::msg::Point transformed_p;
+            //         transformed_p.x = point.x * 1000; //m to mm
+            //         transformed_p.y = point.y * 1000; //m to mm
+            //         transformed_p.z = point.z * 1000; //m to mm
+            //         points_pretransformed.push_back(transformed_p);
+            //     }
+            // }
+
+            ScanPoints_t<Eigen::Vector3f> scan_points; 
+            //points_transformed now holds the pretransformed (in mm) points from the pcd
             for(auto ring = 0u; ring < points.size(); ++ring)
             {
                 for(const auto& point : points[ring])
                 {
-                    fastsense::msg::Point transformed_p;
-                    transformed_p.x = point.x * 1000; //m to mm
-                    transformed_p.y = point.y * 1000; //m to mm
-                    transformed_p.z = point.z * 1000; //m to mm
-                    points_pretransformed.push_back(transformed_p);
+                    Eigen::Vector3f transformed_p;
+                    transformed_p.x() = point.x * 1000; //m to mm
+                    transformed_p.y() = point.y * 1000; //m to mm
+                    transformed_p.z() = point.z * 1000; //m to mm
+                    scan_points[ring].push_back(transformed_p);
                 }
             }
 
-            //points_transformed now holds the pretransformed (in mm) points from the pcd
-
+            float tau = 10;
+            float max_weight = 10;
             //calc tsdf values for the points from the pcd and store them in the local map
-            //update_tsdf(scan_points, Vector3::Zero(), *buffer_ptr_, TsdfCalculation::PROJECTION_INTER, params_.getTau(), max_weight_);
+            fastsense::tsdf::update_tsdf(scan_points, Vector3::Zero(), local_map, fastsense::tsdf::TsdfCalculation::PROJECTION_INTER, tau, max_weight);
 
             //translate 20cm in x and y direction
             int tx = 200; 
@@ -189,12 +204,8 @@ TEST_CASE("Test Registration", "")
             int max_offset = 10; //10mm maximum difference 
 
             REQUIRE(std::abs(transform_mat(0,3) - tx) < max_offset); //x translation smaller than offset
-            REQUIRE(std::abs(transform_mat(1,3) - tx) < max_offset); //y translation smaller than offset
-            REQUIRE(std::abs(transform_mat(2,3) - tx) < max_offset); //z translation smaller than offset
-
-            //todo: scans need to be processed before put in registration?
-            //preprocess_scan_global(model, scan_points, params_.getMapResolution(), Mat4::Identity());
-            
+            REQUIRE(std::abs(transform_mat(1,3) - ty) < max_offset); //y translation smaller than offset
+            REQUIRE(std::abs(transform_mat(2,3) - tz) < max_offset); //z translation smaller than offset
 
         }
         SECTION("Registration test Rotation")

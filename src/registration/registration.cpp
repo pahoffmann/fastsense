@@ -72,7 +72,7 @@ float Registration::filter_value(const std::pair<float, float>& buf_entry)
     return buf_entry.first;
 }
 
-Registration::Matrix4x4 Registration::register_cloud(fastsense::map::LocalMap<std::pair<int, int>>& localmap, std::vector<fastsense::msg::Point>& cloud)
+Registration::Matrix4x4 Registration::register_cloud(fastsense::map::LocalMap<std::pair<float, float>>& localmap, std::vector<fastsense::msg::Point>& cloud)
 {
     mutex_.lock();
     Matrix4x4 cur_transform = global_transform_; //transform used to register the pcl
@@ -134,8 +134,8 @@ Registration::Matrix4x4 Registration::register_cloud(fastsense::map::LocalMap<st
                 buffer_scan[i] = cloud[i];
             }
 
-            krnl.run(localmap, buffer_scan, buffer_output, cloud.size());
-            krnl.waitComplete();
+            //krnl.run(localmap, buffer_scan, buffer_output, cloud.size());
+            //krnl.waitComplete();
 
 
             #pragma omp for schedule(static) nowait
