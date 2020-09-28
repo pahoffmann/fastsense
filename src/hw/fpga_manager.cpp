@@ -64,14 +64,17 @@ void FPGAManager::initDevices()
     //traversing all Platforms To find Xilinx Platform and targeted
     //Device in Xilinx Platform
     cl::Platform::get(&platforms);
+    Logger::info("Found ", platforms.size(), " platforms");
     for (size_t i = 0; i < platforms.size(); i++)
     {
         cl::Platform& platform = platforms[i];
         std::string platformName = platform.getInfo<CL_PLATFORM_NAME>();
+        Logger::info("Platform ", i, ": ", platformName);
         if (platformName == "Xilinx")
         {
             devices_.clear();
             platform.getDevices(CL_DEVICE_TYPE_ACCELERATOR, &devices_);
+            Logger::info("Platform ", i, ": Found ", devices_.size(), " devices");
             if (devices_.size())
             {
                 Logger::info("Device found");

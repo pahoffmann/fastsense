@@ -1,0 +1,14 @@
+{
+    "imu": {
+        "bufferSize": 16
+    },
+
+    "lidar": {
+        "bufferSize": 16,
+        "port": 2368
+    },
+
+    "sensorSync": {
+        "bufferSize": 16
+    }
+}
