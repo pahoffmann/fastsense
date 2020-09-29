@@ -65,7 +65,7 @@ static_assert(sizeof(VelodynePacket) == 1206);
  * A new Thread is started that receives, decodes and bundles the data as point clouds.
  *
  */
-class VelodyneDriver : public ProcessThread
+class VelodyneDriver : public fastsense::util::ProcessThread
 {
 public:
     /**

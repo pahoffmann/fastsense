@@ -21,7 +21,7 @@ namespace fastsense::driver
 /**
  * @brief implements driver phidgets imu 1044, phidgets library version 2.1.9.20190409
  */
-class Imu : public Phidget, public ProcessThread
+class Imu : public Phidget, public fastsense::util::ProcessThread
 {
 public:
     Imu() = delete;

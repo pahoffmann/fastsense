@@ -16,6 +16,7 @@
 
 
 using namespace fastsense::driver;
+using namespace fastsense::util;
 
 using fastsense::data::ImuStampedBufferPtr;
 
@@ -118,7 +119,7 @@ Imu::dataHandler(const double* acceleration, const double* angularRate, const do
     }
 
     msg::ImuMsg msg(acceleration, angularRate, magneticField);
-    data_buffer->push(std::make_pair(msg, TimeStamp()));
+    data_buffer->push(std::make_pair(msg,fastsense::util::TimeStamp()));
 }
 
 void Imu::attachHandler()

@@ -179,6 +179,7 @@ void update_tsdf(const ScanPoints_t<Vector3>& scan_points,
                                     continue;
                                 }
                                 visited.insert(index);
+
                                 if (!buffer.inBounds(index.x(), index.y(), index.z()))
                                 {
                                     continue;
@@ -225,6 +226,7 @@ void update_tsdf(const ScanPoints_t<Vector3>& scan_points,
                             continue;
                         }
                         prev = index;
+
                         if (!buffer.inBounds(index.x(), index.y(), index.z()))
                         {
                             continue;

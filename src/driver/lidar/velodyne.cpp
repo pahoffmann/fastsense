@@ -24,6 +24,7 @@
 
 using namespace fastsense::driver;
 using namespace fastsense::msg;
+using namespace fastsense::util;
 using namespace fastsense::util::logging;
 
 // Magic constants of the sensor
