@@ -1,10 +1,8 @@
-/**
- * @file event_handler_list.h
- * @author Marcel Flottmann
- * @date 2020-09-05
- */
-
 #pragma once
+
+/**
+ * @author Marcel Flottmann
+ */
 
 #include <functional>
 #include <list>
@@ -68,7 +66,7 @@ class EventHandlerList
 public:
     EventHandlerList() = default;
     ~EventHandlerList() = default;
-    
+
     /**
      * @brief Add event handler
      *

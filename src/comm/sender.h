@@ -1,7 +1,11 @@
 #pragma once
 
-#include <zmq.hpp>
+/**
+ * @author Julian Gaal
+ */
+
 #include <string>
+#include <zmq.hpp>
 
 namespace fastsense::comm
 {
@@ -20,4 +24,4 @@ private:
 
 } // namespace fastsense::comm
 
-#include <comm/sender.tcc>
+#include "sender.tcc"

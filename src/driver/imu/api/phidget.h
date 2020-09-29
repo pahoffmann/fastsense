@@ -94,15 +94,15 @@ protected:
     void init(CPhidgetHandle handle);
 
     void registerHandlers();
-    virtual void attachHandler();
-    virtual void detachHandler();
-    virtual void errorHandler(int error);
+    virtual void attach_handler();
+    virtual void detach_handler();
+    virtual void error_handler(int error);
 
 private:
     CPhidgetHandle handle_;
-    static int AttachHandler(CPhidgetHandle handle, void* userptr);
-    static int DetachHandler(CPhidgetHandle handle, void* userptr);
-    static int ErrorHandler(CPhidgetHandle handle, void* userptr, int ErrorCode,
+    static int attach_handler(CPhidgetHandle handle, void* userptr);
+    static int detach_handler(CPhidgetHandle handle, void* userptr);
+    static int error_handler(CPhidgetHandle handle, void* userptr, int ErrorCode,
                             const char* unknown);
 };
 

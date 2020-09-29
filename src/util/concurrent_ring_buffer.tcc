@@ -1,22 +1,21 @@
-/**
- * @file concurrent_ring_buffer.tcc
- * @author Marcel Flottmann
- * @date 2020-08-13
- */
-
 #pragma once
 
-namespace fastsense::util{
+/**
+ * @author Marcel Flottmann
+ */
+
+namespace fastsense::util
+{
 
 template<typename T>
-ConcurrentRingBuffer<T>::ConcurrentRingBuffer(size_t size) :
-    buffer(size),
-    length(0),
-    pushIdx(0),
-    popIdx(0),
-    mutex({}),
-    cvEmpty({}),
-    cvFull({})
+ConcurrentRingBuffer<T>::ConcurrentRingBuffer(size_t size)
+    : buffer(size),
+      length(0),
+      pushIdx(0),
+      popIdx(0),
+      mutex({}),
+      cvEmpty({}),
+      cvFull({})
 {
 }
 
@@ -119,4 +118,4 @@ void ConcurrentRingBuffer<T>::doPop(T* val)
     }
 }
 
-}
+} // namespace fastsense::util

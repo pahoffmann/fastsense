@@ -1,10 +1,8 @@
-/**
- * @file params.h
- * @author Julian Gaal
- * @date 2020-08-14
- */
-
 #pragma once
+
+/**
+ * @author Julian Gaal
+ */
 
 #include <cmath>
 

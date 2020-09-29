@@ -53,10 +53,10 @@ int main(int argc, char** argv)
 //        imu_msg.angular_velocity.y = data.ang.y();
 //        imu_msg.angular_velocity.z = data.ang.z();
 //
-//        auto& cov1 = imu.getLinearAccelerationCovariance();
+//        auto& cov1 = imu.get_linear_acceleration_covariance();
 //        std::copy(cov1.begin(), cov1.end(), imu_msg.linear_acceleration_covariance.begin());
 //
-//        auto& cov2 = imu.getAngularVelocityCovariance();
+//        auto& cov2 = imu.get_angular_velocity_covariance();
 //        std::copy(cov2.begin(), cov2.end(), imu_msg.angular_velocity_covariance.begin());
 //
 //        imu_pub.publish(imu_msg);
@@ -65,7 +65,7 @@ int main(int argc, char** argv)
 //        mag_msg.header.frame_id = "imu";
 //        mag_msg.header.stamp = time_now;
 //        std::array<double, 9> a;
-//        auto& cov = imu.getMagneticFieldCovariance();
+//        auto& cov = imu.get_magnetic_field_covariance();
 //        std::copy(cov.begin(), cov.end(), mag_msg.magnetic_field_covariance.begin());
 //        mag_msg.magnetic_field.x = data.mag.x();
 //        mag_msg.magnetic_field.y = data.mag.y();

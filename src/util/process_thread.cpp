@@ -1,6 +1,6 @@
-//
-// Created by julian on 9/2/20.
-//
+/**
+ * @author Julian Gaal
+ */
 
 #include <util/process_thread.h>
 

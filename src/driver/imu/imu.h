@@ -1,16 +1,14 @@
-/**
- * @file imu.h
- * @author Julian Gaal
- * @date 2020-08-12
- */
-
 #pragma once
 
-#include <driver/imu/api/phidget.h>
+/**
+ * @author Julian Gaal
+ */
+
+#include <data/sensor_sync.h>
 #include <msg/msgs_stamped.h>
 #include <util/process_thread.h>
-#include <data/sensor_sync.h>
 #include <util/concurrent_ring_buffer.h>
+#include "api/phidget.h"
 
 // TODO singleton
 // TODO start function
@@ -53,7 +51,7 @@ public:
      * @return true if device has been calibrated
      * @return false if device has NOT been calibrated
      */
-    inline bool isCalibrated() const
+    inline bool is_calibrated() const
     {
         return is_calibrated_;
     }
@@ -79,23 +77,23 @@ public:
      * Getter for angular velocity covariance
      * @return angular velocity covariance
      */
-    const std::array<double, 9>& getAngularVelocityCovariance() const;
+    const std::array<double, 9>& get_angular_velocity_covariance() const;
 
     /**
      * Getter for linear acceleration covariance
      * @return linear acceleration covariance
      */
-    const std::array<double, 9>& getLinearAccelerationCovariance() const;
+    const std::array<double, 9>& get_linear_acceleration_covariance() const;
 
     /**
      * Getter for magnetic field covariance
      * @return magnetic field covariance
      */
-    const std::array<double, 9>& getMagneticFieldCovariance() const;
+    const std::array<double, 9>& get_magnetic_field_covariance() const;
 
 private:
     /// buffer, in which imu readings are saved
-    fastsense::data::ImuStampedBufferPtr data_buffer;
+    fastsense::data::ImuStampedBufferPtr data_buffer_;
 
     /// whether or not imu is connected
     bool is_connected_;
@@ -119,13 +117,13 @@ private:
     CPhidgetSpatialHandle imu_handle_;
 
     /**
-     * Datahandler for raw data coming from libphidget
+     * data_handler for raw data coming from libphidget
      * @param spatial *nused**
      * @param userptr pointer, with which data will be handled furt
      * @param data incoming data
      * @param count how many sensor readings have been made
      */
-    static int SpatialDataHandler(CPhidgetSpatialHandle spatial, void* userptr,
+    static int spatial_data_handler(CPhidgetSpatialHandle spatial, void* userptr,
                                   CPhidgetSpatial_SpatialEventDataHandle* data,
                                   int count);
 
@@ -136,43 +134,43 @@ private:
      * Set data rate of imu
      * @param rate in ms
      */
-    void setDataRate(int rate);
+    void set_data_rate(int rate);
 
     /// calibrate with zero() and wait, see hee: https://github.com/ros-drivers/phidgets_drivers/issues/40
     void calibrate();
 
     /**
      * @brief Initialize Imu
-     * calls initDevice(), initApi() and initCovariance()
+     * calls init_device(), init_api() and init_covariance()
      */
     void init();
 
     /// initialize phidget device
-    void initDevice();
+    void init_device();
 
     /// initiate libphigdet api
-    void initApi();
+    void init_api();
 
     /// initialize covariance matrices
-    void initCovariance();
+    void init_covariance();
 
     /**
-     * Datahandler, which gets raw data from libphidget
+     * data_handler, which gets raw data from libphidget
      * @param acceleration linear acceleration
      * @param angularRate angular velocity
      * @param magneticField magnetic field
      */
-    void dataHandler(const double acceleration[3], const double angularRate[3],
+    void data_handler(const double acceleration[3], const double angularRate[3],
                      const double magneticField[3]);
 
     /// handles attachment of imu
-    void attachHandler() override;
+    void attach_handler() override;
 
     /// handles detachment of imu
-    void detachHandler() override;
+    void detach_handler() override;
 
     /// handles errors from imu
-    void errorHandler(int error) override;
+    void error_handler(int error) override;
 
     /**
      * Set compass correction parameters for magnetic field, see params.h
@@ -190,7 +188,7 @@ private:
      * @param cc_T4
      * @param cc_T5
      */
-    void setCompassCorrectionParameters(double cc_mag_field, double cc_offset0,
+    void set_compass_correction_parameters(double cc_mag_field, double cc_offset0,
                                         double cc_offset1, double cc_offset2,
                                         double cc_gain0, double cc_gain1,
                                         double cc_gain2, double cc_T0,

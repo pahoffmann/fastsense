@@ -1,14 +1,13 @@
+#pragma once
+
 /**
- * @file ring_buffer.h
  * @author Steffen Hinderink
  * @author Juri Vana
  */
 
-#pragma once
-
-#include <map/global_map.h>
 #include <hw/buffer/buffer.h>
 #include <map/local_map_hw.h>
+#include "global_map.h"
 
 namespace fastsense::map
 {
@@ -134,7 +133,7 @@ public:
     bool inBounds(int x, int y, int z) const;
 
     const buffer::InputOutputBuffer<T>& getBuffer() const;
-    
+
     LocalMapHW getHardwareRepresentation() const;
 };
 

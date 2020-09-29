@@ -1,12 +1,11 @@
 #pragma once
 
 /**
- * @author Marc Eisoldt (meisoldt)
+ * @author Marc Eisoldt
  */
 
 #include <string>
 #include <vector>
-
 #include <iostream>
 #include <fstream>
 #include <map>
@@ -14,7 +13,8 @@
 
 #include <util/types.h>
 
-namespace fastsense::util {
+namespace fastsense::util
+{
 
 template<typename VEC_T>
 class PCDFile

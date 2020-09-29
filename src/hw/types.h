@@ -1,13 +1,13 @@
-/**
- * @file types.h
- * @author Julian Gaal, Marcel Flottmann
- * @date 2020-09-12
- */
 #pragma once
 
-#include <hw/opencl.h>
+/**
+ * @author Julian Gaal
+ * @author Marcel Flottmann
+ */
+
 #include <memory>
 
+#include <hw/opencl.h>
 
 // TODO sensor sync stuff here, too?
 namespace fastsense

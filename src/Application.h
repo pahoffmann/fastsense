@@ -1,10 +1,8 @@
-/**
- * @file Application.h
- * @author Marcel Flottmann
- * @date 2020-09-15
- */
-
 #pragma once
+
+/**
+ * @author Marcel Flottmann
+ */
 
 #include <driver/lidar/velodyne.h>
 #include <driver/imu/imu.h>
@@ -31,4 +29,4 @@ public:
     int run();
 };
 
-}
+} // namespace fastsense

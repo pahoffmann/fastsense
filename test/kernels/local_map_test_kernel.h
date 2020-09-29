@@ -1,10 +1,8 @@
-/**
- * @file local_map_test_kernel.h
- * @author Marcel Flottmann
- * @date 2020-09-16
- */
-
 #pragma once
+
+/**
+ * @author Marcel Flottmann
+ */
 
 #include <hw/kernels/base_kernel.h>
 #include <hw/buffer/buffer.h>
@@ -16,16 +14,11 @@ namespace fastsense::kernels
 
 class LocalMapTestKernel : public BaseKernel
 {
-    std::vector<cl::Event> preEvents;
-    std::vector<cl::Event> executeEvents;
-    std::vector<cl::Event> postEvents;
 public:
     LocalMapTestKernel(const CommandQueuePtr& queue)
-        : BaseKernel{queue, "krnl_local_map_test"},
-          preEvents{1},
-          executeEvents{1},
-          postEvents{1}
+        : BaseKernel{queue, "krnl_local_map_test"}
     {}
+
     ~LocalMapTestKernel() = default;
 
     void run(map::LocalMap<std::pair<float, float>>& map)
@@ -44,18 +37,13 @@ public:
         setArg(m.offsetZ);
 
         // Write buffers
-        cmd_q_->enqueueMigrateMemObjects({map.getBuffer().getBuffer()}, CL_MIGRATE_MEM_OBJECT_DEVICE, nullptr, &preEvents[0]);
+        cmd_q_->enqueueMigrateMemObjects({map.getBuffer().getBuffer()}, CL_MIGRATE_MEM_OBJECT_DEVICE, nullptr, &pre_events_[0]);
 
         // Launch the Kernel
-        cmd_q_->enqueueTask(kernel_, &preEvents, &executeEvents[0]);
+        cmd_q_->enqueueTask(kernel_, &pre_events_, &execute_events_[0]);
 
         // Read buffers
-        cmd_q_->enqueueMigrateMemObjects({map.getBuffer().getBuffer()}, CL_MIGRATE_MEM_OBJECT_HOST, &executeEvents, &postEvents[0]);
-    }
-
-    void waitComplete()
-    {
-        cl::Event::waitForEvents(postEvents);
+        cmd_q_->enqueueMigrateMemObjects({map.getBuffer().getBuffer()}, CL_MIGRATE_MEM_OBJECT_HOST, &execute_events_, &post_events_[0]);
     }
 };
 

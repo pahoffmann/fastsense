@@ -1,14 +1,14 @@
+#pragma once
+
 /**
- * @file fpga_manager.h
- * @author Julian Gaal, Marcel Flottmann
- * @date 2020-09-10
+ * @author Julian Gaal
+ * @author Marcel Flottmann
  */
 
-#pragma once
+#include <fstream>
 
 #include <hw/opencl.h>
 #include <hw/types.h>
-#include <fstream>
 
 namespace fastsense::hw
 {
@@ -21,13 +21,13 @@ public:
     FPGAManager(const FPGAManager&) = delete;
     FPGAManager& operator=(const FPGAManager&) = delete;
 
-    static void loadXCLBIN(const std::string& xclbin_filename);
+    static void load_xclbin(const std::string& xclbin_filename);
 
-    static const cl::Device& getDevice();
-    static const cl::Context& getContext();
-    static const cl::Program& getProgram();
+    static const cl::Device& get_device();
+    static const cl::Context& get_context();
+    static const cl::Program& get_program();
 
-    static CommandQueuePtr createCommandQueue();
+    static CommandQueuePtr create_command_queue();
 
 private:
     FPGAManager();
@@ -38,9 +38,9 @@ private:
     cl::Context context_;
     cl::Program program_;
 
-    void initDevices();
-    void initContext();
-    void loadProgram(const std::string& xclbin_filename);
+    void init_devices();
+    void init_context();
+    void load_program(const std::string& xclbin_filename);
 };
 
 } // namespace fastsense::hw

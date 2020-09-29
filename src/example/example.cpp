@@ -1,9 +1,6 @@
 /**
- * @file main.cpp
  * @author Julian Gaal
- * @date 2020-08-09
  */
-
 
 #include <stdlib.h>
 #include <fstream>
@@ -29,9 +26,9 @@ TEST_CASE("Test krnl_vadd.cpp", "")
 {
     const char* xclbinFilename = "FastSense.xclbin";
 
-    fs::hw::FPGAManager::loadXCLBIN(xclbinFilename);
+    fs::hw::FPGAManager::load_xclbin(xclbinFilename);
 
-    fs::CommandQueuePtr q = fs::hw::FPGAManager::createCommandQueue();
+    fs::CommandQueuePtr q = fs::hw::FPGAManager::create_command_queue();
 
     // These commands will allocate memory on the Device. The cl::Buffer objects can
     // be used to reference the memory locations on the device.

@@ -1,10 +1,8 @@
-/**
- * @file sink.h
- * @author Marcel Flottmann
- * @date 2020-09-02
- */
-
 #pragma once
+
+/**
+ * @author Marcel Flottmann
+ */
 
 #include <string>
 #include <fstream>
@@ -42,4 +40,4 @@ public:
     void write(const std::string& msg) override;
 };
 
-}
+} // namespace fastsense::util::logging::sink

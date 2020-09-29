@@ -3,8 +3,8 @@
 #include <algorithm>
 
 /**
- * @author Malte Hillmann (mhillmann)
- * @author Marc Eisoldt (meisoldt)
+ * @author Malte Hillmann
+ * @author Marc Eisoldt
  */
 
 namespace fastsense::tsdf

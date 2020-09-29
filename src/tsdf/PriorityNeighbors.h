@@ -1,24 +1,24 @@
 #pragma once
 
 /**
- * @author Malte Hillmann (mhillmann)
- * @author Marc Eisoldt (meisoldt)
+ * @author Malte Hillmann
+ * @author Marc Eisoldt
  */
 
-#include <tsdf/NeighborsBase.h>
-
 #include <vector>
+
+#include "NeighborsBase.h"
 
 namespace fastsense::tsdf
 {
 
 /**
- * @brief Class for representing a neighbor determination approach where neighbor points 
- *        are choosen based on a priorety queue. In this abbstract data type, 
+ * @brief Class for representing a neighbor determination approach where neighbor points
+ *        are choosen based on a priorety queue. In this abbstract data type,
  *        every considered neighbor is inserted and sorted by the distance to the query point.
- *        In every iteration, the point with the minimal distance from the query point is choosen and deleted  
+ *        In every iteration, the point with the minimal distance from the query point is choosen and deleted
  *        and every direct neighbor is inserted in the queue until the neighborhood is complete
- * 
+ *
  * @tparam POINT_T Data type of the points
  * @tparam SET_T Data type of the point set
  */
@@ -28,7 +28,7 @@ class PriorityNeighbors : public NeighborsBase<POINT_T, SET_T, std::vector<POINT
 public:
     /**
      * @brief Construct a new Priority Neighbors object
-     * 
+     *
      * @param number_of_neighbors Number of neighbors that should be determined
      */
     PriorityNeighbors(unsigned int number_of_neighbors) : number_of_neighbors_(number_of_neighbors) {}
@@ -78,4 +78,4 @@ private:
 
 } // namespace fastsense::tsdf
 
-#include <tsdf/PriorityNeighbors.tcc>
+#include "PriorityNeighbors.tcc"

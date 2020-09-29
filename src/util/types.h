@@ -1,7 +1,7 @@
 #pragma once
 
 /**
- * @author Malte Hillmann (mhillmann)
+ * @author Malte Hillmann
  */
 
 #include <eigen3/Eigen/Dense>

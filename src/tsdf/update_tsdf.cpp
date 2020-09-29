@@ -1,15 +1,7 @@
-
-#include <tsdf/update_tsdf.h>
-
-#include <tsdf/ScanOrderNeighbors.h>
-#include <tsdf/PriorityNeighbors.h>
-
-#include <tsdf/AverageNormal.h>
-#include <tsdf/ProjectionNormal.h>
-#include <tsdf/RANSACNormal.h>
-#include <tsdf/IterativeNormal.h>
-
-#include <tsdf/weighting.h>
+/**
+ * @author Malte Hillmann
+ * @author Marc Eisoldt
+ */
 
 #include <memory>
 #include <iostream>
@@ -17,6 +9,15 @@
 #include <unordered_map>
 #include <unordered_set>
 #include <utility>
+
+#include "update_tsdf.h"
+#include "ScanOrderNeighbors.h"
+#include "PriorityNeighbors.h"
+#include "AverageNormal.h"
+#include "ProjectionNormal.h"
+#include "RANSACNormal.h"
+#include "IterativeNormal.h"
+#include "weighting.h"
 
 //#include <omp.h>
 

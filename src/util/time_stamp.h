@@ -1,8 +1,8 @@
-//
-// Created by julian on 9/1/20.
-//
-
 #pragma once
+
+/**
+ * @author Julian Gaal
+ */
 
 #include <chrono>
 #include <tuple>

@@ -1,13 +1,13 @@
+#pragma once
+
 /**
- * @file ring_buffer.cpp
  * @author Steffen Hinderink
  * @author Juri Vana
  */
 
-#pragma once
-
 #include <stdlib.h> // for abs
 #include <stdexcept>
+
 #include <util/logging/logger.h>
 
 namespace fastsense::map
@@ -200,4 +200,4 @@ LocalMapHW LocalMap<T>::getHardwareRepresentation() const
             offsetZ};
 }
 
-}
+} // namespace fastsense::map

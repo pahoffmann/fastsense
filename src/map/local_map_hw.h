@@ -1,15 +1,17 @@
 #pragma once
 
-namespace fastsense
-{
-namespace map
+/**
+ * @author Marcel Flottmann
+ */
+
+namespace fastsense::map
 {
 
 template<typename T>
 T overflow(T val, T max)
 {
 #pragma HLS INLINE
-	return (val >= max) ? val - max : val;
+    return (val >= max) ? val - max : val;
     //return val % max;
 }
 
@@ -17,12 +19,12 @@ template<typename T>
 T hw_abs(T val)
 {
 #pragma HLS INLINE
-	return (val >= 0) ? val : -val;
+    return (val >= 0) ? val : -val;
 }
 
 /**
  * @brief Data Transfer Object of LocalMap for hardware with hardware optimized access functions
- * 
+ *
  */
 struct LocalMapHW
 {
@@ -48,15 +50,17 @@ struct LocalMapHW
         int x_offset = overflow(x - posX + offsetX + sizeX, sizeX) * sizeY * sizeZ;
         int y_offset = overflow(y - posY + offsetY + sizeY, sizeY) * sizeZ;
         int z_offset = overflow(z - posZ + offsetZ + sizeZ, sizeZ);
-		return x_offset  + y_offset + z_offset;
+        return x_offset  + y_offset + z_offset;
     }
 
     template<typename T>
     T& get(T* data, int x, int y, int z) const
     {
 #pragma HLS INLINE
-        if(inBounds(x, y, z))
+        if (inBounds(x, y, z))
+        {
             return data[getIndex(x, y, z)];
+        }
         return data[0];
     }
 
@@ -64,10 +68,11 @@ struct LocalMapHW
     void set(T* data, int x, int y, int z, const T& val) const
     {
 #pragma HLS INLINE
-        if(inBounds(x, y, z))
+        if (inBounds(x, y, z))
+        {
             data[getIndex(x, y, z)] = val;
+        }
     }
 };
 
-}
-}
+} // namespace fastsense::map

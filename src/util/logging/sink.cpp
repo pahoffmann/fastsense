@@ -1,12 +1,10 @@
 /**
- * @file sink.cpp
  * @author Marcel Flottmann
- * @date 2020-09-02
  */
 
-#include "sink.h"
-
 #include <iostream>
+
+#include "sink.h"
 
 using namespace fastsense::util::logging::sink;
 

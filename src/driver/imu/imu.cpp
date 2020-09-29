@@ -1,19 +1,15 @@
 /**
- * @file imu.cpp
  * @author Julian Gaal
- * @date 2020-08-11
  */
-
-#include <driver/imu/imu.h>
-#include <util/params.h>
-#include <msg/imu_msg.h>
-#include <util/time_stamp.h>
 
 #include <thread>
 #include <stdexcept>
 #include <cmath>
-#include <driver/imu/imu.h>
 
+#include <util/params.h>
+#include <msg/imu_msg.h>
+#include <util/time_stamp.h>
+#include "imu.h"
 
 using namespace fastsense::driver;
 using namespace fastsense::util;
@@ -25,14 +21,14 @@ using fastsense::data::ImuStampedBufferPtr;
 Imu::Imu(const ImuStampedBufferPtr& ringbuffer)
     :   Phidget(),
         ProcessThread(),
-        data_buffer(ringbuffer),
+        data_buffer_(ringbuffer),
         is_connected_(false),
         is_calibrated_(false),
         init_compass_(false),
         angular_velocity_covariance_({}),
-linear_acceleration_covariance_({}),
-magnetic_field_covariance_({}),
-imu_handle_(nullptr)
+        linear_acceleration_covariance_({}),
+        magnetic_field_covariance_({}),
+        imu_handle_(nullptr)
 {}
 
 void fastsense::driver::Imu::start()
@@ -52,12 +48,12 @@ void Imu::stop()
 
 void Imu::init()
 {
-    initApi();
-    initCovariance();
-    initDevice();
+    init_api();
+    init_covariance();
+    init_device();
 }
 
-void Imu::setDataRate(int rate)
+void Imu::set_data_rate(int rate)
 {
     if (not imu_handle_)
     {
@@ -78,19 +74,19 @@ void Imu::zero()
     CPhidgetSpatial_zeroGyro(imu_handle_);
 }
 
-int Imu::SpatialDataHandler(CPhidgetSpatialHandle /* handle */, void* userptr,
+int Imu::spatial_data_handler(CPhidgetSpatialHandle /* handle */, void* userptr,
                             CPhidgetSpatial_SpatialEventDataHandle* data,
                             int count)
 {
     for (int i = 0; i < count; ++i)
     {
-        ((Imu*)userptr)->dataHandler(data[i]->acceleration, data[i]->angularRate,
+        ((Imu*)userptr)->data_handler(data[i]->acceleration, data[i]->angularRate,
                                      data[i]->magneticField);
     }
     return 0;
 }
 
-void Imu::setCompassCorrectionParameters(double cc_mag_field, double cc_offset0,
+void Imu::set_compass_correction_parameters(double cc_mag_field, double cc_offset0,
         double cc_offset1, double cc_offset2,
         double cc_gain0, double cc_gain1,
         double cc_gain2, double cc_T0,
@@ -108,8 +104,7 @@ void Imu::setCompassCorrectionParameters(double cc_mag_field, double cc_offset0,
     }
 }
 
-void
-Imu::dataHandler(const double* acceleration, const double* angularRate, const double* magneticField)
+void Imu::data_handler(const double* acceleration, const double* angularRate, const double* magneticField)
 {
     // Even during calibration, the device reports back zeroes, so force driver to wait until
     // after calibration
@@ -119,25 +114,25 @@ Imu::dataHandler(const double* acceleration, const double* angularRate, const do
     }
 
     msg::ImuMsg msg(acceleration, angularRate, magneticField);
-    data_buffer->push(std::make_pair(msg,fastsense::util::TimeStamp()));
+    data_buffer_->push(std::make_pair(msg, fastsense::util::TimeStamp()));
 }
 
-void Imu::attachHandler()
+void Imu::attach_handler()
 {
-    Phidget::attachHandler();
-    // Set device params. This is in attachHandler(), since it has to be
+    Phidget::attach_handler();
+    // Set device params. This is in attach_handler(), since it has to be
     // repeated on reattachment.
-    setDataRate(params::period_);
+    set_data_rate(params::period_);
 }
 
-void Imu::detachHandler()
+void Imu::detach_handler()
 {
-    Phidget::detachHandler();
+    Phidget::detach_handler();
 }
 
-void Imu::errorHandler(int error)
+void Imu::error_handler(int error)
 {
-    Phidget::errorHandler(error);
+    Phidget::error_handler(error);
 }
 
 void Imu::calibrate()
@@ -150,7 +145,7 @@ void Imu::calibrate()
     is_calibrated_ = true;
 }
 
-void Imu::initDevice()
+void Imu::init_device()
 {
     openAndWaitForAttachment(-1, 10000);
 
@@ -159,12 +154,12 @@ void Imu::initDevice()
     if (init_compass_)
     {
         using namespace fastsense::util::params;
-        Imu::setCompassCorrectionParameters(cc_mag_field_, cc_offset0_, cc_offset1_, cc_offset2_, cc_gain0_, cc_gain1_,
+        Imu::set_compass_correction_parameters(cc_mag_field_, cc_offset0_, cc_offset1_, cc_offset2_, cc_gain0_, cc_gain1_,
                                             cc_gain2_, cc_T0_, cc_T1_, cc_T2_, cc_T3_, cc_T4_, cc_T5_);
     }
 }
 
-void Imu::initApi()
+void Imu::init_api()
 {
     // create the handle
     CPhidgetSpatial_create(&imu_handle_);
@@ -176,11 +171,11 @@ void Imu::initApi()
     Phidget::registerHandlers();
 
     // register imu data callback
-    CPhidgetSpatial_set_OnSpatialData_Handler(imu_handle_, SpatialDataHandler,
+    CPhidgetSpatial_set_OnSpatialData_Handler(imu_handle_, spatial_data_handler,
             this);
 }
 
-void Imu::initCovariance()
+void Imu::init_covariance()
 {
     double ang_vel_var = params::angular_velocity_stdev_ * params::angular_velocity_stdev_;
     double lin_acc_var = params::linear_acceleration_stdev_ * params::linear_acceleration_stdev_;
@@ -222,17 +217,17 @@ void Imu::initCovariance()
         }
 }
 
-const std::array<double, 9>& Imu::getAngularVelocityCovariance() const
+const std::array<double, 9>& Imu::get_angular_velocity_covariance() const
 {
     return angular_velocity_covariance_;
 }
 
-const std::array<double, 9>& Imu::getLinearAccelerationCovariance() const
+const std::array<double, 9>& Imu::get_linear_acceleration_covariance() const
 {
     return linear_acceleration_covariance_;
 }
 
-const std::array<double, 9>& Imu::getMagneticFieldCovariance() const
+const std::array<double, 9>& Imu::get_magnetic_field_covariance() const
 {
     return magnetic_field_covariance_;
 }

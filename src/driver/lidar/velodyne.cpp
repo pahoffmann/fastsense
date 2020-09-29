@@ -1,13 +1,6 @@
 /**
- * @file velodyne.cpp
  * @author Marcel Flottmann
- * @date 2020-08-11
  */
-
-#include <driver/lidar/velodyne.h>
-#include <util/time_stamp.h>
-#include <msg/msgs_stamped.h>
-#include <util/logging/logger.h>
 
 #include <chrono>
 #include <system_error>
@@ -21,6 +14,11 @@
 #include <fcntl.h>
 #include <sys/file.h>
 #include <poll.h>
+
+#include <driver/lidar/velodyne.h>
+#include <msg/msgs_stamped.h>
+#include <util/time_stamp.h>
+#include <util/logging/logger.h>
 
 using namespace fastsense::driver;
 using namespace fastsense::msg;
@@ -108,16 +106,16 @@ constexpr uint8_t LASER_ID_TO_RING[16] =
 };
 
 VelodyneDriver::VelodyneDriver(uint16_t port, const ConcurrentRingBuffer<PointCloudStamped>::ptr& buffer) :
-    port{port},
-    sockfd{},
-    packet{},
-    azLast{0.f},
-    scanBuffer{buffer},
-    currentScan{std::make_shared<PointCloud>()}
+    port_{port},
+    sockfd_{},
+    packet_{},
+    az_last_{0.f},
+    scan_buffer_{buffer},
+    current_scan_{std::make_shared<PointCloud>()}
 {
     // open socket
-    sockfd = socket(PF_INET, SOCK_DGRAM, 0);
-    if (sockfd < 0)
+    sockfd_ = socket(PF_INET, SOCK_DGRAM, 0);
+    if (sockfd_ < 0)
     {
         throw std::system_error(errno, std::generic_category(),  "failed to open socket");
     }
@@ -130,16 +128,16 @@ VelodyneDriver::VelodyneDriver(uint16_t port, const ConcurrentRingBuffer<PointCl
     addr.sin_addr.s_addr = INADDR_ANY;
 
     // bind to port
-    if (bind(sockfd, (sockaddr*)&addr, sizeof(addr)) == -1)
+    if (bind(sockfd_, (sockaddr*)&addr, sizeof(addr)) == -1)
     {
-        close(sockfd);
+        close(sockfd_);
         throw std::system_error(errno, std::generic_category(),  "failed to bind");
     }
 
     // set non blocking mode
-    if (fcntl(sockfd, F_SETFL, O_NONBLOCK | FASYNC) < 0)
+    if (fcntl(sockfd_, F_SETFL, O_NONBLOCK | FASYNC) < 0)
     {
-        close(sockfd);
+        close(sockfd_);
         throw std::system_error(errno, std::generic_category(),  "failed to set non-blocking mode");
     }
 }
@@ -147,7 +145,7 @@ VelodyneDriver::VelodyneDriver(uint16_t port, const ConcurrentRingBuffer<PointCl
 VelodyneDriver::~VelodyneDriver()
 {
     stop();
-    close(sockfd);
+    close(sockfd_);
 }
 
 void VelodyneDriver::start()
@@ -155,10 +153,10 @@ void VelodyneDriver::start()
     if (running == false)
     {
         running = true;
-        azLast = 0.f;
-        currentScan = std::make_shared<PointCloud>();
-        scanBuffer->clear();
-        worker = std::thread(&VelodyneDriver::receivePacket, this);
+        az_last_ = 0.f;
+        current_scan_ = std::make_shared<PointCloud>();
+        scan_buffer_->clear();
+        worker = std::thread(&VelodyneDriver::receive_packet, this);
     }
 }
 
@@ -171,15 +169,15 @@ void VelodyneDriver::stop()
 fastsense::msg::PointCloudStamped VelodyneDriver::getScan()
 {
     PointCloudStamped pcs;
-    scanBuffer->pop(&pcs);
+    scan_buffer_->pop(&pcs);
     return pcs;
 }
 
-void VelodyneDriver::receivePacket()
+void VelodyneDriver::receive_packet()
 {
     constexpr int POLL_TIMEOUT = 1000;
     struct pollfd fds[1];
-    fds[0].fd = sockfd;
+    fds[0].fd = sockfd_;
     fds[0].events = POLLIN;
 
     sockaddr_in sender;
@@ -213,7 +211,7 @@ void VelodyneDriver::receivePacket()
         while (!(fds[0].revents & POLLIN));
 
         // receive packet
-        ssize_t size = recvfrom(sockfd, &packet, sizeof(VelodynePacket), 0, (sockaddr*)&sender, &senderLength);
+        ssize_t size = recvfrom(sockfd_, &packet_, sizeof(VelodynePacket), 0, (sockaddr*)&sender, &senderLength);
 
         if (size < 0)
         {
@@ -223,50 +221,50 @@ void VelodyneDriver::receivePacket()
         // process packet
         if (size == sizeof(VelodynePacket))
         {
-            decodePacket();
+            decode_packet();
         }
     }
 }
 
-void VelodyneDriver::decodePacket()
+void VelodyneDriver::decode_packet()
 {
-    if (packet.produkt_id != PROD_ID_VLP16)
+    if (packet_.produkt_id != PROD_ID_VLP16)
     {
         throw std::runtime_error("wrong sensor");
     }
 
-    if (packet.mode != MODE_STRONGEST && packet.mode != MODE_LAST)
+    if (packet_.mode != MODE_STRONGEST && packet_.mode != MODE_LAST)
     {
         throw std::runtime_error("wrong mode");
     }
 
     for (int b = 0; b < BLOCKS_IN_PACKET; b++)
     {
-        if (packet.blocks[b].flag == BLOCK_FLAG)
+        if (packet_.blocks[b].flag == BLOCK_FLAG)
         {
-            float az_block = packet.blocks[b].azimuth * 0.01f; // 0.01 degree
+            float az_block = packet_.blocks[b].azimuth * 0.01f; // 0.01 degree
 
             // add new scan to queue when azimuth overflows
-            if (az_block < azLast)
+            if (az_block < az_last_)
             {
                 // TODO set new time point?
-                scanBuffer->push_nb(std::make_pair(currentScan, fastsense::util::TimeStamp()), true);
-                currentScan = std::make_shared<PointCloud>();
-                currentScan->rings = 16;
+                scan_buffer_->push_nb(std::make_pair(current_scan_, fastsense::util::TimeStamp()), true);
+                current_scan_ = std::make_shared<PointCloud>();
+                current_scan_->rings_ = 16;
             }
-            azLast = az_block;
+            az_last_ = az_block;
 
             // allocate points for current block
-            size_t startIdx = currentScan->points.size();
-            currentScan->points.resize(startIdx + POINTS_IN_BLOCK);
+            size_t startIdx = current_scan_->points_.size();
+            current_scan_->points_.resize(startIdx + POINTS_IN_BLOCK);
 
             // calculate azimuth difference between current and next block for interpolation
             // last block uses previous difference for simplification
             float az_diff;
             if (b + 1 < BLOCKS_IN_PACKET)
             {
-                az_diff = (packet.blocks[b + 1].azimuth * 0.01f) - az_block;
-                if (packet.blocks[b + 1].azimuth < packet.blocks[b].azimuth)
+                az_diff = (packet_.blocks[b + 1].azimuth * 0.01f) - az_block;
+                if (packet_.blocks[b + 1].azimuth < packet_.blocks[b].azimuth)
                 {
                     az_diff += 360.f;
                 }
@@ -275,7 +273,7 @@ void VelodyneDriver::decodePacket()
             for (int p = 0; p < POINTS_IN_BLOCK; p++)
             {
                 // select point
-                Point& new_point = currentScan->points[startIdx + LASER_ID_TO_RING[p % 16] + (p < 16 ? 0 : 16)];
+                Point& new_point = current_scan_->points_[startIdx + LASER_ID_TO_RING[p % 16] + (p < 16 ? 0 : 16)];
 
                 // interpolate azimuth (VLP-16 User Manual, Ch. 9.5)
                 float az;
@@ -297,9 +295,9 @@ void VelodyneDriver::decodePacket()
                 az = deg_to_rad(az);
 
                 // calculate XYZ and fill new point
-                if (packet.blocks[b].points[p].distance > 0 && packet.blocks[b].points[p].distance <= std::numeric_limits<decltype(Point::x)>::max())
+                if (packet_.blocks[b].points[p].distance > 0 && packet_.blocks[b].points[p].distance <= std::numeric_limits<decltype(Point::x)>::max())
                 {
-                    float r = packet.blocks[b].points[p].distance * 2 - LASER_ID_TO_OFFSET[p % 16]; // 2 mm
+                    float r = packet_.blocks[b].points[p].distance * 2 - LASER_ID_TO_OFFSET[p % 16]; // 2 mm
                     float cos_vertical = cos(LASER_ID_TO_VERT_ANGLE[p % 16]);
                     new_point.x = r * cos_vertical * sin(az);
                     new_point.y = r * cos_vertical * cos(az);
