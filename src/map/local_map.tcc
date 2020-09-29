@@ -15,10 +15,10 @@ namespace fastsense::map
 
 template<typename T>
 LocalMap<T>::LocalMap(unsigned int sX, unsigned int sY, unsigned int sZ, const std::shared_ptr<GlobalMap>& map, const CommandQueuePtr& queue)
-    : size_{(sX % 2 == 1 ? sX : sX + 1),
-            (sY % 2 == 1 ? sY : sY + 1),
-            (sZ % 2 == 1 ? sZ : sZ + 1)},
-      data_{queue, size_.x() * size_.y() * size_.z()},
+    : size_{static_cast<int>(sX % 2 == 1 ? sX : sX + 1),
+            static_cast<int>(sY % 2 == 1 ? sY : sY + 1),
+            static_cast<int>(sZ % 2 == 1 ? sZ : sZ + 1)},
+      data_{queue, static_cast<size_t>(size_.x() * size_.y() * size_.z())},
       pos_{0},
       offset_{size_.x() / 2, size_.y() / 2, size_.z() / 2},
       map_{map}
@@ -28,7 +28,7 @@ LocalMap<T>::LocalMap(unsigned int sX, unsigned int sY, unsigned int sZ, const s
         fastsense::util::logging::Logger::warning("Changed LocalMap size from even (", sX, ", ", sY, ", ", sZ, ") to odd (", size_.x(), ", ", size_.y(), ", ", size_.z(), ")");
     }
 
-    for (size_t i = 0; i < size_.x() * size_.y() * size_.z(); i++)
+    for (int i = 0; i < size_.x() * size_.y() * size_.z(); i++)
     {
         data_[i] = map_->getValue(i / size_.z() / size_.y() % size_.x() - offset_.x(), i / size_.z() % size_.y() - offset_.y(), i % size_.z() - offset_.z());
     }
@@ -116,12 +116,12 @@ void LocalMap<T>::shift(int x, int y, int z)
 
     // y
     int diffY = y - pos_.y();
-    for (size_t i = 0; i < abs(diffY); i++)
+    for (int i = 0; i < abs(diffY); i++)
     {
         // step y
-        for (size_t j = pos_.x() - size_.x() / 2; j <= pos_.x() + size_.x() / 2; j++)
+        for (int j = pos_.x() - size_.x() / 2; j <= pos_.x() + size_.x() / 2; j++)
         {
-            for (size_t k = pos_.z() - size_.z() / 2; k <= pos_.z() + size_.z() / 2; k++)
+            for (int k = pos_.z() - size_.z() / 2; k <= pos_.z() + size_.z() / 2; k++)
             {
                 if (diffY > 0)
                 {

@@ -33,7 +33,7 @@ TEST_CASE("Test xyz_buffer.h", "[]")
     SECTION("Test Operator: +")
     {   
         {
-            auto buffer = XYZBuffer<int>{0, 1, 2} + XYZBuffer<int>{0, 1, 2};
+            auto buffer = XYZBuffer<int>{0, 1, 2} + XYZBuffer<int>{2, 3, 4};
             REQUIRE(buffer.x() == 2);
             REQUIRE(buffer.y() == 4);
             REQUIRE(buffer.z() == 6);
@@ -114,9 +114,9 @@ TEST_CASE("Test xyz_buffer.h", "[]")
             REQUIRE(buffer.z() == 8);
 
             buffer *= buffer;
-            REQUIRE(buffer.x() == 4);
-            REQUIRE(buffer.y() == 9);
-            REQUIRE(buffer.z() == 16);
+            REQUIRE(buffer.x() == 16);
+            REQUIRE(buffer.y() == 36);
+            REQUIRE(buffer.z() == 64);
         }
     }
 

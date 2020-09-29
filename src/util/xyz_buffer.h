@@ -184,7 +184,7 @@ protected:
 };
 
 
-using LocalMapSize = util::XYZBuffer<size_t>;
+using LocalMapSize = util::XYZBuffer<int>;
 using LocalMapPos = util::XYZBuffer<int>;
 using LocalMapOffset = util::XYZBuffer<int>;
 

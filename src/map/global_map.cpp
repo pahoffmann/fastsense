@@ -31,6 +31,7 @@ std::string GlobalMap::tagFromPos(int x, int y, int z)
 {
     std::stringstream ss;
     ss << std::floor((float) x / CHUNK_SIZE) << "_" << std::floor((float) y / CHUNK_SIZE) << "_" << std::floor((float) z / CHUNK_SIZE);
+
     return ss.str();
 }
 

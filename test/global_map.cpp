@@ -63,7 +63,8 @@ TEST_CASE("Test Map", "[Map]")
     // shift so that the chunk gets unloaded
     localMap.shift(24, 0, 0);
 
-    auto &pos1 = localMap.getPos();
+    auto pos1 = localMap.getPos();
+
     // test getter
     REQUIRE(pos1.x() == 24);
     REQUIRE(pos1.y() == 0);
@@ -75,6 +76,22 @@ TEST_CASE("Test Map", "[Map]")
     REQUIRE(!localMap.inBounds(0, 2, -2));
     REQUIRE(localMap.inBounds(22, 0, 0));
     // test values
+    
+    /*for(int i = -2; i <= 2; ++i)
+    {
+        for(int j = -2; j <= 2; ++j)
+        {
+            for(int z = -2; z <= 2; ++z)
+            {
+                std::cout << i << " " << j << " " << z << ": " << localMap.value(pos1.x() + i, pos1.y() + j, pos1.z() + z).first << " " << localMap.value(pos1.x() + i, pos1.y() + j, pos1.z() + z).second << std::endl;
+            }
+
+            std::cout << std::endl;
+        }
+
+        std::cout << std::endl;
+    }*/
+   
     REQUIRE(localMap.value(24, 0, 0).first == 0);
     REQUIRE(localMap.value(24, 0, 0).second == 7);
 
@@ -85,8 +102,8 @@ TEST_CASE("Test Map", "[Map]")
     std::vector<float> chunk;
     d.read(chunk);
 
-    /*
-    std::cout << "tsdf values:" << std::endl;
+    
+    /*std::cout << "tsdf values:" << std::endl;
     for (int y = 15; y >= 0; y--)
     {
         for (int x = 0; x <= 15; x++)
@@ -104,8 +121,8 @@ TEST_CASE("Test Map", "[Map]")
             std::cout << chunk[(16 * 16 * x + 16 * y) * 2 + 1] << " ";
         }
         std::cout << std::endl;
-    }
-    */
+    }*/
+    
 
     // test pose
     gm_ptr->savePose(8, 13, 21, 34, 55, 89);
