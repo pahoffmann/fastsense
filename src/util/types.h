@@ -7,6 +7,7 @@
 #include <eigen3/Eigen/Dense>
 
 #include <vector>
+#include <msg/point.h>
 
 using Vector3 = Eigen::Vector3f;
 using Mat3 = Eigen::Matrix3f;

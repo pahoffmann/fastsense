@@ -92,7 +92,7 @@ void update_tsdf(const ScanPoints_t<Vector3>& scan_points,
     int thread_count = 1;
 
     std::vector<Map> values(thread_count);
-    
+
     //#pragma omp parallel num_threads(thread_count)
     {
         //int current_thread = omp_get_thread_num();
@@ -179,6 +179,7 @@ void update_tsdf(const ScanPoints_t<Vector3>& scan_points,
                                     continue;
                                 }
                                 visited.insert(index);
+
                                 if (!buffer.inBounds(index.x(), index.y(), index.z()))
                                 {
                                     continue;
@@ -225,6 +226,7 @@ void update_tsdf(const ScanPoints_t<Vector3>& scan_points,
                             continue;
                         }
                         prev = index;
+
                         if (!buffer.inBounds(index.x(), index.y(), index.z()))
                         {
                             continue;

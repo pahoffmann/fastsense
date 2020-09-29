@@ -22,7 +22,7 @@ using SyncedData = std::pair<fastsense::msg::ImuMsg, fastsense::msg::PointCloud:
 using SyncedDataBuffer = fastsense::util::ConcurrentRingBuffer<SyncedData>;
 using SyncedDataBufferPtr = std::shared_ptr<SyncedDataBuffer>;
 
-class SensorSync : public ProcessThread
+class SensorSync : public fastsense::util::ProcessThread
 {
 public:
     SensorSync(ImuStampedBufferPtr imu_buffer, PointCloudStampedBufferPtr pointcloud_buffer, SyncedDataBufferPtr synced_data_buffer);
