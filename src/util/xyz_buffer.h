@@ -21,9 +21,9 @@ template <typename T>
 class XYZBuffer
 {
 public:
-    explicit XYZBuffer() = default;
+    XYZBuffer() = default;
 
-    XYZBuffer(T val) : data_{val, val, val} {}
+    explicit XYZBuffer(T val) : data_{val, val, val} {}
 
     XYZBuffer(T valX, T valY, T valZ) : data_{valX, valY, valZ} {}
 
