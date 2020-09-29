@@ -202,7 +202,7 @@ Registration::Matrix4x4 Registration::register_cloud(fastsense::map::LocalMap<st
                 }
                 catch (const std::out_of_range&)
                 {
-                    std::cout << "FAIL: " << point.x << " " << point.y << " " << point.z << std::endl;
+                    
                 }
             }
             // write local results back into shared variables

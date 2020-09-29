@@ -184,9 +184,9 @@ void PCDFile<VEC_T>::readPoints(std::vector<std::vector<VEC_T>>& points, unsigne
             }
         }
 
-        while (ring >= points.size())
+        while (static_cast<size_t>(ring) >= points.size())
         {
-            points.push_back(std::vector<fastsense::msg::Point>());
+            points.push_back(std::vector<VEC_T>());
         }
 
         points[ring].push_back({x, y, z});
