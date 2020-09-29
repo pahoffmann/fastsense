@@ -32,6 +32,34 @@ namespace fastsense::registration{
 
 static const int DATA_SIZE = 4096;
 
+constexpr unsigned int SCALE = 10;
+
+constexpr float MAX_OFFSET = 0.1 * SCALE;
+
+// Test Translation
+constexpr float TX = 0.5 * SCALE; 
+constexpr float TY = 0.5 * SCALE;
+constexpr float TZ = 0.0 * SCALE;
+// Test Rotation
+constexpr float RY = 15 * (M_PI/180); //radiants
+
+constexpr float TAU = 1 * SCALE;
+constexpr float MAX_WEIGHT = 10;
+
+
+void compare_mats(const Eigen::Matrix4f& a, const Eigen::Matrix4f& b, float trans_offset, float rot_offset)
+{
+    for (size_t i = 0; i < 3; i++)
+    {
+        for (size_t j = 0; i < 3; i++)
+        {
+            REQUIRE(std::abs(a(i, j) - b(i, j)) < rot_offset); //x translation smaller than offset    
+        }
+
+        REQUIRE(std::abs(a(i, 3) - b(i, 3)) < trans_offset);
+    }
+}
+
 static const std::string error_message =
     "Error: Result mismatch:\n"
     "i = %d CPU result = %d Device result = %d\n";
@@ -97,9 +125,9 @@ TEST_CASE("Test Registration", "")
         for(const auto& point : points[ring])
         {
             fastsense::msg::Point transformed_p;
-            transformed_p.x = point.x() * 10; //m to mm
-            transformed_p.y = point.y() * 10; //m to mm
-            transformed_p.z = point.z() * 10; //m to mm
+            transformed_p.x = point.x() * SCALE;
+            transformed_p.y = point.y() * SCALE;
+            transformed_p.z = point.z() * SCALE;
             points_pretransformed_trans.push_back(transformed_p);
         }
     }
@@ -113,24 +141,33 @@ TEST_CASE("Test Registration", "")
         for(const auto& point : points[ring])
         {
             Eigen::Vector3f transformed_p;
-            transformed_p.x() = point.x() * 10; //m to mm
-            transformed_p.y() = point.y() * 10; //m to mm
-            transformed_p.z() = point.z() * 10; //m to mm
+            transformed_p.x() = point.x() * SCALE; 
+            transformed_p.y() = point.y() * SCALE; 
+            transformed_p.z() = point.z() * SCALE;
             scan_points[ring].push_back(transformed_p);
         }
     }
 
     std::shared_ptr<fastsense::map::GlobalMap> global_map_ptr(new fastsense::map::GlobalMap("test_global_map", 0.0, 0.0));
-    fastsense::map::LocalMap<std::pair<float, float>> local_map(20 * 10, 20 * 10, 5 * 10, global_map_ptr, q);
+    fastsense::map::LocalMap<std::pair<float, float>> local_map(20 * SCALE, 20 * SCALE, 5 * SCALE, global_map_ptr, q);
 
     // Initialize temporary testing variables
 
-    float tau = 10;
-    float max_weight = 10;
+    Eigen::Matrix4f translation_mat;
+    translation_mat << 1, 0, 0, TX,
+                       0, 1, 0, TY,
+                       0, 0, 1, TZ,
+                       0, 0, 0,  1;
+
+    Eigen::Matrix4f rotation_mat;
+    rotation_mat <<  cos(RY), 0, sin(RY), 0,
+                           0, 1,       0, 0,
+                    -sin(RY), 0, cos(RY), 0,
+                           0, 0,       0, 1;
 
     //calc tsdf values for the points from the pcd and store them in the local map
 
-    fastsense::tsdf::update_tsdf(scan_points, Vector3::Zero(), local_map, fastsense::tsdf::TsdfCalculation::PROJECTION_INTER, tau, max_weight);
+    fastsense::tsdf::update_tsdf(scan_points, Vector3::Zero(), local_map, fastsense::tsdf::TsdfCalculation::PROJECTION_INTER, TAU, MAX_WEIGHT);
 
         SECTION("Test Transform PCL")
         {
@@ -169,15 +206,15 @@ TEST_CASE("Test Registration", "")
             //reg.register_cloud(local_map, cloud);
 
             float rx = 90 * (M_PI/180); //radiants
-            Eigen::Matrix4f translation_mat_y;
-            translation_mat_y << cos(rx),     0, sin(rx), 0,
+            Eigen::Matrix4f rotation_mat;
+            rotation_mat << cos(rx),     0, sin(rx), 0,
                             0,           1, 0,       0,
                             -1* sin(rx), 0, cos(rx), 0,
                             0,           0, 0,       1;
 
             cloud[0] = Point{1000, 1000, 1000};
 
-            reg.transform_point_cloud(cloud, translation_mat_y);
+            reg.transform_point_cloud(cloud, rotation_mat);
 
             result[0] = Point{1000, 1000, -1000};
 
@@ -187,58 +224,17 @@ TEST_CASE("Test Registration", "")
         }
 
         SECTION("Test Registration Translation")
-        {
-            //translate 50cm in x and y direction
-            int tx = 5; 
-            int ty = 5;
-            int tz = 0;
-
-            Eigen::Matrix4f translation_mat;
-            translation_mat << 1, 0, 0, tx,
-                               0, 1, 0, ty,
-                               0, 0, 1, tz,
-                               0, 0, 0, 1;
-
+        {   
             reg.transform_point_cloud(points_pretransformed_trans, translation_mat);
-
-            Eigen::Matrix4f transform_mat = reg.register_cloud(local_map, points_pretransformed_trans);
-
-            int max_offset = 1; // 10cm maximum difference 
-
-            for (size_t i = 0; i < 4; i++)
-            {
-                for (size_t j = 0; i < 4; i++)
-                {
-                    REQUIRE(std::abs(translation_mat(i, j) - transform_mat(i, j)) < max_offset); //x translation smaller than offset    
-                }
-                
-            }
+            Eigen::Matrix4f transform_mat = reg.register_cloud(local_map, points_pretransformed_trans);  
+            compare_mats(translation_mat, transform_mat, MAX_OFFSET, MAX_OFFSET);
         }
         
         SECTION("Registration test Rotation")
         {
-            float rx = 10 * (M_PI/180); //radiants
-            Eigen::Matrix4f rotation_mat_y;
-            rotation_mat_y << cos(rx),     0, sin(rx), 0,
-                            0,           1, 0,       0,
-                            -1* sin(rx), 0, cos(rx), 0,
-                            0,           0, 0,       1;
-
-
-            reg.transform_point_cloud(points_pretransformed_rot, rotation_mat_y);
-
+            reg.transform_point_cloud(points_pretransformed_rot, rotation_mat);
             Eigen::Matrix4f transform_mat = reg.register_cloud(local_map, points_pretransformed_rot);
-
-            int max_offset = 1; //10mm maximum difference 
-
-            for (size_t i = 0; i < 4; i++)
-            {
-                for (size_t j = 0; i < 4; i++)
-                {
-                    REQUIRE(std::abs(rotation_mat_y(i, j) - transform_mat(i, j)) < max_offset); //x translation smaller than offset    
-                }
-                
-            }
+            compare_mats(rotation_mat, transform_mat, MAX_OFFSET, MAX_OFFSET);
         }
     }
 
