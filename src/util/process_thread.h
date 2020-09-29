@@ -1,8 +1,8 @@
-//
-// Created by julian on 9/2/20.
-//
-
 #pragma once
+
+/**
+ * @author Julian Gaal
+ */
 
 #include <thread>
 
@@ -27,4 +27,4 @@ protected:
     bool running;
 };
 
-}
+} // namespace fastsense::util

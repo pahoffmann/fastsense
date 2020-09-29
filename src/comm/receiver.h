@@ -1,5 +1,10 @@
 #pragma once
 
+/**
+ * @author Julian Gaal
+ * @author Marcel Flottmann
+ */
+
 #include <zmq.hpp>
 #include <msg/point_cloud.h>
 
@@ -25,4 +30,4 @@ private:
 
 } // namespace fastsense::comm
 
-#include <comm/receiver.tcc>
+#include "receiver.tcc"

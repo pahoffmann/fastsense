@@ -1,10 +1,9 @@
 /**
- * @file global_map.cpp
  * @author Steffen Hinderink
  * @author Juri Vana
  */
 
-#include <map/global_map.h>
+#include "global_map.h"
 
 using namespace fastsense::map;
 

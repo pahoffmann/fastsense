@@ -46,7 +46,7 @@ void SensorSync::sync()
         ImuMsgStamped imus;
 
         TimeStamp imu_timestamp, pcl_timestamp;
-        PointCloud::ptr pcl;
+        PointCloud::Ptr pcl;
         ImuMsg imu_msg;
 
         // "referenzdaten" kommen aus laserscanner, da er viel langsamer ist

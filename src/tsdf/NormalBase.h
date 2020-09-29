@@ -1,8 +1,8 @@
 #pragma once
 
 /**
- * @author Malte Hillmann (mhillmann)
- * @author Marc Eisoldt (meisoldt)
+ * @author Malte Hillmann
+ * @author Marc Eisoldt
  */
 
 namespace fastsense::tsdf
@@ -10,7 +10,7 @@ namespace fastsense::tsdf
 
 /**
  * @brief Base class for determining the normals for a give point in a set of points
- * 
+ *
  * @tparam POINT_T Datatype of the points
  * @tparam SET_T  Datatype of the point set
  */
@@ -29,10 +29,7 @@ public:
      */
     virtual POINT_T operator()(const unsigned short query_ring, const size_t query_index, const SET_T& points) const = 0;
 
-    virtual ~NormalBase()
-    {
-        
-    }
+    virtual ~NormalBase() = default;
 };
 
 } // namespace fastsense::tsdf

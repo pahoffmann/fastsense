@@ -1,15 +1,14 @@
+#pragma once
+
 /**
- * @file global_map.h
  * @author Steffen Hinderink
  * @author Juri Vana
  */
 
-#pragma once
-
 #include <highfive/H5File.hpp>
 #include <vector>
 #include <string>
-#include <cmath> // for floor
+#include <cmath>
 #include <sstream>
 #include <utility>
 

@@ -1,10 +1,8 @@
-/**
- * @file logger.tcc
- * @author Marcel Flottmann
- * @date 2020-09-02
- */
-
 #pragma once
+
+/**
+ * @author Marcel Flottmann
+ */
 
 namespace fastsense::util::logging
 {
@@ -109,4 +107,4 @@ inline void Logger::removeSink(const std::shared_ptr<sink::Sink>& s)
     sinks.erase(newEnd, sinks.end());
 }
 
-}
+} // namespace fastsense::util::logging

@@ -1,13 +1,15 @@
+#pragma once
+
 /**
- * @file angular_velocity.h
  * @author Julian Gaal
- * @date 2020-08-17
  */
 
-#pragma once
+#include <cmath>
 
 #include <util/params.h>
 #include <msg/xyz_buffer.h>
+
+constexpr double DEEGREES_TO_RADIANS = M_PI / 180.0;
 
 namespace fastsense::msg
 {
@@ -18,7 +20,12 @@ namespace fastsense::msg
 struct AngularVelocity : public XYZBuffer<double>
 {
     AngularVelocity() = default;
-    AngularVelocity(const double* angular_rate);
+    AngularVelocity(const double* angular_rate)
+    {
+        data_[0] = angular_rate[0] * DEEGREES_TO_RADIANS;
+        data_[1] = angular_rate[1] * DEEGREES_TO_RADIANS;
+        data_[2] = angular_rate[2] * DEEGREES_TO_RADIANS;
+    }
 };
 
 } // namespace fastsense::msg

@@ -1,10 +1,8 @@
-/**
- * @file event_handler_list.h
- * @author Marcel Flottmann
- * @date 2020-09-10
- */
-
 #pragma once
+
+/**
+ * @author Marcel Flottmann
+ */
 
 namespace fastsense::util
 {

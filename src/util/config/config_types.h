@@ -1,15 +1,14 @@
-/**
- * @file config_types.h
- * @author Marcel Flottmann
- * @date 2020-09-03
- */
-
 #pragma once
+
+/**
+ * @author Marcel Flottmann
+ */
 
 #include <unordered_map>
 #include <functional>
 #include <mutex>
 #include <boost/property_tree/ptree.hpp>
+
 #include <util/event_handler_list.h>
 
 namespace fastsense::util::config
@@ -242,7 +241,7 @@ public:
     void removeHandler(EventHandlerHandle<void()>&& handle);
 };
 
-}
+} // namespace fastsense::util::config
 
 #define DECLARE_CONFIG_ENTRY(T, name) ConfigEntry<T> name{#name, this}
 #define DECLARE_CONFIG_GROUP(T, name) T name{#name, this}

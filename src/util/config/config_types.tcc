@@ -1,10 +1,8 @@
-/**
- * @file config_types.tcc
- * @author Marcel Flottmann
- * @date 2020-09-03
- */
-
 #pragma once
+
+/**
+ * @author Marcel Flottmann
+ */
 
 #include <util/logging/logger.h>
 
@@ -147,4 +145,4 @@ inline void ConfigGroup::removeHandler(EventHandlerHandle<void()>&& handle)
     handlerList.remove(std::move(handle));
 }
 
-}
+} // namespace fastsense::util::config

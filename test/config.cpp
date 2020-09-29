@@ -1,7 +1,5 @@
 /**
- * @file config.cpp
  * @author Marcel Flottmann
- * @date 2020-09-11
  */
 
 #include "catch2_config.h"

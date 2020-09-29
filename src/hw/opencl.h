@@ -1,12 +1,10 @@
+#pragma once
+
 /**
- * @file opencl.h
  * @author Marcel Flottmann
- * @date 2020-09-11
  *
  * Include this file instead of <CL/cl2.hpp> directly to define version and other settings
  */
-
-#pragma once
 
 #define CL_HPP_CL_1_2_DEFAULT_BUILD
 #define CL_HPP_TARGET_OPENCL_VERSION 120

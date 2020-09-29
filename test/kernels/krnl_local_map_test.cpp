@@ -1,7 +1,5 @@
 /**
- * @file krnl_local_map_test.cpp
  * @author Marcel Flottmann
- * @date 2020-09-16
  */
 
 #include <map/local_map_hw.h>

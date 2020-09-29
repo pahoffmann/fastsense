@@ -1,10 +1,8 @@
-/**
- * @file config.h
- * @author Marcel Flottmann
- * @date 2020-09-03
- */
-
 #pragma once
+
+/**
+ * @author Marcel Flottmann
+ */
 
 #include "config_types.h"
 
@@ -42,4 +40,4 @@ struct Config : public ConfigGroup
     DECLARE_CONFIG_GROUP(SensorSyncConfig, sensorSync);
 };
 
-}
+} // namespace fastsense::util::config

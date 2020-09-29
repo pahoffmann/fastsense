@@ -44,9 +44,9 @@ Phidget::~Phidget()
 
 void Phidget::registerHandlers()
 {
-    CPhidget_set_OnAttach_Handler(handle_, &Phidget::AttachHandler, this);
-    CPhidget_set_OnDetach_Handler(handle_, &Phidget::DetachHandler, this);
-    CPhidget_set_OnError_Handler(handle_, &Phidget::ErrorHandler, this);
+    CPhidget_set_OnAttach_Handler(handle_, &Phidget::attach_handler, this);
+    CPhidget_set_OnDetach_Handler(handle_, &Phidget::detach_handler, this);
+    CPhidget_set_OnError_Handler(handle_, &Phidget::error_handler, this);
 }
 
 void Phidget::init(CPhidgetHandle handle)
@@ -128,37 +128,37 @@ std::string Phidget::getErrorDescription(int errorCode)
     return std::string(errorPtr);
 }
 
-void Phidget::attachHandler()
+void Phidget::attach_handler()
 {
     printf("Phidget attached (serial# %d)\n", getDeviceSerialNumber());
 }
 
-void Phidget::detachHandler()
+void Phidget::detach_handler()
 {
     printf("Phidget detached (serial# %d)\n", getDeviceSerialNumber());
 }
 
-void Phidget::errorHandler(int error)
+void Phidget::error_handler(int error)
 {
     printf("Phidget error [%d]: %s\n", error,
            getErrorDescription(error).c_str());
 }
 
-int Phidget::AttachHandler(CPhidgetHandle /* handle */, void* userptr)
+int Phidget::attach_handler(CPhidgetHandle /* handle */, void* userptr)
 {
-    ((Phidget*)userptr)->attachHandler();
+    ((Phidget*)userptr)->attach_handler();
     return 0;
 }
 
-int Phidget::DetachHandler(CPhidgetHandle /* handle */, void* userptr)
+int Phidget::detach_handler(CPhidgetHandle /* handle */, void* userptr)
 {
-    ((Phidget*)userptr)->detachHandler();
+    ((Phidget*)userptr)->detach_handler();
     return 0;
 }
 
-int Phidget::ErrorHandler(CPhidgetHandle /* handle */, void* userptr,
+int Phidget::error_handler(CPhidgetHandle /* handle */, void* userptr,
                           int ErrorCode, const char* /* unknown */)
 {
-    ((Phidget*)userptr)->errorHandler(ErrorCode);
+    ((Phidget*)userptr)->error_handler(ErrorCode);
     return 0;
 }

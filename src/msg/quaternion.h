@@ -1,5 +1,9 @@
 #pragma once
 
+/**
+ * @author Julian Gaal
+ */
+
 #include <msg/xyz_buffer.h>
 
 namespace fastsense::msg

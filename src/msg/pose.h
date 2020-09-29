@@ -1,10 +1,8 @@
-/**
- * @file angular_velocity.h
- * @author Julian Gaal
- * @date 2020-08-17
- */
-
 #pragma once
+
+/**
+ * @author Julian Gaal
+ */
 
 #include <util/params.h>
 #include <msg/point.h>

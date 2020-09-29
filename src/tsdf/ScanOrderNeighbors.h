@@ -1,21 +1,21 @@
 #pragma once
 
 /**
- * @author Malte Hillmann (mhillmann)
- * @author Marc Eisoldt (meisoldt)
+ * @author Malte Hillmann
+ * @author Marc Eisoldt
  */
 
-#include <tsdf/NeighborsBase.h>
-
 #include <vector>
+
+#include "NeighborsBase.h"
 
 namespace fastsense::tsdf
 {
 
 /**
- * @brief Class for representing a neighbor determination approach where neighbor points 
+ * @brief Class for representing a neighbor determination approach where neighbor points
  *        are only choosen from the scan order in the given point set
- * 
+ *
  * @tparam POINT_T Data type of the points
  * @tparam SET_T Data type of the point set
  */
@@ -25,7 +25,7 @@ class ScanOrderNeighbors : public NeighborsBase<POINT_T, SET_T, std::vector<POIN
 public:
     /**
      * @brief Construct a new Scan Order Neighbors object
-     * 
+     *
      * @param neighbor_rings How many surrounding scan rings should be considered in every direction?
      * @param neighbor_range How many surrounding points should be considered on a ring in every direction?
      */
@@ -52,4 +52,4 @@ private:
 
 } // namespace fastsense::tsdf
 
-#include <tsdf/ScanOrderNeighbors.tcc>
+#include "ScanOrderNeighbors.tcc"

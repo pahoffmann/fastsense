@@ -1,16 +1,8 @@
 /**
- * @file registration.cpp
  * @author Patrick Hoffmann
  * @author Malte Hillmann
  * @author Marc Eisoldt
- * @brief Registration Class used to Register a Pointcloud with the current ringbuffer
- * @version 0.1
- * @date 2020-08-24
- *
- * @copyright Copyright (c) 2020
- *
  */
-
 
 #include "registration.h"
 
@@ -120,7 +112,7 @@ Registration::Matrix4x4 Registration::register_cloud(fastsense::map::LocalMap<st
 
             //kernel, run, wait
 
-            /*fastsense::CommandQueuePtr q = fastsense::hw::FPGAManager::createCommandQueue();
+            /*fastsense::CommandQueuePtr q = fastsense::hw::FPGAManager::create_command_queue();
             fastsense::kernels::RegKernel krnl{q};
 
             fastsense::buffer::InputBuffer<fastsense::msg::Point> buffer_scan{q, cloud.size()};
@@ -189,7 +181,7 @@ Registration::Matrix4x4 Registration::register_cloud(fastsense::map::LocalMap<st
                     {
                         gradient.z() = (z_next.first - z_last.first) / 2;
                     }
-                    
+
                     Vector3 cross_vec; //TODO: remove this lul
                     cross_vec << point.x, point.y, point.z;
                     jacobi << cross_vec.cross(gradient), gradient;
@@ -202,7 +194,7 @@ Registration::Matrix4x4 Registration::register_cloud(fastsense::map::LocalMap<st
                 }
                 catch (const std::out_of_range&)
                 {
-                    
+
                 }
             }
             // write local results back into shared variables
@@ -215,7 +207,7 @@ Registration::Matrix4x4 Registration::register_cloud(fastsense::map::LocalMap<st
             }
 
 
-            //RESUME SOFTWARE IMPLEMENTATION 
+            //RESUME SOFTWARE IMPLEMENTATION
             // wait for all threads to finish //here should be the exit point of the hw communication, after which the data is being used.
             //#pragma omp barrier
             // only execute on a single thread, all others wait - use the data coming from hw to calculate diff things.
@@ -270,7 +262,8 @@ Registration::Matrix4x4 Registration::register_cloud(fastsense::map::LocalMap<st
  */
 void Registration::update_imu_data(const fastsense::msg::ImuMsgStamped& imu)
 {
-    if(first_imu_msg_ == true){
+    if (first_imu_msg_ == true)
+    {
         imu_time_ = imu.second;
         first_imu_msg_ = false;
         return;

@@ -1,10 +1,8 @@
-/**
- * @file concurrent_ring_buffer.h
- * @author Marcel Flottmann
- * @date 2020-08-11
- */
-
 #pragma once
+
+/**
+ * @author Marcel Flottmann
+ */
 
 #include <vector>
 #include <mutex>

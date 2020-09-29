@@ -1,13 +1,13 @@
-/**
- * @file config_manager.cpp
- * @author Marcel Flottmann
- * @date 2020-09-03
- */
 #pragma once
 
-#include "config_manager.h"
+/**
+ * @author Marcel Flottmann
+ */
+
 #include <boost/property_tree/json_parser.hpp>
 #include <type_traits>
+
+#include "config_manager.h"
 
 namespace fastsense::util::config
 {

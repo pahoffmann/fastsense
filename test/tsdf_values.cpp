@@ -1,11 +1,5 @@
 /**
- * @file tsdf_values.cpp
- * @author Marc Eisoldt 
- * @version 0.1
- * @date 2020-09-16
- * 
- * @copyright Copyright (c) 2020
- * 
+ * @author Marc Eisoldt
  */
 
 #include "catch2_config.h"
@@ -22,7 +16,7 @@ TEST_CASE("Test TSDF Values", "[]")
     SECTION("TSDF Generation")
     {
         std::shared_ptr<GlobalMap> gm_ptr = std::make_shared<GlobalMap>("MapTest.h5", 0, 0);
-        auto commandQueue = FPGAManager::createCommandQueue();
+        auto commandQueue = FPGAManager::create_command_queue();
         LocalMap<std::pair<float, float>> localMap{25, 25, 25, gm_ptr, commandQueue};
 
         int size[3];
@@ -75,7 +69,7 @@ TEST_CASE("Test TSDF Values", "[]")
         // TODO
 
         std::shared_ptr<GlobalMap> gm_ptr = std::make_shared<GlobalMap>("MapTest.h5", 0, 7);
-        auto commandQueue = FPGAManager::createCommandQueue();
+        auto commandQueue = FPGAManager::create_command_queue();
         LocalMap<std::pair<float, float>> localMap{25, 25, 25, gm_ptr, commandQueue};
 
         int size[3];
@@ -87,7 +81,7 @@ TEST_CASE("Test TSDF Values", "[]")
 
         ScanPoints_t<Vector3> points(1);
         points[0].push_back(Vector3(6.5, 0.5, 0.5));
-        
+
         update_tsdf(points, scanner_pos, localMap, method, tau, 100.0);
 
         // Front values

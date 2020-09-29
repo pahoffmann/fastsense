@@ -1,9 +1,9 @@
-/**
- * @file base_kernel.h
- * @author Julian Gaal, Marcel Flottmann
- * @date 2020-09-9
- */
 #pragma once
+
+/**
+ * @author Julian Gaal
+ * @author Marcel Flottmann
+ */
 
 #include <hw/opencl.h>
 #include <hw/types.h>
@@ -30,13 +30,25 @@ protected:
 
     cl::Kernel kernel_;
     fastsense::CommandQueuePtr cmd_q_;
+    std::vector<cl::Event> pre_events_;
+    std::vector<cl::Event> execute_events_;
+    std::vector<cl::Event> post_events_;
 public:
     inline BaseKernel(const fastsense::CommandQueuePtr& queue, const char* name)
         :   narg_{0},
-            kernel_{fastsense::hw::FPGAManager::getProgram(), name},
-            cmd_q_{queue} {}
+            kernel_{fastsense::hw::FPGAManager::get_program(), name},
+            cmd_q_{queue}
+            pre_events_(1),
+            execute_events_(1),
+            post_events_(1)
+    {}
 
     virtual ~BaseKernel() = default;
+
+    virtual void waitComplete()
+    {
+        cl::Event::waitForEvents(post_events_);
+    }
 };
 
 } // namespace fastsense::kernels

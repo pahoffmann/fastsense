@@ -1,10 +1,8 @@
-/**
- * @file xyz_buffer.h
- * @author Julian Gaal
- * @date 2020-08-17
- */
-
 #pragma once
+
+/**
+ * @author Julian Gaal
+ */
 
 namespace fastsense::msg
 {

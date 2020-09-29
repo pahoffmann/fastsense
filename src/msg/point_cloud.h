@@ -1,10 +1,8 @@
-/**
- * @file point_cloud.h
- * @author Marcel Flottmann
- * @date 2020-08-11
- */
-
 #pragma once
+
+/**
+ * @author Marcel Flottmann
+ */
 
 #include <cstdint>
 #include <vector>
@@ -25,11 +23,11 @@ namespace fastsense::msg
 class PointCloud
 {
 public:
-    PointCloud() : points{}, rings{} {}
+    PointCloud() : points_{}, rings_{} {}
     ~PointCloud() = default;
-    using ptr = std::shared_ptr<PointCloud>;
-    std::vector<Point> points;
-    uint16_t rings;
+    using Ptr = std::shared_ptr<PointCloud>;
+    std::vector<Point> points_;
+    uint16_t rings_;
 };
 
 } // namespace fastsense::msg;

@@ -1,38 +1,12 @@
 #pragma once
 
 /**
- * @file registration.h
  * @author Patrick Hoffmann
  * @author Adrian Nitschmann
  * @author Pascal Buschermöhle
  * @author Malte Hillmann
  * @author Marc Eisoldt
- * @brief
- * @version 0.1
- * @date 2020-08-24
- *
- * @copyright Copyright (c) 2020
- *
  */
-
-
-// #include <ros/ros.h>
-// #include <sensor_msgs/PointCloud2.h>
-// #include <sensor_msgs/Imu.h>
-// #include <ros/time.h>
-
-//#include <prototyping/REGConfig.h>
-
-//#include <prototyping/ring_buffer/ring_buffer.h>
-//#include <prototyping/types.h>
-
-#include <map/local_map.h>
-#include <util/types.h>
-#include <util/time_stamp.h>
-#include <msg/msgs_stamped.h>
-#include <msg/point.h>
-//#include <hw/kernels/reg_kernel.h>
-
 
 #include <cmath>
 #include <mutex>
@@ -40,9 +14,12 @@
 #include <utility>
 #include <algorithm>
 
-
-#ifndef REGISTRATION_H_
-#define REGISTRATION_H_
+#include <util/types.h>
+#include <util/time_stamp.h>
+#include <map/local_map.h>
+#include <msg/msgs_stamped.h>
+#include <msg/point.h>
+//#include <hw/kernels/reg_kernel.h>
 
 namespace fastsense::registration
 {
@@ -71,7 +48,7 @@ private:
     Matrix4x4 global_transform_; //used to store the transform since the last registration (right now calculated using the angular velocities by the IMU)
     fastsense::util::TimeStamp imu_time_;
     bool first_imu_msg_;
-    
+
     /**
      * @brief transforms xi vector 6x1 (angular and linear velocity) to transformation matrix 4x4
      *
@@ -87,12 +64,12 @@ public:
      * @brief Construct a new Registration object, used to register a pointcloud with the current ring buffer
      *
      */
-    Registration(unsigned int max_iterations = 500, double weighting_constant = 100.0, double it_weight_offset = 0.0, double it_weight_gradient = 0.01) : 
-    max_iterations_(max_iterations),
-    weighting_constant_(weighting_constant),
-    it_weight_offset_(it_weight_offset),
-    it_weight_gradient_(it_weight_gradient),
-    first_imu_msg_(true)
+    Registration(unsigned int max_iterations = 500, double weighting_constant = 100.0, double it_weight_offset = 0.0, double it_weight_gradient = 0.01) :
+        max_iterations_(max_iterations),
+        weighting_constant_(weighting_constant),
+        it_weight_offset_(it_weight_offset),
+        it_weight_gradient_(it_weight_gradient),
+        first_imu_msg_(true)
     {
         global_transform_.setIdentity();
     }
@@ -103,11 +80,11 @@ public:
      */
     virtual ~Registration();
 
-    float calc_weight(float x) const 
+    float calc_weight(float x) const
     {
         auto value = fabs(x);
 
-        if(value <= weighting_constant_)
+        if (value <= weighting_constant_)
         {
             return 1.0;
         }
@@ -143,5 +120,3 @@ public:
 
 
 } //namespace fastsense
-
-#endif

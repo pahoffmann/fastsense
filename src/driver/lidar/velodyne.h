@@ -1,17 +1,15 @@
-/**
- * @file velodyne.h
- * @author Marcel Flottmann
- * @date 2020-08-11
- */
-
 #pragma once
 
-#include <util/process_thread.h>
-#include <msg/msgs_stamped.h>
-#include <util/concurrent_ring_buffer.h>
+/**
+ * @author Marcel Flottmann
+ */
 
 #include <memory>
 #include <thread>
+
+#include <msg/msgs_stamped.h>
+#include <util/process_thread.h>
+#include <util/concurrent_ring_buffer.h>
 
 namespace fastsense::driver
 {
@@ -106,31 +104,31 @@ protected:
      * @brief Receives a packet. This is the main receiver thread function.
      *
      */
-    void receivePacket();
+    void receive_packet();
 
     /**
      * @brief Decode the packet and make point clouds from the data.
      *
      */
-    void decodePacket();
+    void decode_packet();
 
     /// Port for receiving data
-    uint16_t port;
+    uint16_t port_;
 
     /// Socket file descriptor
-    int sockfd;
+    int sockfd_;
 
     /// Current packet
-    VelodynePacket packet;
+    VelodynePacket packet_;
 
     /// Last azimuth
-    float azLast;
+    float az_last_;
 
     /// Buffer to write scans to
-    fastsense::util::ConcurrentRingBuffer<fastsense::msg::PointCloudStamped>::ptr scanBuffer;
+    fastsense::util::ConcurrentRingBuffer<fastsense::msg::PointCloudStamped>::ptr scan_buffer_;
 
     /// Current scan
-    fastsense::msg::PointCloud::ptr currentScan;
+    fastsense::msg::PointCloud::Ptr current_scan_;
 };
 
 } // namespace fastsense::driver
