@@ -8,44 +8,42 @@
 
 using namespace fastsense::registration;
 
-Registration::~Registration()
+Vector3i transform(const Vector3i& input, const Matrix4i& mat)
 {
-    // Currently not necessary, because all member variablesare of a memory save type
+    return (mat.block<3, 3>(0, 0) * input + mat.block<3, 1>(0, 3)) / MATRIX_RESOLUTION;
 }
-
 
 //todo: check whether data exchange has a negative consequences regarding the runtime
 //TODO: test functionality
-void Registration::transform_point_cloud(std::vector<fastsense::msg::Point>& in_cloud, const Matrix4x4& transform)
+void Registration::transform_point_cloud(ScanPoints_t& in_cloud, const Matrix4f& mat)
 {
+    Matrix4i tf = (mat * MATRIX_RESOLUTION).cast<int>();
+
     for (auto index = 0u; index < in_cloud.size(); ++index)
     {
-        Eigen::Vector4f v;
-        fastsense::msg::Point& point = in_cloud[index];
-
-        v << point.x, point.y, point.z, 1.0f;
-        v = transform * v;
-        point.x = std::round(v.x());
-        point.y = std::round(v.y());
-        point.z = std::round(v.z());
+        auto& point = in_cloud[index];
+        point = transform(point, tf);
     }
 }
 
 
-Registration::Matrix4x4 Registration::xi_to_transform(Matrix6x1 xi)
+Matrix4f Registration::xi_to_transform(Vector6f xi)
 {
     // Formula 3.9 on Page 40 of "Truncated Signed Distance Fields Applied To Robotics"
 
+    // Rotation around an Axis.
+    // Direction of axis (l) = Direction of angular_velocity
+    // Angle of Rotation (theta) = Length of angular_velocity
     auto angular_velocity = xi.block<3, 1>(0, 0);
     auto theta = angular_velocity.norm();
     auto l = angular_velocity / theta;
-    Matrix3x3 L;
+    Eigen::Matrix3f L;
     L <<
       0, -l.z(), l.y(),
       l.z(), 0, -l.x(),
       -l.y(), l.x(), 0;
 
-    Matrix4x4 transform = Matrix4x4::Identity();
+    Matrix4f transform = Matrix4f::Identity();
 
     auto rotation = transform.block<3, 3>(0, 0);
     rotation += sin(theta) * L + (1 - cos(theta)) * L * L;
@@ -54,58 +52,46 @@ Registration::Matrix4x4 Registration::xi_to_transform(Matrix6x1 xi)
     return transform;
 }
 
-float Registration::filter_value(const std::pair<float, float>& buf_entry)
-{
-    if (buf_entry.second == 0.0)
-    {
-        throw - 1;
-    }
-
-    return buf_entry.first;
-}
-
-Registration::Matrix4x4 Registration::register_cloud(fastsense::map::LocalMap<std::pair<float, float>>& localmap, std::vector<fastsense::msg::Point>& cloud)
+Matrix4f Registration::register_cloud(LocalMap_t& localmap, ScanPoints_t& cloud)
 {
     mutex_.lock();
-    Matrix4x4 cur_transform = global_transform_; //transform used to register the pcl
-    global_transform_.setIdentity();
+    Matrix4f total_transform = imu_accumulator_; //transform used to register the pcl
+    imu_accumulator_.setIdentity();
     mutex_.unlock();
 
-    Matrix4x4 next_transform = cur_transform;
+    float alpha = 0;
 
-    auto alpha = it_weight_offset_;
-
-    double previous_errors[4] = {0, 0, 0, 0};
-    double error = 0.0;
+    float previous_errors[4] = {0, 0, 0, 0};
+    int error = 0.0;
     int count = 0;
-    const double epsilon = 0.0001; // TODO: make parameter?
-    const size_t width = cloud.size();
+    constexpr float epsilon = 0.0001; // TODO: make parameter?
 
     bool finished = false;
 
-    Matrix6x6 h = Matrix6x6::Zero();
-    Matrix6x1 g = Matrix6x1::Zero();
-    Matrix6x1 xi;
+    Matrix6i h = Matrix6i::Zero();
+    Vector6i g = Vector6i::Zero();
 
     // instead of splitting and joining threads twice per iteration, stay in a
     // multithreaded environment and guard the appropriate places with #pragma omp single
     //#pragma omp parallel
     {
-        Matrix6x6 local_h;
-        Matrix6x1 local_g;
-        double local_error;
+        Matrix6i local_h;
+        Vector6i local_g;
+        int local_error;
         int local_count;
+        Matrix4i next_transform;
 
-        Matrix3x1 gradient;
-        Matrix6x1 jacobi;
-        Eigen::Vector4f extended;
+        Vector3i gradient;
+        Vector6i jacobi;
 
         for (int i = 0; i < max_iterations_ && !finished; i++)
         {
-            local_h = Matrix6x6::Zero();
-            local_g = Matrix6x1::Zero();
-            local_error = 0.0;
+            local_h = Matrix6i::Zero();
+            local_g = Vector6i::Zero();
+            local_error = 0;
             local_count = 0;
+
+            next_transform = (total_transform * MATRIX_RESOLUTION).cast<int>();
 
             //STOP SW IMPLEMENTATION
             //BEGIN HW IMPLEMENTATION
@@ -132,64 +118,46 @@ Registration::Matrix4x4 Registration::register_cloud(fastsense::map::LocalMap<st
             */
 
             //#pragma omp for schedule(static) nowait
-            for (size_t i = 0; i < width; i++)
+            for (size_t i = 0; i < cloud.size(); i++)
             {
-                fastsense::msg::Point& point = cloud[i];
-
-                if (std::isnan(point.x))
+                auto& input = cloud[i];
+                if (input == INVALID_POINT)
                 {
                     continue;
                 }
 
-                // apply transform from previous iteration/IMU
-                extended << point.x, point.y, point.z, 1.0f;
-                extended = next_transform * extended;
-                point.x = extended.x();
-                point.y = extended.y();
-                point.z = extended.z();
+                // apply the total transform
+                Vector3i point = transform(input, next_transform);
 
-                int buf_x = (int)std::floor(point.x);
-                int buf_y = (int)std::floor(point.y);
-                int buf_z = (int)std::floor(point.z);
+                Vector3i buf = point / MAP_RESOLUTION;
 
                 try
                 {
-                    const auto& current = localmap.value(buf_x, buf_y, buf_z);
-                    if (current.second == 0.0)
+                    const auto& current = localmap.value(buf.x(), buf.y(), buf.z());
+                    if (current.second == 0)
                     {
                         continue;
                     }
 
-                    const auto& x_next = localmap.value(buf_x + 1, buf_y, buf_z);
-                    const auto& x_last = localmap.value(buf_x - 1, buf_y, buf_z);
-                    const auto& y_next = localmap.value(buf_x, buf_y + 1, buf_z);
-                    const auto& y_last = localmap.value(buf_x, buf_y - 1, buf_z);
-                    const auto& z_next = localmap.value(buf_x, buf_y, buf_z + 1);
-                    const auto& z_last = localmap.value(buf_x, buf_y, buf_z - 1);
-
-                    gradient = Matrix3x1::Zero();
-
-                    if (x_next.second != 0.0 && x_last.second != 0.0 && !((x_next.first > 0.0 && x_last.first < 0.0) || (x_next.first < 0.0 && x_last.first > 0.0)))
+                    gradient = Vector3i::Zero();
+                    for (size_t axis = 0; axis < 3; axis++)
                     {
-                        gradient.x() = (x_next.first - x_last.first) / 2;
-                    }
-                    if (y_next.second != 0.0 && y_last.second != 0.0 && !((y_next.first > 0.0 && y_last.first < 0.0) || (y_next.first < 0.0 && y_last.first > 0.0)))
-                    {
-                        gradient.y() = (y_next.first - y_last.first) / 2;
-                    }
-                    if (z_next.second != 0.0 && z_last.second != 0.0 && !((z_next.first > 0.0 && z_last.first < 0.0) || (z_next.first < 0.0 && z_last.first > 0.0)))
-                    {
-                        gradient.z() = (z_next.first - z_last.first) / 2;
+                        Vector3i index = buf;
+                        index[axis] -= 1;
+                        const auto last = localmap.value(index.x(), index.y(), index.z());
+                        index[axis] += 2;
+                        const auto next = localmap.value(index.x(), index.y(), index.z());
+                        if (last.second != 0 && next.second != 0 && (next.first > 0.0) == (last.first > 0.0))
+                        {
+                            gradient[axis] = (next.first - last.first) / 2;
+                        }
                     }
 
-                    Vector3 cross_vec; //TODO: remove this lul
-                    cross_vec << point.x, point.y, point.z;
-                    jacobi << cross_vec.cross(gradient), gradient;
+                    jacobi << point.cross(gradient).cast<long>(), gradient.cast<long>();
 
-                    auto weight = calc_weight(current.first);
-                    local_h += weight * jacobi * jacobi.transpose();
-                    local_g += weight * jacobi * current.first;
-                    local_error += fabs(current.first);
+                    local_h += jacobi * jacobi.transpose();
+                    local_g += jacobi * current.first;
+                    local_error += abs(current.first);
                     local_count++;
                 }
                 catch (const std::out_of_range&)
@@ -213,22 +181,25 @@ Registration::Matrix4x4 Registration::register_cloud(fastsense::map::LocalMap<st
             // only execute on a single thread, all others wait - use the data coming from hw to calculate diff things.
             //#pragma omp single
             {
+                Matrix6f hf = h.cast<float>();
+                Vector6f gf = g.cast<float>();
+
                 // W Matrix
-                h += alpha * count * Matrix6x6::Identity();
+                hf += alpha * count * Matrix6f::Identity();
 
-                //std::cout << -h.completeOrthogonalDecomposition().pseudoInverse() * g << std::endl << std::endl;
-
-                xi = -h.completeOrthogonalDecomposition().pseudoInverse() * g; //-h.completeOrthogonalDecomposition().pseudoInverse() * g;
+                Vector6f xi = -hf.inverse() * gf;
+                // alternative: Vector6f xi = hf.completeOrthogonalDecomposition().solve(-gf);
 
                 //convert xi into transform matrix T
-                next_transform = xi_to_transform(xi);
+                Matrix4f transform = xi_to_transform(xi);
+
+                total_transform = transform * total_transform; //update transform
 
                 alpha += it_weight_gradient_;
 
-                cur_transform = next_transform * cur_transform; //update transform
+                float err = (float)error / count;
 
-                error /= count;
-                if (fabs(error - previous_errors[2]) < epsilon && fabs(error - previous_errors[0]) < epsilon)
+                if (fabs(err - previous_errors[2]) < epsilon && fabs(err - previous_errors[0]) < epsilon)
                 {
                     std::cout << "Stopped after " << i << " / " << max_iterations_ << " Iterations" << std::endl;
                     finished = true;
@@ -237,10 +208,10 @@ Registration::Matrix4x4 Registration::register_cloud(fastsense::map::LocalMap<st
                 {
                     previous_errors[e - 1] = previous_errors[e];
                 }
-                previous_errors[3] = error;
+                previous_errors[3] = err;
 
-                h = Matrix6x6::Zero();
-                g = Matrix6x1::Zero();
+                h = Matrix6i::Zero();
+                g = Vector6i::Zero();
                 error = 0;
                 count = 0;
             }
@@ -248,9 +219,9 @@ Registration::Matrix4x4 Registration::register_cloud(fastsense::map::LocalMap<st
     }
 
     // apply final transformation
-    transform_point_cloud(cloud, next_transform);
+    transform_point_cloud(cloud, total_transform);
 
-    return cur_transform;
+    return total_transform;
 }
 
 /**
@@ -269,29 +240,20 @@ void Registration::update_imu_data(const fastsense::msg::ImuMsgStamped& imu)
         return;
     }
 
-    /*if (imu_time_.toSec() == 0)
-    {
-        imu_time_ = imu.header.stamp;
-        return;
-    }*/
-
     float acc_time = std::chrono::duration_cast<std::chrono::seconds>(imu.second.time - imu_time_.time).count();
 
-    //ros::Duration acc_time = imu.header.stamp - imu_time_;
+    Vector3f ang_vel(imu.first.ang.x(), imu.first.ang.y(), imu.first.ang.z());
 
-    Vector3 ang_vel(imu.first.ang.x(), imu.first.ang.y(), imu.first.ang.z());
-    //Vector3 ang_vel(imu.angular_velocity.x, imu.angular_velocity.y, imu.angular_velocity.z);
+    Vector3f orientation = ang_vel * acc_time; //in radiants [rad, rad, rad]
+    auto rotation =   Eigen::AngleAxisf(orientation.x(), Vector3f::UnitX())
+                    * Eigen::AngleAxisf(orientation.y(), Vector3f::UnitY())
+                    * Eigen::AngleAxisf(orientation.z(), Vector3f::UnitZ());
 
-    Vector3 orientation = ang_vel * acc_time; //in radiants [rad, rad, rad]
-    auto rotation = Eigen::AngleAxisf(orientation.x(), Vector3::UnitX())
-                    * Eigen::AngleAxisf(orientation.y(), Vector3::UnitY())
-                    * Eigen::AngleAxisf(orientation.z(), Vector3::UnitZ());
-
-    Matrix4x4 local_transform = Matrix4x4::Identity();
+    Matrix4f local_transform = Matrix4f::Identity();
     local_transform.block<3, 3>(0, 0) = rotation.toRotationMatrix();
 
     mutex_.lock();
-    global_transform_ *= local_transform; //combine/update transforms
+    imu_accumulator_ = local_transform * imu_accumulator_; //combine/update transforms
     mutex_.unlock();
 
     imu_time_ = imu.second;

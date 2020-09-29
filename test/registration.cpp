@@ -7,7 +7,7 @@
 #include <fstream>
 #include <iostream>
 
-#include <hw/buffer/buffer.h>
+/*#include <hw/buffer/buffer.h>
 #include <hw/kernels/vadd_kernel.h>
 #include <hw/types.h>
 #include <hw/fpga_manager.h>
@@ -62,7 +62,7 @@ static const std::string error_message =
     "Error: Result mismatch:\n"
     "i = %d CPU result = %d Device result = %d\n";
 
-TEST_CASE("Test Registration", "")
+TEST_CASE("Registration", "[registration][slow]")
 {
     // const char* xclbinFilename = "FastSense.xclbin";
 
@@ -110,116 +110,109 @@ TEST_CASE("Test Registration", "")
     //test registration
     fastsense::registration::Registration reg(1);
 
-    ScanPoints_t<Vector3> points;
+    std::vector<std::vector<Vector3f>> float_points;
     unsigned int num_points;
 
-    fastsense::util::PCDFile<Vector3> file("sim_cloud.pcd");
-    file.readPoints(points, num_points);
+    fastsense::util::PCDFile file("sim_cloud.pcd");
+    file.readPoints(float_points, num_points);
 
-    std::vector<fastsense::msg::Point> points_pretransformed_trans;
+    ScanPoints_t points(num_points);
 
-    for (auto ring = 0u; ring < points.size(); ++ring)
+    auto count = 0u;
+
+    ScanPoints_t scan_points(num_points);
+
+    for(const auto& ring : float_points)
     {
-        for (const auto& point : points[ring])
+        for(const auto& point : ring)
         {
             fastsense::msg::Point transformed_p;
-            transformed_p.x = point.x() * SCALE;
-            transformed_p.y = point.y() * SCALE;
-            transformed_p.z = point.z() * SCALE;
-            points_pretransformed_trans.push_back(transformed_p);
+            Eigen::Vector3f transformed_p_eigen;
+            scan_points[count].x() = point.x() * SCALE;
+            scan_points[count].y() = point.y() * SCALE;
+            scan_points[count].z() = point.z() * SCALE;
+            
+            ++count;
         }
     }
 
-    std::vector<fastsense::msg::Point> points_pretransformed_rot(points_pretransformed_trans);
-
-    ScanPoints_t<Eigen::Vector3f> scan_points(points.size());
-    //points_transformed now holds the pretransformed (in mm) points from the pcd
-    for (auto ring = 0u; ring < points.size(); ++ring)
-    {
-        for (const auto& point : points[ring])
-        {
-            Eigen::Vector3f transformed_p;
-            transformed_p.x() = point.x() * SCALE;
-            transformed_p.y() = point.y() * SCALE;
-            transformed_p.z() = point.z() * SCALE;
-            scan_points[ring].push_back(transformed_p);
-        }
-    }
+    ScanPoints_t points_pretransformed_trans(scan_points);
+    ScanPoints_t points_pretransformed_rot(scan_points);
 
     std::shared_ptr<fastsense::map::GlobalMap> global_map_ptr(new fastsense::map::GlobalMap("test_global_map", 0.0, 0.0));
-    fastsense::map::LocalMap<std::pair<float, float>> local_map(20 * SCALE, 20 * SCALE, 5 * SCALE, global_map_ptr, q);
+    LocalMap_t local_map(20 * SCALE, 20 * SCALE, 5 * SCALE, global_map_ptr, q);
 
     // Initialize temporary testing variables
 
     Eigen::Matrix4f translation_mat;
     translation_mat << 1, 0, 0, TX,
-                    0, 1, 0, TY,
-                    0, 0, 1, TZ,
-                    0, 0, 0,  1;
+                       0, 1, 0, TY,
+                       0, 0, 1, TZ,
+                       0, 0, 0,  1;
 
     Eigen::Matrix4f rotation_mat;
     rotation_mat <<  cos(RY), 0, sin(RY), 0,
-                 0, 1,       0, 0,
-                 -sin(RY), 0, cos(RY), 0,
-                 0, 0,       0, 1;
+                           0, 1,       0, 0,
+                    -sin(RY), 0, cos(RY), 0,
+                           0, 0,       0, 1;
 
     //calc tsdf values for the points from the pcd and store them in the local map
 
-    fastsense::tsdf::update_tsdf(scan_points, Vector3::Zero(), local_map, fastsense::tsdf::TsdfCalculation::PROJECTION_INTER, TAU, MAX_WEIGHT);
+    fastsense::tsdf::update_tsdf(scan_points, Vector3i::Zero(), local_map, TAU, MAX_WEIGHT, SCALE);
 
     SECTION("Test Transform PCL")
     {
         //test pointcloud transform
-        std::vector<fastsense::msg::Point> cloud(5);
-        std::vector<fastsense::msg::Point> result(5);
+        ScanPoints_t cloud(5);
+        ScanPoints_t result(5);
 
         float tx = 2.0f;
         float ty = 2.0f;
         float tz = 2.0f;
         Eigen::Matrix4f translation_mat;
         translation_mat << 1, 0, 0, tx,
-                        0, 1, 0, ty,
-                        0, 0, 1, tz,
-                        0, 0, 0, 1;
+                           0, 1, 0, ty,
+                           0, 0, 1, tz,
+                           0, 0, 0, 1;
 
-        cloud[0] = Point{1, 1, 1};
-        cloud[1] = Point{0, 0, 0};
-        cloud[2] = Point{5, 3, 1};
-        cloud[3] = Point{540, 244, 124};
-        cloud[4] = Point{1, 0, 0};
+        cloud[0] = Vector3i{1, 1, 1};
+        cloud[1] = Vector3i{0, 0, 0};
+        cloud[2] = Vector3i{5, 3, 1};
+        cloud[3] = Vector3i{540, 244, 124};
+        cloud[4] = Vector3i{1, 0, 0};
 
         reg.transform_point_cloud(cloud, translation_mat);
 
-        result[0] = Point{3, 3, 3};
-        result[1] = Point{2, 2, 2};
-        result[2] = Point{7, 5, 3};
-        result[3] = Point{542, 246, 126};
-        result[4] = Point{3, 2, 2};
+        result[0] = Vector3i{3, 3, 3};
+        result[1] = Vector3i{2, 2, 2};
+        result[2] = Vector3i{7, 5, 3};
+        result[3] = Vector3i{542, 246, 126};
+        result[4] = Vector3i{3, 2, 2};
 
         for (auto i = 0; i < cloud.size(); i++)
         {
-            REQUIRE(cloud[i].x == result[i].x);
-            REQUIRE(cloud[i].y == result[i].y);
-            REQUIRE(cloud[i].z == result[i].z);
+            REQUIRE(cloud[i].x() == result[i].x());
+            REQUIRE(cloud[i].y() == result[i].y());
+            REQUIRE(cloud[i].z() == result[i].z());
         }
         //reg.register_cloud(local_map, cloud);
 
         float rx = 90 * (M_PI / 180); //radiants
         Eigen::Matrix4f rotation_mat;
-        rotation_mat << cos(rx),     0, sin(rx), 0,
-                     0,           1, 0,       0,
-                     -1 * sin(rx), 0, cos(rx), 0,
-                     0,           0, 0,       1;
+        rotation_mat <<  cos(rx), 0, sin(rx), 0,
+                               0, 1,       0, 0,
+                        -sin(rx), 0, cos(rx), 0,
+                               0, 0,       0, 1;
 
-        cloud[0] = Point{1000, 1000, 1000};
+        cloud[0] = Vector3i{1000, 1000, 1000};
 
         reg.transform_point_cloud(cloud, rotation_mat);
 
-        result[0] = Point{1000, 1000, -1000};
+        result[0] = Vector3i{1000, 1000, -1000};
 
-        REQUIRE(cloud[0].x == result[0].x);
-        REQUIRE(cloud[0].y == result[0].y);
-        REQUIRE(cloud[0].z == result[0].z);
+        REQUIRE(cloud[0].x() == result[0].x());
+        REQUIRE(cloud[0].y() == result[0].y());
+        REQUIRE(cloud[0].z() == result[0].z());
     }
 
     SECTION("Test Registration Translation")
@@ -237,4 +230,4 @@ TEST_CASE("Test Registration", "")
     }
 }
 
-} //namespace fastsense:: registration
+} //namespace fastsense::registration */

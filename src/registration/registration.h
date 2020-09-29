@@ -30,22 +30,17 @@ namespace fastsense::registration
  */
 class Registration
 {
+    using Matrix6i = Eigen::Matrix<long, 6, 6>;
+    using Matrix6f = Eigen::Matrix<float, 6, 6>;
+    using Vector6i = Eigen::Matrix<long, 6, 1>;
+    using Vector6f = Eigen::Matrix<float, 6, 1>;
 
 private:
-    typedef Eigen::Matrix<float, 6, 1> Matrix6x1; //jacobi, tf
-    typedef Eigen::Matrix<float, 6, 3> Matrix6x3; //first part of jacobi
-    typedef Eigen::Matrix<float, 3, 1> Matrix3x1; //second part of jacobi
-    typedef Eigen::Matrix<float, 6, 6> Matrix6x6; //second part of jacobi
-    typedef Eigen::Matrix<float, 4, 4> Matrix4x4; //transform matrix
-    typedef Eigen::Matrix<float, 3, 3> Matrix3x3; //rotation matrix
-
     int max_iterations_;
-    double weighting_constant_;
-    double it_weight_offset_;
-    double it_weight_gradient_;
+    float it_weight_gradient_;
 
     std::mutex mutex_;
-    Matrix4x4 global_transform_; //used to store the transform since the last registration (right now calculated using the angular velocities by the IMU)
+    Matrix4f imu_accumulator_; //used to store the transform since the last registration (right now calculated using the angular velocities by the IMU)
     fastsense::util::TimeStamp imu_time_;
     bool first_imu_msg_;
 
@@ -54,9 +49,7 @@ private:
      *
      * @param xi vector
      */
-    Matrix4x4 xi_to_transform(Matrix6x1 xi);
-
-    static inline float filter_value(const std::pair<float, float>& buf_entry);
+    Matrix4f xi_to_transform(Vector6f xi);
 
 public:
 
@@ -64,42 +57,28 @@ public:
      * @brief Construct a new Registration object, used to register a pointcloud with the current ring buffer
      *
      */
-    Registration(unsigned int max_iterations = 500, double weighting_constant = 100.0, double it_weight_offset = 0.0, double it_weight_gradient = 0.01) :
+    Registration(unsigned int max_iterations = 500, float it_weight_gradient = 0.01) :
         max_iterations_(max_iterations),
-        weighting_constant_(weighting_constant),
-        it_weight_offset_(it_weight_offset),
         it_weight_gradient_(it_weight_gradient),
         first_imu_msg_(true)
     {
-        global_transform_.setIdentity();
+        imu_accumulator_.setIdentity();
     }
 
     /**
      * Destructor of the ring buffer.
      * Deletes the array in particular.
      */
-    virtual ~Registration();
-
-    float calc_weight(float x) const
-    {
-        auto value = fabs(x);
-
-        if (value <= weighting_constant_)
-        {
-            return 1.0;
-        }
-
-        return weighting_constant_ / value;
-    }
+    virtual ~Registration() = default;
 
     /**
      * @brief Registers the given pointcloud with the local ring buffer. Transforms the cloud
      *
      * @param cur_buffer
      * @param cloud
-     * @return Matrix4x4
+     * @return Matrix4f
      */
-    Matrix4x4 register_cloud(fastsense::map::LocalMap<std::pair<float, float>>& localmap, std::vector<fastsense::msg::Point>& cloud);
+    Matrix4f register_cloud(LocalMap_t& localmap, ScanPoints_t& cloud);
 
     /**
      * @brief Updates the IMU data used by the registration method
@@ -115,7 +94,7 @@ public:
      * @param out_cloud
      * @param transform
      */
-    static void transform_point_cloud(std::vector<fastsense::msg::Point>& in_cloud, const Matrix4x4& transform);
+    static void transform_point_cloud(ScanPoints_t& in_cloud, const Matrix4f& transform);
 };
 
 

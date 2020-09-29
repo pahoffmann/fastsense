@@ -7,14 +7,12 @@
 namespace fastsense::util
 {
 
-template<typename VEC_T>
-PCDFile<VEC_T>::PCDFile(const std::string& file_name) : name_(file_name)
+PCDFile::PCDFile(const std::string& file_name) : name_(file_name)
 {
 
 }
 
-template<typename VEC_T>
-void PCDFile<VEC_T>::writePoints(const ScanPoints_t<VEC_T>& points, bool binary)
+void PCDFile::writePoints(const std::vector<std::vector<Vector3f>>& points, bool binary)
 {
     std::ofstream file(name_);
 
@@ -89,8 +87,7 @@ void PCDFile<VEC_T>::writePoints(const ScanPoints_t<VEC_T>& points, bool binary)
     file.close();
 }
 
-template<typename VEC_T>
-void PCDFile<VEC_T>::readPoints(std::vector<std::vector<VEC_T>>& points, unsigned int& number_of_points)
+void PCDFile::readPoints(std::vector<std::vector<Vector3f>>& points, unsigned int& number_of_points)
 {
     points.clear();
     std::ifstream file(name_);
@@ -188,7 +185,7 @@ void PCDFile<VEC_T>::readPoints(std::vector<std::vector<VEC_T>>& points, unsigne
 
         while (static_cast<size_t>(ring) >= points.size())
         {
-            points.push_back(std::vector<VEC_T>());
+            points.push_back(std::vector<Vector3f>());
         }
 
         points[ring].push_back({x, y, z});

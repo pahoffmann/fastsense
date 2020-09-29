@@ -16,15 +16,14 @@
 namespace fastsense::util
 {
 
-template<typename VEC_T>
 class PCDFile
 {
 public:
     PCDFile(const std::string& file_name);
 
-    void writePoints(const ScanPoints_t<VEC_T>& points, bool binary = false);
+    void writePoints(const std::vector<std::vector<Vector3f>>& points, bool binary = false);
 
-    void readPoints(std::vector<std::vector<VEC_T>>& points, unsigned int& number_of_points);
+    void readPoints(std::vector<std::vector<Vector3f>>& points, unsigned int& number_of_points);
 
 private:
 
