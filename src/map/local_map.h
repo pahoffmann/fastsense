@@ -98,21 +98,11 @@ public:
      */
     const T& value(int x, int y, int z) const;
 
-    /**
-     * Returns the size of the ring buffer per reference in an array of length 3.
-     * @param size Array in which the size is stored
-     */
-    void getSize(int* size) const;
+    const util::LocalMapSize& getSize() const;
 
-    /**
-     * Returns the position of the center of the cuboid in global coordinates per reference in an array of length 3.
-     * @param pos Array in which the position is stored
-     */
-    void getPos(int* pos) const;
+    const util::LocalMapPos& getPos() const;
 
-    util::LocalMapSize getSize() const;
-
-    util::LocalMapPos getPos() const;
+    const util::LocalMapOffset& getOffset() const;
 
     /**
      * Shifts the ring buffer, so that a new position is the center of the cuboid.

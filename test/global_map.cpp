@@ -35,18 +35,16 @@ TEST_CASE("Test Map", "[Map]")
     localMap.value(-2, 0, 0) = p4;
     localMap.value(-1, 0, 0) = p5;
 
-    int pos[3];
-    localMap.getPos(pos);
-    int size[3];
-    localMap.getSize(size);
+    auto& pos = localMap.getPos();
+    auto& size = localMap.getSize();
 
     // test getter
-    REQUIRE(pos[0] == 0);
-    REQUIRE(pos[1] == 0);
-    REQUIRE(pos[2] == 0);
-    REQUIRE(size[0] == 5);
-    REQUIRE(size[1] == 5);
-    REQUIRE(size[2] == 5);
+    REQUIRE(pos.x() == 0);
+    REQUIRE(pos.y() == 0);
+    REQUIRE(pos.z() == 0);
+    REQUIRE(size.x() == 5);
+    REQUIRE(size.y() == 5);
+    REQUIRE(size.z() == 5);
     // test inBounds
     REQUIRE(localMap.inBounds(0, 2, -2));
     REQUIRE(!localMap.inBounds(22, 0, 0));
@@ -65,14 +63,14 @@ TEST_CASE("Test Map", "[Map]")
     // shift so that the chunk gets unloaded
     localMap.shift(24, 0, 0);
 
-    localMap.getPos(pos);
+    auto &pos1 = localMap.getPos();
     // test getter
-    REQUIRE(pos[0] == 24);
-    REQUIRE(pos[1] == 0);
-    REQUIRE(pos[2] == 0);
-    REQUIRE(size[0] == 5);
-    REQUIRE(size[1] == 5);
-    REQUIRE(size[2] == 5);
+    REQUIRE(pos1.x() == 24);
+    REQUIRE(pos1.y() == 0);
+    REQUIRE(pos1.z() == 0);
+    REQUIRE(size.x() == 5);
+    REQUIRE(size.y() == 5);
+    REQUIRE(size.z() == 5);
     // test inBounds
     REQUIRE(!localMap.inBounds(0, 2, -2));
     REQUIRE(localMap.inBounds(22, 0, 0));

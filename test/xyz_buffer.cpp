@@ -30,18 +30,123 @@ TEST_CASE("Test xyz_buffer.h", "[]")
         }
     }
 
-    SECTION("Test Operators")
-    {
-        XYZBuffer<int> buffer{0, 1, 2};
-        buffer += 1;
-        REQUIRE(buffer.x() == 1);
-        REQUIRE(buffer.y() == 2);
-        REQUIRE(buffer.z() == 3);
+    SECTION("Test Operator: +")
+    {   
+        {
+            auto buffer = XYZBuffer<int>{0, 1, 2} + XYZBuffer<int>{0, 1, 2};
+            REQUIRE(buffer.x() == 2);
+            REQUIRE(buffer.y() == 4);
+            REQUIRE(buffer.z() == 6);
+        }
 
-        buffer += buffer;
-        REQUIRE(buffer.x() == 2);
-        REQUIRE(buffer.y() == 4);
-        REQUIRE(buffer.z() == 6);
+        {
+            auto buffer = XYZBuffer<int>{0, 1, 2} + 1;
+            REQUIRE(buffer.x() == 1);
+            REQUIRE(buffer.y() == 2);
+            REQUIRE(buffer.z() == 3);
+        }
 
+        {
+            XYZBuffer<int> buffer{0, 1, 2};
+            buffer += 1;
+            REQUIRE(buffer.x() == 1);
+            REQUIRE(buffer.y() == 2);
+            REQUIRE(buffer.z() == 3);
+
+            buffer += buffer;
+            REQUIRE(buffer.x() == 2);
+            REQUIRE(buffer.y() == 4);
+            REQUIRE(buffer.z() == 6);
+        }
+    }
+
+    SECTION("Test Operator: -")
+    {   
+        {
+            auto buffer = XYZBuffer<int>{0, 1, 2} - XYZBuffer<int>{0, 1, 2};
+            REQUIRE(buffer.x() == 0);
+            REQUIRE(buffer.y() == 0);
+            REQUIRE(buffer.z() == 0);
+        }
+
+        {
+            auto buffer = XYZBuffer<int>{2, 3, 4} - 1;
+            REQUIRE(buffer.x() == 1);
+            REQUIRE(buffer.y() == 2);
+            REQUIRE(buffer.z() == 3);
+        }
+
+        {
+            XYZBuffer<int> buffer{2, 3, 4};
+            buffer -= 1;
+            REQUIRE(buffer.x() == 1);
+            REQUIRE(buffer.y() == 2);
+            REQUIRE(buffer.z() == 3);
+
+            buffer -= buffer;
+            REQUIRE(buffer.x() == 0);
+            REQUIRE(buffer.y() == 0);
+            REQUIRE(buffer.z() == 0);
+        }
+    }
+
+    SECTION("Test Operator: *")
+    {   
+        {
+            auto buffer = XYZBuffer<int>{1, 2, 3} * XYZBuffer<int>{1, 2, 3};
+            REQUIRE(buffer.x() == 1);
+            REQUIRE(buffer.y() == 4);
+            REQUIRE(buffer.z() == 9);
+        }
+
+        {
+            auto buffer = XYZBuffer<int>{2, 3, 4} * 2;
+            REQUIRE(buffer.x() == 4);
+            REQUIRE(buffer.y() == 6);
+            REQUIRE(buffer.z() == 8);
+        }
+
+        {
+            XYZBuffer<int> buffer{2, 3, 4};
+            buffer *= 2;
+            REQUIRE(buffer.x() == 4);
+            REQUIRE(buffer.y() == 6);
+            REQUIRE(buffer.z() == 8);
+
+            buffer *= buffer;
+            REQUIRE(buffer.x() == 4);
+            REQUIRE(buffer.y() == 9);
+            REQUIRE(buffer.z() == 16);
+        }
+    }
+
+    SECTION("Test Operator: /")
+    {   
+        {
+            auto buffer = XYZBuffer<int>{1, 1, 2} / XYZBuffer<int>{1, 1, 2};
+            REQUIRE(buffer.x() == 1);
+            REQUIRE(buffer.y() == 1);
+            REQUIRE(buffer.z() == 1);
+        }
+
+        {
+            auto buffer = XYZBuffer<int>{2, 3, 4} / 1;
+            REQUIRE(buffer.x() == 2);
+            REQUIRE(buffer.y() == 3);
+            REQUIRE(buffer.z() == 4);
+        }
+
+        {
+            XYZBuffer<int> buffer{2, 4, 6};
+            buffer /= 2;
+            REQUIRE(buffer.x() == 1);
+            REQUIRE(buffer.y() == 2);
+            REQUIRE(buffer.z() == 3);
+
+            buffer /= buffer;
+            REQUIRE(buffer.x() == 1);
+            REQUIRE(buffer.y() == 1);
+            REQUIRE(buffer.z() == 1);
+        }
     }
 }

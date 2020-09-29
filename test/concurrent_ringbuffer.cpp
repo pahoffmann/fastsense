@@ -22,7 +22,9 @@ TEST_CASE("Test Buffer STL Container", "[]")
     for (size_t i = 0; i < buffer_size*2; i++)
     {
         ImuMsg imu_msg{};
-
+        imu_msg.acc += 1;
+        imu_msg.ang += 2;
+        imu_msg.mag += 3;
     }
 
     SECTION("Test #1")

@@ -74,11 +74,21 @@ public:
         return data_;
     }
 
-    XYZBuffer<T>& operator+=(const T& rhs)
+    XYZBuffer<T> operator+(T val)
     {
-      x() += rhs;
-      y() += rhs;
-      z() += rhs;
+        return XYZBuffer{x() + val, y() + val, z() + val}; 
+    }
+
+    XYZBuffer<T> operator+(const XYZBuffer<T>& rhs)
+    {
+        return XYZBuffer{x() + rhs.x(), y() + rhs.y(), z() + rhs.z()}; 
+    }
+
+    XYZBuffer<T>& operator+=(T val)
+    {
+      x() += val;
+      y() += val;
+      z() += val;
       return *this;
     }
 
@@ -90,13 +100,91 @@ public:
       return *this;
     }
 
+    XYZBuffer<T> operator-(T val)
+    {
+        return XYZBuffer{x() - val, y() - val, z() - val}; 
+    }
+
+    XYZBuffer<T> operator-(const XYZBuffer<T>& rhs)
+    {
+        return XYZBuffer{x() - rhs.x(), y() - rhs.y(), z() - rhs.z()}; 
+    }
+
+    XYZBuffer<T>& operator-=(T val)
+    {
+      x() -= val;
+      y() -= val;
+      z() -= val;
+      return *this;
+    }
+
+    XYZBuffer<T>& operator-=(const XYZBuffer<T>& rhs)
+    {
+      x() -= rhs.x();
+      y() -= rhs.y();
+      z() -= rhs.z();
+      return *this;
+    }
+
+    XYZBuffer<T> operator*(T val)
+    {
+        return XYZBuffer{x() * val, y() * val, z() * val}; 
+    }
+
+    XYZBuffer<T> operator*(const XYZBuffer<T>& rhs)
+    {
+        return XYZBuffer{x() * rhs.x(), y() * rhs.y(), z() * rhs.z()}; 
+    }
+
+    XYZBuffer<T>& operator*=(T val)
+    {
+      x() *= val;
+      y() *= val;
+      z() *= val;
+      return *this;
+    }
+
+    XYZBuffer<T>& operator*=(const XYZBuffer<T>& rhs)
+    {
+      x() *= rhs.x();
+      y() *= rhs.y();
+      z() *= rhs.z();
+      return *this;
+    }
+
+     XYZBuffer<T> operator/(T val)
+    {
+        return XYZBuffer{x() / val, y() / val, z() / val}; 
+    }
+
+    XYZBuffer<T> operator/(const XYZBuffer<T>& rhs)
+    {
+        return XYZBuffer{x() / rhs.x(), y() / rhs.y(), z() / rhs.z()}; 
+    }
+
+    XYZBuffer<T>& operator/=(T val)
+    {
+      x() /= val;
+      y() /= val;
+      z() /= val;
+      return *this;
+    }
+
+    XYZBuffer<T>& operator/=(const XYZBuffer<T>& rhs)
+    {
+      x() /= rhs.x();
+      y() /= rhs.y();
+      z() /= rhs.z();
+      return *this;
+    }
+
 protected:
     /// actual data
     T data_[3];
 };
 
 
-using LocalMapSize = util::XYZBuffer<int>;
+using LocalMapSize = util::XYZBuffer<size_t>;
 using LocalMapPos = util::XYZBuffer<int>;
 using LocalMapOffset = util::XYZBuffer<int>;
 

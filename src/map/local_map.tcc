@@ -59,27 +59,21 @@ const T& LocalMap<T>::value(int x, int y, int z) const
 }
 
 template<typename T>
-void LocalMap<T>::getSize(int* size) const
-{
-    memcpy(size, size_.getData(), sizeof(size_));
-}
-
-template<typename T>
-void LocalMap<T>::getPos(int* pos) const
-{
-    memcpy(pos, pos_.getData(), sizeof(pos_));
-}
-
-template<typename T>
-util::LocalMapSize LocalMap<T>::getSize() const
+const util::LocalMapSize& LocalMap<T>::getSize() const
 {
     return size_;
 }
 
 template<typename T>
-util::LocalMapPos LocalMap<T>::getPos() const
+const util::LocalMapPos& LocalMap<T>::getPos() const
 {
     return pos_;
+}
+
+template<typename T>
+const util::LocalMapOffset& LocalMap<T>::getOffset() const
+{
+    return offset_;
 }
 
 template<typename T>
@@ -122,12 +116,12 @@ void LocalMap<T>::shift(int x, int y, int z)
 
     // y
     int diffY = y - pos_.y();
-    for (int i = 0; i < abs(diffY); i++)
+    for (size_t i = 0; i < abs(diffY); i++)
     {
         // step y
-        for (int j = pos_.x() - size_.x() / 2; j <= pos_.x() + size_.x() / 2; j++)
+        for (size_t j = pos_.x() - size_.x() / 2; j <= pos_.x() + size_.x() / 2; j++)
         {
-            for (int k = pos_.z() - size_.z() / 2; k <= pos_.z() + size_.z() / 2; k++)
+            for (size_t k = pos_.z() - size_.z() / 2; k <= pos_.z() + size_.z() / 2; k++)
             {
                 if (diffY > 0)
                 {

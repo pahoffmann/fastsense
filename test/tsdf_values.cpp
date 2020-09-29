@@ -26,8 +26,7 @@ TEST_CASE("Test TSDF Values", "[]")
         auto commandQueue = FPGAManager::createCommandQueue();
         LocalMap<std::pair<float, float>> localMap{20, 20, 20, gm_ptr, commandQueue};
 
-        int size[3];
-        localMap.getSize(size);
+        auto& size = localMap.getSize();
 
         //std::cout << "tsdf map size (simple cases): " << size[0] << " " << size[1] << " " << size[2] << std::endl; 
 
