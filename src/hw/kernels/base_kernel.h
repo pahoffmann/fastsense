@@ -37,7 +37,7 @@ public:
     inline BaseKernel(const fastsense::CommandQueuePtr& queue, const char* name)
         :   narg_{0},
             kernel_{fastsense::hw::FPGAManager::get_program(), name},
-            cmd_q_{queue}
+            cmd_q_{queue},
             pre_events_(1),
             execute_events_(1),
             post_events_(1)

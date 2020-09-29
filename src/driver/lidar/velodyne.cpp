@@ -211,7 +211,7 @@ void VelodyneDriver::receive_packet()
         while (!(fds[0].revents & POLLIN));
 
         // receive packet
-        ssize_t size = recvfrom(sockfd_, &packet, sizeof(VelodynePacket), 0, (sockaddr*)&sender, &senderLength);
+        ssize_t size = recvfrom(sockfd_, &packet_, sizeof(VelodynePacket), 0, (sockaddr*)&sender, &senderLength);
 
         if (size < 0)
         {
@@ -228,21 +228,21 @@ void VelodyneDriver::receive_packet()
 
 void VelodyneDriver::decode_packet()
 {
-    if (packet.produkt_id != PROD_ID_VLP16)
+    if (packet_.produkt_id != PROD_ID_VLP16)
     {
         throw std::runtime_error("wrong sensor");
     }
 
-    if (packet.mode != MODE_STRONGEST && packet.mode != MODE_LAST)
+    if (packet_.mode != MODE_STRONGEST && packet_.mode != MODE_LAST)
     {
         throw std::runtime_error("wrong mode");
     }
 
     for (int b = 0; b < BLOCKS_IN_PACKET; b++)
     {
-        if (packet.blocks[b].flag == BLOCK_FLAG)
+        if (packet_.blocks[b].flag == BLOCK_FLAG)
         {
-            float az_block = packet.blocks[b].azimuth * 0.01f; // 0.01 degree
+            float az_block = packet_.blocks[b].azimuth * 0.01f; // 0.01 degree
 
             // add new scan to queue when azimuth overflows
             if (az_block < az_last_)
@@ -263,8 +263,8 @@ void VelodyneDriver::decode_packet()
             float az_diff;
             if (b + 1 < BLOCKS_IN_PACKET)
             {
-                az_diff = (packet.blocks[b + 1].azimuth * 0.01f) - az_block;
-                if (packet.blocks[b + 1].azimuth < packet.blocks[b].azimuth)
+                az_diff = (packet_.blocks[b + 1].azimuth * 0.01f) - az_block;
+                if (packet_.blocks[b + 1].azimuth < packet_.blocks[b].azimuth)
                 {
                     az_diff += 360.f;
                 }
@@ -295,9 +295,9 @@ void VelodyneDriver::decode_packet()
                 az = deg_to_rad(az);
 
                 // calculate XYZ and fill new point
-                if (packet.blocks[b].points[p].distance > 0 && packet.blocks[b].points[p].distance <= std::numeric_limits<decltype(Point::x)>::max())
+                if (packet_.blocks[b].points[p].distance > 0 && packet_.blocks[b].points[p].distance <= std::numeric_limits<decltype(Point::x)>::max())
                 {
-                    float r = packet.blocks[b].points[p].distance * 2 - LASER_ID_TO_OFFSET[p % 16]; // 2 mm
+                    float r = packet_.blocks[b].points[p].distance * 2 - LASER_ID_TO_OFFSET[p % 16]; // 2 mm
                     float cos_vertical = cos(LASER_ID_TO_VERT_ANGLE[p % 16]);
                     new_point.x = r * cos_vertical * sin(az);
                     new_point.y = r * cos_vertical * cos(az);

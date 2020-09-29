@@ -26,9 +26,9 @@ Imu::Imu(const ImuStampedBufferPtr& ringbuffer)
         is_calibrated_(false),
         init_compass_(false),
         angular_velocity_covariance_({}),
-linear_acceleration_covariance_({}),
-magnetic_field_covariance_({}),
-imu_handle_(nullptr)
+        linear_acceleration_covariance_({}),
+        magnetic_field_covariance_({}),
+        imu_handle_(nullptr)
 {}
 
 void fastsense::driver::Imu::start()
@@ -60,7 +60,7 @@ void Imu::set_data_rate(int rate)
         throw std::runtime_error("Can't set rate: Imu not initialized");
     }
 
-    CPhidgetSpatial_set_data_rate(imu_handle_, rate);
+    CPhidgetSpatial_setDataRate(imu_handle_, rate);
 }
 
 void Imu::zero()
@@ -94,7 +94,7 @@ void Imu::set_compass_correction_parameters(double cc_mag_field, double cc_offse
         double cc_T3, double cc_T4,
         double cc_T5)
 {
-    int ret = CPhidgetSpatial_set_compass_correction_parameters(
+    int ret = CPhidgetSpatial_setCompassCorrectionParameters(
                   imu_handle_, cc_mag_field, cc_offset0, cc_offset1, cc_offset2, cc_gain0,
                   cc_gain1, cc_gain2, cc_T0, cc_T1, cc_T2, cc_T3, cc_T4, cc_T5);
 
