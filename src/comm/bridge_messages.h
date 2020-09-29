@@ -7,6 +7,7 @@
 #pragma once
 
 #include <tsdf/TSDFParameters.h>
+#include <util/xyz_buffer.h>
 #include <vector>
 
 namespace fastsense::comm 
@@ -14,6 +15,8 @@ namespace fastsense::comm
 
 struct TSDFBridgeMessage 
 {
+    TSDFBridgeMessage() = default;
+    ~TSDFBridgeMessage() = default;
     float tau_;
     float map_resolution_;
     fastsense::util::LocalMapSize size_;

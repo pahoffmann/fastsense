@@ -6,6 +6,7 @@ add_compile_options(-std=c++17)
 find_package(catkin REQUIRED COMPONENTS
   roscpp
   sensor_msgs
+  std_msgs
   visualization_msgs
 )
 
@@ -24,11 +25,15 @@ add_subdirectory(${FASTSENSE_DIR}/ext/HighFive ${CMAKE_CURRENT_BINARY_DIR}/HighF
 
 catkin_package()
 
-add_executable(tsdf_bridge src/tsdf_bridge.cpp)
+add_executable(bridge 
+  ${FASTSENSE_DIR}/src/util/process_thread.cpp
+  src/tsdf_bridge.cpp
+  src/bridge.cpp
+)
 
-target_compile_options(tsdf_bridge PRIVATE ${OpenMP_FLAGS})
+target_compile_options(bridge PRIVATE ${OpenMP_FLAGS})
 
-target_include_directories(tsdf_bridge PRIVATE
+target_include_directories(bridge PRIVATE
   ${FASTSENSE_DIR}/src
   ${FASTSENSE_DIR}/ext/HighFive/include 
   include
@@ -36,7 +41,7 @@ target_include_directories(tsdf_bridge PRIVATE
   ${HDF5_INCLUDE_DIRS}
 )
 
-target_link_libraries(tsdf_bridge
+target_link_libraries(bridge
   ${catkin_LIBRARIES}
   libzmq
   ${OpenMP_LIBS}
