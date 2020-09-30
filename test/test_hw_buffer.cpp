@@ -25,7 +25,7 @@ static const std::string error_message =
 
 TEST_CASE("Test krnl_vadd.cpp", "")
 {
-    const char* xclbinFilename = "FastSense.xclbin";
+    const char* xclbinFilename = "FastSense_test.xclbin";
 
     fs::hw::FPGAManager::loadXCLBIN(xclbinFilename);
 
@@ -33,6 +33,7 @@ TEST_CASE("Test krnl_vadd.cpp", "")
 
     // These commands will allocate memory on the Device. The cl::Buffer objects can
     // be used to reference the memory locations on the device.
+
     fs::buffer::InputBuffer<int> buffer_a{q, DATA_SIZE};
     fs::buffer::InputBuffer<int> buffer_b{q, DATA_SIZE};
     fs::buffer::OutputBuffer<int> buffer_result{q, DATA_SIZE};
