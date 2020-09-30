@@ -19,7 +19,7 @@ namespace fastsense::tsdf
  */
 void update_tsdf(const ScanPoints_t& scan_points,
                  const Vector3i& scanner_pos,
-                 fastsense::map::LocalMap<std::pair<int, int>>& buffer,
+                 LocalMap_t& buffer,
                  int tau,
                  int max_weight);
 
