@@ -127,23 +127,28 @@ public:
         using pointer = T*;
 
         const_iterator(pointer ptr) : ptr_(ptr) { }
+        
         self_type operator++()
         {
             ++ptr_;
             return *this;
         }
-        const reference operator*()
+
+        const reference operator*() const
         {
             return *ptr_;
         }
-        bool operator==(const self_type& rhs)
+
+        bool operator==(const self_type& rhs) const
         {
             return ptr_ == rhs.ptr_;
         }
-        bool operator!=(const self_type& rhs)
+
+        bool operator!=(const self_type& rhs) const 
         {
             return ptr_ != rhs.ptr_;
         }
+
     private:
         pointer ptr_;
     };
@@ -161,27 +166,33 @@ public:
 
         using iterator_category = std::forward_iterator_tag;
         iterator(pointer ptr) : ptr_(ptr) { }
+
         self_type operator++()
         {
             ++ptr_;
             return *this;
         }
+
         reference operator*()
         {
             return *ptr_;
         }
+
         pointer operator->()
         {
             return ptr_;
         }
-        bool operator==(const self_type& rhs)
+
+        bool operator==(const self_type& rhs) const
         {
             return ptr_ == rhs.ptr_;
         }
-        bool operator!=(const self_type& rhs)
+
+        bool operator!=(const self_type& rhs) const
         {
             return ptr_ != rhs.ptr_;
         }
+
     private:
         pointer ptr_;
     };

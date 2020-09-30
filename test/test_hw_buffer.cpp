@@ -72,17 +72,17 @@ TEST_CASE("Test krnl_vadd.cpp", "")
 
     SECTION("Test operator* (const)")
     {
-        const auto it = buffer_a.cbegin();
+        const auto& it = buffer_a.cbegin();
+        REQUIRE(*it == 10);
     }
 
     SECTION("Test operator==")
     {
-        auto it = buffer_a.begin();
-        auto comp_it = buffer_a.begin();
+        const auto& it = buffer_a.cbegin();
+        const auto& comp_it = buffer_a.cbegin();
         for (int i = 0 ; i < DATA_SIZE; i++)
         {   
-            // REQUIRE(it == comp_it);
-            
+            REQUIRE(it == comp_it);
         }
     }
 
@@ -120,7 +120,9 @@ TEST_CASE("Test krnl_vadd.cpp", "")
             REQUIRE(buffer_b[i] == 20);
         }
 
+        #pragma GCC diagnostic warning "-Warray-bounds"
         REQUIRE_THROWS_AS(buffer_a[-1], std::out_of_range);
+        #pragma GCC diagnostic warning "-Warray-bounds"
         REQUIRE_THROWS_AS(buffer_a[DATA_SIZE+1], std::out_of_range);
     }
 
