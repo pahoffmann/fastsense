@@ -143,7 +143,7 @@ TEST_CASE("Registration", "[registration][slow]")
     fastsense::CommandQueuePtr q = fastsense::hw::FPGAManager::create_command_queue();
 
     //test registration
-    fastsense::registration::Registration reg(10);
+    fastsense::registration::Registration reg(1000);
 
     std::vector<std::vector<Vector3f>> float_points;
     unsigned int num_points;
@@ -274,12 +274,11 @@ TEST_CASE("Registration", "[registration][slow]")
 
         reg.transform_point_cloud(points_pretransformed_trans, translation_mat);
         Eigen::Matrix4f transform_mat = reg.register_cloud(local_map, points_pretransformed_trans);
-        compare_mats(translation_mat, transform_mat, MAX_OFFSET, MAX_OFFSET);
+        //compare_mats(translation_mat, transform_mat, MAX_OFFSET, MAX_OFFSET);
 
-        std::cout << translation_mat << std::endl << std::endl;
-        std::cout << transform_mat << std::endl;
+        //std::cout << translation_mat << std::endl << std::endl;
 
-        //check_computed_transform(transform_mat, points_pretransformed_trans, scan_points);
+        check_computed_transform(transform_mat, points_pretransformed_trans, scan_points);
 
         std::cout << __LINE__ << std::endl;
     }
