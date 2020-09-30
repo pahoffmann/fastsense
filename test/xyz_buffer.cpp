@@ -12,7 +12,7 @@
 
 using namespace fastsense::util;
 
-TEST_CASE("Test xyz_buffer.h", "[]")
+TEST_CASE("Test XZYBuffer", "[]")
 {   
     SECTION("Test Constructors")
     {
