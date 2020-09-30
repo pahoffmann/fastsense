@@ -75,14 +75,50 @@ void compare_mats(const Eigen::Matrix4f& a, const Eigen::Matrix4f& b, float tran
 
 void check_computed_transform(const ScanPoints_t& points_posttransform, ScanPoints_t& points_pretransform, float max_dist = MAX_OFFSET)
 {
+    int minimum = std::numeric_limits<int>::infinity();
+    int maximum = -std::numeric_limits<int>::infinity();
+    int average = 0;
+
+    int average_x = 0;
+    int average_y = 0;
+    int average_z = 0;
+
+    std::vector<int> dists(points_pretransform.size());
+
     for (size_t i = 0; i < points_pretransform.size(); i++)
     {
         Eigen::Vector3i sub = points_pretransform[i] - points_posttransform[i];
         auto norm = sub.norm();
 
+        if(norm < minimum)
+        {
+            minimum = norm;
+        }
+
+        if(norm > maximum)
+        {
+            maximum = norm;
+        }
+
+        average += norm;
+        average_x += std::abs(sub.x());
+        average_y += std::abs(sub.y());
+        average_z += std::abs(sub.z());
+
+        dists[i] = norm;
+
         REQUIRE(norm < max_dist);
     }
+
+    std::sort(dists.begin(), dists.end());
     
+    std::cout << "minimum distance: " << minimum << std::endl;
+    std::cout << "maximum distance: " << maximum << std::endl;
+    std::cout << "average distance: " << average / points_pretransform.size() << std::endl;
+    std::cout << "average distance x: " << average_x / points_pretransform.size() << std::endl;
+    std::cout << "average distance y: " << average_y / points_pretransform.size() << std::endl;
+    std::cout << "average distance z: " << average_z / points_pretransform.size() << std::endl;
+    std::cout << "median distance: " << dists[dists.size() / 2 + 1] << std::endl;
 }
 
 static const std::string error_message =
