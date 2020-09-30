@@ -25,14 +25,14 @@ using fastsense::data::ImuStampedBufferPtr;
 Imu::Imu(const ImuStampedBufferPtr& ringbuffer)
     :   Phidget(),
         ProcessThread(),
-        data_buffer(ringbuffer),
-        is_connected_(false),
-        is_calibrated_(false),
-        init_compass_(false),
-        angular_velocity_covariance_({}),
-linear_acceleration_covariance_({}),
-magnetic_field_covariance_({}),
-imu_handle_(nullptr)
+        data_buffer{ringbuffer},
+        is_connected_{false},
+        is_calibrated_{false},
+        init_compass_{false},
+        angular_velocity_covariance_{},
+        linear_acceleration_covariance_{},
+        magnetic_field_covariance_{},
+        imu_handle_{nullptr}
 {}
 
 void fastsense::driver::Imu::start()
@@ -186,6 +186,7 @@ void Imu::initCovariance()
     double lin_acc_var = params::linear_acceleration_stdev_ * params::linear_acceleration_stdev_;
 
     for (int i = 0; i < 3; ++i)
+    {
         for (int j = 0; j < 3; ++j)
         {
             int idx = j * 3 + i;
@@ -201,12 +202,13 @@ void Imu::initCovariance()
                 linear_acceleration_covariance_[idx] = 0.0;
             }
         }
-
+    }
     // build covariance matrix
 
     double mag_field_var = params::magnetic_field_stdev_ * params::magnetic_field_stdev_;
 
     for (int i = 0; i < 3; ++i)
+    {
         for (int j = 0; j < 3; ++j)
         {
             int idx = j * 3 + i;
@@ -220,6 +222,7 @@ void Imu::initCovariance()
                 magnetic_field_covariance_[idx] = 0.0;
             }
         }
+    }
 }
 
 const std::array<double, 9>& Imu::getAngularVelocityCovariance() const

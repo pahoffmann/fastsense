@@ -12,9 +12,15 @@ namespace fastsense::util
 class ProcessThread
 {
 public:
-    ProcessThread();
+    ProcessThread() : worker{}, running{false} {}
 
-    virtual ~ProcessThread() = default;
+    virtual ~ProcessThread()
+    {
+        if (running)
+        {
+            worker.join();
+        }
+    }
 
     virtual void start() = 0;
 

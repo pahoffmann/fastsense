@@ -12,8 +12,8 @@ find_package(catkin REQUIRED COMPONENTS
 
 find_package(ZeroMQ 4.3.2 REQUIRED)
 find_package(cppzmq 4.4.1 REQUIRED)
-find_package(OpenMP REQUIRED)
 find_package(HDF5 REQUIRED COMPONENTS CXX C HL)
+find_package(OpenMP REQUIRED)
 
 set(FASTSENSE_DIR ../../../../fastsense)                               
 set(OpenMP_FLAGS ${OpenMP_CXX_FLAGS})
@@ -26,7 +26,11 @@ add_subdirectory(${FASTSENSE_DIR}/ext/HighFive ${CMAKE_CURRENT_BINARY_DIR}/HighF
 catkin_package()
 
 add_executable(bridge 
-  ${FASTSENSE_DIR}/src/util/process_thread.cpp
+  ${FASTSENSE_DIR}/src/msg/imu_msg.cpp
+  ${FASTSENSE_DIR}/src/msg/angular_velocity.cpp
+  ${FASTSENSE_DIR}/src/msg/linear_acceleration.cpp
+  ${FASTSENSE_DIR}/src/msg/magnetic_field.cpp
+  src/imu_bridge.cpp
   src/tsdf_bridge.cpp
   src/bridge.cpp
 )

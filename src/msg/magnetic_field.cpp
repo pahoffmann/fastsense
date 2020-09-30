@@ -5,8 +5,10 @@
  */
 
 #include <limits>
-#include <phidget21.h>
 #include <msg/magnetic_field.h>
+
+// Taken from phidget21.h header, for portability
+#define PUNK_DBL	1e300					/**< Unknown Double */
 
 using namespace fastsense::msg;
 

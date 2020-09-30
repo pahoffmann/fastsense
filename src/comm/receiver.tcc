@@ -1,9 +1,12 @@
+#pragma once
+
 /**
  * @file receiver.tcc
  * @author Julian Gaal
  * @date 2020-09-06
  */
-#pragma once
+
+#include <iostream>
 
 namespace fastsense::comm {
 
@@ -27,16 +30,12 @@ T Receiver<T>::receive(zmq::recv_flags flag)
 }
 
 template <typename T>
-bool Receiver<T>::receive(T& target, zmq::recv_flags flag) 
+void Receiver<T>::receive(T& target, zmq::recv_flags flag) 
 {
     zmq::message_t msg;
-    if (auto bytes_recv = socket_.recv(msg, flag))
-    {
-        memcpy(&target, msg.data(), sizeof(T));
-        return true;
-    }
-
-    return false;
+    socket_.recv(msg, flag);
+    std::cout << "received\n";
+    memcpy(&target, msg.data(), sizeof(T));
 }
 
 } // namespace fastsense::comm

@@ -4,16 +4,23 @@
  * @date 2020-09-15
  */
 
-#include "Application.h"
-#include <util/config/config_manager.h>
-#include <util/logging/logger.h>
-#include <comm/bridge_messages.h>
+#include <chrono>
 #include <csignal>
 #include <cstring>
+#include <algorithm>
+#include <iostream>
+
+#include "Application.h"
+#include <msg/imu_msg.h>
+#include <util/config/config_manager.h>
+#include <util/logging/logger.h>
+#include <comm/sender.h>
+#include <comm/bridge_messages.h>
 
 using namespace fastsense;
 using namespace fastsense::util::config;
 using namespace fastsense::util::logging;
+using namespace std::chrono_literals;
 
 template<typename T>
 class Runner
@@ -53,9 +60,9 @@ Application::Application()
 int Application::run()
 {
     Logger::info("Starting Application...");
-    Runner run_synchronizer(synchronizer);
-    Runner run_lidarDriver(lidarDriver);
-    Runner run_imuDriver(imuDriver);
+    // Runner run_synchronizer(synchronizer);
+    // Runner run_lidarDriver(lidarDriver);
+    // Runner run_imuDriver(imuDriver);
     Logger::info("Application started");
 
     int sig;
@@ -69,6 +76,17 @@ int Application::run()
 
     Logger::info("Stopping Application...");
 
+    std::vector<std::pair<float, float>> tsdf_values(30'000);
+    std::fill(tsdf_values.begin(), tsdf_values.end(), std::make_pair(1, 1));
+
+    msg::ImuMsg imu_msg;
+    imu_msg.acc += 1;
+    imu_msg.ang += 2;
+    imu_msg.mag += 2;
+
+    comm::Sender<comm::TSDFBridgeMessage> tsdf_sender{"localhost:6666"};
+    comm::Sender<msg::ImuMsg> imu_sender{"localhost:5555"};
+
     while (true) {
         // Iteration done
         // * TSDF berechnet
@@ -79,6 +97,20 @@ int Application::run()
         // std::copy(buffer.begin(), buffer.end(), tsdf_values.begin());
         // comm::TSDFBridgeMessage msg { .map_resolution_ }
         // Sender.send(msg)
+        comm::TSDFBridgeMessage tsdf_msg;
+        tsdf_msg.tau_ = 1;
+        tsdf_msg.size_ = {10, 10, 10};
+        tsdf_msg.map_resolution_ = 1;
+        tsdf_msg.offset_ = {1, 1, 1};
+        tsdf_msg.pos_ = {1, 1, 1};
+        tsdf_msg.offset_ = {1, 1, 1};
+
+        tsdf_sender.send(&tsdf_msg);
+
+        imu_sender.send(&imu_msg);
+
+        std::cout << "Sent\n";
+        std::this_thread::sleep_for(1s);
     }
 
     return 0;

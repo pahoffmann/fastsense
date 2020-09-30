@@ -8,10 +8,10 @@
 
 using namespace fastsense::msg;
 
-ImuMsg::ImuMsg(const double* acceleration, const double* angular_rate, const double* magField) : acc(acceleration), ang(angular_rate), mag(magField)
+ImuMsg::ImuMsg(const double* acceleration, const double* angular_rate, const double* magField) : acc{acceleration}, ang{angular_rate}, mag{magField}
 {}
 
-ImuMsg::ImuMsg() : acc(), ang(), mag() {}
+ImuMsg::ImuMsg() : acc{}, ang{}, mag{} {}
 
 std::ostream& operator<<(std::ostream& os, const ImuMsg& data)
 {

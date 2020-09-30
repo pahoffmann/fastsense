@@ -11,7 +11,7 @@ class Sender
 {
 public:
     Sender(std::string addr, size_t threads = 1);
-    void send(T* data);
+    void send(T* data, zmq::send_flags flag = zmq::send_flags::dontwait);
 private:
     std::string addr_;
     zmq::context_t context_;

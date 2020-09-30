@@ -18,7 +18,7 @@
 namespace fastsense::bridge
 {
 
-class TSDFBridge :  public BridgeBase<comm::TSDFBridgeMessage, visualization_msgs::Marker, 1111>, 
+class TSDFBridge :  public BridgeBase<comm::TSDFBridgeMessage, visualization_msgs::Marker, 6666>, 
                     public util::ProcessThread
 {
 public:

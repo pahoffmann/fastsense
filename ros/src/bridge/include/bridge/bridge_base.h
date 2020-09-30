@@ -7,6 +7,7 @@
 #pragma once
 
 #include <string>
+#include <iostream>
 #include <ros/node_handle.h>
 #include <comm/receiver.h>
 #include <util/process_thread.h>
@@ -36,11 +37,10 @@ public:
     
     virtual void run() 
     {
-        if (auto _nbytes = receiver_.receive(msg_))
-        {
-            convert();
-            publish();
-        }
+        std::cout << "Attempting to receive\n";
+        receiver_.receive(msg_);
+        convert();
+        publish();
     }
 
     inline const T& msg() const 
