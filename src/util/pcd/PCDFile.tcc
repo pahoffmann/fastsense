@@ -28,7 +28,7 @@ void PCDFile::writePoints(const std::vector<std::vector<Vector3f>>& points, bool
 
     float x, y, z;
 
-    for (short ring_number = 0; ring_number < points.size(); ++ring_number)
+    for (size_t ring_number = 0; ring_number < points.size(); ++ring_number)
     {
         for (const auto& point : points[ring_number])
         {

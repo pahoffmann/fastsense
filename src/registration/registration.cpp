@@ -240,7 +240,7 @@ void Registration::update_imu_data(const fastsense::msg::ImuMsgStamped& imu)
         return;
     }
 
-    float acc_time = std::chrono::duration_cast<std::chrono::seconds>(imu.second.time - imu_time_.time).count();
+    float acc_time = std::chrono::duration_cast<std::chrono::milliseconds>(imu.second.time - imu_time_.time).count() / 100.0f;
 
     Vector3f ang_vel(imu.first.ang.x(), imu.first.ang.y(), imu.first.ang.z());
 

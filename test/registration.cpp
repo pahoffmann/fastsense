@@ -73,24 +73,16 @@ void compare_mats(const Eigen::Matrix4f& a, const Eigen::Matrix4f& b, float tran
     }
 }
 
-void check_computed_transform(const Eigen::Matrix4f &transform, const ScanPoints_t& points_posttransform, ScanPoints_t& points_pretransform, float max_dist = MAX_OFFSET)
+void check_computed_transform(const ScanPoints_t& points_posttransform, ScanPoints_t& points_pretransform, float max_dist = MAX_OFFSET)
 {
-    //fastsense::registration::Registration::transform_point_cloud(points_pretransform, transform);
     for (size_t i = 0; i < points_pretransform.size(); i++)
     {
         Eigen::Vector3i sub = points_pretransform[i] - points_posttransform[i];
         auto norm = sub.norm();
 
-        //std::cout << sub.x() << " " << sub.y() << " " << sub.z() << std::endl;
-
         REQUIRE(norm < max_dist);
     }
     
-}
-
-void the_ultimate_compare_mats_function_v3(const Eigen::Matrix4f &a, const Eigen::Matrix4f& b, std::vector<fastsense::msg::Point> points)
-{
-    REQUIRE(a == b);
 }
 
 static const std::string error_message =
@@ -156,8 +148,6 @@ TEST_CASE("Registration", "[registration][slow]")
     ScanPoints_t scan_points(num_points);
     ScanPoints_t scan_points_2(num_points);
 
-    std::cout << __LINE__ << std::endl;
-
     for(const auto& ring : float_points)
     {
         for(const auto& point : ring)
@@ -174,18 +164,11 @@ TEST_CASE("Registration", "[registration][slow]")
         }
     }
 
-    std::cout << __LINE__ << std::endl;
-
-
     ScanPoints_t points_pretransformed_trans(scan_points);
     ScanPoints_t points_pretransformed_rot(scan_points);
 
-    std::cout << __LINE__ << std::endl;
-
     std::shared_ptr<fastsense::map::GlobalMap> global_map_ptr(new fastsense::map::GlobalMap("test_global_map", 0.0, 0.0));
     fastsense::map::LocalMap local_map(SIZE_Y, SIZE_Y, SIZE_Z, global_map_ptr, q);
-
-    std::cout << __LINE__ << std::endl;
 
     // Initialize temporary testing variables
 
@@ -203,16 +186,10 @@ TEST_CASE("Registration", "[registration][slow]")
 
     //calc tsdf values for the points from the pcd and store them in the local map
 
-    std::cout << __LINE__ << std::endl;
-
     fastsense::tsdf::update_tsdf(scan_points, Vector3i::Zero(), local_map, TAU, MAX_WEIGHT);
-
-    std::cout << __LINE__ << std::endl;
 
     SECTION("Test Transform PCL")
     {
-        std::cout << __LINE__ << std::endl;
-
         //test pointcloud transform
         ScanPoints_t cloud(5);
         ScanPoints_t result(5);
@@ -240,13 +217,12 @@ TEST_CASE("Registration", "[registration][slow]")
         result[3] = Vector3i{542, 246, 126} * SCALE;
         result[4] = Vector3i{3, 2, 2} * SCALE;
 
-        for (auto i = 0; i < cloud.size(); i++)
+        for (size_t i = 0u; i < cloud.size(); i++)
         {
             REQUIRE(cloud[i].x() == result[i].x());
             REQUIRE(cloud[i].y() == result[i].y());
             REQUIRE(cloud[i].z() == result[i].z());
         }
-        //reg.register_cloud(local_map, cloud);
 
         float rx = 90 * (M_PI / 180); //radiants
         Eigen::Matrix4f rotation_mat;
@@ -264,36 +240,20 @@ TEST_CASE("Registration", "[registration][slow]")
         REQUIRE(cloud[0].x() == result[0].x());
         REQUIRE(cloud[0].y() == result[0].y());
         REQUIRE(cloud[0].z() == result[0].z());
-
-        std::cout << __LINE__ << std::endl;
     }
 
     SECTION("Test Registration Translation")
     {
-        std::cout << __LINE__ << std::endl;
-
         reg.transform_point_cloud(points_pretransformed_trans, translation_mat);
-        Eigen::Matrix4f transform_mat = reg.register_cloud(local_map, points_pretransformed_trans);
-        //compare_mats(translation_mat, transform_mat, MAX_OFFSET, MAX_OFFSET);
-
-        //std::cout << translation_mat << std::endl << std::endl;
-
-        check_computed_transform(transform_mat, points_pretransformed_trans, scan_points);
-
-        std::cout << __LINE__ << std::endl;
+        reg.register_cloud(local_map, points_pretransformed_trans);
+        check_computed_transform(points_pretransformed_trans, scan_points);
     }
 
     SECTION("Registration test Rotation")
     {
-        std::cout << __LINE__ << std::endl;
-
         reg.transform_point_cloud(points_pretransformed_rot, rotation_mat);
-        Eigen::Matrix4f transform_mat = reg.register_cloud(local_map, points_pretransformed_rot);
-        //compare_mats(rotation_mat, transform_mat, MAX_OFFSET, MAX_OFFSET);
-        check_computed_transform(transform_mat, points_pretransformed_rot, scan_points_2);
-
-        
-        std::cout << __LINE__ << std::endl;
+        reg.register_cloud(local_map, points_pretransformed_rot);
+        check_computed_transform(points_pretransformed_rot, scan_points_2);
     }
 }
 
