@@ -52,7 +52,7 @@ Matrix4f Registration::xi_to_transform(Vector6f xi)
     return transform;
 }
 
-Matrix4f Registration::register_cloud(LocalMap_t& localmap, ScanPoints_t& cloud)
+Matrix4f Registration::register_cloud(fastsense::map::LocalMap& localmap, ScanPoints_t& cloud)
 {
     mutex_.lock();
     Matrix4f total_transform = imu_accumulator_; //transform used to register the pcl
@@ -133,7 +133,7 @@ Matrix4f Registration::register_cloud(LocalMap_t& localmap, ScanPoints_t& cloud)
 
                 try
                 {
-                    const auto& current = localmap.value(buf.x(), buf.y(), buf.z());
+                    const auto& current = localmap.value(buf);
                     if (current.second == 0)
                     {
                         continue;
@@ -144,9 +144,9 @@ Matrix4f Registration::register_cloud(LocalMap_t& localmap, ScanPoints_t& cloud)
                     {
                         Vector3i index = buf;
                         index[axis] -= 1;
-                        const auto last = localmap.value(index.x(), index.y(), index.z());
+                        const auto last = localmap.value(index);
                         index[axis] += 2;
-                        const auto next = localmap.value(index.x(), index.y(), index.z());
+                        const auto next = localmap.value(index);
                         if (last.second != 0 && next.second != 0 && (next.first > 0.0) == (last.first > 0.0))
                         {
                             gradient[axis] = (next.first - last.first) / 2;

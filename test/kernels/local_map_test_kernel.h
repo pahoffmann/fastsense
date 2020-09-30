@@ -21,7 +21,7 @@ public:
 
     ~LocalMapTestKernel() = default;
 
-    void run(map::LocalMap<std::pair<float, float>>& map)
+    void run(map::LocalMap& map)
     {
         resetNArg();
         setArg(map.getBuffer().getBuffer());

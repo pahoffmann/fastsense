@@ -8,6 +8,7 @@
 #include <hw/buffer/buffer.h>
 #include <map/local_map_hw.h>
 #include "global_map.h"
+#include <util/types.h>
 
 namespace fastsense::map
 {
@@ -21,7 +22,6 @@ namespace fastsense::map
  * In order to use the global map with the ring buffer, T has to be std::pair<float, float>.
  * Otherwise the function shift will not work.
  */
-template<typename T>
 class LocalMap
 {
 
@@ -36,7 +36,7 @@ private:
     int sizeZ;
 
     /// Actual data of the ring buffer.
-    buffer::InputOutputBuffer<T> data;
+    buffer::InputOutputBuffer<std::pair<int, int>> data;
 
     /// Position of the center of the cuboid in global coordinates.
     int posX;
@@ -88,7 +88,7 @@ public:
      * @param z z-coordinate of the index in global coordinates
      * @return Value of the ring buffer
      */
-    T& value(int x, int y, int z);
+    std::pair<int, int>& value(int x, int y, int z);
 
     /**
      * Returns a value from the ring buffer per reference.
@@ -98,7 +98,23 @@ public:
      * @param z z-coordinate of the index in global coordinates
      * @return Value of the ring buffer
      */
-    const T& value(int x, int y, int z) const;
+    const std::pair<int, int>& value(int x, int y, int z) const;
+
+    /**
+     * Returns a value from the ring buffer per reference.
+     * Throws an exception if the index is out of bounds i.e. if it is more than size / 2 away from the position.
+     * @param p position of the index in global coordinates
+     * @return Value of the ring buffer
+     */
+    std::pair<int, int>& value(const Vector3i& p);
+
+    /**
+     * Returns a value from the ring buffer per reference.
+     * Throws an exception if the index is out of bounds i.e. if it is more than size / 2 away from the position.
+     * @param p position of the index in global coordinates
+     * @return Value of the ring buffer
+     */
+    const std::pair<int, int>& value(const Vector3i& p) const;
 
     /**
      * Returns the size of the ring buffer per reference in an array of length 3.
@@ -132,11 +148,17 @@ public:
      */
     bool inBounds(int x, int y, int z) const;
 
-    const buffer::InputOutputBuffer<T>& getBuffer() const;
+    /**
+     * Checks if x, y and z are within the current range
+     *
+     * @param p position of the index in global coordinates
+     * @return true if (x, y, z) is within the area of the buffer
+     */
+    bool inBounds(const Vector3i& p) const;
+
+    const buffer::InputOutputBuffer<std::pair<int, int>>& getBuffer() const;
 
     LocalMapHW getHardwareRepresentation() const;
 };
 
 } // namespace fastsense::map
-
-#include "local_map.tcc"

@@ -17,7 +17,7 @@ TEST_CASE("Test Map", "[Map]")
 {
     std::shared_ptr<GlobalMap> gm_ptr = std::make_shared<GlobalMap>("MapTest.h5", 0, 7);
     auto commandQueue = FPGAManager::create_command_queue();
-    LocalMap<std::pair<float, float>> localMap{5, 5, 5, gm_ptr, commandQueue};
+    LocalMap localMap{5, 5, 5, gm_ptr, commandQueue};
 
     // write some tsdf values and weights into one corner of the ring buffer,
     // that will be written to the file as one chunk

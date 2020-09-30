@@ -46,19 +46,51 @@ constexpr float MAX_WEIGHT = 10 * WEIGHT_RESOLUTION;
 
 constexpr int SIZE_X = 20 * SCALE / MAP_RESOLUTION;
 constexpr int SIZE_Y = 20 * SCALE / MAP_RESOLUTION;
-constexpr int SIZE_Z = 5 * SCALE / MAP_RESOLUTION;
+constexpr int SIZE_Z = 5 * SCALE / MAP_RESOLUTION; 
 
+/**
+ * @brief Compares two matrices (transform and registered transform) and checks wether they match considering a certain amount of drift
+ * 
+ * @param a 
+ * @param b 
+ * @param trans_offset 
+ * @param rot_offset 
+ */
 void compare_mats(const Eigen::Matrix4f& a, const Eigen::Matrix4f& b, float trans_offset, float rot_offset)
 {
+    //std::cout << a << std::endl << std::endl;
+    //std::cout << b << std::endl;
+
+    //TODO:: Force marc to do this.
     for (size_t i = 0; i < 3; i++)
     {
-        for (size_t j = 0; i < 3; i++)
+        for (size_t j = 0; j < 3; j++)
         {
             REQUIRE(std::abs(a(i, j) - b(i, j)) < rot_offset); //x translation smaller than offset
         }
-
+        
         REQUIRE(std::abs(a(i, 3) - b(i, 3)) < trans_offset);
     }
+}
+
+void check_computed_transform(const Eigen::Matrix4f &transform, const ScanPoints_t& points_posttransform, ScanPoints_t& points_pretransform, float max_dist = MAX_OFFSET)
+{
+    //fastsense::registration::Registration::transform_point_cloud(points_pretransform, transform);
+    for (size_t i = 0; i < points_pretransform.size(); i++)
+    {
+        Eigen::Vector3i sub = points_pretransform[i] - points_posttransform[i];
+        auto norm = sub.norm();
+
+        //std::cout << sub.x() << " " << sub.y() << " " << sub.z() << std::endl;
+
+        REQUIRE(norm < max_dist);
+    }
+    
+}
+
+void the_ultimate_compare_mats_function_v3(const Eigen::Matrix4f &a, const Eigen::Matrix4f& b, std::vector<fastsense::msg::Point> points)
+{
+    REQUIRE(a == b);
 }
 
 static const std::string error_message =
@@ -111,7 +143,7 @@ TEST_CASE("Registration", "[registration][slow]")
     fastsense::CommandQueuePtr q = fastsense::hw::FPGAManager::create_command_queue();
 
     //test registration
-    fastsense::registration::Registration reg(1);
+    fastsense::registration::Registration reg(10);
 
     std::vector<std::vector<Vector3f>> float_points;
     unsigned int num_points;
@@ -119,11 +151,10 @@ TEST_CASE("Registration", "[registration][slow]")
     fastsense::util::PCDFile file("sim_cloud.pcd");
     file.readPoints(float_points, num_points);
 
-    ScanPoints_t points(num_points);
-
     auto count = 0u;
 
     ScanPoints_t scan_points(num_points);
+    ScanPoints_t scan_points_2(num_points);
 
     std::cout << __LINE__ << std::endl;
 
@@ -131,11 +162,13 @@ TEST_CASE("Registration", "[registration][slow]")
     {
         for(const auto& point : ring)
         {
-            fastsense::msg::Point transformed_p;
-            Eigen::Vector3f transformed_p_eigen;
             scan_points[count].x() = point.x() * SCALE;
             scan_points[count].y() = point.y() * SCALE;
             scan_points[count].z() = point.z() * SCALE;
+
+            scan_points_2[count].x() = point.x() * SCALE;
+            scan_points_2[count].y() = point.y() * SCALE;
+            scan_points_2[count].z() = point.z() * SCALE;
             
             ++count;
         }
@@ -150,7 +183,7 @@ TEST_CASE("Registration", "[registration][slow]")
     std::cout << __LINE__ << std::endl;
 
     std::shared_ptr<fastsense::map::GlobalMap> global_map_ptr(new fastsense::map::GlobalMap("test_global_map", 0.0, 0.0));
-    LocalMap_t local_map(SIZE_Y, SIZE_Y, SIZE_Z, global_map_ptr, q);
+    fastsense::map::LocalMap local_map(SIZE_Y, SIZE_Y, SIZE_Z, global_map_ptr, q);
 
     std::cout << __LINE__ << std::endl;
 
@@ -242,7 +275,12 @@ TEST_CASE("Registration", "[registration][slow]")
         reg.transform_point_cloud(points_pretransformed_trans, translation_mat);
         Eigen::Matrix4f transform_mat = reg.register_cloud(local_map, points_pretransformed_trans);
         compare_mats(translation_mat, transform_mat, MAX_OFFSET, MAX_OFFSET);
-        
+
+        std::cout << translation_mat << std::endl << std::endl;
+        std::cout << transform_mat << std::endl;
+
+        //check_computed_transform(transform_mat, points_pretransformed_trans, scan_points);
+
         std::cout << __LINE__ << std::endl;
     }
 
@@ -252,10 +290,12 @@ TEST_CASE("Registration", "[registration][slow]")
 
         reg.transform_point_cloud(points_pretransformed_rot, rotation_mat);
         Eigen::Matrix4f transform_mat = reg.register_cloud(local_map, points_pretransformed_rot);
-        compare_mats(rotation_mat, transform_mat, MAX_OFFSET, MAX_OFFSET);
+        //compare_mats(rotation_mat, transform_mat, MAX_OFFSET, MAX_OFFSET);
+        check_computed_transform(transform_mat, points_pretransformed_rot, scan_points_2);
+
         
         std::cout << __LINE__ << std::endl;
     }
 }
 
-} //namespace fastsense::registration 
+} //namespace fastsense::registration  

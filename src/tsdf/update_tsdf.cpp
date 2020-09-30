@@ -34,7 +34,7 @@ namespace fastsense::tsdf
 
 void update_tsdf(const ScanPoints_t& scan_points,
                  const Vector3i& scanner_pos,
-                 LocalMap_t& buffer,
+                 fastsense::map::LocalMap& buffer,
                  int tau,
                  int max_weight)
 {
@@ -63,7 +63,7 @@ void update_tsdf(const ScanPoints_t& scan_points,
                 continue;
             }
             prev = index;
-            if (!buffer.inBounds(index.x(), index.y(), index.z()))
+            if (!buffer.inBounds(index))
             {
                 continue;
             }
@@ -95,7 +95,7 @@ void update_tsdf(const ScanPoints_t& scan_points,
             int highest = (proj.z() + delta_z) / MAP_RESOLUTION;
             for (index.z() = lowest; index.z() <= highest; index.z()++)
             {
-                if (!buffer.inBounds(index.x(), index.y(), index.z()))
+                if (!buffer.inBounds(index))
                 {
                     continue;
                 }
@@ -106,7 +106,7 @@ void update_tsdf(const ScanPoints_t& scan_points,
                 //     existing.first->second = object;
                 // }
 
-                auto& entry = buffer.value(index.x(), index.y(), index.z());
+                auto& entry = buffer.value(index);
                 entry.first = (entry.first * entry.second + value * weight) / (entry.second + weight);
                 entry.second = std::min(max_weight, entry.second + weight);
             }
