@@ -3,6 +3,7 @@
 /**
  * @author Steffen Hinderink
  * @author Juri Vana
+ * @author Malte Hillmann
  */
 
 #include <highfive/H5File.hpp>
@@ -18,6 +19,13 @@
 namespace fastsense::map
 {
 
+struct ActiveChunk
+{
+    std::vector<int> chunk;
+    Vector3i pos;
+    int age;
+};
+
 /**
  * Global map containing containing truncated signed distance function (tsdf) values and weights.
  * The map is divided into chunks.
@@ -30,9 +38,10 @@ class GlobalMap
 private:
 
     /// Side length of the cube-shaped chunks. One chunk contains CHUNK_SIZE^3 * 2 entries (tsdf values and weights).
-    const int CHUNK_SIZE = 16;
-    const int SINGLE_SIZE = CHUNK_SIZE * CHUNK_SIZE * CHUNK_SIZE;
-    const int TOTAL_SIZE = CHUNK_SIZE * CHUNK_SIZE * CHUNK_SIZE * 2;
+    const int CHUNK_SHIFT = 4;
+    const int CHUNK_SIZE = 1 << CHUNK_SHIFT;
+    const int SINGLE_SIZE = 1 << (3 * CHUNK_SHIFT); // 3 Dimensions
+    const int TOTAL_SIZE = SINGLE_SIZE * 2;
 
     /// Maximum number of active chunks.
     const int NUM_CHUNKS = 8;
@@ -67,23 +76,8 @@ private:
 
     /**
      * Vector of active chunks.
-     * Each 3D chunk with tsdf values and weights is stored in a 1D vector.
      */
-    std::vector<std::vector<int>> activeChunks;
-
-    /**
-     * Vector of the Positions of the active chunks.
-     * Each entry in this vector corresponds to the entry in activeChunks with the same index.
-     */
-    std::vector<Vector3i> activeChunkPos;
-
-    /**
-     * Vector of the ages of the active chunks.
-     * Each entry in this vector corresponds to the entry in activeChunks with the same index.
-     * The age of a chunk counts, for how long the chunk has not been used.
-     * It is used to determine which chunk gets replaced by a least recently used (LRU) strategy.
-     */
-    std::vector<int> ages;
+    std::vector<ActiveChunk> activeChunks;
 
     /// Number of poses that are saved in the HDF5 file
     int numPoses;
@@ -102,7 +96,7 @@ private:
      * @param pos the position
      * @return index in the chunk
      */
-    int indexFromPos(Vector3i pos);
+    int indexFromPos(Vector3i pos, const Vector3i& chunkPos);
 
     /**
      * Activates a chunk and returns it by reference.
@@ -140,7 +134,7 @@ public:
      * @param pos the position
      * @param value value pair that is set
      */
-    void setValue(const Vector3i& pos, std::pair<int, int> value);
+    void setValue(const Vector3i& pos, const std::pair<int, int>& value);
 
     /**
      * Saves a pose in the HDF5 file.

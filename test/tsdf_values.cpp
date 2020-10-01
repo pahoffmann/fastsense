@@ -2,7 +2,7 @@
  * @author Marc Eisoldt
  */
 
-/*#include "catch2_config.h"
+#include "catch2_config.h"
 #include <tsdf/ProjectionNormal.h>
 #include <tsdf/update_tsdf.h>
 #include <iostream>
@@ -37,36 +37,36 @@ TEST_CASE("TSDF_Values", "[tsdf_values]")
         update_tsdf(points, scanner_pos, localMap, TAU, 100);
 
         // Front values
-        REQUIRE(localMap.value(6, 0, 0).first == 0);
-        REQUIRE(localMap.value(5, 0, 0).first == 1 * SCALE);
-        REQUIRE(localMap.value(4, 0, 0).first == 2 * SCALE);
-        REQUIRE(localMap.value(3, 0, 0).first == TAU);
-        REQUIRE(localMap.value(2, 0, 0).first == TAU);
-        REQUIRE(localMap.value(1, 0, 0).first == TAU);
+        CHECK(localMap.value(6, 0, 0).first == 0);
+        CHECK(localMap.value(5, 0, 0).first == 1 * SCALE);
+        CHECK(localMap.value(4, 0, 0).first == 2 * SCALE);
+        CHECK(localMap.value(3, 0, 0).first == TAU);
+        CHECK(localMap.value(2, 0, 0).first == TAU);
+        CHECK(localMap.value(1, 0, 0).first == TAU);
 
         // Front weights
-        REQUIRE(localMap.value(6, 0, 0).second == 1 * WEIGHT_RESOLUTION);
-        REQUIRE(localMap.value(5, 0, 0).second == 1 * WEIGHT_RESOLUTION);
-        REQUIRE(localMap.value(4, 0, 0).second == 1 * WEIGHT_RESOLUTION);
-        REQUIRE(localMap.value(3, 0, 0).second == 1 * WEIGHT_RESOLUTION);
-        REQUIRE(localMap.value(2, 0, 0).second == 1 * WEIGHT_RESOLUTION);
-        REQUIRE(localMap.value(1, 0, 0).second == 1 * WEIGHT_RESOLUTION);
+        CHECK(localMap.value(6, 0, 0).second == 1 * WEIGHT_RESOLUTION);
+        CHECK(localMap.value(5, 0, 0).second == 1 * WEIGHT_RESOLUTION);
+        CHECK(localMap.value(4, 0, 0).second == 1 * WEIGHT_RESOLUTION);
+        CHECK(localMap.value(3, 0, 0).second == 1 * WEIGHT_RESOLUTION);
+        CHECK(localMap.value(2, 0, 0).second == 1 * WEIGHT_RESOLUTION);
+        CHECK(localMap.value(1, 0, 0).second == 1 * WEIGHT_RESOLUTION);
 
         // back values
-        REQUIRE(localMap.value( 7, 0, 0).first == -1 * SCALE);
-        REQUIRE(localMap.value( 8, 0, 0).first == -2 * SCALE);
-        REQUIRE(localMap.value( 9, 0, 0).first ==  0 * SCALE);
-        REQUIRE(localMap.value(10, 0, 0).first ==  0 * SCALE);
-        REQUIRE(localMap.value(11, 0, 0).first ==  0 * SCALE);
-        REQUIRE(localMap.value(12, 0, 0).first ==  0 * SCALE);
+        CHECK(localMap.value( 7, 0, 0).first == -1 * SCALE);
+        CHECK(localMap.value( 8, 0, 0).first == -2 * SCALE);
+        CHECK(localMap.value( 9, 0, 0).first ==  0 * SCALE);
+        CHECK(localMap.value(10, 0, 0).first ==  0 * SCALE);
+        CHECK(localMap.value(11, 0, 0).first ==  0 * SCALE);
+        CHECK(localMap.value(12, 0, 0).first ==  0 * SCALE);
 
         // back weights
-        REQUIRE((localMap.value( 7, 0, 0).second < 1 * WEIGHT_RESOLUTION && localMap.value( 7, 0, 0).second > 0));
-        REQUIRE((localMap.value( 8, 0, 0).second < 1 * WEIGHT_RESOLUTION && localMap.value( 8, 0, 0).second > 0));
-        REQUIRE(localMap.value( 9, 0, 0).second == 0);
-        REQUIRE(localMap.value(10, 0, 0).second == 0);
-        REQUIRE(localMap.value(11, 0, 0).second == 0);
-        REQUIRE(localMap.value(12, 0, 0).second == 0);
+        CHECK((localMap.value( 7, 0, 0).second < 1 * WEIGHT_RESOLUTION && localMap.value( 7, 0, 0).second > 0));
+        CHECK((localMap.value( 8, 0, 0).second < 1 * WEIGHT_RESOLUTION && localMap.value( 8, 0, 0).second > 0));
+        CHECK(localMap.value( 9, 0, 0).second == 0);
+        CHECK(localMap.value(10, 0, 0).second == 0);
+        CHECK(localMap.value(11, 0, 0).second == 0);
+        CHECK(localMap.value(12, 0, 0).second == 0);
     }
 
     SECTION("TSDF Update")
@@ -85,25 +85,25 @@ TEST_CASE("TSDF_Values", "[tsdf_values]")
         update_tsdf(points, scanner_pos, localMap, TAU, 100 * WEIGHT_RESOLUTION);
 
         // Front values
-        REQUIRE(localMap.value(6, 0, 0).first == 0);
-        REQUIRE(localMap.value(5, 0, 0).first == 1 * WEIGHT_SCALE);
-        REQUIRE(localMap.value(4, 0, 0).first == 2 * WEIGHT_SCALE);
-        REQUIRE(localMap.value(3, 0, 0).first == 3 * WEIGHT_SCALE);
-        REQUIRE(localMap.value(2, 0, 0).first == 3 * WEIGHT_SCALE);
-        REQUIRE(localMap.value(1, 0, 0).first == 3 * WEIGHT_SCALE);
+        CHECK(localMap.value(6, 0, 0).first == 0);
+        CHECK(localMap.value(5, 0, 0).first == 1 * WEIGHT_SCALE);
+        CHECK(localMap.value(4, 0, 0).first == 2 * WEIGHT_SCALE);
+        CHECK(localMap.value(3, 0, 0).first == 3 * WEIGHT_SCALE);
+        CHECK(localMap.value(2, 0, 0).first == 3 * WEIGHT_SCALE);
+        CHECK(localMap.value(1, 0, 0).first == 3 * WEIGHT_SCALE);
 
         // Front weights
-        REQUIRE(localMap.value(6, 0, 0).second == 8 * WEIGHT_RESOLUTION);
-        REQUIRE(localMap.value(5, 0, 0).second == 8 * WEIGHT_RESOLUTION);
-        REQUIRE(localMap.value(4, 0, 0).second == 8 * WEIGHT_RESOLUTION);
-        REQUIRE(localMap.value(3, 0, 0).second == 8 * WEIGHT_RESOLUTION);
-        REQUIRE(localMap.value(2, 0, 0).second == 8 * WEIGHT_RESOLUTION);
-        REQUIRE(localMap.value(1, 0, 0).second == 8 * WEIGHT_RESOLUTION);
+        CHECK(localMap.value(6, 0, 0).second == 8 * WEIGHT_RESOLUTION);
+        CHECK(localMap.value(5, 0, 0).second == 8 * WEIGHT_RESOLUTION);
+        CHECK(localMap.value(4, 0, 0).second == 8 * WEIGHT_RESOLUTION);
+        CHECK(localMap.value(3, 0, 0).second == 8 * WEIGHT_RESOLUTION);
+        CHECK(localMap.value(2, 0, 0).second == 8 * WEIGHT_RESOLUTION);
+        CHECK(localMap.value(1, 0, 0).second == 8 * WEIGHT_RESOLUTION);
 
         SECTION("TSDF Max Weight")
         {
             update_tsdf(points, scanner_pos, localMap, TAU, WEIGHT_RESOLUTION);
-            REQUIRE(localMap.value(6, 0, 0).second == WEIGHT_RESOLUTION);
+            CHECK(localMap.value(6, 0, 0).second == WEIGHT_RESOLUTION);
         }
     }
 
@@ -116,4 +116,4 @@ TEST_CASE("TSDF_Values", "[tsdf_values]")
     {
         // TODO
     }
-}*/
+}

@@ -1,6 +1,7 @@
 /**
  * @author Steffen Hinderink
  * @author Juri Vana
+ * @author Malte Hillmann
  */
 
 #include <sstream>
@@ -14,8 +15,6 @@ GlobalMap::GlobalMap(std::string name, int initialTsdfValue, int initialWeight)
       initialTsdfValue{initialTsdfValue},
       initialWeight{initialWeight},
       activeChunks{},
-      activeChunkPos{},
-      ages{},
       numPoses{0}
 {
     if (!file.exist("/map"))
@@ -34,9 +33,9 @@ std::string GlobalMap::tagFromChunkPos(const Vector3i& pos)
     ss << pos.x() << "_" << pos.y() << "_" << pos.z();
     return ss.str();
 }
-int GlobalMap::indexFromPos(Vector3i pos)
+int GlobalMap::indexFromPos(Vector3i pos, const Vector3i& chunkPos)
 {
-    pos -= (pos / CHUNK_SIZE) * CHUNK_SIZE;
+    pos -= chunkPos * CHUNK_SIZE;
     return (pos.x() * CHUNK_SIZE * CHUNK_SIZE + pos.y() * CHUNK_SIZE + pos.z()) * 2;
 }
 
@@ -46,7 +45,7 @@ std::vector<int>& GlobalMap::activateChunk(const Vector3i& chunkPos)
     int n = activeChunks.size(); // == ages.size() == activeChunkPos.size()
     for (int i = 0; i < n; i++)
     {
-        if (activeChunkPos[i] == chunkPos)
+        if (activeChunks[i].pos == chunkPos)
         {
             // chunk is already active
             index = i;
@@ -55,23 +54,26 @@ std::vector<int>& GlobalMap::activateChunk(const Vector3i& chunkPos)
     if (index == -1)
     {
         // chunk is not already active
-        std::vector<int> newChunk;
+        ActiveChunk newChunk;
+        newChunk.pos = chunkPos;
+        newChunk.age = 0;
+
         HighFive::Group g = file.getGroup("/map");
         auto tag = tagFromChunkPos(chunkPos);
         if (g.exist(tag))
         {
             // read chunk from file
             HighFive::DataSet d = g.getDataSet(tag);
-            d.read(newChunk);
+            d.read(newChunk.chunk);
         }
         else
         {
             // create new chunk
-            newChunk = std::vector<int>(TOTAL_SIZE);
+            newChunk.chunk = std::vector<int>(TOTAL_SIZE);
             for (int i = 0; i < SINGLE_SIZE; i++)
             {
-                newChunk[2 * i] = initialTsdfValue;
-                newChunk[2 * i + 1] = initialWeight;
+                newChunk.chunk[2 * i] = initialTsdfValue;
+                newChunk.chunk[2 * i + 1] = initialWeight;
             }
         }
         // put new chunk into activeChunks
@@ -79,9 +81,8 @@ std::vector<int>& GlobalMap::activateChunk(const Vector3i& chunkPos)
         {
             // there is still room for active chunks
             index = n;
+            newChunk.age = n; // temporarily assign oldest age so that all other ages get incremented
             activeChunks.push_back(newChunk);
-            activeChunkPos.push_back(chunkPos);
-            ages.push_back(n); // temporarily assign oldest age so that all other ages get incremented
         }
         else
         {
@@ -89,51 +90,52 @@ std::vector<int>& GlobalMap::activateChunk(const Vector3i& chunkPos)
             int max = -1;
             for (int i = 0; i < n; i++)
             {
-                if (ages[i] > max)
+                if (activeChunks[i].age > max)
                 {
-                    max = ages[i];
+                    max = activeChunks[i].age;
                     index = i;
                 }
             }
-            auto tag = tagFromChunkPos(activeChunkPos[index]);
+            auto tag = tagFromChunkPos(activeChunks[index].pos);
             if (g.exist(tag))
             {
                 auto d = g.getDataSet(tag);
-                d.write(activeChunks[index]);
+                d.write(activeChunks[index].chunk);
             }
             else
             {
-                g.createDataSet(tag, activeChunks[index]);
+                g.createDataSet(tag, activeChunks[index].chunk);
             }
             // overwrite with new chunk
             activeChunks[index] = newChunk;
-            activeChunkPos[index] = chunkPos;
         }
     }
     // update ages
-    int age = ages[index];
-    for (size_t i = 0; i < ages.size(); i++)
+    int age = activeChunks[index].age;
+    for (auto& chunk : activeChunks)
     {
-        if (ages[i] < age)
+        if (chunk.age < age)
         {
-            ages[i]++;
+            chunk.age++;
         }
     }
-    ages[index] = 0;
-    return activeChunks[index];
+    activeChunks[index].age = 0;
+    return activeChunks[index].chunk;
 }
 
 std::pair<int, int> GlobalMap::getValue(const Vector3i& pos)
 {
-    const auto& chunk = activateChunk(pos / CHUNK_SIZE);
-    int index = indexFromPos(pos);
-    return std::pair<int, int>(chunk[index], chunk[index + 1]);
+    Vector3i chunkPos = floor_shift(pos, CHUNK_SHIFT);
+    const auto& chunk = activateChunk(chunkPos);
+    int index = indexFromPos(pos, chunkPos);
+    return std::make_pair(chunk[index], chunk[index + 1]);
 }
 
-void GlobalMap::setValue(const Vector3i& pos, std::pair<int, int> value)
+void GlobalMap::setValue(const Vector3i& pos, const std::pair<int, int>& value)
 {
-    std::vector<int>& chunk = activateChunk(pos / CHUNK_SIZE);
-    int index = indexFromPos(pos);
+    Vector3i chunkPos = floor_shift(pos, CHUNK_SHIFT);
+    auto& chunk = activateChunk(chunkPos);
+    int index = indexFromPos(pos, chunkPos);
     chunk[index] = value.first;
     chunk[index + 1] = value.second;
 }

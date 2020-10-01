@@ -34,8 +34,7 @@ LocalMap::LocalMap(unsigned int sX, unsigned int sY, unsigned int sZ, const std:
 
     for (size_t i = 0; i < sizeX * sizeY * sizeZ; i++)
     {
-        //data[i] = map->getValue(Vector3i(i / sizeZ / sizeY % sizeX - offsetX, i / sizeZ % sizeY - offsetY, i % sizeZ - offsetZ));
-        data[i] = std::make_pair(0, 0);
+        data[i] = map->getValue(Vector3i(i / sizeZ / sizeY % sizeX - offsetX, i / sizeZ % sizeY - offsetY, i % sizeZ - offsetZ));
     }
 }
 

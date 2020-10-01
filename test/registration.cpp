@@ -66,10 +66,10 @@ void compare_mats(const Eigen::Matrix4f& a, const Eigen::Matrix4f& b, float tran
     {
         for (size_t j = 0; j < 3; j++)
         {
-            REQUIRE(std::abs(a(i, j) - b(i, j)) < rot_offset); //x translation smaller than offset
+            CHECK(std::abs(a(i, j) - b(i, j)) < rot_offset); //x translation smaller than offset
         }
         
-        REQUIRE(std::abs(a(i, 3) - b(i, 3)) < trans_offset);
+        CHECK(std::abs(a(i, 3) - b(i, 3)) < trans_offset);
     }
 }
 
@@ -255,9 +255,9 @@ TEST_CASE("Registration", "[registration][slow]")
 
         for (size_t i = 0u; i < cloud.size(); i++)
         {
-            REQUIRE(cloud[i].x() == result[i].x());
-            REQUIRE(cloud[i].y() == result[i].y());
-            REQUIRE(cloud[i].z() == result[i].z());
+            CHECK(cloud[i].x() == result[i].x());
+            CHECK(cloud[i].y() == result[i].y());
+            CHECK(cloud[i].z() == result[i].z());
         }
 
         float rx = 90 * (M_PI / 180); //radiants
@@ -273,9 +273,9 @@ TEST_CASE("Registration", "[registration][slow]")
 
         result[0] = Vector3i{1000, 1000, -1000} * SCALE;
 
-        REQUIRE(cloud[0].x() == result[0].x());
-        REQUIRE(cloud[0].y() == result[0].y());
-        REQUIRE(cloud[0].z() == result[0].z());
+        CHECK(cloud[0].x() == result[0].x());
+        CHECK(cloud[0].y() == result[0].y());
+        CHECK(cloud[0].z() == result[0].z());
     }
 
     SECTION("Test Registration Translation")

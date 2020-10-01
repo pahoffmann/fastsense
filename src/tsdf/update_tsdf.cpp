@@ -56,7 +56,7 @@ void update_tsdf(const ScanPoints_t& scan_points,
         for (int len = MAP_RESOLUTION; len <= distance + tau; len += MAP_RESOLUTION / 2)
         {
             Vector3i proj = scanner_pos + direction_vector * len / distance;
-            Vector3i index = proj / MAP_RESOLUTION;
+            Vector3i index = floor_shift(proj, MAP_SHIFT);
             
             if (index.x() == prev.x() && index.y() == prev.y())
             {
@@ -91,8 +91,8 @@ void update_tsdf(const ScanPoints_t& scan_points,
 
             int delta_z = dz_per_distance * len / MATRIX_RESOLUTION;
 
-            int lowest = (proj.z() - delta_z) / MAP_RESOLUTION;
-            int highest = (proj.z() + delta_z) / MAP_RESOLUTION;
+            int lowest = (proj.z() - delta_z) >> MAP_SHIFT;
+            int highest = (proj.z() + delta_z) >> MAP_SHIFT;
             for (index.z() = lowest; index.z() <= highest; index.z()++)
             {
                 if (!buffer.inBounds(index))
