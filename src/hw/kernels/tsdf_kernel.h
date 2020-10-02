@@ -7,7 +7,18 @@
 #include <hw/kernels/base_kernel.h>
 #include <hw/buffer/buffer.h>
 #include <map/local_map.h>
+#include <util/types.h>
+#include <hw/fpga_manager.h>
+#include <hw/buffer/buffer.h>
+
 #include <iostream>
+
+struct Point
+{
+    int x;
+    int y;
+    int z;
+};
 
 namespace fastsense::kernels
 {
@@ -21,9 +32,21 @@ public:
 
     ~LocalMapTestKernel() = default;
 
-    void run(map::LocalMap& map)
+    void run(map::LocalMap& map, ScanPoints_t scan_points)
     {
         resetNArg();
+
+        auto queue = fastsense::hw::FPGAManager::create_command_queue();
+        buffer::InputOutputBuffer<Point> point_data(queue, scan_points.size());
+        
+        for(size_t i = 0; i < scan_points.size(); ++i)
+        {
+            point_data[i].x = scan_points[i].x();
+            point_data[i].y = scan_points[i].y();
+            point_data[i].z = scan_points[i].z();
+        }
+
+        setArg(point_data.getBuffer());
         setArg(map.getBuffer().getBuffer());
         auto m = map.getHardwareRepresentation();
         setArg(m.sizeX);

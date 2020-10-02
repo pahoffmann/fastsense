@@ -21,7 +21,8 @@ struct IntTuple
 extern "C"
 {
 
-    void krnl_tsdf(IntTuple* mapData,
+    void krnl_tsdf(Point* scanPoints,
+                   IntTuple* mapData,
                              int sizeX,
                              int sizeY,
                              int sizeZ,
@@ -33,6 +34,10 @@ extern "C"
                              int offsetZ
                             )
     {
+#pragma HLS DATA_PACK variable=scanPoints
+#pragma HLS INTERFACE m_axi port=scanPoints offset=slave bundle=gmem
+#pragma HLS INTERFACE s_axilite port=scanPoints bundle=control
+
 #pragma HLS DATA_PACK variable=mapData
 #pragma HLS INTERFACE m_axi port=mapData offset=slave bundle=gmem
 #pragma HLS INTERFACE s_axilite port=mapData bundle=control
