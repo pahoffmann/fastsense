@@ -117,17 +117,19 @@ Matrix4f Registration::register_cloud(fastsense::map::LocalMap& localmap, ScanPo
 
             */
 
+           transform_point_cloud(cloud, next_transform);
+
             //#pragma omp for schedule(static) nowait
             for (size_t i = 0; i < cloud.size(); i++)
             {
-                auto& input = cloud[i];
-                if (input == INVALID_POINT)
+                auto& point = cloud[i];
+                if (point == INVALID_POINT)
                 {
                     continue;
                 }
 
                 // apply the total transform
-                Vector3i point = transform(input, next_transform);
+                //Vector3i point = transform(input, next_transform);
 
                 Vector3i buf = point / MAP_RESOLUTION;
                 //Vector3i buf = floor_shift(point, MAP_SHIFT);

@@ -3,11 +3,18 @@
  */
 
 #include <map/local_map_hw.h>
-
+#include <msg/point.h>
 struct IntTuple
 {
     int first;
     int second;
+};
+
+struct IntPoint
+{
+    int x;
+    int y;
+    int z;
 };
 
 extern "C"
@@ -23,8 +30,9 @@ extern "C"
                              int offsetX,
                              int offsetY,
                              int offsetZ,
-                             int* pointData,
-                             int numPoints
+                             fastsense::msg::Point* pointData,
+                             int numPoints,
+                             int mapResolution
                             )
     {
 #pragma HLS DATA_PACK variable=mapData
@@ -42,17 +50,69 @@ extern "C"
 #pragma HLS INTERFACE s_axilite port=offsetY bundle=control
 #pragma HLS INTERFACE s_axilite port=offsetZ bundle=control
 #pragma HLS INTERFACE s_axilite port=numPoints bundle=control
+#pragma HLS INTERFACE s_axilite port=mapResolution bundle=control
 #pragma HLS INTERFACE s_axilite port=return bundle=control
 
         fastsense::map::LocalMapHW map{sizeX, sizeY, sizeZ,
                                        posX, posY, posZ,
                                        offsetX, offsetY, offsetZ};
-        for (int i = 0; i < numPoints; i += 3 * sizeof(int))
+
+
+        for (int i = 0; i < numPoints; i += sizeof(IntPoint))
         {
-                //todo: do stuff with tsdf and point
-                //todo: matrix multiplication???
-                //todo: 
-                IntTuple tmp = map.get(mapData, pointData[i], pointData[i + sizeof(int)], pointData[i + 2* sizeof(int)]);
+            //todo: do stuff with tsdf and point
+            //todo: matrix multiplication???
+            //todo: 
+            IntTuple tmp = map.get(mapData, pointData[i].x, pointData[i].y, pointData[i].z);
+
+            //#pragma omp for schedule(static) nowait
+            
+            auto point = pointData[i];
+
+            // apply the total transform
+            //Vector3i point = transform(input, next_transform);
+
+            // fastsense::msg::Point buf;    
+            // buf.x = point.x / mapResolution;
+            // buf.y = point.y / mapResolution;
+            // buf.z = point.z / mapResolution;
+            //Vector3i buf = floor_shift(point, MAP_SHIFT);
+            
+            try
+            {
+                const auto& current = map.get(mapData, pointData[i].x / mapResolution, pointData[i].y / mapResolution, pointData[i].z / mapResolution);
+
+                if (current.second == 0)
+                {
+                    continue;
+                }
+
+                gradient = Vector3i::Zero();
+                for (size_t axis = 0; axis < 3; axis++)
+                {
+                    Vector3i index = buf;
+                    index[axis] -= 1;
+                    const auto last = localmap.value(index);
+                    index[axis] += 2;
+                    const auto next = localmap.value(index);
+                    if (last.second != 0 && next.second != 0 && (next.first > 0.0) == (last.first > 0.0))
+                    {
+                        gradient[axis] = (next.first - last.first) / 2;
+                    }
+                }
+
+                jacobi << point.cross(gradient).cast<long>(), gradient.cast<long>();
+
+                local_h += jacobi * jacobi.transpose();
+                local_g += jacobi * current.first;
+                local_error += abs(current.first);
+                local_count++;
+            }
+            catch (const std::out_of_range&)
+            {
+
+            }
+        
 
         }
         
