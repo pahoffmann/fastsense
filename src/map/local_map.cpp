@@ -1,9 +1,10 @@
-#pragma once
 
 /**
  * @author Steffen Hinderink
  * @author Juri Vana
  */
+
+#include "local_map.h"
 
 #include <stdlib.h> // for abs
 #include <stdexcept>
@@ -13,8 +14,7 @@
 namespace fastsense::map
 {
 
-template<typename T>
-LocalMap<T>::LocalMap(unsigned int sX, unsigned int sY, unsigned int sZ, const std::shared_ptr<GlobalMap>& map, const CommandQueuePtr& queue)
+LocalMap::LocalMap(unsigned int sX, unsigned int sY, unsigned int sZ, const std::shared_ptr<GlobalMap>& map, const CommandQueuePtr& queue)
     : sizeX{sX % 2 == 1 ? sX : sX + 1},
       sizeY{sY % 2 == 1 ? sY : sY + 1},
       sizeZ{sZ % 2 == 1 ? sZ : sZ + 1},
@@ -32,65 +32,75 @@ LocalMap<T>::LocalMap(unsigned int sX, unsigned int sY, unsigned int sZ, const s
         fastsense::util::logging::Logger::warning("Changed LocalMap size from even (", sX, ", ", sY, ", ", sZ, ") to odd (", sizeX, ", ", sizeY, ", ", sizeZ, ")");
     }
 
+    auto default_entry = map->getValue(Vector3i(0, 0, 0)); 
+
     for (size_t i = 0; i < sizeX * sizeY * sizeZ; i++)
     {
-        data[i] = map->getValue(i / sizeZ / sizeY % sizeX - offsetX, i / sizeZ % sizeY - offsetY, i % sizeZ - offsetZ);
+        data[i] = default_entry;
     }
 }
 
-template<typename T>
-LocalMap<T>::~LocalMap()
+LocalMap::~LocalMap()
 {
 }
 
-template<typename T>
-T& LocalMap<T>::value(int x, int y, int z)
+std::pair<int, int>& LocalMap::value(int x, int y, int z)
 {
-    if (!inBounds(x, y, z))
+    return value(Vector3i(x, y, z));
+}
+
+const std::pair<int, int>& LocalMap::value(int x, int y, int z) const
+{
+    return value(Vector3i(x, y, z));
+}
+
+std::pair<int, int>& LocalMap::value(const Vector3i& p)
+{
+    if (!inBounds(p))
     {
         throw std::out_of_range("Index out of bounds");
     }
-    return data[((x - posX + offsetX + sizeX) % sizeX) * sizeY * sizeZ +
-                                              ((y - posY + offsetY + sizeY) % sizeY) * sizeZ +
-                                              (z - posZ + offsetZ + sizeZ) % sizeZ];
+    return data[((p.x() - posX + offsetX + sizeX) % sizeX) * sizeY * sizeZ +
+                                              ((p.y() - posY + offsetY + sizeY) % sizeY) * sizeZ +
+                                              (p.z() - posZ + offsetZ + sizeZ) % sizeZ];
 }
 
-template<typename T>
-const T& LocalMap<T>::value(int x, int y, int z) const
+const std::pair<int, int>& LocalMap::value(const Vector3i& p) const
 {
-    if (!inBounds(x, y, z))
+    if (!inBounds(p))
     {
         throw std::out_of_range("Index out of bounds");
     }
-    return data[((x - posX + offsetX + sizeX) % sizeX) * sizeY * sizeZ +
-                                              ((y - posY + offsetY + sizeY) % sizeY) * sizeZ +
-                                              (z - posZ + offsetZ + sizeZ) % sizeZ];
+    return data[((p.x() - posX + offsetX + sizeX) % sizeX) * sizeY * sizeZ +
+                                              ((p.y() - posY + offsetY + sizeY) % sizeY) * sizeZ +
+                                              (p.z() - posZ + offsetZ + sizeZ) % sizeZ];
 }
 
-template<typename T>
-void LocalMap<T>::getSize(int* size) const
+void LocalMap::getSize(int* size) const
 {
     size[0] = sizeX;
     size[1] = sizeY;
     size[2] = sizeZ;
 }
 
-template<typename T>
-void LocalMap<T>::getPos(int* pos) const
+void LocalMap::getPos(int* pos) const
 {
     pos[0] = posX;
     pos[1] = posY;
     pos[2] = posZ;
 }
 
-template<typename T>
-bool LocalMap<T>::inBounds(int x, int y, int z) const
+bool LocalMap::inBounds(int x, int y, int z) const
 {
     return abs(x - posX) <= sizeX / 2 && abs(y - posY) <= sizeY / 2 && abs(z - posZ) <= sizeZ / 2;
 }
 
-template<typename T>
-void LocalMap<T>::shift(int x, int y, int z)
+bool LocalMap::inBounds(const Vector3i& p) const
+{
+    return abs(p.x() - posX) <= sizeX / 2 && abs(p.y() - posY) <= sizeY / 2 && abs(p.z() - posZ) <= sizeZ / 2;
+}
+
+void LocalMap::shift(int x, int y, int z)
 {
     // x
     int diffX = x - posX;
@@ -104,16 +114,16 @@ void LocalMap<T>::shift(int x, int y, int z)
                 if (diffX > 0)
                 {
                     // step forward
-                    T& inout = value(posX - sizeX / 2, j, k);
-                    map->setValue(posX - sizeX / 2, j, k, inout);
-                    inout = map->getValue(posX + sizeX / 2 + 1, j, k);
+                    std::pair<int, int>& inout = value(posX - sizeX / 2, j, k);
+                    map->setValue(Vector3i(posX - sizeX / 2, j, k), inout);
+                    inout = map->getValue(Vector3i(posX + sizeX / 2 + 1, j, k));
                 }
                 else
                 {
                     // step backwards
-                    T& inout = value(posX + sizeX / 2, j, k);
-                    map->setValue(posX + sizeX / 2, j, k, inout);
-                    inout = map->getValue(posX - sizeX / 2 - 1, j, k);
+                    std::pair<int, int>& inout = value(posX + sizeX / 2, j, k);
+                    map->setValue(Vector3i(posX + sizeX / 2, j, k), inout);
+                    inout = map->getValue(Vector3i(posX - sizeX / 2 - 1, j, k));
                 }
             }
         }
@@ -133,16 +143,16 @@ void LocalMap<T>::shift(int x, int y, int z)
                 if (diffY > 0)
                 {
                     // step forward
-                    T& inout = value(j, posY - sizeY / 2, k);
-                    map->setValue(j, posY - sizeY / 2, k, inout);
-                    inout = map->getValue(j, posY + sizeY / 2 + 1, k);
+                    std::pair<int, int>& inout = value(j, posY - sizeY / 2, k);
+                    map->setValue(Vector3i(j, posY - sizeY / 2, k), inout);
+                    inout = map->getValue(Vector3i(j, posY + sizeY / 2 + 1, k));
                 }
                 else
                 {
                     // step backwards
-                    T& inout = value(j, posY + sizeY / 2, k);
-                    map->setValue(j, posY + sizeY / 2, k, inout);
-                    inout = map->getValue(j, posY - sizeY / 2 - 1, k);
+                    std::pair<int, int>& inout = value(j, posY + sizeY / 2, k);
+                    map->setValue(Vector3i(j, posY + sizeY / 2, k), inout);
+                    inout = map->getValue(Vector3i(j, posY - sizeY / 2 - 1, k));
                 }
             }
         }
@@ -162,16 +172,16 @@ void LocalMap<T>::shift(int x, int y, int z)
                 if (diffZ > 0)
                 {
                     // step forward
-                    T& inout = value(j, k, posZ - sizeZ / 2);
-                    map->setValue(j, k, posZ - sizeZ / 2, inout);
-                    inout = map->getValue(j, k, posZ + sizeZ / 2 + 1);
+                    std::pair<int, int>& inout = value(j, k, posZ - sizeZ / 2);
+                    map->setValue(Vector3i(j, k, posZ - sizeZ / 2), inout);
+                    inout = map->getValue(Vector3i(j, k, posZ + sizeZ / 2 + 1));
                 }
                 else
                 {
                     // step backwards
-                    T& inout = value(j, k, posZ + sizeZ / 2);
-                    map->setValue(j, k, posZ + sizeZ / 2, inout);
-                    inout = map->getValue(j, k, posZ - sizeZ / 2 - 1);
+                    std::pair<int, int>& inout = value(j, k, posZ + sizeZ / 2);
+                    map->setValue(Vector3i(j, k, posZ + sizeZ / 2), inout);
+                    inout = map->getValue(Vector3i(j, k, posZ - sizeZ / 2 - 1));
                 }
             }
         }
@@ -180,14 +190,12 @@ void LocalMap<T>::shift(int x, int y, int z)
     }
 }
 
-template<typename T>
-const buffer::InputOutputBuffer<T>& LocalMap<T>::getBuffer() const
+const buffer::InputOutputBuffer<std::pair<int, int>>& LocalMap::getBuffer() const
 {
     return data;
 }
 
-template<typename T>
-LocalMapHW LocalMap<T>::getHardwareRepresentation() const
+LocalMapHW LocalMap::getHardwareRepresentation() const
 {
     return {sizeX,
             sizeY,

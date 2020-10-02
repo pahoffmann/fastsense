@@ -4,16 +4,16 @@
 
 #include <map/local_map_hw.h>
 
-struct FloatTuple
+struct IntTuple
 {
-    float first;
-    float second;
+    int first;
+    int second;
 };
 
 extern "C"
 {
 
-    void krnl_local_map_test(FloatTuple* mapData,
+    void krnl_local_map_test(IntTuple* mapData,
                              int sizeX,
                              int sizeY,
                              int sizeZ,
@@ -50,9 +50,9 @@ extern "C"
                 for (int k = map.posZ - map.sizeZ / 2; k <= map.posZ + map.sizeZ / 2; k++)
                 {
 #pragma HLS PIPELINE
-                    FloatTuple tmp = map.get(mapData, i, j, k);
+                    IntTuple tmp = map.get(mapData, i, j, k);
                     tmp.first *= 2;
-                    tmp.second *= 0.5f;
+                    tmp.second /= 2;
                     map.set(mapData, i, j, k, tmp);
                 }
             }

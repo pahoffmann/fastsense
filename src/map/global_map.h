@@ -3,19 +3,28 @@
 /**
  * @author Steffen Hinderink
  * @author Juri Vana
+ * @author Malte Hillmann
  */
 
 #include <highfive/H5File.hpp>
 #include <vector>
-#include <string>
 #include <cmath>
-#include <sstream>
+#include <string>
 #include <utility>
+
+#include <util/types.h>
 
 // TODO handle existing/missing folder, where hdf5 will write
 
 namespace fastsense::map
 {
+
+struct ActiveChunk
+{
+    std::vector<int> chunk;
+    Vector3i pos;
+    int age;
+};
 
 /**
  * Global map containing containing truncated signed distance function (tsdf) values and weights.
@@ -29,10 +38,13 @@ class GlobalMap
 private:
 
     /// Side length of the cube-shaped chunks. One chunk contains CHUNK_SIZE^3 * 2 entries (tsdf values and weights).
-    const int CHUNK_SIZE = 16;
+    const int CHUNK_SHIFT = 6;
+    const int CHUNK_SIZE = 1 << CHUNK_SHIFT;
+    const int SINGLE_SIZE = 1 << (3 * CHUNK_SHIFT); // 3 Dimensions
+    const int TOTAL_SIZE = SINGLE_SIZE * 2;
 
     /// Maximum number of active chunks.
-    const int NUM_CHUNKS = 8;
+    const int NUM_CHUNKS = 64;
 
     /**
      * HDF5 file in which the chunks are stored.
@@ -57,54 +69,34 @@ private:
     HighFive::File file;
 
     /// Initial default tsdf value.
-    float initialTsdfValue;
+    int initialTsdfValue;
 
     /// Initial default weight.
-    float initialWeight;
+    int initialWeight;
 
     /**
      * Vector of active chunks.
-     * Each 3D chunk with tsdf values and weights is stored in a 1D vector.
      */
-    std::vector<std::vector<float>> activeChunks;
-
-    /**
-     * Vector of the tags of the active chunks.
-     * Each entry in this vector corresponds to the entry in activeChunks with the same index.
-     * A tag alway has the form x_y_z, where x, y and z are the position of the chunk.
-     */
-    std::vector<std::string> tags;
-
-    /**
-     * Vector of the ages of the active chunks.
-     * Each entry in this vector corresponds to the entry in activeChunks with the same index.
-     * The age of a chunk counts, for how long the chunk has not been used.
-     * It is used to determine which chunk gets replaced by a least recently used (LRU) strategy.
-     */
-    std::vector<int> ages;
+    std::vector<ActiveChunk> activeChunks;
 
     /// Number of poses that are saved in the HDF5 file
     int numPoses;
 
     /**
      * Given a position in a chunk the tag of the chunk gets returned.
-     * @param x x-coordinate of the position
-     * @param y y-coordinate of the position
-     * @param z z-coordinate of the position
+     * @param pos the position
      * @return tag of the chunk
      */
-    std::string tagFromPos(int x, int y, int z);
+    std::string tagFromChunkPos(const Vector3i& pos);
 
     /**
      * Returns the index of a global position in a chunk.
      * The returned index is that of the tsdf value.
      * The index of the weight is one greater.
-     * @param x x-coordinate of the position
-     * @param y y-coordinate of the position
-     * @param z z-coordinate of the position
+     * @param pos the position
      * @return index in the chunk
      */
-    int indexFromPos(int x, int y, int z);
+    int indexFromPos(Vector3i pos, const Vector3i& chunkPos);
 
     /**
      * Activates a chunk and returns it by reference.
@@ -113,10 +105,10 @@ private:
      * If it also doesn't exist there, a new empty chunk is created.
      * Chunks get replaced and written into the HDF5 file by a LRU strategy.
      * The age of the activated chunk is reset and all ages are updated.
-     * @param tag tag of the chunk that gets activated
+     * @param chunk position of the chunk that gets activated
      * @return reference to the activated chunk
      */
-    std::vector<float>& activateChunk(std::string tag);
+    std::vector<int>& activateChunk(const Vector3i& chunk);
 
 public:
 
@@ -128,25 +120,21 @@ public:
      * @param initialTsdfValue initial default tsdf value
      * @param initialWeight initial default weight
      */
-    GlobalMap(std::string name, float initialTsdfValue, float initialWeight);
+    GlobalMap(std::string name, int initialTsdfValue, int initialWeight);
 
     /**
      * Returns a value pair consisting of a tsdf value and a weight from the map.
-     * @param x x-coordinate of the position
-     * @param y y-coordinate of the position
-     * @param z z-coordinate of the position
+     * @param pos the position
      * @return value pair from the map
      */
-    std::pair<float, float> getValue(int x, int y, int z);
+    std::pair<int, int> getValue(const Vector3i& pos);
 
     /**
      * Sets a value pair consisting of a tsdf value and a weight on the map.
-     * @param x x-coordinate of the position
-     * @param y y-coordinate of the position
-     * @param z z-coordinate of the position
+     * @param pos the position
      * @param value value pair that is set
      */
-    void setValue(int x, int y, int z, std::pair<float, float> value);
+    void setValue(const Vector3i& pos, const std::pair<int, int>& value);
 
     /**
      * Saves a pose in the HDF5 file.
@@ -158,6 +146,16 @@ public:
      * @param yaw yaw value of the rotation of the pose
      */
     void savePose(float x, float y, float z, float roll, float pitch, float yaw);
+
+    void flush()
+    {
+        file.flush();
+    }
+
+    ~GlobalMap()
+    {
+        flush();
+    }
 
 };
 
