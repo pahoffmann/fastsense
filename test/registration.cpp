@@ -32,7 +32,7 @@ namespace fastsense::registration
 
 constexpr unsigned int SCALE = 1000;
 
-constexpr float MAX_OFFSET = 0.1 * SCALE;
+constexpr float MAX_OFFSET = 4 * MAP_RESOLUTION; // TODO: this is too much
 
 // Test Translation
 constexpr float TX = 0.5 * SCALE;
@@ -75,7 +75,7 @@ void compare_mats(const Eigen::Matrix4f& a, const Eigen::Matrix4f& b, float tran
     }
 }
 
-void check_computed_transform(const ScanPoints_t& points_posttransform, ScanPoints_t& points_pretransform, float max_dist = MAX_OFFSET)
+void check_computed_transform(const ScanPoints_t& points_posttransform, ScanPoints_t& points_pretransform)
 {
     int minimum = std::numeric_limits<int>::infinity();
     int maximum = -std::numeric_limits<int>::infinity();
@@ -109,7 +109,7 @@ void check_computed_transform(const ScanPoints_t& points_posttransform, ScanPoin
 
         dists[i] = norm;
 
-        REQUIRE(norm < max_dist);
+        REQUIRE(norm < MAX_OFFSET);
     }
 
     std::sort(dists.begin(), dists.end());
