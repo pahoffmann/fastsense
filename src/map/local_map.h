@@ -159,6 +159,11 @@ public:
     const buffer::InputOutputBuffer<std::pair<int, int>>& getBuffer() const;
 
     LocalMapHW getHardwareRepresentation() const;
+
+    void flush()
+    {
+        map->flush();
+    }
 };
 
 } // namespace fastsense::map

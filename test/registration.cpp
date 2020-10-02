@@ -44,6 +44,8 @@ constexpr float RY = 15 * (M_PI / 180); //radiants
 constexpr float TAU = 1 * SCALE;
 constexpr float MAX_WEIGHT = 10 * WEIGHT_RESOLUTION;
 
+constexpr int MAX_ITERATIONS = 1000;
+
 constexpr int SIZE_X = 20 * SCALE / MAP_RESOLUTION;
 constexpr int SIZE_Y = 20 * SCALE / MAP_RESOLUTION;
 constexpr int SIZE_Z = 5 * SCALE / MAP_RESOLUTION; 
@@ -171,7 +173,7 @@ TEST_CASE("Registration", "[registration][slow]")
     fastsense::CommandQueuePtr q = fastsense::hw::FPGAManager::create_command_queue();
 
     //test registration
-    fastsense::registration::Registration reg(1000);
+    fastsense::registration::Registration reg(MAX_ITERATIONS);
 
     std::vector<std::vector<Vector3f>> float_points;
     unsigned int num_points;
@@ -182,7 +184,6 @@ TEST_CASE("Registration", "[registration][slow]")
     auto count = 0u;
 
     ScanPoints_t scan_points(num_points);
-    ScanPoints_t scan_points_2(num_points);
 
     for(const auto& ring : float_points)
     {
@@ -191,15 +192,12 @@ TEST_CASE("Registration", "[registration][slow]")
             scan_points[count].x() = point.x() * SCALE;
             scan_points[count].y() = point.y() * SCALE;
             scan_points[count].z() = point.z() * SCALE;
-
-            scan_points_2[count].x() = point.x() * SCALE;
-            scan_points_2[count].y() = point.y() * SCALE;
-            scan_points_2[count].z() = point.z() * SCALE;
             
             ++count;
         }
     }
 
+    ScanPoints_t scan_points_2(scan_points);
     ScanPoints_t points_pretransformed_trans(scan_points);
     ScanPoints_t points_pretransformed_rot(scan_points);
 

@@ -97,6 +97,12 @@ std::vector<int>& GlobalMap::activateChunk(const Vector3i& chunkPos)
                 }
             }
             auto tag = tagFromChunkPos(activeChunks[index].pos);
+
+            if(tag == "-1_0_0")
+            {
+                std::cout << "test" << std::endl;
+            }
+
             if (g.exist(tag))
             {
                 auto d = g.getDataSet(tag);

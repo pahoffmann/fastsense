@@ -129,8 +129,10 @@ Matrix4f Registration::register_cloud(fastsense::map::LocalMap& localmap, ScanPo
                 // apply the total transform
                 Vector3i point = transform(input, next_transform);
 
-                Vector3i buf = floor_shift(point, MAP_SHIFT);
+                Vector3i buf = point / MAP_RESOLUTION;
+                //Vector3i buf = floor_shift(point, MAP_SHIFT);
 
+                
                 try
                 {
                     const auto& current = localmap.value(buf);

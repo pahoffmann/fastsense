@@ -32,9 +32,11 @@ LocalMap::LocalMap(unsigned int sX, unsigned int sY, unsigned int sZ, const std:
         fastsense::util::logging::Logger::warning("Changed LocalMap size from even (", sX, ", ", sY, ", ", sZ, ") to odd (", sizeX, ", ", sizeY, ", ", sizeZ, ")");
     }
 
+    auto default_entry = map->getValue(Vector3i(0, 0, 0)); 
+
     for (size_t i = 0; i < sizeX * sizeY * sizeZ; i++)
     {
-        data[i] = map->getValue(Vector3i(i / sizeZ / sizeY % sizeX - offsetX, i / sizeZ % sizeY - offsetY, i % sizeZ - offsetZ));
+        data[i] = default_entry;
     }
 }
 

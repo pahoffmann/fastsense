@@ -38,13 +38,13 @@ class GlobalMap
 private:
 
     /// Side length of the cube-shaped chunks. One chunk contains CHUNK_SIZE^3 * 2 entries (tsdf values and weights).
-    const int CHUNK_SHIFT = 4;
+    const int CHUNK_SHIFT = 6;
     const int CHUNK_SIZE = 1 << CHUNK_SHIFT;
     const int SINGLE_SIZE = 1 << (3 * CHUNK_SHIFT); // 3 Dimensions
     const int TOTAL_SIZE = SINGLE_SIZE * 2;
 
     /// Maximum number of active chunks.
-    const int NUM_CHUNKS = 8;
+    const int NUM_CHUNKS = 64;
 
     /**
      * HDF5 file in which the chunks are stored.
@@ -146,6 +146,16 @@ public:
      * @param yaw yaw value of the rotation of the pose
      */
     void savePose(float x, float y, float z, float roll, float pitch, float yaw);
+
+    void flush()
+    {
+        file.flush();
+    }
+
+    ~GlobalMap()
+    {
+        flush();
+    }
 
 };
 
