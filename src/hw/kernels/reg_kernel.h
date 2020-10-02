@@ -1,33 +1,28 @@
 #pragma once
 
 /**
- * @author Julian Gaal
- * @author Marcel Flottmann
+ * @author Patrick Hoffmann
  */
 
-#include <iostream>
-
+#include <hw/kernels/base_kernel.h>
 #include <hw/buffer/buffer.h>
 #include <map/local_map.h>
-#include <msg/point.h>
-#include "base_kernel.h"
+#include <iostream>
+#include <util/types.h>
 
 namespace fastsense::kernels
 {
 
-class RegKernel : public BaseKernel
+class RegistrationKernel : public BaseKernel
 {
 public:
-    RegKernel(const CommandQueuePtr& queue)
-        : BaseKernel(queue, "krnl_reg")
+    RegistrationKernel(const CommandQueuePtr& queue)
+        : BaseKernel{queue, "krnl_reg"}
     {}
 
-    ~RegKernel() = default;
+    ~RegistrationKernel() = default;
 
-
-    //todo: determine parameters for the kernel.
-    // localmap - marcel? - pointcloud
-    void run(map::LocalMap<std::pair<int, int>>& map, buffer::InputBuffer<fastsense::msg::Point>& scan, buffer::OutputBuffer<int>& outbuf, int data_size)
+    void run(map::LocalMap& map, ScanPoints_t& points)
     {
         resetNArg();
         setArg(map.getBuffer().getBuffer());
@@ -41,19 +36,15 @@ public:
         setArg(m.offsetX);
         setArg(m.offsetY);
         setArg(m.offsetZ);
-        setArg(scan.getBuffer());
-        setArg(outbuf.getBuffer());
-        setArg(data_size);
-
 
         // Write buffers
-        cmd_q_->enqueueMigrateMemObjects({map.getBuffer().getBuffer(), scan.getBuffer()}, CL_MIGRATE_MEM_OBJECT_DEVICE, nullptr, &pre_events_[0]);
+        cmd_q_->enqueueMigrateMemObjects({map.getBuffer().getBuffer()}, CL_MIGRATE_MEM_OBJECT_DEVICE, nullptr, &pre_events_[0]);
 
         // Launch the Kernel
         cmd_q_->enqueueTask(kernel_, &pre_events_, &execute_events_[0]);
 
         // Read buffers
-        cmd_q_->enqueueMigrateMemObjects({outbuf.getBuffer()}, CL_MIGRATE_MEM_OBJECT_HOST, &execute_events_, &post_events_[0]);
+        cmd_q_->enqueueMigrateMemObjects({map.getBuffer().getBuffer()}, CL_MIGRATE_MEM_OBJECT_HOST, &execute_events_, &post_events_[0]);
     }
 };
 

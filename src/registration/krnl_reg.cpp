@@ -1,113 +1,76 @@
-/*******************************************************************************
-Vendor: Xilinx
-Associated Filename: krnl_vadd.cpp
-Purpose: Vitis vector addition example
-*******************************************************************************
-Copyright (C) 2019 XILINX, Inc.
+/**
+ * @author Marcel Flottmann
+ */
 
-This file contains confidential and proprietary information of Xilinx, Inc. and
-is protected under U.S. and international copyright and other intellectual
-property laws.
-
-DISCLAIMER
-This disclaimer is not a license and does not grant any rights to the materials
-distributed herewith. Except as otherwise provided in a valid license issued to
-you by Xilinx, and to the maximum extent permitted by applicable law:
-(1) THESE MATERIALS ARE MADE AVAILABLE "AS IS" AND WITH ALL FAULTS, AND XILINX
-HEREBY DISCLAIMS ALL WARRANTIES AND CONDITIONS, EXPRESS, IMPLIED, OR STATUTORY,
-INCLUDING BUT NOT LIMITED TO WARRANTIES OF MERCHANTABILITY, NON-INFRINGEMENT, OR
-FITNESS FOR ANY PARTICULAR PURPOSE; and (2) Xilinx shall not be liable (whether
-in contract or tort, including negligence, or under any other theory of
-liability) for any loss or damage of any kind or nature related to, arising under
-or in connection with these materials, including for any direct, or any indirect,
-special, incidental, or consequential loss or damage (including loss of data,
-profits, goodwill, or any type of loss or damage suffered as a result of any
-action brought by a third party) even if such damage or loss was reasonably
-foreseeable or Xilinx had been advised of the possibility of the same.
-
-CRITICAL APPLICATIONS
-Xilinx products are not designed or intended to be fail-safe, or for use in any
-application requiring fail-safe performance, such as life-support or safety
-devices or systems, Class III medical devices, nuclear facilities, applications
-related to the deployment of airbags, or any other applications that could lead
-to death, personal injury, or severe property or environmental damage
-(individually and collectively, "Critical Applications"). Customer assumes the
-sole risk and liability of any use of Xilinx products in Critical Applications,
-subject only to applicable laws and regulations governing limitations on product
-liability.
-
-THIS COPYRIGHT NOTICE AND DISCLAIMER MUST BE RETAINED AS PART OF THIS FILE AT
-ALL TIMES.
-
-*******************************************************************************/
-
-//------------------------------------------------------------------------------
-//
-// kernel:  vadd
-//
-// Purpose: Demonstrate Vector Add Kernel
-//
-
-#include <msg/point.h>
 #include <map/local_map_hw.h>
 
-#define BUFFER_SIZE 256
-#define DATA_SIZE 4096
-//TRIPCOUNT identifier
-const unsigned int c_len = DATA_SIZE / BUFFER_SIZE;
-const unsigned int c_size = BUFFER_SIZE;
-
-/*
-    Vector Addition Kernel Implementation
-    Arguments:
-        in1   (input)     --> Input Vector1
-        in2   (input)     --> Input Vector2
-        out_r   (output)    --> Output Vector
-        size  (input)     --> Size of Vector in Integer
-*/
-
-struct FloatTuple
+struct IntTuple
 {
-    float first;
-    float second;
+    int first;
+    int second;
 };
 
+extern "C"
+{
 
-extern "C" {
-    void krnl_reg(FloatTuple* mapData,
-                  int sizeX, 
-                  int sizeY,
-                  int sizeZ,
-                  int posX,
-                  int posY,
-                  int posZ,
-                  int offsetX,
-                  int offsetY,
-                  int offsetZ,
-                  fastsense::msg::Point* scan,
-                  unsigned int* out_r,
-                  int size
-                  )
+    void krnl_local_map_test(IntTuple* mapData,
+                             int sizeX,
+                             int sizeY,
+                             int sizeZ,
+                             int posX,
+                             int posY,
+                             int posZ,
+                             int offsetX,
+                             int offsetY,
+                             int offsetZ,
+                             int* pointData,
+                             int numPoints
+                            )
     {
+#pragma HLS DATA_PACK variable=mapData
+#pragma HLS INTERFACE m_axi port=mapData offset=slave bundle=gmem
+#pragma HLS INTERFACE m_axi port=pointData offset=slave bundle=gmem
+#pragma HLS INTERFACE s_axilite port=mapData bundle=control
+#pragma HLS INTERFACE s_axilite port=pointData bundle=control
+#pragma HLS INTERFACE s_axilite port=sizeX bundle=control
+#pragma HLS INTERFACE s_axilite port=sizeY bundle=control
+#pragma HLS INTERFACE s_axilite port=sizeZ bundle=control
+#pragma HLS INTERFACE s_axilite port=posX bundle=control
+#pragma HLS INTERFACE s_axilite port=posY bundle=control
+#pragma HLS INTERFACE s_axilite port=posZ bundle=control
+#pragma HLS INTERFACE s_axilite port=offsetX bundle=control
+#pragma HLS INTERFACE s_axilite port=offsetY bundle=control
+#pragma HLS INTERFACE s_axilite port=offsetZ bundle=control
+#pragma HLS INTERFACE s_axilite port=numPoints bundle=control
+#pragma HLS INTERFACE s_axilite port=return bundle=control
 
-
-//TODO: adapt #pragma hls interfacce to function parameters
-
-/*#pragma HLS INTERFACE m_axi port = in1 offset = slave bundle = gmem
-#pragma HLS INTERFACE m_axi port = in2 offset = slave bundle = gmem
-#pragma HLS INTERFACE m_axi port = out_r offset = slave bundle = gmem
-#pragma HLS INTERFACE s_axilite port = in1 bundle = control
-#pragma HLS INTERFACE s_axilite port = in2 bundle = control
-#pragma HLS INTERFACE s_axilite port = out_r bundle = control
-#pragma HLS INTERFACE s_axilite port = size bundle = control
-#pragma HLS INTERFACE s_axilite port = return bundle = control*/
-        
         fastsense::map::LocalMapHW map{sizeX, sizeY, sizeZ,
-                                   posX, posY, posZ,
-                                   offsetX, offsetY, offsetZ};
+                                       posX, posY, posZ,
+                                       offsetX, offsetY, offsetZ};
+        for (int i = 0; i < numPoints; i += 3 * sizeof(int))
+        {
+                //todo: do stuff with tsdf and point
+                //todo: matrix multiplication???
+                //todo: 
+                IntTuple tmp = map.get(mapData, pointData[i], pointData[i + sizeof(int)], pointData[i + 2* sizeof(int)]);
 
-        //Work with map example:
-        //Get: FloatTuple value = map.get(mapData, x, y, z);
+        }
+        
 
-    }
+//         for (int i = map.posX - map.sizeX / 2; i <= map.posX + map.sizeX / 2; i++)
+//         {
+//             for (int j = map.posY - map.sizeY / 2; j <= map.posY + map.sizeY / 2; j++)
+//             {
+//                 for (int k = map.posZ - map.sizeZ / 2; k <= map.posZ + map.sizeZ / 2; k++)
+//                 {
+// #pragma HLS PIPELINE
+//                     IntTuple tmp = map.get(mapData, i, j, k);
+//                     tmp.first *= 2;
+//                     tmp.second /= 2;
+//                     map.set(mapData, i, j, k, tmp);
+//                 }
+//             }
+//         }
+//     }
+
 }
