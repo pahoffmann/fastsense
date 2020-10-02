@@ -119,56 +119,9 @@ Matrix4f Registration::register_cloud(fastsense::map::LocalMap& localmap, ScanPo
 
            transform_point_cloud(cloud, next_transform);
 
-            //#pragma omp for schedule(static) nowait
-            for (size_t i = 0; i < cloud.size(); i++)
-            {
-                auto& point = cloud[i];
-                if (point == INVALID_POINT)
-                {
-                    continue;
-                }
+            //TODO::use kernel here.
 
-                // apply the total transform
-                //Vector3i point = transform(input, next_transform);
-
-                Vector3i buf = point / MAP_RESOLUTION;
-                //Vector3i buf = floor_shift(point, MAP_SHIFT);
-
-                
-                try
-                {
-                    const auto& current = localmap.value(buf);
-                    if (current.second == 0)
-                    {
-                        continue;
-                    }
-
-                    gradient = Vector3i::Zero();
-                    for (size_t axis = 0; axis < 3; axis++)
-                    {
-                        Vector3i index = buf;
-                        index[axis] -= 1;
-                        const auto last = localmap.value(index);
-                        index[axis] += 2;
-                        const auto next = localmap.value(index);
-                        if (last.second != 0 && next.second != 0 && (next.first > 0.0) == (last.first > 0.0))
-                        {
-                            gradient[axis] = (next.first - last.first) / 2;
-                        }
-                    }
-
-                    jacobi << point.cross(gradient).cast<long>(), gradient.cast<long>();
-
-                    local_h += jacobi * jacobi.transpose();
-                    local_g += jacobi * current.first;
-                    local_error += abs(current.first);
-                    local_count++;
-                }
-                catch (const std::out_of_range&)
-                {
-
-                }
-            }
+            
             // write local results back into shared variables
             //#pragma omp critical
             {
