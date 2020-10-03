@@ -50,9 +50,9 @@ Application::Application()
 int Application::run()
 {
     Logger::info("Starting Application...");
-    Runner run_synchronizer(synchronizer);
-    Runner run_lidarDriver(lidarDriver);
-    Runner run_imuDriver(imuDriver);
+    Runner<fastsense::data::SensorSync> run_synchronizer(synchronizer);
+    Runner<fastsense::driver::VelodyneDriver> run_lidarDriver(lidarDriver);
+    Runner<fastsense::driver::Imu> run_imuDriver(imuDriver);
     Logger::info("Application started");
 
     int sig;
@@ -63,6 +63,14 @@ int Application::run()
         Logger::fatal("Wait for signal failed (", std::strerror(err), ")! Stopping Application...");
         return -1;
     }
+
+    //TODO: TSDF Slam
+    
+
+    //Create thread for cloint callback
+    //Create thread for imu callback
+
+    //Put this thread to sleep
 
     Logger::info("Stopping Application...");
     return 0;
