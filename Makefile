@@ -98,7 +98,7 @@ HW_SRCS = src/example/krnl_vadd.cpp
 HW_OBJS = $(HW_SRCS:%.cpp=$(BUILD_DIR)/%.xo)
 HW_DEPS = $(HW_OBJS:.xo=.d)
 
-HW_TEST_SRCS = test/kernels/krnl_local_map_test.cpp
+HW_TEST_SRCS = test/kernels/krnl_local_map_test.cpp src/tsdf/krnl_tsdf.cpp
 HW_TEST_OBJS = $(HW_TEST_SRCS:%.cpp=$(BUILD_DIR)/%.xo)
 HW_TEST_DEPS = $(HW_TEST_OBJS:.xo=.d)
 

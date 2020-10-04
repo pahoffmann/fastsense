@@ -22,6 +22,7 @@ extern "C"
 {
 
     void krnl_tsdf(Point* scanPoints,
+                             int numPoints,
                    IntTuple* mapData,
                              int sizeX,
                              int sizeY,
@@ -37,6 +38,7 @@ extern "C"
 #pragma HLS DATA_PACK variable=scanPoints
 #pragma HLS INTERFACE m_axi port=scanPoints offset=slave bundle=gmem
 #pragma HLS INTERFACE s_axilite port=scanPoints bundle=control
+#pragma HLS INTERFACE s_axilite port=numPoints bundle=control 
 
 #pragma HLS DATA_PACK variable=mapData
 #pragma HLS INTERFACE m_axi port=mapData offset=slave bundle=gmem
@@ -56,7 +58,7 @@ extern "C"
                                        posX, posY, posZ,
                                        offsetX, offsetY, offsetZ};
 
-        for (int i = map.posX - map.sizeX / 2; i <= map.posX + map.sizeX / 2; i++)
+        /*for (int i = map.posX - map.sizeX / 2; i <= map.posX + map.sizeX / 2; i++)
         {
             for (int j = map.posY - map.sizeY / 2; j <= map.posY + map.sizeY / 2; j++)
             {
@@ -69,6 +71,15 @@ extern "C"
                     map.set(mapData, i, j, k, tmp);
                 }
             }
+        }*/
+
+        for(int i = 0; i < numPoints; ++i)
+        {
+            Point& point = scanPoints[i];
+            IntTuple tmp = map.get(mapData, point.x, point.y, point.z);
+            tmp.first = 42;
+            tmp.second = 17;
+            map.set(mapData, point.x, point.y, point.z, tmp);
         }
     }
 

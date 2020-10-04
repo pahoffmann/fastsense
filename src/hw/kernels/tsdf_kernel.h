@@ -23,14 +23,14 @@ struct Point
 namespace fastsense::kernels
 {
 
-class LocalMapTestKernel : public BaseKernel
+class TSDFKernel : public BaseKernel
 {
 public:
-    LocalMapTestKernel(const CommandQueuePtr& queue)
+    TSDFKernel(const CommandQueuePtr& queue)
         : BaseKernel{queue, "krnl_tsdf"}
     {}
 
-    ~LocalMapTestKernel() = default;
+    ~TSDFKernel() = default;
 
     void run(map::LocalMap& map, ScanPoints_t scan_points)
     {
@@ -38,7 +38,7 @@ public:
 
         auto queue = fastsense::hw::FPGAManager::create_command_queue();
         buffer::InputOutputBuffer<Point> point_data(queue, scan_points.size());
-        
+
         for(size_t i = 0; i < scan_points.size(); ++i)
         {
             point_data[i].x = scan_points[i].x();
@@ -47,6 +47,8 @@ public:
         }
 
         setArg(point_data.getBuffer());
+        setArg(static_cast<int>(scan_points.size()));
+
         setArg(map.getBuffer().getBuffer());
         auto m = map.getHardwareRepresentation();
         setArg(m.sizeX);
