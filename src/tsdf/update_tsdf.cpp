@@ -38,8 +38,8 @@ void update_tsdf(const ScanPoints_t& scan_points,
                  int tau,
                  int max_weight)
 {
-    constexpr int RINGS = 16; // TODO: take from Scanner
-    int dz_per_distance = std::tan(30.0 / ((double)RINGS - 1.0) / 180.0 * M_PI) / 2.0 * MATRIX_RESOLUTION;
+    //constexpr int RINGS = 16; // TODO: take from Scanner
+    //int dz_per_distance = std::tan(30.0 / ((double)RINGS - 1.0) / 180.0 * M_PI) / 2.0 * MATRIX_RESOLUTION;
 
     int weight_epsilon = tau / 10;
 

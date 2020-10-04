@@ -32,7 +32,7 @@ public:
 
     ~TSDFKernel() = default;
 
-    void run(map::LocalMap& map, ScanPoints_t scan_points)
+    void run(map::LocalMap& map, const ScanPoints_t& scan_points, const Vector3i& scanner_pos, int tau, int max_weight)
     {
         resetNArg();
 
@@ -49,6 +49,14 @@ public:
         setArg(point_data.getBuffer());
         setArg(static_cast<int>(scan_points.size()));
 
+        auto queue2 = fastsense::hw::FPGAManager::create_command_queue();
+        buffer::InputOutputBuffer<int> scanner_pos_data(queue2, 3);
+        scanner_pos_data[0] = scanner_pos[0];
+        scanner_pos_data[1] = scanner_pos[1];
+        scanner_pos_data[2] = scanner_pos[2];
+
+        setArg(scanner_pos_data.getBuffer());
+
         setArg(map.getBuffer().getBuffer());
         auto m = map.getHardwareRepresentation();
         setArg(m.sizeX);
@@ -60,6 +68,9 @@ public:
         setArg(m.offsetX);
         setArg(m.offsetY);
         setArg(m.offsetZ);
+
+        setArg(tau);
+        setArg(max_weight);
 
         // Write buffers
         cmd_q_->enqueueMigrateMemObjects({map.getBuffer().getBuffer()}, CL_MIGRATE_MEM_OBJECT_DEVICE, nullptr, &pre_events_[0]);

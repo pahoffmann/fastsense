@@ -10,3 +10,15 @@
  */
 
 #pragma once
+
+#include <cmath>
+
+// int norm(const Point& point)
+// {
+//     return std::sqrt(point.x * point.x + point.y * point.y + point.z * point.z);
+// }
+
+int norm(int* point)
+{
+    return std::sqrt(point[0] * point[0] + point[1] * point[1] + point[2] * point[2]);
+}
