@@ -55,7 +55,7 @@ TEST_CASE("TSDF_Kernel", "[tsdf_kernel]")
         auto q = fastsense::hw::FPGAManager::create_command_queue();
         fastsense::kernels::TSDFKernel krnl(q);
 
-        krnl.run(localMap, points, scanner_pos, TAU, 100);
+        krnl.run(localMap, points, scanner_pos, TAU, 100 * WEIGHT_RESOLUTION);
         krnl.waitComplete();
 
         //update_tsdf(points, scanner_pos, localMap, TAU, 100);
@@ -91,5 +91,49 @@ TEST_CASE("TSDF_Kernel", "[tsdf_kernel]")
         CHECK(localMap.value(10, 0, 0).second == 0);
         CHECK(localMap.value(11, 0, 0).second == 0);
         CHECK(localMap.value(12, 0, 0).second == 0);
+    }
+
+    SECTION("TSDF Update")
+    {
+        // TODO
+
+        std::shared_ptr<fastsense::map::GlobalMap> gm_ptr = std::make_shared<fastsense::map::GlobalMap>("MapTest.h5", 0, 7 * WEIGHT_RESOLUTION);
+        auto commandQueue = fastsense::hw::FPGAManager::create_command_queue();
+        fastsense::map::LocalMap localMap{SIZE_X, SIZE_Y, SIZE_Z, gm_ptr, commandQueue};
+
+        Vector3i scanner_pos(0, 0, 0);
+        
+        ScanPoints_t points(1);
+        points[0] = Vector3i(6, 0, 0) * SCALE + Vector3i::Constant(MAP_RESOLUTION / 2);
+
+        auto q = fastsense::hw::FPGAManager::create_command_queue();
+        fastsense::kernels::TSDFKernel krnl(q);
+
+        krnl.run(localMap, points, scanner_pos, TAU, 100 * WEIGHT_RESOLUTION);
+        krnl.waitComplete();
+
+        // Front values
+        CHECK(localMap.value(6, 0, 0).first == 0);
+        CHECK(localMap.value(5, 0, 0).first == 1 * WEIGHT_SCALE);
+        CHECK(localMap.value(4, 0, 0).first == 2 * WEIGHT_SCALE);
+        CHECK(localMap.value(3, 0, 0).first == 3 * WEIGHT_SCALE);
+        CHECK(localMap.value(2, 0, 0).first == 3 * WEIGHT_SCALE);
+        CHECK(localMap.value(1, 0, 0).first == 3 * WEIGHT_SCALE);
+
+        // Front weights
+        CHECK(localMap.value(6, 0, 0).second == 8 * WEIGHT_RESOLUTION);
+        CHECK(localMap.value(5, 0, 0).second == 8 * WEIGHT_RESOLUTION);
+        CHECK(localMap.value(4, 0, 0).second == 8 * WEIGHT_RESOLUTION);
+        CHECK(localMap.value(3, 0, 0).second == 8 * WEIGHT_RESOLUTION);
+        CHECK(localMap.value(2, 0, 0).second == 8 * WEIGHT_RESOLUTION);
+        CHECK(localMap.value(1, 0, 0).second == 8 * WEIGHT_RESOLUTION);
+
+        SECTION("TSDF Max Weight")
+        {
+            krnl.run(localMap, points, scanner_pos, TAU, WEIGHT_RESOLUTION);
+            krnl.waitComplete();
+
+            CHECK(localMap.value(6, 0, 0).second == WEIGHT_RESOLUTION);
+        }
     }
 }
