@@ -7,6 +7,8 @@
 
 #include <cmath>
 
+using namespace fastsense::tsdf;
+
 //#include <util/types.h>
 
 constexpr int MAP_SHIFT = 6; 							// bitshift for a faster way to apply MAP_RESOLUTION
@@ -95,6 +97,8 @@ extern "C"
 
         for(int point_index = 0; point_index < numPoints; ++point_index)
         {
+#pragma HLS PIPELINE
+
             int direction[3];
 
             direction[0] = scanPoints[point_index].x - scannerPos[0];
@@ -107,11 +111,15 @@ extern "C"
 
             for(int len = MAP_RESOLUTION; len <= distance + tau; len += MAP_RESOLUTION)
             {
+#pragma HLS PIPELINE
+
                 int proj[3];
                 int index[3];
 
                 for(int coor_index = 0; coor_index < 3; ++coor_index)
                 {
+#pragma HLS unroll factor=3 skip_exit_check
+
                     proj[coor_index] = scannerPos[coor_index] + direction[coor_index] * len / distance;
                     index[coor_index] = proj[coor_index] / MAP_RESOLUTION;
                 }
@@ -136,6 +144,8 @@ extern "C"
 
                 for(int coor_index = 0; coor_index < 3; ++coor_index)
                 {
+#pragma HLS unroll factor=3 skip_exit_check
+
                     target_center[coor_index] = index[coor_index] * MAP_RESOLUTION + MAP_RESOLUTION / 2;
                 }            
 
@@ -167,8 +177,6 @@ extern "C"
                     continue;
                 }
 
-                //for(inde)
-
                 int delta_z = dz_per_distance * len / MATRIX_RESOLUTION;
                 int lowest = (proj[2] - delta_z) / MAP_RESOLUTION;
                 int highest = (proj[2] + delta_z) / MAP_RESOLUTION;
@@ -189,9 +197,11 @@ extern "C"
                     }
 
                     map.set(new_entries, index[0], index[1], index[2], entry);
-                    }
+                }
             }
         }
+
+        // FIXME: This is very inefficient. Try reducing the number of iterations or removing this completely
 
         for (int i = 0; i < map.sizeX; i++)
         {
@@ -199,6 +209,8 @@ extern "C"
             {
                 for (int k = 0; k < map.sizeZ; k++)
                 {
+#pragma HLS PIPELINE
+
                     int index = i + j * sizeX + k * sizeX * sizeY;
                     int new_weight = mapData[index].second + new_entries[index].second;
 
