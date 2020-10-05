@@ -94,6 +94,8 @@ extern "C"
 
         int weight_epsilon = tau / 10;
         IntTuple new_entries[sizeX * sizeY * sizeZ];
+        int map_changes[3 * sizeX * sizeY * sizeZ];
+        int change_count = 0;
 
         for(int point_index = 0; point_index < numPoints; ++point_index)
         {
@@ -183,47 +185,91 @@ extern "C"
 
                 for(index[2] = lowest; index[2] <= highest; ++index[2])
                 {
-                    auto entry = map.get(new_entries, index[0], index[1], index[2]);
-            
                     if(!map.inBounds(index[0], index[1], index[2]))
                     {
                         continue;
                     }
 
+                    auto entry = map.get(new_entries, index[0], index[1], index[2]);
+
                     if(entry.second == 0 || std::abs(value) < std::abs(entry.first)) 
                     {
+                        if(entry.second == 0)
+                        {
+                            int map_pos = index[0] + index[1] * sizeX + index[2] * sizeX * sizeY;
+                            int change_pos = change_count * 3;
+
+                            map_changes[change_pos]     = index[0];
+                            map_changes[change_pos + 1] = index[1];
+                            map_changes[change_pos + 2] = index[2];
+
+                            ++change_count;
+                        }
+
                         entry.first = value;
                         entry.second = weight;
-                    }
 
-                    map.set(new_entries, index[0], index[1], index[2], entry);
+                        map.set(new_entries, index[0], index[1], index[2], entry);
+                    }
                 }
             }
         }
 
         // FIXME: This is very inefficient. Try reducing the number of iterations or removing this completely
 
-        for (int i = 0; i < map.sizeX; i++)
+        for(int i = 0; i < change_count; ++i)
         {
-            for (int j = 0; j < map.sizeY; j++)
-            {
-                for (int k = 0; k < map.sizeZ; k++)
-                {
 #pragma HLS PIPELINE
 
-                    int index = i + j * sizeX + k * sizeX * sizeY;
-                    int new_weight = mapData[index].second + new_entries[index].second;
+            int three_times = 3 * i;
+        
+            int index_x = map_changes[three_times];
+            int index_y = map_changes[three_times + 1];
+            int index_z = map_changes[three_times + 2];
 
-                    if(new_weight > max_weight)
-                    {
-                        new_weight = max_weight;
-                    }
+            auto map_entry = map.get(mapData, index_x, index_y, index_z);
+            auto new_entry = map.get(new_entries, index_x, index_y, index_z);
 
-                    mapData[index].first = (mapData[index].first * mapData[index].second + new_entries[index].first * new_entries[index].second) / new_weight;
-                    mapData[index].second = new_weight; 
-                }
+            int new_weight = map_entry.second + new_entry.second;
+
+            if(new_weight > max_weight)
+            {
+                new_weight = max_weight;
             }
+
+            map_entry.first = (map_entry.first * map_entry.second + new_entry.first * new_entry.second) / new_weight;
+            map_entry.second = new_weight;
+
+            map.set(mapData, index_x, index_y, index_z, map_entry);
         }
+
+//         for (int i = 0; i < map.sizeX; i++)
+//         {
+//             for (int j = 0; j < map.sizeY; j++)
+//             {
+//                 for (int k = 0; k < map.sizeZ; k++)
+//                 {
+// #pragma HLS PIPELINE
+
+//                     int index = i + j * sizeX + k * sizeX * sizeY;
+
+//                     if(new_entries[index].second == 0)
+//                     {
+//                         continue;
+//                     }
+
+//                     int new_weight = mapData[index].second + new_entries[index].second;
+
+//                     if(new_weight > max_weight)
+//                     {
+//                         new_weight = max_weight;
+//                     }
+
+//                     mapData[index].first = (mapData[index].first * mapData[index].second + new_entries[index].first * new_entries[index].second) / new_weight;
+//                     mapData[index].second = new_weight; 
+//                 }
+//             }
+//         }
 
         // Map access example 
 

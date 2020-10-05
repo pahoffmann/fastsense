@@ -58,8 +58,6 @@ TEST_CASE("TSDF_Kernel", "[tsdf_kernel]")
         krnl.run(localMap, points, scanner_pos, TAU, 100 * WEIGHT_RESOLUTION);
         krnl.waitComplete();
 
-        //update_tsdf(points, scanner_pos, localMap, TAU, 100);
-
         // Front values
         CHECK(localMap.value(6, 0, 0).first == 0);
         CHECK(localMap.value(5, 0, 0).first == 1 * SCALE);
