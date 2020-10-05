@@ -22,7 +22,6 @@
 #include <eigen3/Eigen/Dense>
 
 
-using fastsense::msg::Point;
 using fastsense::util::PCDFile;
 
 namespace fastsense::registration
@@ -49,6 +48,8 @@ constexpr int MAX_ITERATIONS = 1000;
 constexpr int SIZE_X = 20 * SCALE / MAP_RESOLUTION;
 constexpr int SIZE_Y = 20 * SCALE / MAP_RESOLUTION;
 constexpr int SIZE_Z = 5 * SCALE / MAP_RESOLUTION; 
+
+constexpr int ACCURACY = 5;
 
 /**
  * @brief Compares two matrices (transform and registered transform) and checks wether they match considering a certain amount of drift
@@ -271,9 +272,9 @@ TEST_CASE("Registration", "[registration][slow]")
 
         result[0] = Vector3i{1000, 1000, -1000} * SCALE;
 
-        CHECK(cloud[0].x() == result[0].x());
-        CHECK(cloud[0].y() == result[0].y());
-        CHECK(cloud[0].z() == result[0].z());
+        CHECK((cloud[0].x() - result[0].x()) < ACCURACY);
+        CHECK((cloud[0].y() - result[0].y()) < ACCURACY);
+        CHECK((cloud[0].z() - result[0].z()) < ACCURACY);
     }
 
     SECTION("Test Registration Translation")

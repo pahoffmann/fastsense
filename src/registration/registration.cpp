@@ -17,12 +17,10 @@ Vector3i transform(const Vector3i& input, const Matrix4i& mat)
 //TODO: test functionality
 void Registration::transform_point_cloud(ScanPoints_t& in_cloud, const Matrix4f& mat)
 {
-    Matrix4i tf = (mat * MATRIX_RESOLUTION).cast<int>();
-
     for (auto index = 0u; index < in_cloud.size(); ++index)
     {
         auto& point = in_cloud[index];
-        point = transform(point, tf);
+        point = (mat.block<3, 3>(0, 0) * point.cast<float>() + mat.block<3, 1>(0, 3)).cast<int>();
     }
 }
 
@@ -59,6 +57,8 @@ Matrix4f Registration::register_cloud(fastsense::map::LocalMap& localmap, ScanPo
     imu_accumulator_.setIdentity();
     mutex_.unlock();
 
+    Matrix4f next_transform = total_transform;
+
     float alpha = 0;
 
     float previous_errors[4] = {0, 0, 0, 0};
@@ -79,7 +79,6 @@ Matrix4f Registration::register_cloud(fastsense::map::LocalMap& localmap, ScanPo
         Vector6i local_g;
         int local_error;
         int local_count;
-        Matrix4i next_transform;
 
         Vector3i gradient;
         Vector6i jacobi;
@@ -91,7 +90,10 @@ Matrix4f Registration::register_cloud(fastsense::map::LocalMap& localmap, ScanPo
             local_error = 0;
             local_count = 0;
 
-            next_transform = (total_transform * MATRIX_RESOLUTION).cast<int>();
+            //next_transform = (total_transform * MATRIX_RESOLUTION).cast<int>();
+           
+            //TODO: doesnt work, because of integer - float konversion, total transform, used in hw or local transform used on entire pcl - you decide.
+            transform_point_cloud(cloud, next_transform);
 
             //STOP SW IMPLEMENTATION
             //BEGIN HW IMPLEMENTATION
@@ -114,24 +116,16 @@ Matrix4f Registration::register_cloud(fastsense::map::LocalMap& localmap, ScanPo
 
             krnl.run(localmap, cloud, local_h, local_g, local_error, local_count); //TODO: is this working?
             //krnl.waitComplete();
-           
-           //TODO: doesnt work, because of integer - float konversion
-           transform_point_cloud(cloud, next_transform);
-
-            //TODO::use kernel here.
-
-            
-            // write local results back into shared variables
-            //#pragma omp critical
-            {
-                h += local_h;
-                g += local_g;
-                error += local_error;
-                count += local_count;
-            }
-
 
             //RESUME SOFTWARE IMPLEMENTATION
+            // write local results back into shared variables
+
+            h += local_h;
+            g += local_g;
+            error += local_error;
+            count += local_count;
+
+
             // wait for all threads to finish //here should be the exit point of the hw communication, after which the data is being used.
             //#pragma omp barrier
             // only execute on a single thread, all others wait - use the data coming from hw to calculate diff things.
@@ -147,9 +141,9 @@ Matrix4f Registration::register_cloud(fastsense::map::LocalMap& localmap, ScanPo
                 // alternative: Vector6f xi = hf.completeOrthogonalDecomposition().solve(-gf);
 
                 //convert xi into transform matrix T
-                Matrix4f transform = xi_to_transform(xi);
+                next_transform = xi_to_transform(xi);
 
-                total_transform = transform * total_transform; //update transform
+                total_transform = next_transform * total_transform; //update transform
 
                 alpha += it_weight_gradient_;
 
@@ -175,7 +169,7 @@ Matrix4f Registration::register_cloud(fastsense::map::LocalMap& localmap, ScanPo
     }
 
     // apply final transformation
-    transform_point_cloud(cloud, total_transform);
+    transform_point_cloud(cloud, next_transform);
 
     return total_transform;
 }

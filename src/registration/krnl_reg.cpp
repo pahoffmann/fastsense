@@ -1,5 +1,5 @@
 /**
- * @author Marcel Flottmann
+ * @author Patrick Hoffmann
  */
 
 #include <map/local_map_hw.h>
@@ -157,7 +157,7 @@ extern "C"
             }
             catch (const std::out_of_range& oor)
             {
-                fastsense::util::logging::Logger::error("Out of range exception in reg kernel: %s", oor.what());
+                fastsense::util::logging::Logger::error("Out of range exception in reg kernel: ", oor.what());
             }
         
 
