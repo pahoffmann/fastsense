@@ -56,7 +56,7 @@ void CloudCallback::callback(){
         preprocess_scan(point_cloud, scan_points, ConfigManager::config().slam.map_resolution(), pose);
 
         if(first_iteration){
-            first_iteration = true;
+            first_iteration = false;
         }else{
             Matrix4f transform = registration.register_cloud(local_map, scan_points);
             pose = transform * pose;
