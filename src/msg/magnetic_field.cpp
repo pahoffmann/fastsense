@@ -1,10 +1,10 @@
 /**
- * @file magnetic_field.cpp
  * @author Julian Gaal
- * @date 2020-08-18
  */
 
 #include <limits>
+#include <phidget21.h>
+
 #include <msg/magnetic_field.h>
 
 // Taken from phidget21.h header, for portability

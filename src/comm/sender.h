@@ -1,7 +1,11 @@
 #pragma once
 
-#include <zmq.hpp>
+/**
+ * @author Julian Gaal
+ */
+
 #include <string>
+#include <zmq.hpp>
 
 namespace fastsense::comm
 {

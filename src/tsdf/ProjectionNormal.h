@@ -1,11 +1,11 @@
 #pragma once
 
 /**
- * @author Malte Hillmann (mhillmann)
- * @author Marc Eisoldt (meisoldt)
+ * @author Malte Hillmann
+ * @author Marc Eisoldt
  */
 
-#include <tsdf/NormalBase.h>
+#include "NormalBase.h"
 
 namespace fastsense::tsdf
 {
@@ -36,7 +36,7 @@ public:
      *
      * @return The normal of the given point based on a given point set
      *
-     * @throws -1 If the calculated determinants are invalid
+     * @throw -1 If the calculated determinants are invalid
      */
     virtual POINT_T operator()(const unsigned short query_ring, const size_t query_index, const SET_T& points) const override
     {

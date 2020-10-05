@@ -1,8 +1,8 @@
 #pragma once
 
 /**
- * @author Malte Hillmann (mhillmann)
- * @author Marc Eisoldt (meisoldt)
+ * @author Malte Hillmann
+ * @author Marc Eisoldt
  */
 
 #include <math.h>
@@ -27,10 +27,7 @@ public:
      */
     virtual T operator()(const T d) const = 0;
 
-    virtual ~WeightingBase()
-    {
-
-    }
+    virtual ~WeightingBase() = default;
 };
 
 /**

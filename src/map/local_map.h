@@ -1,15 +1,14 @@
+#pragma once
+
 /**
- * @file local_map.h
  * @author Steffen Hinderink
  * @author Juri Vana
  */
 
-#pragma once
-
-#include <map/global_map.h>
 #include <hw/buffer/buffer.h>
 #include <map/local_map_hw.h>
-#include <util/xyz_buffer.h>
+#include "global_map.h"
+#include <util/types.h>
 
 namespace fastsense::map
 {
@@ -23,7 +22,6 @@ namespace fastsense::map
  * In order to use the global map with the ring buffer, T has to be std::pair<float, float>.
  * Otherwise the function shift will not work.
  */
-template<typename T>
 class LocalMap
 {
 
@@ -33,13 +31,13 @@ private:
      * Side lengths of the ring buffer. They are always odd, so that there is a central cell.
      * The ring buffer contains sizeX * sizeY * sizeZ values.
      */
-    util::LocalMapSize size_;
+    Vector3i size_;
 
     /// Actual data of the ring buffer.
-    buffer::InputOutputBuffer<T> data_;
+    buffer::InputOutputBuffer<std::pair<int, int>> data_;
 
     /// Position (x,y,z) of the center of the cuboid in global coordinates.
-    util::LocalMapPos pos_;
+    Vector3i pos_;
 
     /**
      * Offset (x,y,z) of the data in the ring.
@@ -51,7 +49,7 @@ private:
      *          ^
      *       offset
      */
-    util::LocalMapOffset offset_;
+    Vector3i offset_;
 
     /// Pointer to the global map in which the values outside of the buffer are stored
     std::shared_ptr<GlobalMap> map_;
@@ -86,7 +84,7 @@ public:
      * @param z z-coordinate of the index in global coordinates
      * @return Value of the ring buffer
      */
-    T& value(int x, int y, int z);
+    std::pair<int, int>& value(int x, int y, int z);
 
     /**
      * Returns a value from the ring buffer per reference.
@@ -96,13 +94,29 @@ public:
      * @param z z-coordinate of the index in global coordinates
      * @return Value of the ring buffer
      */
-    const T& value(int x, int y, int z) const;
+    const std::pair<int, int>& value(int x, int y, int z) const;
 
-    const util::LocalMapSize& getSize() const;
+    /**
+     * Returns a value from the ring buffer per reference.
+     * Throws an exception if the index is out of bounds i.e. if it is more than size / 2 away from the position.
+     * @param p position of the index in global coordinates
+     * @return Value of the ring buffer
+     */
+    std::pair<int, int>& value(Vector3i p);
 
-    const util::LocalMapPos& getPos() const;
+    /**
+     * Returns a value from the ring buffer per reference.
+     * Throws an exception if the index is out of bounds i.e. if it is more than size / 2 away from the position.
+     * @param p position of the index in global coordinates
+     * @return Value of the ring buffer
+     */
+    const std::pair<int, int>& value(Vector3i p) const;
 
-    const util::LocalMapOffset& getOffset() const;
+    const Vector3i& getSize() const;
+
+    const Vector3i& getPos() const;
+
+    const Vector3i& getOffset() const;
 
     /**
      * Shifts the ring buffer, so that a new position is the center of the cuboid.
@@ -124,11 +138,22 @@ public:
      */
     bool inBounds(int x, int y, int z) const;
 
-    const buffer::InputOutputBuffer<T>& getBuffer() const;
+    /**
+     * Checks if x, y and z are within the current range
+     *
+     * @param p position of the index in global coordinates
+     * @return true if (x, y, z) is within the area of the buffer
+     */
+    bool inBounds(Vector3i p) const;
+
+    const buffer::InputOutputBuffer<std::pair<int, int>>& getBuffer() const;
 
     LocalMapHW getHardwareRepresentation() const;
+
+    void flush()
+    {
+        map_->flush();
+    }
 };
 
 } // namespace fastsense::map
-
-#include "local_map.tcc"

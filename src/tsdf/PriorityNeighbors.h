@@ -1,13 +1,13 @@
 #pragma once
 
 /**
- * @author Malte Hillmann (mhillmann)
- * @author Marc Eisoldt (meisoldt)
+ * @author Malte Hillmann
+ * @author Marc Eisoldt
  */
 
-#include <tsdf/NeighborsBase.h>
-
 #include <vector>
+
+#include "NeighborsBase.h"
 
 namespace fastsense::tsdf
 {
@@ -78,4 +78,4 @@ private:
 
 } // namespace fastsense::tsdf
 
-#include <tsdf/PriorityNeighbors.tcc>
+#include "PriorityNeighbors.tcc"

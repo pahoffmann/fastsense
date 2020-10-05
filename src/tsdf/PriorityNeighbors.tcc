@@ -1,8 +1,8 @@
 #pragma once
 
 /**
- * @author Malte Hillmann (mhillmann)
- * @author Marc Eisoldt (meisoldt)
+ * @author Malte Hillmann
+ * @author Marc Eisoldt
  */
 
 #include <set>

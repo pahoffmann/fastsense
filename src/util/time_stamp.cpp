@@ -1,6 +1,6 @@
-//
-// Created by julian on 9/1/20.
-//
+/**
+ * @author Julian Gaal
+ */
 
 #include <util/time_stamp.h>
 

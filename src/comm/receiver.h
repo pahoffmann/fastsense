@@ -1,5 +1,10 @@
 #pragma once
 
+/**
+ * @author Julian Gaal
+ * @author Marcel Flottmann
+ */
+
 #include <zmq.hpp>
 #include <msg/point_cloud.h>
 

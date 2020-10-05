@@ -1,10 +1,8 @@
-/**
- * @file magnetic_field.h
- * @author Julian Gaal
- * @date 2020-08-18
- */
-
 #pragma once
+
+/**
+ * @author Julian Gaal
+ */
 
 #include <util/xyz_buffer.h>
 

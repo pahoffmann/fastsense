@@ -4,20 +4,19 @@
 #include <sstream>
 #include <typeinfo>
 
-namespace fastsense::util {
+namespace fastsense::util
+{
 
-template<typename VEC_T>
-PCDFile<VEC_T>::PCDFile(const std::string& file_name) : name_(file_name)
+PCDFile::PCDFile(const std::string& file_name) : name_(file_name)
 {
 
 }
 
-template<typename VEC_T>
-void PCDFile<VEC_T>::writePoints(const ScanPoints_t<VEC_T>& points, bool binary)
+void PCDFile::writePoints(const std::vector<std::vector<Vector3f>>& points, bool binary)
 {
     std::ofstream file(name_);
 
-    if(!file)
+    if (!file)
     {
         throw std::ifstream::failure("Error while opening file for writing");
     }
@@ -29,11 +28,11 @@ void PCDFile<VEC_T>::writePoints(const ScanPoints_t<VEC_T>& points, bool binary)
 
     float x, y, z;
 
-    for(short ring_number = 0; ring_number < points.size(); ++ring_number)
+    for (size_t ring_number = 0; ring_number < points.size(); ++ring_number)
     {
-        for(const auto& point : points[ring_number])
+        for (const auto& point : points[ring_number])
         {
-            if(binary)
+            if (binary)
             {
                 x = static_cast<float>(point[0]);
                 y = static_cast<float>(point[1]);
@@ -53,7 +52,7 @@ void PCDFile<VEC_T>::writePoints(const ScanPoints_t<VEC_T>& points, bool binary)
         }
     }
 
-    // Write header 
+    // Write header
     file << "# .PCD v.7 - Point Cloud Data file format\n";
     file << "VERSION .7\n";
     file << "FIELDS x y z ring\n";
@@ -64,8 +63,8 @@ void PCDFile<VEC_T>::writePoints(const ScanPoints_t<VEC_T>& points, bool binary)
     file << "HEIGHT 1\n";
     file << "VIEWPOINT 0 0 0 1 0 0 0\n";
     file << "POINTS " << width << '\n';
-    
-    if(binary)
+
+    if (binary)
     {
         file << "DATA binary\n";
     }
@@ -76,11 +75,11 @@ void PCDFile<VEC_T>::writePoints(const ScanPoints_t<VEC_T>& points, bool binary)
 
     // Write data
     file << data.str();
-    
+
     // Make sure that all data are written
     file.flush();
 
-    if(!file)
+    if (!file)
     {
         throw std::ifstream::failure("Error while writing into file");
     }
@@ -88,41 +87,41 @@ void PCDFile<VEC_T>::writePoints(const ScanPoints_t<VEC_T>& points, bool binary)
     file.close();
 }
 
-template<typename VEC_T>
-void PCDFile<VEC_T>::readPoints(std::vector<std::vector<VEC_T>>& points, unsigned int& number_of_points)
+void PCDFile::readPoints(std::vector<std::vector<Vector3f>>& points, unsigned int& number_of_points)
 {
     points.clear();
     std::ifstream file(name_);
 
     bool binary = false;
 
-    if(!file)
+    if (!file)
     {
         throw std::ifstream::failure("Error while opening file for reading");
     }
 
-    std::string str; 
-    
-    for(auto header_line = 1u; header_line <= 10; ++header_line)
+    std::string str;
+
+    for (auto header_line = 1u; header_line <= 10; ++header_line)
     {
         do
         {
             std::getline(file, str);
 
-            if(str.size() == 0)
+            if (str.size() == 0)
             {
                 throw std::ifstream::failure("Error: PCD header has the wrong format at header line " + header_line);
             }
 
-        } while(str[0] == '#');
-   
-        if(header_line == 6)
+        }
+        while (str[0] == '#');
+
+        if (header_line == 6)
         {
             std::string delimiter = " ";
 
             size_t pos = 0;
             std::string token;
-            while ((pos = str.find(delimiter)) != std::string::npos) 
+            while ((pos = str.find(delimiter)) != std::string::npos)
             {
                 token = str.substr(0, pos);
                 str.erase(0, pos + delimiter.length());
@@ -139,54 +138,54 @@ void PCDFile<VEC_T>::readPoints(std::vector<std::vector<VEC_T>>& points, unsigne
 
     while (!file.eof())
     {
-        if(binary)
+        if (binary)
         {
-            if(!file.read((char*)&x, sizeof(x)))
+            if (!file.read((char*)&x, sizeof(x)))
             {
                 break;
             }
 
-            if(!file.read((char*)&y, sizeof(y)))
+            if (!file.read((char*)&y, sizeof(y)))
             {
                 throw std::ifstream::failure("Error: y component could not be read");
             }
 
-            if(!file.read((char*)&z, sizeof(z)))
+            if (!file.read((char*)&z, sizeof(z)))
             {
                 throw std::ifstream::failure("Error: z component could not be read");
             }
 
-            if(!file.read((char*)&ring, sizeof(ring)))
+            if (!file.read((char*)&ring, sizeof(ring)))
             {
                 throw std::ifstream::failure("Error: ring component could not be read");
             }
         }
         else
         {
-            if(!(file >> x))
+            if (!(file >> x))
             {
                 break;
             }
-            
-            if(!(file >> y))
+
+            if (!(file >> y))
             {
                 throw std::ifstream::failure("Error: y component could not be read");
             }
 
-            if(!(file >> z))
+            if (!(file >> z))
             {
                 throw std::ifstream::failure("Error: z component could not be read");
             }
 
-            if(!(file >> ring))
-            {   
+            if (!(file >> ring))
+            {
                 throw std::ifstream::failure("Error: ring component could not be read");
             }
         }
 
         while (static_cast<size_t>(ring) >= points.size())
         {
-            points.push_back(std::vector<VEC_T>());
+            points.push_back(std::vector<Vector3f>());
         }
 
         points[ring].push_back({x, y, z});
@@ -195,4 +194,4 @@ void PCDFile<VEC_T>::readPoints(std::vector<std::vector<VEC_T>>& points, unsigne
     file.close();
 }
 
-}
+} // namespace fastsense::util

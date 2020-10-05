@@ -1,7 +1,5 @@
 /**
- * @file imu_msg.cpp
  * @author Julian Gaal
- * @date 2020-08-18
  */
 
 #include <msg/imu_msg.h>

@@ -1,8 +1,10 @@
 #pragma once
 
-namespace fastsense
-{
-namespace map
+/**
+ * @author Marcel Flottmann
+ */
+
+namespace fastsense::map
 {
 
 template<typename T>
@@ -73,5 +75,4 @@ struct LocalMapHW
     }
 };
 
-}
-}
+} // namespace fastsense::map

@@ -1,14 +1,15 @@
 #include <chrono>
 #include <ostream>
+
 #include <util/time_stamp.h>
-#include <msg/imu_msg.h>
-#include <msg/point_cloud.h>
+#include "imu_msg.h"
+#include "point_cloud.h"
 
 namespace fastsense::msg
 {
 
 using ImuMsgStamped = std::pair<ImuMsg, fastsense::util::TimeStamp>;
-using PointCloudStamped = std::pair<PointCloud::ptr, fastsense::util::TimeStamp>;
+using PointCloudStamped = std::pair<PointCloud::Ptr, fastsense::util::TimeStamp>;
 
 }
 

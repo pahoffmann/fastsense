@@ -1,20 +1,20 @@
+
 /**
- * @file ring_buffer.cpp
  * @author Steffen Hinderink
  * @author Juri Vana
  */
 
-#pragma once
+#include "local_map.h"
 
 #include <stdlib.h> // for abs
 #include <stdexcept>
+
 #include <util/logging/logger.h>
 
 namespace fastsense::map
 {
 
-template<typename T>
-LocalMap<T>::LocalMap(unsigned int sX, unsigned int sY, unsigned int sZ, const std::shared_ptr<GlobalMap>& map, const CommandQueuePtr& queue)
+LocalMap::LocalMap(unsigned int sX, unsigned int sY, unsigned int sZ, const std::shared_ptr<GlobalMap> &map, const CommandQueuePtr &queue)
     : size_{static_cast<int>(sX % 2 == 1 ? sX : sX + 1),
             static_cast<int>(sY % 2 == 1 ? sY : sY + 1),
             static_cast<int>(sZ % 2 == 1 ? sZ : sZ + 1)},
@@ -28,62 +28,74 @@ LocalMap<T>::LocalMap(unsigned int sX, unsigned int sY, unsigned int sZ, const s
         fastsense::util::logging::Logger::warning("Changed LocalMap size from even (", sX, ", ", sY, ", ", sZ, ") to odd (", size_.x(), ", ", size_.y(), ", ", size_.z(), ")");
     }
 
+    auto default_entry = map_->getValue(Vector3i(0, 0, 0));
     for (int i = 0; i < size_.x() * size_.y() * size_.z(); i++)
     {
-        data_[i] = map_->getValue(i / size_.z() / size_.y() % size_.x() - offset_.x(), i / size_.z() % size_.y() - offset_.y(), i % size_.z() - offset_.z());
+        data_[i] = default_entry;
     }
 }
 
-template<typename T>
-T& LocalMap<T>::value(int x, int y, int z)
+std::pair<int, int> &LocalMap::value(int x, int y, int z)
 {
-    if (!inBounds(x, y, z))
+    return value(Vector3i(x, y, z));
+}
+
+const std::pair<int, int> &LocalMap::value(int x, int y, int z) const
+{
+    return value(Vector3i(x, y, z));
+}
+
+std::pair<int, int> &LocalMap::value(Vector3i p)
+{
+    if (!inBounds(p))
     {
         throw std::out_of_range("Index out of bounds");
     }
-    return data_[((x - pos_.x() + offset_.x() + size_.x()) % size_.x()) * size_.y() * size_.z() +
-                                              ((y - pos_.y() + offset_.y() + size_.y()) % size_.y()) * size_.z() +
-                                              (z - pos_.z() + offset_.z() + size_.z()) % size_.z()];
+    p = p - pos_ + offset_ + size_;
+    return data_[(p.x() % size_.x()) * size_.y() * size_.z() +
+                        (p.y() % size_.y()) * size_.z() +
+                        p.z() % size_.z()];
 }
 
-template<typename T>
-const T& LocalMap<T>::value(int x, int y, int z) const
+const std::pair<int, int> &LocalMap::value(Vector3i p) const
 {
-    if (!inBounds(x, y, z))
+    if (!inBounds(p))
     {
         throw std::out_of_range("Index out of bounds");
     }
-    return data_[((x - pos_.x() + offset_.x() + size_.x()) % size_.x()) * size_.y() * size_.z() +
-                                              ((y - pos_.y() + offset_.y() + size_.y()) % size_.y()) * size_.z() +
-                                              (z - pos_.z() + offset_.z() + size_.z()) % size_.z()];
+    p = p - pos_ + offset_ + size_;
+    return data_[(p.x() % size_.x()) * size_.y() * size_.z() +
+                        (p.y() % size_.y()) * size_.z() +
+                        p.z() % size_.z()];
 }
 
-template<typename T>
-const util::LocalMapSize& LocalMap<T>::getSize() const
+const Vector3i &LocalMap::getSize() const
 {
     return size_;
 }
 
-template<typename T>
-const util::LocalMapPos& LocalMap<T>::getPos() const
+const Vector3i &LocalMap::getPos() const
 {
     return pos_;
 }
 
-template<typename T>
-const util::LocalMapOffset& LocalMap<T>::getOffset() const
+const Vector3i &LocalMap::getOffset() const
 {
     return offset_;
 }
 
-template<typename T>
-bool LocalMap<T>::inBounds(int x, int y, int z) const
+bool LocalMap::inBounds(int x, int y, int z) const
 {
-    return abs(x - pos_.x()) <= size_.x() / 2 && abs(y - pos_.y()) <= size_.y() / 2 && abs(z - pos_.z()) <= size_.z() / 2;
+    return inBounds(Vector3i(x, y, z));
 }
 
-template<typename T>
-void LocalMap<T>::shift(int x, int y, int z)
+bool LocalMap::inBounds(Vector3i p) const
+{
+    p = (p - pos_).cwiseAbs();
+    return p.x() <= size_.x() / 2 && p.y() <= size_.y() / 2 && p.z() <= size_.z() / 2;
+}
+
+void LocalMap::shift(int x, int y, int z)
 {
     // x
     int diffX = x - pos_.x();
@@ -97,16 +109,16 @@ void LocalMap<T>::shift(int x, int y, int z)
                 if (diffX > 0)
                 {
                     // step forward
-                    T& inout = value(pos_.x() - size_.x() / 2, j, k);
-                    map_->setValue(pos_.x() - size_.x() / 2, j, k, inout);
-                    inout = map_->getValue(pos_.x() + size_.x() / 2 + 1, j, k);
+                    std::pair<int, int> &inout = value(pos_.x() - size_.x() / 2, j, k);
+                    map_->setValue(Vector3i(pos_.x() - size_.x() / 2, j, k), inout);
+                    inout = map_->getValue(Vector3i(pos_.x() + size_.x() / 2 + 1, j, k));
                 }
                 else
                 {
                     // step backwards
-                    T& inout = value(pos_.x() + size_.x() / 2, j, k);
-                    map_->setValue(pos_.x() + size_.x() / 2, j, k, inout);
-                    inout = map_->getValue(pos_.x() - size_.x() / 2 - 1, j, k);
+                    std::pair<int, int> &inout = value(pos_.x() + size_.x() / 2, j, k);
+                    map_->setValue(Vector3i(pos_.x() + size_.x() / 2, j, k), inout);
+                    inout = map_->getValue(Vector3i(pos_.x() - size_.x() / 2 - 1, j, k));
                 }
             }
         }
@@ -126,16 +138,16 @@ void LocalMap<T>::shift(int x, int y, int z)
                 if (diffY > 0)
                 {
                     // step forward
-                    T& inout = value(j, pos_.y() - size_.y() / 2, k);
-                    map_->setValue(j, pos_.y() - size_.y() / 2, k, inout);
-                    inout = map_->getValue(j, pos_.y() + size_.y() / 2 + 1, k);
+                    std::pair<int, int> &inout = value(j, pos_.y() - size_.y() / 2, k);
+                    map_->setValue(Vector3i(j, pos_.y() - size_.y() / 2, k), inout);
+                    inout = map_->getValue(Vector3i(j, pos_.y() + size_.y() / 2 + 1, k));
                 }
                 else
                 {
                     // step backwards
-                    T& inout = value(j, pos_.y() + size_.y() / 2, k);
-                    map_->setValue(j, pos_.y() + size_.y() / 2, k, inout);
-                    inout = map_->getValue(j, pos_.y() - size_.y() / 2 - 1, k);
+                    std::pair<int, int> &inout = value(j, pos_.y() + size_.y() / 2, k);
+                    map_->setValue(Vector3i(j, pos_.y() + size_.y() / 2, k), inout);
+                    inout = map_->getValue(Vector3i(j, pos_.y() - size_.y() / 2 - 1, k));
                 }
             }
         }
@@ -155,16 +167,16 @@ void LocalMap<T>::shift(int x, int y, int z)
                 if (diffZ > 0)
                 {
                     // step forward
-                    T& inout = value(j, k, pos_.z() - size_.z() / 2);
-                    map_->setValue(j, k, pos_.z() - size_.z() / 2, inout);
-                    inout = map_->getValue(j, k, pos_.z() + size_.z() / 2 + 1);
+                    std::pair<int, int> &inout = value(j, k, pos_.z() - size_.z() / 2);
+                    map_->setValue(Vector3i(j, k, pos_.z() - size_.z() / 2), inout);
+                    inout = map_->getValue(Vector3i(j, k, pos_.z() + size_.z() / 2 + 1));
                 }
                 else
                 {
                     // step backwards
-                    T& inout = value(j, k, pos_.z() + size_.z() / 2);
-                    map_->setValue(j, k, pos_.z() + size_.z() / 2, inout);
-                    inout = map_->getValue(j, k, pos_.z() - size_.z() / 2 - 1);
+                    std::pair<int, int> &inout = value(j, k, pos_.z() + size_.z() / 2);
+                    map_->setValue(Vector3i(j, k, pos_.z() + size_.z() / 2), inout);
+                    inout = map_->getValue(Vector3i(j, k, pos_.z() - size_.z() / 2 - 1));
                 }
             }
         }
@@ -173,14 +185,12 @@ void LocalMap<T>::shift(int x, int y, int z)
     }
 }
 
-template<typename T>
-const buffer::InputOutputBuffer<T>& LocalMap<T>::getBuffer() const
+const buffer::InputOutputBuffer<std::pair<int, int>> &LocalMap::getBuffer() const
 {
     return data_;
 }
 
-template<typename T>
-LocalMapHW LocalMap<T>::getHardwareRepresentation() const
+LocalMapHW LocalMap::getHardwareRepresentation() const
 {
     return {size_.x(),
             size_.y(),
@@ -193,4 +203,4 @@ LocalMapHW LocalMap<T>::getHardwareRepresentation() const
             offset_.z()};
 }
 
-}
+} // namespace fastsense::map

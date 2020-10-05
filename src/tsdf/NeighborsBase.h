@@ -1,8 +1,8 @@
 #pragma once
 
 /**
- * @author Malte Hillmann (mhillmann)
- * @author Marc Eisoldt (meisoldt)
+ * @author Malte Hillmann
+ * @author Marc Eisoldt
  */
 
 namespace fastsense::tsdf
@@ -30,10 +30,7 @@ public:
      */
     virtual NEIGHBORS_T operator()(const unsigned short query_ring, const size_t query_index, const SET_T& points) const = 0;
 
-    virtual ~NeighborsBase()
-    {
-
-    }
+    virtual ~NeighborsBase() = default;
 };
 
 } // namespace fastsense::tsdf

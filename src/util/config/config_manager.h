@@ -1,14 +1,13 @@
-/**
- * @file config_manager.h
- * @author Marcel Flottmann
- * @date 2020-09-03
- */
-
 #pragma once
 
-#include "config.h"
+/**
+ * @author Marcel Flottmann
+ */
+
 #include <list>
 #include <boost/property_tree/ptree.hpp>
+
+#include "config.h"
 
 namespace fastsense::util::config
 {
@@ -91,6 +90,6 @@ public:
  */
 using ConfigManager = ConfigManagerImpl<Config>;
 
-}
+} // namespace fastsense::util::config
 
 #include "config_manager.tcc"

@@ -1,10 +1,8 @@
-/**
- * @file logger.h
- * @author Marcel Flottmann
- * @date 2020-09-02
- */
-
 #pragma once
+
+/**
+ * @author Marcel Flottmann
+ */
 
 #include <mutex>
 #include <sstream>
@@ -96,6 +94,6 @@ public:
     static void removeSink(const std::shared_ptr<sink::Sink>& s);
 };
 
-}
+} // namespace fastsense::util::logging
 
 #include "logger.tcc"

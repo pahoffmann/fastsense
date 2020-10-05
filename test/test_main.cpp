@@ -1,7 +1,5 @@
 /**
- * @file test_main.cpp
  * @author Marcel Flottmann
- * @date 2020-09-14
  */
 
 #define CATCH_CONFIG_RUNNER
@@ -19,7 +17,7 @@ int main( int argc, char* argv[] )
     Logger::addSink(logSink);
     Logger::setLoglevel(LogLevel::Debug);
 
-    FPGAManager::loadXCLBIN("FastSense_test.xclbin");
+    FPGAManager::load_xclbin("FastSense_test.xclbin");
 
     int result = Catch::Session().run(argc, argv);
 

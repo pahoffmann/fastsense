@@ -1,9 +1,8 @@
 #pragma once
 
 /**
- * @file buffer.h
- * @author Julian Gaal, Marcel Flottmann
- * @date 2020-09-09
+ * @author Julian Gaal
+ * @author Marcel Flottmann
  */
 
 #include <hw/opencl.h>
@@ -35,7 +34,7 @@ private:
     /**
      * @brief unmap buffer: deattach virtual address from buffer
      */
-    void unmapMemory()
+    void unmap_memory()
     {
         if (virtual_address_)
         {
@@ -49,7 +48,7 @@ private:
     /**
      * @brief map buffer: attach virtual address from buffer
      */
-    void mapMemory()
+    void map_memory()
     {
         virtual_address_ = static_cast<T*>(queue_->enqueueMapBuffer(buffer_, CL_TRUE, map_flag_, 0, size_in_bytes_));
     }
@@ -106,12 +105,12 @@ protected:
         : queue_{queue},
           num_elements_{num_elements},
           size_in_bytes_{sizeof(T) * num_elements},
-          buffer_{fastsense::hw::FPGAManager::getContext(), mem_flag, size_in_bytes_},
+          buffer_{fastsense::hw::FPGAManager::get_context(), mem_flag, size_in_bytes_},
           mem_flag_{mem_flag},
           map_flag_{map_flag},
           virtual_address_{nullptr}
     {
-        mapMemory();
+        map_memory();
     }
 
 public:
@@ -223,7 +222,7 @@ public:
      */
     ~Buffer()
     {
-        unmapMemory();
+        unmap_memory();
     }
 
     /**
@@ -242,7 +241,7 @@ public:
     Buffer& operator=(Buffer&& rhs)
     {
         //Cleanup
-        unmapMemory();
+        unmap_memory();
 
         //Assign new values
         queue_ = std::move(rhs.queue_);

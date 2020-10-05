@@ -1,13 +1,12 @@
 /**
- * @file fpga_manager.cpp
- * @author Julian Gaal, Marcel Flottmann
- * @date 2020-09-10
+ * @author Julian Gaal
+ * @author Marcel Flottmann
  */
 
-#include "fpga_manager.h"
-
 #include <iostream>
+
 #include <util/logging/logger.h>
+#include "fpga_manager.h"
 
 using namespace fastsense::hw;
 using namespace fastsense::util::logging;
@@ -19,11 +18,11 @@ FPGAManager::FPGAManager()
 {
 }
 
-void FPGAManager::loadXCLBIN(const std::string& xclbin_filename)
+void FPGAManager::load_xclbin(const std::string& xclbin_filename)
 {
-    inst().initDevices();
-    inst().initContext();
-    inst().loadProgram(xclbin_filename);
+    inst().init_devices();
+    inst().init_context();
+    inst().load_program(xclbin_filename);
 }
 
 FPGAManager& FPGAManager::inst()
@@ -32,7 +31,7 @@ FPGAManager& FPGAManager::inst()
     return manager;
 }
 
-const cl::Device& FPGAManager::getDevice()
+const cl::Device& FPGAManager::get_device()
 {
     if (not inst().devices_.size())
     {
@@ -41,22 +40,22 @@ const cl::Device& FPGAManager::getDevice()
     return inst().devices_[0];
 }
 
-const cl::Context& FPGAManager::getContext()
+const cl::Context& FPGAManager::get_context()
 {
     return inst().context_;
 }
 
-const cl::Program& FPGAManager::getProgram()
+const cl::Program& FPGAManager::get_program()
 {
     return inst().program_;
 }
 
-fastsense::CommandQueuePtr FPGAManager::createCommandQueue()
+fastsense::CommandQueuePtr FPGAManager::create_command_queue()
 {
-    return std::make_shared<cl::CommandQueue>(getContext(), getDevice(), CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE);
+    return std::make_shared<cl::CommandQueue>(get_context(), get_device(), CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE);
 }
 
-void FPGAManager::initDevices()
+void FPGAManager::init_devices()
 {
     Logger::info("Initializing Device");
     std::vector<cl::Platform> platforms;
@@ -86,7 +85,7 @@ void FPGAManager::initDevices()
     throw std::runtime_error("Error: Unable to find Target Device");
 }
 
-void FPGAManager::initContext()
+void FPGAManager::init_context()
 {
     if (not devices_.size())
     {
@@ -96,7 +95,7 @@ void FPGAManager::initContext()
     context_ = cl::Context(devices_);
 }
 
-void FPGAManager::loadProgram(const std::string& xclbin_filename)
+void FPGAManager::load_program(const std::string& xclbin_filename)
 {
     Logger::info("Loading ", xclbin_filename);
 

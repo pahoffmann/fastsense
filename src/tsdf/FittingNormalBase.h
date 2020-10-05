@@ -1,14 +1,14 @@
 #pragma once
 
 /**
- * @author Malte Hillmann (mhillmann)
- * @author Marc Eisoldt (meisoldt)
+ * @author Malte Hillmann
+ * @author Marc Eisoldt
  */
 
-#include <tsdf/NormalBase.h>
-#include <tsdf/NeighborsBase.h>
-
 #include <memory>
+
+#include "NormalBase.h"
+#include "NeighborsBase.h"
 
 namespace fastsense::tsdf
 {

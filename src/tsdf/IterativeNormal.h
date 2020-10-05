@@ -1,13 +1,13 @@
 #pragma once
 
 /**
- * @author Malte Hillmann (mhillmann)
- * @author Marc Eisoldt (meisoldt)
+ * @author Malte Hillmann
+ * @author Marc Eisoldt
  */
 
-#include <tsdf/FittingNormalBase.h>
-
 #include <vector>
+
+#include <tsdf/FittingNormalBase.h>
 
 namespace fastsense::tsdf
 {
