@@ -45,6 +45,8 @@ SW_SRCS = src/Application.cpp \
 	$(wildcard src/tsdf/*.cpp) \
 	$(wildcard src/registration/*.cpp) \
 	$(wildcard src/util/*.cpp) \
+	$(wildcard src/util/pcd/*.cpp) \
+	$(wildcard src/eval/*.cpp) \
 	$(wildcard src/msg/*.cpp) \
 	$(wildcard src/util/config/*.cpp) \
 	$(wildcard src/hw/*.cpp) \
