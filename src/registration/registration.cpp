@@ -98,25 +98,24 @@ Matrix4f Registration::register_cloud(fastsense::map::LocalMap& localmap, ScanPo
 
             //kernel, run, wait
 
-            /*fastsense::CommandQueuePtr q = fastsense::hw::FPGAManager::create_command_queue();
-            fastsense::kernels::RegKernel krnl{q};
+            fastsense::CommandQueuePtr q = fastsense::hw::FPGAManager::create_command_queue();
+            fastsense::kernels::RegistrationKernel krnl{q};
 
-            fastsense::buffer::InputBuffer<fastsense::msg::Point> buffer_scan{q, cloud.size()};
+            //fastsense::buffer::InputBuffer<fastsense::msg::Point> buffer_scan{q, cloud.size()};
 
             //Output size: local_h matrix (6x6) + local_g matrix (6x1) + local_error (int) + local_count (int)
             // 36 + 6 + 1 + 1 = 44
-            fastsense::buffer::OutputBuffer<int> buffer_output{q, 44};
+            //fastsense::buffer::OutputBuffer<int> buffer_output{q, 44};
 
             //Write scan points into buffer
-            for(int i = 0; i < cloud.size(); i++){
-                buffer_scan[i] = cloud[i];
-            }
+            // for(int i = 0; i < cloud.size(); i++){
+            //     buffer_scan[i] = cloud[i];
+            // }
 
-            //krnl.run(localmap, buffer_scan, buffer_output, cloud.size());
+            krnl.run(localmap, cloud, local_h, local_g, local_error, local_count); //TODO: is this working?
             //krnl.waitComplete();
-
-            */
-
+           
+           //TODO: doesnt work, because of integer - float konversion
            transform_point_cloud(cloud, next_transform);
 
             //TODO::use kernel here.

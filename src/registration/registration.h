@@ -19,7 +19,7 @@
 #include <map/local_map.h>
 #include <msg/msgs_stamped.h>
 #include <msg/point.h>
-//#include <hw/kernels/reg_kernel.h>
+#include <hw/kernels/reg_kernel.h>
 
 namespace fastsense::registration
 {

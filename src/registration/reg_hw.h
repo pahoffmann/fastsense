@@ -13,14 +13,17 @@
 
 #include <cmath>
 
-#define MAT_A_ROWS 4
-#define MAT_A_COLS 4
-#define MAT_B_ROWS 4
-#define MAT_B_COLS 4
+#define MAT_A_ROWS 6
+#define MAT_A_COLS 1
+#define MAT_B_ROWS 1
+#define MAT_B_COLS 6
 
-typedef int mat_a_t;
-typedef int mat_b_t;
-typedef int result_t; // select the required bit width
+typedef long mat_a_t;
+typedef long mat_b_t;
+typedef long result_t; // select the required bit width
+
+namespace fastsense::registration
+{
 
 // Prototype of top level function for C-synthesis
 void MatrixMul(
@@ -56,4 +59,6 @@ void MatrixMul(
 				}
 		}
 	}
+}
+
 }
