@@ -20,7 +20,6 @@ class BridgeBase
 {
 private:
     comm::Receiver<T> receiver_;
-    T msg_;
     ros::Publisher pub_;
 
 public:
@@ -37,8 +36,10 @@ public:
     
     virtual void run() 
     {
-        std::cout << "Attempting to receive\n";
         receiver_.receive(msg_);
+        return;
+
+        // TODO segfault during conversion
         convert();
         publish();
     }
@@ -54,6 +55,7 @@ public:
     }
 
 protected:
+    T msg_;
     virtual void convert() = 0;
     virtual void publish() = 0;
 };

@@ -40,6 +40,9 @@ void TSDFBridge::run()
     while (running && ros::ok())
     {
         BridgeBase::run();
+        std::cout << "TSDF: \n";
+        std::cout << msg_.tau_ << "\n";
+        std::cout << msg_.map_resolution_ << "\n";
     }
 }
 

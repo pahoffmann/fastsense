@@ -81,11 +81,12 @@ int Application::run()
 
     msg::ImuMsg imu_msg;
     imu_msg.acc += 1;
-    imu_msg.ang += 2;
-    imu_msg.mag += 2;
+    imu_msg.acc.z() = -9.81;
+    imu_msg.ang += 0;
+    imu_msg.mag += 0;
 
-    comm::Sender<comm::TSDFBridgeMessage> tsdf_sender{"localhost:6666"};
-    comm::Sender<msg::ImuMsg> imu_sender{"localhost:5555"};
+    comm::Sender<comm::TSDFBridgeMessage> tsdf_sender{"192.168.1.1", 6666};
+    comm::Sender<msg::ImuMsg> imu_sender{"192.168.1.1", 5555};
 
     while (true) {
         // Iteration done

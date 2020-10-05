@@ -50,6 +50,8 @@ void ImuBridge::run()
     while (running && ros::ok())
     {
         BridgeBase::run();
+        std::cout << "Imu: \n";
+        std::cout << msg_ << "\n";
     }
 }
 
