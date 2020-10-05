@@ -10,43 +10,43 @@
 
 using namespace fastsense::map;
 
-GlobalMap::GlobalMap(std::string name, int initialTsdfValue, int initialWeight)
-    : file{name, HighFive::File::OpenOrCreate | HighFive::File::Truncate}, // Truncate clears already existing file
-      initialTsdfValue{initialTsdfValue},
-      initialWeight{initialWeight},
-      activeChunks{},
-      numPoses{0}
+GlobalMap::GlobalMap(std::string name, int initial_tsdf_value, int initial_weight)
+    : file_{name, HighFive::File::OpenOrCreate | HighFive::File::Truncate}, // Truncate clears already existing file
+      initial_tsdf_value_{initial_tsdf_value},
+      initial_weight_{initial_weight},
+      active_chunks_{},
+      num_poses_{0}
 {
-    if (!file.exist("/map"))
+    if (!file_.exist("/map"))
     {
-        file.createGroup("/map");
+        file_.createGroup("/map");
     }
-    if (!file.exist("/poses"))
+    if (!file_.exist("/poses"))
     {
-        file.createGroup("/poses");
+        file_.createGroup("/poses");
     }
 }
 
-std::string GlobalMap::tagFromChunkPos(const Vector3i& pos)
+std::string GlobalMap::tag_from_chunk_pos(const Vector3i& pos)
 {
     std::stringstream ss;
     ss << pos.x() << "_" << pos.y() << "_" << pos.z();
     return ss.str();
 }
 
-int GlobalMap::indexFromPos(Vector3i pos, const Vector3i& chunkPos)
+int GlobalMap::index_from_pos(Vector3i pos, const Vector3i& chunkPos)
 {
     pos -= chunkPos * CHUNK_SIZE;
     return (pos.x() * CHUNK_SIZE * CHUNK_SIZE + pos.y() * CHUNK_SIZE + pos.z()) * 2;
 }
 
-std::vector<int>& GlobalMap::activateChunk(const Vector3i& chunkPos)
+std::vector<int>& GlobalMap::activate_chunk(const Vector3i& chunkPos)
 {
     int index = -1;
-    int n = activeChunks.size(); // == ages.size() == activeChunkPos.size()
+    int n = active_chunks_.size();
     for (int i = 0; i < n; i++)
     {
-        if (activeChunks[i].pos == chunkPos)
+        if (active_chunks_[i].pos == chunkPos)
         {
             // chunk is already active
             index = i;
@@ -59,8 +59,8 @@ std::vector<int>& GlobalMap::activateChunk(const Vector3i& chunkPos)
         newChunk.pos = chunkPos;
         newChunk.age = 0;
 
-        HighFive::Group g = file.getGroup("/map");
-        auto tag = tagFromChunkPos(chunkPos);
+        HighFive::Group g = file_.getGroup("/map");
+        auto tag = tag_from_chunk_pos(chunkPos);
         if (g.exist(tag))
         {
             // read chunk from file
@@ -73,17 +73,17 @@ std::vector<int>& GlobalMap::activateChunk(const Vector3i& chunkPos)
             newChunk.chunk = std::vector<int>(TOTAL_SIZE);
             for (int i = 0; i < SINGLE_SIZE; i++)
             {
-                newChunk.chunk[2 * i] = initialTsdfValue;
-                newChunk.chunk[2 * i + 1] = initialWeight;
+                newChunk.chunk[2 * i] = initial_tsdf_value_;
+                newChunk.chunk[2 * i + 1] = initial_weight_;
             }
         }
-        // put new chunk into activeChunks
+        // put new chunk into active_chunks_
         if (n < NUM_CHUNKS)
         {
             // there is still room for active chunks
             index = n;
             newChunk.age = n; // temporarily assign oldest age so that all other ages get incremented
-            activeChunks.push_back(newChunk);
+            active_chunks_.push_back(newChunk);
         }
         else
         {
@@ -91,68 +91,69 @@ std::vector<int>& GlobalMap::activateChunk(const Vector3i& chunkPos)
             int max = -1;
             for (int i = 0; i < n; i++)
             {
-                if (activeChunks[i].age > max)
+                if (active_chunks_[i].age > max)
                 {
-                    max = activeChunks[i].age;
+                    max = active_chunks_[i].age;
                     index = i;
                 }
             }
-            auto tag = tagFromChunkPos(activeChunks[index].pos);
-
-            if(tag == "-1_0_0")
-            {
-                std::cout << "test" << std::endl;
-            }
+            auto tag = tag_from_chunk_pos(active_chunks_[index].pos);
 
             if (g.exist(tag))
             {
                 auto d = g.getDataSet(tag);
-                d.write(activeChunks[index].chunk);
+                d.write(active_chunks_[index].chunk);
             }
             else
             {
-                g.createDataSet(tag, activeChunks[index].chunk);
+                g.createDataSet(tag, active_chunks_[index].chunk);
             }
             // overwrite with new chunk
-            activeChunks[index] = newChunk;
+            active_chunks_[index] = newChunk;
         }
     }
     // update ages
-    int age = activeChunks[index].age;
-    for (auto& chunk : activeChunks)
+    int age = active_chunks_[index].age;
+    for (auto& chunk : active_chunks_)
     {
         if (chunk.age < age)
         {
             chunk.age++;
         }
     }
-    activeChunks[index].age = 0;
-    return activeChunks[index].chunk;
+    active_chunks_[index].age = 0;
+    return active_chunks_[index].chunk;
 }
 
-std::pair<int, int> GlobalMap::getValue(const Vector3i& pos)
+std::pair<int, int> GlobalMap::get_value(const Vector3i& pos)
 {
     Vector3i chunkPos = floor_shift(pos, CHUNK_SHIFT);
-    const auto& chunk = activateChunk(chunkPos);
-    int index = indexFromPos(pos, chunkPos);
+    const auto& chunk = activate_chunk(chunkPos);
+    int index = index_from_pos(pos, chunkPos);
     return std::make_pair(chunk[index], chunk[index + 1]);
 }
 
-void GlobalMap::setValue(const Vector3i& pos, const std::pair<int, int>& value)
+void GlobalMap::set_value(const Vector3i& pos, const std::pair<int, int>& value)
 {
     Vector3i chunkPos = floor_shift(pos, CHUNK_SHIFT);
-    auto& chunk = activateChunk(chunkPos);
-    int index = indexFromPos(pos, chunkPos);
+    auto& chunk = activate_chunk(chunkPos);
+    int index = index_from_pos(pos, chunkPos);
     chunk[index] = value.first;
     chunk[index + 1] = value.second;
 }
 
-void GlobalMap::savePose(float x, float y, float z, float roll, float pitch, float yaw)
+void GlobalMap::save_pose(float x, float y, float z, float roll, float pitch, float yaw)
 {
-    HighFive::Group g = file.getGroup("/poses");
+    HighFive::Group g = file_.getGroup("/poses");
     std::vector<float> pose {x, y, z, roll, pitch, yaw};
     std::stringstream ss;
-    ss << numPoses;
+    ss << num_poses_;
     g.createDataSet(ss.str(), pose);
-    numPoses++;
+    num_poses_++;
+}
+
+void GlobalMap::write_back()
+{
+    // TODO: write back
+    file_.flush();
 }

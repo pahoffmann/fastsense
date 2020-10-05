@@ -3,7 +3,7 @@
  * @author Juri Vana
  */
 
-/*#include <map/local_map.h>
+#include <map/local_map.h>
 #include <hw/fpga_manager.h>
 #include "catch2_config.h"
 
@@ -13,12 +13,17 @@ using namespace fastsense::map;
 using namespace fastsense::hw;
 using namespace fastsense::kernels;
 
-TEST_CASE("Test Map", "[Map]")
+TEST_CASE("Map", "[Map]")
 {
-    std::cout << "Testing 'Test Map'" << std::endl;
+    std::cout << "Testing 'Map'" << std::endl;
     std::shared_ptr<GlobalMap> gm_ptr = std::make_shared<GlobalMap>("MapTest.h5", 0, 7);
     auto commandQueue = FPGAManager::create_command_queue();
     LocalMap localMap{5, 5, 5, gm_ptr, commandQueue};
+
+    int test = 21;
+    CHECK(test == 21);
+
+    /*
 
     // write some tsdf values and weights into one corner of the ring buffer,
     // that will be written to the file as one chunk
@@ -34,9 +39,9 @@ TEST_CASE("Test Map", "[Map]")
     localMap.value(-1, 1, 0) = p3;
     localMap.value(-2, 0, 0) = p4;
     localMap.value(-1, 0, 0) = p5;
-
-    auto& pos = localMap.getPos();
-    auto& size = localMap.getSize();
+    
+    auto& pos = localMap.get_pos();
+    auto& size = localMap.get_size();
 
     // test getter
     CHECK(pos[0] == 0);
@@ -45,9 +50,9 @@ TEST_CASE("Test Map", "[Map]")
     CHECK(size[0] == 5);
     CHECK(size[1] == 5);
     CHECK(size[2] == 5);
-    // test inBounds
-    CHECK(localMap.inBounds(0, 2, -2));
-    CHECK(!localMap.inBounds(22, 0, 0));
+    // test in_bounds
+    CHECK(localMap.in_bounds(0, 2, -2));
+    CHECK(!localMap.in_bounds(22, 0, 0));
     // test default values
     CHECK(localMap.value(0, 0, 0).first == 0);
     CHECK(localMap.value(0, 0, 0).second == 7);
@@ -63,8 +68,8 @@ TEST_CASE("Test Map", "[Map]")
     // shift so that the chunk gets unloaded
     localMap.shift(24, 0, 0);
 
-    auto pos1 = localMap.getPos();
-    auto size1 = localMap.getSize();
+    auto pos1 = localMap.get_pos();
+    auto size1 = localMap.get_size();
 
     // test getter
     CHECK(pos1[0] == 24);
@@ -73,9 +78,9 @@ TEST_CASE("Test Map", "[Map]")
     CHECK(size1[0] == 5);
     CHECK(size1[1] == 5);
     CHECK(size1[2] == 5);
-    // test inBounds
-    CHECK(!localMap.inBounds(0, 2, -2));
-    CHECK(localMap.inBounds(22, 0, 0));
+    // test in_bounds
+    CHECK(!localMap.in_bounds(0, 2, -2));
+    CHECK(localMap.in_bounds(22, 0, 0));
     // test values
     CHECK(localMap.value(24, 0, 0).first == 0);
     CHECK(localMap.value(24, 0, 0).second == 7);
@@ -119,4 +124,6 @@ TEST_CASE("Test Map", "[Map]")
     CHECK(pose[i++] == 610);
     CHECK(pose[i++] == 987);
     CHECK(pose[i++] == 1597);
-}*/
+
+    */
+}

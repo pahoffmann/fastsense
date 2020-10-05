@@ -25,7 +25,7 @@ public:
     {
         resetNArg();
         setArg(map.getBuffer().getBuffer());
-        auto m = map.getHardwareRepresentation();
+        auto m = map.get_hardware_representation();
         setArg(m.sizeX);
         setArg(m.sizeY);
         setArg(m.sizeZ);

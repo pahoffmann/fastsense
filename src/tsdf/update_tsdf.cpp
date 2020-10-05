@@ -65,7 +65,7 @@ void update_tsdf(const ScanPoints_t& scan_points,
                 continue;
             }
             prev = index;
-            if (!buffer.inBounds(index))
+            if (!buffer.in_bounds(index))
             {
                 continue;
             }
@@ -102,7 +102,7 @@ void update_tsdf(const ScanPoints_t& scan_points,
 
             for (index.z() = lowest; index.z() <= highest; index.z()++)
             {
-                if (!buffer.inBounds(index))
+                if (!buffer.in_bounds(index))
                 {
                     continue;
                 }

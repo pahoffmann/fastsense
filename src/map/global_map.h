@@ -14,7 +14,7 @@
 
 #include <util/types.h>
 
-// TODO handle existing/missing folder, where hdf5 will write
+// TODO: (maybe) handle existing/missing folder, where hdf5 will write
 
 namespace fastsense::map
 {
@@ -37,10 +37,22 @@ class GlobalMap
 
 private:
 
-    /// Side length of the cube-shaped chunks. One chunk contains CHUNK_SIZE^3 * 2 entries (tsdf values and weights).
+    /**
+     * log(CHUNK_SIZE).
+     * The side length is a power of 2 so that divisions by the side length can be accomplished by shifting.
+     */
     const int CHUNK_SHIFT = 6;
+
+    /// Side length of the cube-shaped chunks (2^CHUNK_SHIFT).
     const int CHUNK_SIZE = 1 << CHUNK_SHIFT;
-    const int SINGLE_SIZE = 1 << (3 * CHUNK_SHIFT); // 3 Dimensions
+
+    /// Number of voxels in one chunk (CHUNK_SIZE^3). 
+    const int SINGLE_SIZE = 1 << (3 * CHUNK_SHIFT); // = CHUNK_SIZE * CHUNK_SIZE * CHUNK_SIZE
+
+    /**
+     * Number of entries in one chunk (SINGLE_SIZE * 2).
+     * Per voxel a tsdf value and a weight is stored.
+     */
     const int TOTAL_SIZE = SINGLE_SIZE * 2;
 
     /// Maximum number of active chunks.
@@ -66,28 +78,28 @@ private:
      * | |-1   pose datasets named in ascending order containing 6 values each
      * | |-2 /
      */
-    HighFive::File file;
+    HighFive::File file_;
 
     /// Initial default tsdf value.
-    int initialTsdfValue;
+    int initial_tsdf_value_;
 
     /// Initial default weight.
-    int initialWeight;
+    int initial_weight_;
 
     /**
      * Vector of active chunks.
      */
-    std::vector<ActiveChunk> activeChunks;
+    std::vector<ActiveChunk> active_chunks_;
 
     /// Number of poses that are saved in the HDF5 file
-    int numPoses;
+    int num_poses_;
 
     /**
      * Given a position in a chunk the tag of the chunk gets returned.
      * @param pos the position
      * @return tag of the chunk
      */
-    std::string tagFromChunkPos(const Vector3i& pos);
+    std::string tag_from_chunk_pos(const Vector3i& pos);
 
     /**
      * Returns the index of a global position in a chunk.
@@ -96,7 +108,7 @@ private:
      * @param pos the position
      * @return index in the chunk
      */
-    int indexFromPos(Vector3i pos, const Vector3i& chunkPos);
+    int index_from_pos(Vector3i pos, const Vector3i& chunkPos);
 
     /**
      * Activates a chunk and returns it by reference.
@@ -108,7 +120,7 @@ private:
      * @param chunk position of the chunk that gets activated
      * @return reference to the activated chunk
      */
-    std::vector<int>& activateChunk(const Vector3i& chunk);
+    std::vector<int>& activate_chunk(const Vector3i& chunk);
 
 public:
 
@@ -120,21 +132,21 @@ public:
      * @param initialTsdfValue initial default tsdf value
      * @param initialWeight initial default weight
      */
-    GlobalMap(std::string name, int initialTsdfValue, int initialWeight);
+    GlobalMap(std::string name, int initial_tsdf_value, int initial_weight);
 
     /**
      * Returns a value pair consisting of a tsdf value and a weight from the map.
      * @param pos the position
      * @return value pair from the map
      */
-    std::pair<int, int> getValue(const Vector3i& pos);
+    std::pair<int, int> get_value(const Vector3i& pos);
 
     /**
      * Sets a value pair consisting of a tsdf value and a weight on the map.
      * @param pos the position
      * @param value value pair that is set
      */
-    void setValue(const Vector3i& pos, const std::pair<int, int>& value);
+    void set_value(const Vector3i& pos, const std::pair<int, int>& value);
 
     /**
      * Saves a pose in the HDF5 file.
@@ -145,17 +157,12 @@ public:
      * @param pitch pitch value of the rotation of the pose
      * @param yaw yaw value of the rotation of the pose
      */
-    void savePose(float x, float y, float z, float roll, float pitch, float yaw);
+    void save_pose(float x, float y, float z, float roll, float pitch, float yaw);
 
-    void flush()
-    {
-        file.flush();
-    }
-
-    ~GlobalMap()
-    {
-        flush();
-    }
+    /**
+     * Writes all active chunks into the HDF5 file.
+     */
+    void write_back();
 
 };
 
