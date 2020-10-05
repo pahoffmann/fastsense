@@ -48,7 +48,7 @@ struct SlamConfig : public ConfigGroup
     DECLARE_CONFIG_ENTRY(unsigned int, map_size_x);
     DECLARE_CONFIG_ENTRY(unsigned int, map_size_y);
     DECLARE_CONFIG_ENTRY(unsigned int, map_size_z);
-    DECLARE_CONFIG_ENTRY(float, max_weight);
+    DECLARE_CONFIG_ENTRY(int, max_weight);
     DECLARE_CONFIG_ENTRY(float, initial_map_weight);
 
 };

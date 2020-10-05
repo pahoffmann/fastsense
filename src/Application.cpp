@@ -9,6 +9,7 @@
 #include <cstring>
 #include <registration/registration.h>
 #include <callback/cloud_callback.h>
+#include <callback/imu_callback.h>
 #include <map/local_map.h>
 #include <map/global_map.h>
 
@@ -20,6 +21,7 @@ using fastsense::registration::Registration;
 using fastsense::map::LocalMap;
 using fastsense::map::GlobalMap;
 using fastsense::callback::CloudCallback;
+using fastsense::callback::ImuCallback;
 
 template<typename T>
 class Runner
@@ -64,6 +66,19 @@ int Application::run()
     Runner<fastsense::driver::Imu> run_imuDriver(imuDriver);
     Logger::info("Application started");
 
+
+    Registration registration{ConfigManager::config().registration.max_iterations(), ConfigManager::config().registration.it_weight_gradient()};
+    std::shared_ptr<GlobalMap> global_map_ptr = std::make_shared<GlobalMap>("GlobalMap.h5", ConfigManager::config().slam.max_distance() / ConfigManager::config().slam.map_resolution(), ConfigManager::config().slam.initial_map_weight());
+    fastsense::CommandQueuePtr q = fastsense::hw::FPGAManager::create_command_queue();
+    LocalMap local_map{ConfigManager::config().slam.map_size_x(), ConfigManager::config().slam.map_size_y(), ConfigManager::config().slam.map_size_z(), global_map_ptr, q};
+    Matrix4f pose = Matrix4f::Identity();
+
+    CloudCallback cloud_callback{registration, pointcloudBuffer, local_map, global_map_ptr, pose};
+    Runner<CloudCallback> run_cloud_callback{cloud_callback};
+
+    ImuCallback imu_callback{registration, imuBuffer};
+    Runner<ImuCallback> run_imu_callback{imu_callback};
+
     int sig;
     int ret = sigwait(&signal_set, &sig);
     if (ret == -1)
@@ -72,18 +87,6 @@ int Application::run()
         Logger::fatal("Wait for signal failed (", std::strerror(err), ")! Stopping Application...");
         return -1;
     }
-
-    //TODO: TSDF Slam
-    Registration registration{ConfigManager::config().registration.max_iterations(), ConfigManager::config().registration.it_weight_gradient()};
-    std::shared_ptr<GlobalMap> global_map_ptr = std::make_shared<GlobalMap>("GlobalMap.h5", ConfigManager::config().slam.max_distance() / ConfigManager::config().slam.map_resolution(), ConfigManager::config().slam.initial_map_weight());
-    fastsense::CommandQueuePtr q = fastsense::hw::FPGAManager::create_command_queue();
-    LocalMap local_map{ConfigManager::config().slam.map_size_x(), ConfigManager::config().slam.map_size_y(), ConfigManager::config().slam.map_size_z(), global_map_ptr, q};
-    Matrix4f pose = Matrix4f::Identity();
-
-    CloudCallback cloud_callback{registration, pointcloudBuffer, local_map, global_map_ptr, pose};
-    
-    Runner<CloudCallback> run_cloud_callback{cloud_callback};
-
 
     Logger::info("Stopping Application...");
     return 0;

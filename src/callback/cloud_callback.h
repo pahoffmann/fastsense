@@ -12,6 +12,8 @@
 #include <msg/msgs_stamped.h>
 #include <map/local_map.h>
 #include <eigen3/Eigen/Dense>
+#include <util/config/config_manager.h>
+#include <tsdf/update_tsdf.h>
 
 namespace fastsense::callback
 {
@@ -21,6 +23,7 @@ namespace fastsense::callback
     using fastsense::map::LocalMap;
     using fastsense::map::GlobalMap;
     using Eigen::Matrix4f;
+    using fastsense::util::config::ConfigManager;
 
     class CloudCallback : public fastsense::util::ProcessThread{
         public:
@@ -40,5 +43,6 @@ namespace fastsense::callback
             LocalMap& local_map;
             std::shared_ptr<GlobalMap>& global_map;
             Matrix4f& pose;
+            bool first_iteration;
     };
 }

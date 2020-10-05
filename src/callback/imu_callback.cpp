@@ -9,7 +9,7 @@
 
 using namespace fastsense::callback;
 
-ImuCallback::ImuCallback(Registration& registration, ImuBuffer& imu_buffer)
+ImuCallback::ImuCallback(Registration& registration, std::shared_ptr<ImuBuffer>& imu_buffer)
      : ProcessThread(), 
      registration{registration}, 
      imu_buffer{imu_buffer}{}
@@ -27,7 +27,8 @@ void ImuCallback::stop(){
 
 void ImuCallback::callback(){
     while(running){
-        fastsense::msg::ImuMsgStamped point_cloud;
-        imu_buffer.pop(&point_cloud);
+        fastsense::msg::ImuMsgStamped imu;
+        imu_buffer->pop(&imu);
+        registration.update_imu_data(imu);
     }
 }

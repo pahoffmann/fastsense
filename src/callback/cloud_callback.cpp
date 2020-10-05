@@ -15,7 +15,8 @@ CloudCallback::CloudCallback(Registration& registration, std::shared_ptr<PointCl
      cloud_buffer{cloud_buffer},
      local_map{local_map},
      global_map{global_map},
-     pose{pose}{}
+     pose{pose},
+     first_iteration{true}{}
 
 void CloudCallback::start(){
     if(not running){
@@ -51,5 +52,24 @@ void CloudCallback::callback(){
         fastsense::msg::PointCloudStamped point_cloud;
         cloud_buffer->pop(&point_cloud);
 
+        ScanPoints_t scan_points(point_cloud.first->points_.size());
+        preprocess_scan(point_cloud, scan_points, ConfigManager::config().slam.map_resolution(), pose);
+
+        if(first_iteration){
+            first_iteration = true;
+        }else{
+            Matrix4f transform = registration.register_cloud(local_map, scan_points);
+            pose = transform * pose;
+            int x = (int)std::floor(pose(0, 3));
+            int y = (int)std::floor(pose(1, 3));
+            int z = (int)std::floor(pose(2, 3));
+            local_map.shift(x, y, z);
+        }
+
+        Vector3i pose_integer;
+        pose_integer << (int)std::floor(pose(0, 3)), (int)std::floor(pose(1, 3)), (int)std::floor(pose(2, 3));
+
+        int tau = (int)(ConfigManager::config().slam.max_distance() / ConfigManager::config().slam.map_resolution());
+        fastsense::tsdf::update_tsdf(scan_points, pose_integer, local_map, tau, ConfigManager::config().slam.max_weight());
     }
 }

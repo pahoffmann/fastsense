@@ -19,7 +19,7 @@ namespace fastsense::callback
 
     class ImuCallback : public fastsense::util::ProcessThread{
         public:
-            ImuCallback(Registration& registration, ImuBuffer& imu_buffer);
+            ImuCallback(Registration& registration, std::shared_ptr<ImuBuffer>& imu_buffer);
 
             void start() override;
 
@@ -29,7 +29,7 @@ namespace fastsense::callback
 
         private:
             Registration& registration;
-            ImuBuffer& imu_buffer;
+            std::shared_ptr<ImuBuffer>& imu_buffer;
 
     };
 }
