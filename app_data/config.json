@@ -18,8 +18,8 @@
     },
 
     "tsdfSlam": {
-        "max_distance": 0.8,
-        "map_resolution": 0.08,
+        "max_distance": 800, //in mm 
+        "map_resolution": 64, //in mm
         "map_size_x": 20,
         "map_size_y": 20,
         "map_size_z": 5,
