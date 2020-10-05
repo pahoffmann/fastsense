@@ -4,6 +4,8 @@
 
 #include "catch2_config.h"
 
+#include <iostream>
+
 #include <util/config/config_manager.h>
 
 using namespace fastsense::util::config;
@@ -68,8 +70,10 @@ static const std::string TEST_STRING_WRONG_NAME(
 
 TEST_CASE("load configuration", "[ConfigManager]")
 {
+    std::cout << "Testing 'load configuration'" << std::endl;
     SECTION("loading string")
     {
+        std::cout << "    Section 'loading string'" << std::endl;
         TestConfigManager::loadString(TEST_STRING);
         REQUIRE(TestConfigManager::config().subGroup.myInt() == 4321);
         REQUIRE(TestConfigManager::config().subGroup.myString() == "Hello String!");
@@ -78,6 +82,7 @@ TEST_CASE("load configuration", "[ConfigManager]")
 
     SECTION("load file")
     {
+        std::cout << "    Section 'load file'" << std::endl;
         TestConfigManager::loadFile("config.json");
         REQUIRE(TestConfigManager::config().subGroup.myInt() == 1234);
         REQUIRE(TestConfigManager::config().subGroup.myString() == "Hello File!");
@@ -86,6 +91,7 @@ TEST_CASE("load configuration", "[ConfigManager]")
 
     SECTION("load partial")
     {
+        std::cout << "    Section 'load partial'" << std::endl;
         TestConfigManager::loadString(TEST_STRING);
         TestConfigManager::loadString(TEST_STRING_PARTIAL);
         REQUIRE(TestConfigManager::config().subGroup.myInt() == 4321);
@@ -95,6 +101,7 @@ TEST_CASE("load configuration", "[ConfigManager]")
 
     SECTION("load wrong data throws")
     {
+        std::cout << "    Section 'load wrong data throws'" << std::endl;
         REQUIRE_THROWS(TestConfigManager::loadString(TEST_STRING_WRONG_TYPE));
         REQUIRE_THROWS(TestConfigManager::loadString(TEST_STRING_WRONG_NAME));
     }
@@ -102,8 +109,10 @@ TEST_CASE("load configuration", "[ConfigManager]")
 
 TEST_CASE("export configuration", "[ConfigManager]")
 {
+    std::cout << "Testing 'export configuration'" << std::endl;
     SECTION("create string")
     {
+        std::cout << "    Section 'create string'" << std::endl;
         TestConfigManager::loadString(TEST_STRING);
         std::string str = TestConfigManager::createString();
         TestConfigManager::loadString(TEST_STRING_ZERO);
@@ -115,6 +124,7 @@ TEST_CASE("export configuration", "[ConfigManager]")
 
     SECTION("create string")
     {
+        std::cout << "    Section 'create string'" << std::endl;
         TestConfigManager::loadString(TEST_STRING);
         TestConfigManager::writeFile("test.json");
         TestConfigManager::loadString(TEST_STRING_ZERO);
@@ -128,6 +138,7 @@ TEST_CASE("export configuration", "[ConfigManager]")
 
 TEST_CASE("configuration event handler", "[ConfigManager]")
 {
+    std::cout << "Testing 'configuration event handler'" << std::endl;
     bool handlerCalled = false;
     auto handle = TestConfigManager::config().myFloat.addHandler([&](float /*unused*/)
     {

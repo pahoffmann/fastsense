@@ -5,7 +5,7 @@
  */
 
 #include <util/params.h>
-#include "xyz_buffer.h"
+#include <util/xyz_buffer.h>
 
 namespace fastsense::msg
 {

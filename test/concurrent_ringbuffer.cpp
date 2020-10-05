@@ -15,7 +15,8 @@ using namespace fastsense::util::config;
 using namespace fastsense::msg;
 
 TEST_CASE("Test Buffer STL Container", "[]")
-{   
+{
+    std::cout << "Testing 'Test Buffer STL Container'" << std::endl;   
     constexpr size_t buffer_size = 5;
     data::ImuStampedBufferPtr imuBuffer{std::make_shared<data::ImuStampedBuffer>(buffer_size)};
     
@@ -29,6 +30,7 @@ TEST_CASE("Test Buffer STL Container", "[]")
 
     SECTION("Test #1")
     {
+        std::cout << "    Section 'Test #1'" << std::endl;
 
     }
 }

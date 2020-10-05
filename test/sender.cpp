@@ -12,7 +12,8 @@ using fastsense::comm::Sender;
 
 TEST_CASE("Send 10 Points", "[!hide]")
 {
-    Sender<Point> sender("localhost:5555");
+    std::cout << "Testing 'Send 10 Points'" << std::endl;
+    Sender<Point> sender("localhost", 5555);
 
     Point p;
     p.x = 1;

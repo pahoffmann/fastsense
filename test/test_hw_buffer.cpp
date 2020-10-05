@@ -25,11 +25,12 @@ static const std::string error_message =
 
 TEST_CASE("Test krnl_vadd.cpp", "")
 {
+    std::cout << "Testing 'Test krnl_vadd.cpp'" << std::endl;
     const char* xclbinFilename = "FastSense_test.xclbin";
 
-    fs::hw::FPGAManager::loadXCLBIN(xclbinFilename);
+    fs::hw::FPGAManager::load_xclbin(xclbinFilename);
 
-    fs::CommandQueuePtr q = fs::hw::FPGAManager::createCommandQueue();
+    fs::CommandQueuePtr q = fs::hw::FPGAManager::create_command_queue();
 
     // These commands will allocate memory on the Device. The cl::Buffer objects can
     // be used to reference the memory locations on the device.
@@ -47,6 +48,7 @@ TEST_CASE("Test krnl_vadd.cpp", "")
 
     SECTION("Test operator*")
     {
+        std::cout << "    Section 'Test operator*'" << std::endl;
         auto it = buffer_a.begin();
         for (int i = 0 ; i < DATA_SIZE; i++)
         {   
@@ -73,12 +75,14 @@ TEST_CASE("Test krnl_vadd.cpp", "")
 
     SECTION("Test operator* (const)")
     {
+        std::cout << "    Section 'Test operator* (const)'" << std::endl;
         const auto& it = buffer_a.cbegin();
         REQUIRE(*it == 10);
     }
 
     SECTION("Test operator==")
     {
+        std::cout << "    Section 'Test operator=='" << std::endl;
         const auto& it = buffer_a.cbegin();
         const auto& comp_it = buffer_a.cbegin();
         for (int i = 0 ; i < DATA_SIZE; i++)
@@ -89,6 +93,7 @@ TEST_CASE("Test krnl_vadd.cpp", "")
 
     SECTION("Test range based loops (const)")
     {
+        std::cout << "    Section 'Test range based loops (const)'" << std::endl;
         for (const auto& it: buffer_a)
         {
             REQUIRE(it == 10);
@@ -102,6 +107,7 @@ TEST_CASE("Test krnl_vadd.cpp", "")
 
     SECTION("Test range based loops")
     {
+        std::cout << "    Section 'Test range based loops'" << std::endl;
         for (auto& it: buffer_a)
         {
             REQUIRE(it == 10);
@@ -115,6 +121,7 @@ TEST_CASE("Test krnl_vadd.cpp", "")
 
     SECTION("Test operator[]")
     {
+        std::cout << "    Section 'Test operator[]'" << std::endl;
         for (int i = 0 ; i < DATA_SIZE; i++)
         {
             REQUIRE(buffer_a[i] == 10);

@@ -6,7 +6,6 @@
 
 #pragma once
 
-#include <tsdf/TSDFParameters.h>
 #include <util/xyz_buffer.h>
 #include <vector>
 

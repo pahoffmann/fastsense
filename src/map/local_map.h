@@ -68,8 +68,6 @@ public:
      */
     LocalMap(unsigned int sX, unsigned int sY, unsigned int sZ, const std::shared_ptr<GlobalMap>& map, const CommandQueuePtr& queue);
 
-    LocalMap();
-
     /**
      * Destructor of the ring buffer.
      * Deletes the array in particular.

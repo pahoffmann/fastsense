@@ -15,6 +15,7 @@ using namespace fastsense::kernels;
 
 TEST_CASE("Test Map", "[Map]")
 {
+    std::cout << "Testing 'Test Map'" << std::endl;
     std::shared_ptr<GlobalMap> gm_ptr = std::make_shared<GlobalMap>("MapTest.h5", 0, 7);
     auto commandQueue = FPGAManager::create_command_queue();
     LocalMap localMap{5, 5, 5, gm_ptr, commandQueue};

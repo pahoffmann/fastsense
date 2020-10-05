@@ -13,9 +13,11 @@
 using namespace fastsense::util;
 
 TEST_CASE("Test XZYBuffer", "[]")
-{   
+{
+    std::cout << "Testing 'Test XZYBuffer'" << std::endl;   
     SECTION("Test Constructors")
     {
+        std::cout << "    Section 'Test Constructors'" << std::endl;
         {
             XYZBuffer<int> buffer{1, 2, 3};
             REQUIRE(buffer.x() == 1);
@@ -31,7 +33,8 @@ TEST_CASE("Test XZYBuffer", "[]")
     }
 
     SECTION("Test Operator: +")
-    {   
+    {
+        std::cout << "    Section 'Test Operator: +'" << std::endl;   
         {
             auto buffer = XYZBuffer<int>{0, 1, 2} + XYZBuffer<int>{2, 3, 4};
             REQUIRE(buffer.x() == 2);
@@ -61,7 +64,8 @@ TEST_CASE("Test XZYBuffer", "[]")
     }
 
     SECTION("Test Operator: -")
-    {   
+    {
+        std::cout << "    Section 'Test Operator: -'" << std::endl;   
         {
             auto buffer = XYZBuffer<int>{0, 1, 2} - XYZBuffer<int>{0, 1, 2};
             REQUIRE(buffer.x() == 0);
@@ -91,7 +95,8 @@ TEST_CASE("Test XZYBuffer", "[]")
     }
 
     SECTION("Test Operator: *")
-    {   
+    {
+        std::cout << "    Section 'Test Operator: *'" << std::endl;   
         {
             auto buffer = XYZBuffer<int>{1, 2, 3} * XYZBuffer<int>{1, 2, 3};
             REQUIRE(buffer.x() == 1);
@@ -121,7 +126,8 @@ TEST_CASE("Test XZYBuffer", "[]")
     }
 
     SECTION("Test Operator: /")
-    {   
+    {
+        std::cout << "    Section 'Test Operator: /'" << std::endl;   
         {
             auto buffer = XYZBuffer<int>{1, 1, 2} / XYZBuffer<int>{1, 1, 2};
             REQUIRE(buffer.x() == 1);

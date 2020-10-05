@@ -14,6 +14,7 @@ using namespace fastsense::comm;
 
 TEST_CASE("Receive 10 Points", "[!hide]")
 {
+    std::cout << "Testing 'Receive 10 Points'" << std::endl;
     Receiver<Point> receiver(5555);
 
     for (int i = 0; i < 10; i++)

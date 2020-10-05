@@ -19,8 +19,8 @@ LocalMap::LocalMap(unsigned int sX, unsigned int sY, unsigned int sZ, const std:
             static_cast<int>(sY % 2 == 1 ? sY : sY + 1),
             static_cast<int>(sZ % 2 == 1 ? sZ : sZ + 1)},
       data_{queue, static_cast<size_t>(size_.x() * size_.y() * size_.z())},
-      pos_{0},
-      offset_{size_.x() / 2, size_.y() / 2, size_.z() / 2},
+      pos_{Vector3i::Zero()},
+      offset_{size_ / 2},
       map_{map}
 {
     if (sX % 2 || sY % 2 || sZ % 2)

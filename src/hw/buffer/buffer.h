@@ -312,7 +312,7 @@ public:
     {
         if(index >= num_elements_)
         {
-            throw std::out_of_range("Can't access buffer at index: " + index);
+            throw std::out_of_range(std::string("Can't access buffer at index: ") + std::to_string(index));
         }
         return virtual_address_[index];
     }
@@ -321,7 +321,7 @@ public:
     {
         if(index >= num_elements_)
         {
-            throw std::out_of_range("Can't access buffer at index: " + index);
+            throw std::out_of_range(std::string("Can't access buffer at index: ") + std::to_string(index));
         }
         return virtual_address_[index];
     }
