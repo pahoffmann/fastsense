@@ -4,7 +4,10 @@
  * @author Marcel Flottmann
  */
 
-namespace fastsense::map
+namespace fastsense
+{
+
+namespace map
 {
 
 template<typename T>
@@ -57,7 +60,7 @@ struct LocalMapHW
     T& get(T* data, int x, int y, int z) const
     {
 #pragma HLS INLINE
-        if (inBounds(x, y, z))
+    	if (inBounds(x, y, z))
         {
             return data[getIndex(x, y, z)];
         }
@@ -75,4 +78,6 @@ struct LocalMapHW
     }
 };
 
-} // namespace fastsense::map
+} // namespace map
+
+} // namespace fastsense

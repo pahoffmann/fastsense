@@ -32,22 +32,25 @@ public:
 
     ~TSDFKernel() = default;
 
-    void run(map::LocalMap& map, const ScanPoints_t& scan_points, const Vector3i& scanner_pos, int tau, int max_weight)
+    void run(map::LocalMap& map, const buffer::InputOutputBuffer<Point>& scan_points, const Vector3i& scanner_pos, int tau, int max_weight)
     {
         resetNArg();
 
-        auto queue = fastsense::hw::FPGAManager::create_command_queue();
-        buffer::InputOutputBuffer<Point> point_data(queue, scan_points.size());
-
-        for(size_t i = 0; i < scan_points.size(); ++i)
-        {
-            point_data[i].x = scan_points[i].x();
-            point_data[i].y = scan_points[i].y();
-            point_data[i].z = scan_points[i].z();
-        }
-
-        setArg(point_data.getBuffer());
+        setArg(scan_points.getBuffer());
         setArg(static_cast<int>(scan_points.size()));
+
+        // auto queue = fastsense::hw::FPGAManager::create_command_queue();
+        // buffer::InputOutputBuffer<Point> point_data(queue, scan_points.size());
+
+        // for(size_t i = 0; i < scan_points.size(); ++i)
+        // {
+        //     point_data[i].x = scan_points[i].x();
+        //     point_data[i].y = scan_points[i].y();
+        //     point_data[i].z = scan_points[i].z();
+        // }
+
+        // setArg(point_data.getBuffer());
+        // setArg(static_cast<int>(scan_points.size()));
 
         auto queue2 = fastsense::hw::FPGAManager::create_command_queue();
         buffer::InputOutputBuffer<int> scanner_pos_data(queue2, 3);

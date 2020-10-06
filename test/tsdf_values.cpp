@@ -5,6 +5,7 @@
 #include "catch2_config.h"
 #include <tsdf/ProjectionNormal.h>
 #include <tsdf/update_tsdf.h>
+#include <hw/buffer/buffer.h>
 #include <eval/RuntimeEvaluator.h>
 #include <util/pcd/PCDFile.h>
 #include <iostream>
@@ -111,6 +112,7 @@ TEST_CASE("TSDF_Values", "[tsdf_values]")
 
     SECTION("TSDF Runtime")
     {
+        constexpr unsigned int SCALE = 100;
         constexpr float TAU = 1 * SCALE;
         constexpr float MAX_WEIGHT = 10 * WEIGHT_RESOLUTION;
 
@@ -144,9 +146,7 @@ TEST_CASE("TSDF_Values", "[tsdf_values]")
             }
         }
 
-        ScanPoints_t scan_points_2(scan_points);
-        ScanPoints_t points_pretransformed_trans(scan_points);
-        ScanPoints_t points_pretransformed_rot(scan_points);
+        std::cout << "num points: " << count << std::endl;
 
         std::shared_ptr<fastsense::map::GlobalMap> global_map_ptr(new fastsense::map::GlobalMap("test_global_map", 0.0, 0.0));
         fastsense::map::LocalMap local_map(SIZE_Y, SIZE_Y, SIZE_Z, global_map_ptr, q);

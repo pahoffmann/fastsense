@@ -7,9 +7,9 @@
 
 #include <cmath>
 
-using namespace fastsense::tsdf;
-
 //#include <util/types.h>
+
+using namespace fastsense::map;
 
 constexpr int MAP_SHIFT = 6; 							// bitshift for a faster way to apply MAP_RESOLUTION
 constexpr int MAP_RESOLUTION = 1 << MAP_SHIFT; 			// Resolution of the Map in Millimeter per Cell
@@ -22,6 +22,14 @@ constexpr int MATRIX_RESOLUTION = 1 << MATRIX_SHIFT; 	// Resolutions of calculat
 
 constexpr int RINGS = 16; // TODO: take from Scanner
 const int dz_per_distance = std::tan(30.0 / ((double)RINGS - 1.0) / 180.0 * M_PI) / 2.0 * MATRIX_RESOLUTION;
+
+constexpr unsigned int SCALE = 100;
+constexpr int SIZE_X = 20 * SCALE / MAP_RESOLUTION;
+constexpr int SIZE_Y = 20 * SCALE / MAP_RESOLUTION;
+constexpr int SIZE_Z = 5 * SCALE / MAP_RESOLUTION;
+
+constexpr int NUM_POINTS = 30000;
+
 
 struct Point
 {
@@ -93,13 +101,13 @@ extern "C"
                                        offsetX, offsetY, offsetZ};
 
         int weight_epsilon = tau / 10;
-        IntTuple new_entries[sizeX * sizeY * sizeZ];
-        int map_changes[3 * sizeX * sizeY * sizeZ];
+        IntTuple new_entries[SIZE_X * SIZE_Y * SIZE_Z];
+        //int map_changes[3 * sizeX * sizeY * sizeZ];
         int change_count = 0;
 
-        for(int point_index = 0; point_index < numPoints; ++point_index)
+        point_loop: for(int point_index = 0; point_index < NUM_POINTS; ++point_index)
         {
-#pragma HLS PIPELINE
+//#pragma HLS pipeline
 
             int direction[3];
 
@@ -111,16 +119,15 @@ extern "C"
 
             int prev[] = {0, 0, 0};
 
-            for(int len = MAP_RESOLUTION; len <= distance + tau; len += MAP_RESOLUTION)
+            tsdf_loop: for(int len = MAP_RESOLUTION; len <= distance + tau; len += MAP_RESOLUTION)
             {
-#pragma HLS PIPELINE
 
                 int proj[3];
                 int index[3];
 
-                for(int coor_index = 0; coor_index < 3; ++coor_index)
+                ray_step_loop: for(int coor_index = 0; coor_index < 3; ++coor_index)
                 {
-#pragma HLS unroll factor=3 skip_exit_check
+//#pragma HLS unroll
 
                     proj[coor_index] = scannerPos[coor_index] + direction[coor_index] * len / distance;
                     index[coor_index] = proj[coor_index] / MAP_RESOLUTION;
@@ -131,8 +138,10 @@ extern "C"
                     continue;
                 }
 
-                for(int coor_index = 0; coor_index < 3; ++coor_index)
+                prev_loop: for(int coor_index = 0; coor_index < 3; ++coor_index)
                 {
+//#pragma HLS unroll
+
                     prev[coor_index] = index[coor_index];
                 }
 
@@ -144,9 +153,9 @@ extern "C"
                 int target_center[3];
                 int value_vec[3];
 
-                for(int coor_index = 0; coor_index < 3; ++coor_index)
+                target_loop: for(int coor_index = 0; coor_index < 3; ++coor_index)
                 {
-#pragma HLS unroll factor=3 skip_exit_check
+//#pragma HLS unroll
 
                     target_center[coor_index] = index[coor_index] * MAP_RESOLUTION + MAP_RESOLUTION / 2;
                 }            
@@ -183,37 +192,175 @@ extern "C"
                 int lowest = (proj[2] - delta_z) / MAP_RESOLUTION;
                 int highest = (proj[2] + delta_z) / MAP_RESOLUTION;
 
-                for(index[2] = lowest; index[2] <= highest; ++index[2])
+                //auto entry = map.get(new_entries, index[0], index[1], index[2]);
+
+                //entry.first = value;
+                //entry.second = weight;
+
+                //map.set(new_entries, index[0], index[1], index[2], entry);
+
+                interpolate_loop: for(int z = lowest; z <= highest; ++z)
                 {
-                    if(!map.inBounds(index[0], index[1], index[2]))
+
+                    if(!map.inBounds(index[0], index[1], z))
                     {
                         continue;
                     }
 
-                    auto entry = map.get(new_entries, index[0], index[1], index[2]);
+                    IntTuple entry = map.get(new_entries, index[0], index[1], z);
 
-                    if(entry.second == 0 || std::abs(value) < std::abs(entry.first)) 
+                    entry.first = value;
+                    entry.second = weight;
+
+                    IntTuple new_entry;
+
+                    if(entry.second == 0 || hw_abs(value) < hw_abs(entry.first))
                     {
-                        // if(entry.second == 0)
-                        // {
-                        //     int map_pos = index[0] + index[1] * sizeX + index[2] * sizeX * sizeY;
-                        //     int change_pos = change_count * 3;
 
-                        //     map_changes[change_pos]     = index[0];
-                        //     map_changes[change_pos + 1] = index[1];
-                        //     map_changes[change_pos + 2] = index[2];
-
-                        //     ++change_count;
-                        // }
-
-                        entry.first = value;
-                        entry.second = weight;
-
-                        map.set(new_entries, index[0], index[1], index[2], entry);
+//                        // if(entry.second == 0)
+//                        // {
+//                        //     int map_pos = index[0] + index[1] * sizeX + index[2] * sizeX * sizeY;
+//                        //     int change_pos = change_count * 3;
+//
+//                        //     map_changes[change_pos]     = index[0];
+//                        //     map_changes[change_pos + 1] = index[1];
+//                        //     map_changes[change_pos + 2] = index[2];
+//
+//                        //     ++change_count;
+//                        //}
+//
+                        new_entry.first = value;
+                        new_entry.second = weight;
                     }
+                    else
+                    {
+                    	new_entry.first = entry.first;
+                    	new_entry.second = entry.second;
+                    }
+
+                    map.set(new_entries, index[0], index[1], z, new_entry);
                 }
             }
         }
+
+
+//         for(int point_index = 0; point_index < numPoints; ++point_index)
+//         {
+// #pragma HLS PIPELINE
+
+//             int direction[3];
+
+//             direction[0] = scanPoints[point_index].x - scannerPos[0];
+//             direction[1] = scanPoints[point_index].y - scannerPos[1];
+//             direction[2] = scanPoints[point_index].z - scannerPos[2];
+
+//             int distance = norm(direction);
+
+//             int prev[] = {0, 0, 0};
+
+//             for(int len = MAP_RESOLUTION; len <= distance + tau; len += MAP_RESOLUTION)
+//             {
+// #pragma HLS PIPELINE
+
+//                 int proj[3];
+//                 int index[3];
+
+//                 for(int coor_index = 0; coor_index < 3; ++coor_index)
+//                 {
+// #pragma HLS unroll factor=3 skip_exit_check
+
+//                     proj[coor_index] = scannerPos[coor_index] + direction[coor_index] * len / distance;
+//                     index[coor_index] = proj[coor_index] / MAP_RESOLUTION;
+//                 }
+
+//                 if(index[0] == prev[0] && index[1] == prev[1])
+//                 {
+//                     continue;
+//                 }
+
+//                 for(int coor_index = 0; coor_index < 3; ++coor_index)
+//                 {
+//                     prev[coor_index] = index[coor_index];
+//                 }
+
+//                 if(!map.inBounds(index[0], index[1], index[2]))
+//                 {
+//                     continue;
+//                 }
+
+//                 int target_center[3];
+//                 int value_vec[3];
+
+//                 for(int coor_index = 0; coor_index < 3; ++coor_index)
+//                 {
+// #pragma HLS unroll factor=3 skip_exit_check
+
+//                     target_center[coor_index] = index[coor_index] * MAP_RESOLUTION + MAP_RESOLUTION / 2;
+//                 }            
+
+//                 value_vec[0] = scanPoints[point_index].x - target_center[0];
+//                 value_vec[1] = scanPoints[point_index].y - target_center[1];
+//                 value_vec[2] = scanPoints[point_index].z - target_center[2];
+
+//                 int value = norm(value_vec);
+
+//                 if(tau < value)
+//                 {
+//                     value = tau;
+//                 }
+
+//                 if(len > distance)
+//                 {
+//                     value = -value;
+//                 }
+
+//                 int weight = WEIGHT_RESOLUTION;
+
+//                 if(value < - weight_epsilon)
+//                 {
+//                     weight = WEIGHT_RESOLUTION * (tau + value) / (tau - weight_epsilon);
+//                 }
+
+//                 if(weight == 0)
+//                 {
+//                     continue;
+//                 }
+
+//                 int delta_z = dz_per_distance * len / MATRIX_RESOLUTION;
+//                 int lowest = (proj[2] - delta_z) / MAP_RESOLUTION;
+//                 int highest = (proj[2] + delta_z) / MAP_RESOLUTION;
+
+//                 for(index[2] = lowest; index[2] <= highest; ++index[2])
+//                 {
+//                     if(!map.inBounds(index[0], index[1], index[2]))
+//                     {
+//                         continue;
+//                     }
+
+//                     auto entry = map.get(new_entries, index[0], index[1], index[2]);
+
+//                     if(entry.second == 0 || std::abs(value) < std::abs(entry.first)) 
+//                     {
+//                         // if(entry.second == 0)
+//                         // {
+//                         //     int map_pos = index[0] + index[1] * sizeX + index[2] * sizeX * sizeY;
+//                         //     int change_pos = change_count * 3;
+
+//                         //     map_changes[change_pos]     = index[0];
+//                         //     map_changes[change_pos + 1] = index[1];
+//                         //     map_changes[change_pos + 2] = index[2];
+
+//                         //     ++change_count;
+//                         // }
+
+//                         entry.first = value;
+//                         entry.second = weight;
+
+//                         map.set(new_entries, index[0], index[1], index[2], entry);
+//                     }
+//                 }
+//             }
+//         }
 
         // FIXME: This is very inefficient. Try reducing the number of iterations or removing this completely
 
@@ -243,33 +390,33 @@ extern "C"
 //             map.set(mapData, index_x, index_y, index_z, map_entry);
 //         }
 
-        for (int i = 0; i < map.sizeX; i++)
-        {
-            for (int j = 0; j < map.sizeY; j++)
-            {
-                for (int k = 0; k < map.sizeZ; k++)
-                {
-#pragma HLS PIPELINE
+//         for (int i = 0; i < map.sizeX; i++)
+//         {
+//             for (int j = 0; j < map.sizeY; j++)
+//             {
+//                 for (int k = 0; k < map.sizeZ; k++)
+//                 {
+// #pragma HLS PIPELINE
 
-                    int index = i + j * sizeX + k * sizeX * sizeY;
+//                     int index = i + j * sizeX + k * sizeX * sizeY;
 
-                    if(new_entries[index].second == 0)
-                    {
-                        continue;
-                    }
+//                     if(new_entries[index].second == 0)
+//                     {
+//                         continue;
+//                     }
 
-                    int new_weight = mapData[index].second + new_entries[index].second;
+//                     int new_weight = mapData[index].second + new_entries[index].second;
 
-                    if(new_weight > max_weight)
-                    {
-                        new_weight = max_weight;
-                    }
+//                     if(new_weight > max_weight)
+//                     {
+//                         new_weight = max_weight;
+//                     }
 
-                    mapData[index].first = (mapData[index].first * mapData[index].second + new_entries[index].first * new_entries[index].second) / new_weight;
-                    mapData[index].second = new_weight; 
-                }
-            }
-        }
+//                     mapData[index].first = (mapData[index].first * mapData[index].second + new_entries[index].first * new_entries[index].second) / new_weight;
+//                     mapData[index].second = new_weight; 
+//                 }
+//             }
+//         }
 
         // Map access example 
 
