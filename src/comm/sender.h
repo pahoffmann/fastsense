@@ -6,6 +6,8 @@
 
 #include <string>
 #include <zmq.hpp>
+#include <zmq_addon.hpp>
+#include <msg/zmq_converter.h>
 
 namespace fastsense::comm
 {
@@ -25,10 +27,22 @@ public:
 
     ~Sender() = default;
 
+    template <typename TT = T, std::enable_if_t<! std::is_base_of_v<msg::ZMQConverter, TT>, int> = 0>
     void send(T* data, zmq::send_flags flag = zmq::send_flags::dontwait)
     {
-        socket_.send(data, sizeof(T));
+        auto length = sizeof(T);
+        zmq::message_t msg(length);
+        memcpy(msg.data(), data, length);
+        socket_.send(msg, flag);
     }
+
+    template <typename TT = T, std::enable_if_t<std::is_base_of_v<msg::ZMQConverter, TT>, int> = 0>
+    void send(const T& data, zmq::send_flags flag = zmq::send_flags::dontwait)
+    {
+        zmq::multipart_t multi = data.to_zmq_msg();
+        multi.send(socket_);
+    }
+
 private:
     std::string addr_;
     size_t port_;

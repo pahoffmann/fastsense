@@ -37,9 +37,6 @@ public:
     virtual void run() 
     {
         receiver_.receive(msg_);
-        return;
-
-        // TODO segfault during conversion
         convert();
         publish();
     }

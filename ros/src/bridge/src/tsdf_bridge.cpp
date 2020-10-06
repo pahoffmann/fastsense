@@ -5,6 +5,8 @@
  */
 
 #include <omp.h>
+#include <iostream>
+#include <iterator>
 #include <ros/ros.h>
 #include <bridge/tsdf_bridge.h>
 
@@ -31,25 +33,26 @@ void TSDFBridge::start()
 
 void TSDFBridge::stop()
 {
-    running = false;
-    worker.join();
+    if (running)
+    {
+        running = false;
+        worker.join();
+    }
 }
 
 void TSDFBridge::run()
-{
+{   
     while (running && ros::ok())
     {
         BridgeBase::run();
-        std::cout << "TSDF: \n";
-        std::cout << msg_.tau_ << "\n";
-        std::cout << msg_.map_resolution_ << "\n";
+        std::cout << "Received " << msg_.tsdf_data_.size() << " tsdf values\n";
     }
 }
 
 // TODO in util, so steffen and my version match
 bool TSDFBridge::inBounds(int x, int y, int z)
 {
-    return abs(x - msg().pos_.x()) <= msg().size_.x() / 2 && abs(y - msg().pos_.y()) <= msg().size_.y() / 2 && abs(z - msg().pos_.z()) <= msg().size_.z() / 2;
+    return abs(x - msg().pos_[0] <= msg().size_[0] / 2 && abs(y - msg().pos_[1]) <= msg().size_[1] / 2 && abs(z - msg().pos_[2]) <= msg().size_[2] / 2);
 }
 
 std::pair<float, float> TSDFBridge::get_tsdf_value(int x, int y, int z)
@@ -58,23 +61,28 @@ std::pair<float, float> TSDFBridge::get_tsdf_value(int x, int y, int z)
     {
         throw std::out_of_range("Index out of bounds");
     }
+
+    if (msg().tsdf_data_.empty())
+    {
+        throw std::out_of_range("Index out of bounds: data empty");
+    }
     
-    return msg().tsdf_data_[((x - msg().pos_.x() + msg().offset_.x() + msg().size_.x()) % msg().size_.x()) * msg().size_.y() * msg().size_.z() +
-                     ((y - msg().pos_.y() + msg().offset_.y() + msg().size_.y()) % msg().size_.y()) * msg().size_.z() +
-                     (z - msg().pos_.z() + msg().offset_.z() + msg().size_.z()) % msg().size_.z()];
+    return msg().tsdf_data_[((x - msg().pos_[0] + msg().offset_[0] + msg().size_[0]) % msg().size_[0]) * msg().size_[1] * msg().size_[2] +
+                     ((y - msg().pos_[1] + msg().offset_[1] + msg().size_[1]) % msg().size_[1]) * msg().size_[2] +
+                     (z - msg().pos_[2] + msg().offset_[2] + msg().size_[2]) % msg().size_[2]];
 }
 
 void TSDFBridge::convert()
 {   
-    constexpr size_t thread_count = 20;
+    constexpr size_t thread_count = 10;
     std::vector<std::pair<geometry_msgs::Point, std_msgs::ColorRGBA>> results[thread_count];
 
     int left[3], right[3];
 
     for (int i = 0; i < 3; i++)
     {
-        left[i] = msg().pos_.at(i) - msg().size_.at(i) / 2;
-        right[i] = msg().pos_.at(i) + msg().size_.at(i) / 2;
+        left[i] = msg().pos_[i] - msg().size_[i] / 2;
+        right[i] = msg().pos_[i] + msg().size_[i] / 2;
     }
 
     #pragma omp parallel num_threads(thread_count)
@@ -128,16 +136,17 @@ void TSDFBridge::convert()
         total_results += results[i].size();
     }
     
-    points_.clear();
-    colors_.clear();
-
     if (total_results == 0)
     {
         return;
     }
 
+    size_t length = msg_.tsdf_data_.size();
+    points_.resize(length);
+    colors_.resize(length);
+
     #pragma omp parallel num_threads(thread_count)
-    {
+    {   
         auto& result = results[omp_get_thread_num()];
         int offset = offsets[omp_get_thread_num()];
         for (int i = 0; i < result.size(); i++)
@@ -147,6 +156,7 @@ void TSDFBridge::convert()
             colors_[i + offset] = p.second;
         }
     }
+    std::cout << "Converted tsdf values: " << msg_.tsdf_data_.size() << "/" << points_.size() << " points\n";
 }
 
 void TSDFBridge::publish()
@@ -154,6 +164,7 @@ void TSDFBridge::publish()
     visualization_msgs::Marker marker;
     marker.header = std_msgs::Header{};
     marker.header.stamp = ros::Time();
+    marker.header.frame_id = "base_link";
     marker.type = visualization_msgs::Marker::POINTS;
     marker.action = visualization_msgs::Marker::ADD;
     marker.ns = "window";
@@ -162,4 +173,6 @@ void TSDFBridge::publish()
     marker.points = points_;
     marker.colors = colors_;
     pub().publish(marker);
+
+    std::cout << "Published tsdf values\n";
 }

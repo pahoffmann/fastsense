@@ -1,5 +1,5 @@
 /**
- * @file sender.tcc
+ * @file bridge.cpp
  * @author Julian Gaal
  * @date 2020-09-06
  */

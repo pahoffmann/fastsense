@@ -7,6 +7,7 @@
 
 #include <zmq.hpp>
 #include <msg/point_cloud.h>
+#include <msg/zmq_converter.h>
 
 namespace fastsense::comm
 {
@@ -35,8 +36,17 @@ public:
         memcpy(&target, msg.data(), sizeof(T));
         return target;
     }
-  
-    void receive(T& target, zmq::recv_flags flag = zmq::recv_flags::none)
+    
+    template <typename TT = T, std::enable_if_t<std::is_base_of_v<msg::ZMQConverter, TT>, int> = 0>
+    void receive(TT& target, zmq::recv_flags flag = zmq::recv_flags::none)
+    {
+        zmq::multipart_t multi;
+        multi.recv(socket_);
+        target.from_zmq_msg(multi);
+    }
+
+    template <typename SS = T, std::enable_if_t<! std::is_base_of_v<msg::ZMQConverter, SS>, int> = 0>
+    void receive(SS& target, zmq::recv_flags flag = zmq::recv_flags::none)
     {
         zmq::message_t msg;
         socket_.recv(msg, flag);
