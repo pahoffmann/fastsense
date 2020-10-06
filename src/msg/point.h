@@ -4,7 +4,7 @@
  * @author Julian Gaal
  */
 
-#include <util/params.h>
+#include <cstdint>
 
 namespace fastsense::msg
 {
@@ -23,6 +23,11 @@ struct Point
 
     /// Z component
     int16_t z;
+
+    bool operator==(const Point& p) const
+    {
+        return x == p.x && y == p.y && z == p.z;
+    }
 };
 
 } // namespace fastsense::msg

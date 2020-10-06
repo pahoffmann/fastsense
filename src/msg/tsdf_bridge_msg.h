@@ -7,8 +7,7 @@
  */
 
 #include "zmq_converter.h"
-#include <util/xyz_buffer.h>
-#include <eigen3/Eigen/Dense>
+#include <array>
 #include <vector>
 #include <algorithm>
 
@@ -37,7 +36,6 @@ struct TSDFBridgeMessage : public ZMQConverter
         tsdf_data_.reserve(n_tsdf_values);
         tsdf_data_.clear();
         std::copy_n(static_cast<std::pair<float,float>*>(tsdf_data_msg.data()), n_tsdf_values, std::back_inserter(tsdf_data_));
-        // memcpy(tsdf_data_.data(), tsdf_data_msg.data(), tsdf_data_msg.size()); 
     }
 
     zmq::multipart_t to_zmq_msg() const

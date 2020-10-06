@@ -17,9 +17,9 @@ class Receiver
 {
 public:
     Receiver(int port, size_t threads = 1)
-    :   context_(threads), 
-        socket_(context_, zmq::socket_type::pull), 
-        port_(port)
+        :   context_(threads),
+            socket_(context_, zmq::socket_type::pull),
+            port_(port)
     {
         std::string address = "tcp://*:" + std::to_string(port_);
         socket_.bind(address);
@@ -36,23 +36,23 @@ public:
         memcpy(&target, msg.data(), sizeof(T));
         return target;
     }
-    
+
     template <typename TT = T, std::enable_if_t<std::is_base_of_v<msg::ZMQConverter, TT>, int> = 0>
-    void receive(TT& target, zmq::recv_flags flag = zmq::recv_flags::none)
+    void receive(TT& target)
     {
         zmq::multipart_t multi;
         multi.recv(socket_);
         target.from_zmq_msg(multi);
     }
 
-    template <typename SS = T, std::enable_if_t<! std::is_base_of_v<msg::ZMQConverter, SS>, int> = 0>
+    template < typename SS = T, std::enable_if_t < ! std::is_base_of_v<msg::ZMQConverter, SS>, int > = 0 >
     void receive(SS& target, zmq::recv_flags flag = zmq::recv_flags::none)
     {
         zmq::message_t msg;
         socket_.recv(msg, flag);
         memcpy(&target, msg.data(), sizeof(T));
     }
-    
+
     inline int getPort() const
     {
         return port_;

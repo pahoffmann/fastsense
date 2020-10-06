@@ -41,10 +41,8 @@ Application::Application()
     : signal_set{},
       imuBuffer{std::make_shared<data::ImuStampedBuffer>(ConfigManager::config().imu.bufferSize())},
       pointcloudBuffer{std::make_shared<data::PointCloudStampedBuffer>(ConfigManager::config().lidar.bufferSize())},
-      syncedDataBuffer{std::make_shared<data::SyncedDataBuffer>(ConfigManager::config().sensorSync.bufferSize())},
       imuDriver{imuBuffer},
-      lidarDriver{ConfigManager::config().lidar.port(), pointcloudBuffer},
-      synchronizer{imuBuffer, pointcloudBuffer, syncedDataBuffer}
+      lidarDriver{ConfigManager::config().lidar.port(), pointcloudBuffer}
 {
     // block signals
     sigemptyset(&signal_set);
@@ -59,18 +57,18 @@ int Application::run()
 {
     Logger::info("Starting Application...");
     // Runner run_synchronizer(synchronizer);
-    // Runner run_lidarDriver(lidarDriver);
+    Runner run_lidarDriver(lidarDriver);
     // Runner run_imuDriver(imuDriver);
     Logger::info("Application started");
 
-    int sig;
+    /*int sig;
     int ret = sigwait(&signal_set, &sig);
     if (ret == -1)
     {
         auto err = errno;
         Logger::fatal("Wait for signal failed (", std::strerror(err), ")! Stopping Application...");
         return -1;
-    }
+    }*/
 
     Logger::info("Stopping Application...");
 
@@ -90,13 +88,13 @@ int Application::run()
     tsdf_msg.size_ = {10, 10, 10};
     tsdf_msg.pos_ = {0, 0, 0};
     tsdf_msg.offset_ = {0, 0, 0};
-    tsdf_msg.tsdf_data_.resize(10*10*10);
-    for (size_t i = 0; i < 10*10*10; ++i)
+    tsdf_msg.tsdf_data_.resize(10 * 10 * 10);
+    for (size_t i = 0; i < 10 * 10 * 10; ++i)
     {
-       tsdf_msg.tsdf_data_[i].first = 0;
-       tsdf_msg.tsdf_data_[i].second = 0;
+        tsdf_msg.tsdf_data_[i].first = 0;
+        tsdf_msg.tsdf_data_[i].second = 0;
     }
-    
+
     tsdf_msg.tsdf_data_[4 + 5 * 10 + 5 * 10 * 10].first = 1;
     tsdf_msg.tsdf_data_[4 + 5 * 10 + 5 * 10 * 10].second = 1;
 
@@ -109,10 +107,12 @@ int Application::run()
     tsdf_msg.tsdf_data_[7 + 5 * 10 + 5 * 10 * 10].first = -2;
     tsdf_msg.tsdf_data_[7 + 5 * 10 + 5 * 10 * 10].second = 1;
 
+    comm::Sender<msg::PointCloud> lidar_sender{"192.168.1.1", 7777};
     comm::Sender<msg::TSDFBridgeMessage> tsdf_sender{"192.168.1.1", 6666};
     comm::Sender<msg::ImuMsg> imu_sender{"192.168.1.1", 5555};
 
-    while (true) {
+    while (true)
+    {
         // Iteration done
         // * TSDF berechnet
         // * Werte in Buffer
@@ -122,6 +122,10 @@ int Application::run()
         // std::copy(buffer.begin(), buffer.end(), tsdf_values.begin());
         // comm::TSDFBridgeMessage msg { .map_resolution_ }
         // Sender.send(msg)
+
+        msg::PointCloudStamped scan;
+        pointcloudBuffer->pop(&scan);
+        lidar_sender.send(*scan.first);
 
         tsdf_sender.send(tsdf_msg);
 

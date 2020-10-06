@@ -8,6 +8,7 @@
 #include <ros/ros.h>
 #include <bridge/tsdf_bridge.h>
 #include <bridge/imu_bridge.h>
+#include <bridge/velodyne_bridge.h>
 
 namespace fs = fastsense;
 using namespace std::chrono_literals;
@@ -20,9 +21,11 @@ int main(int argc, char** argv)
 
     fs::bridge::TSDFBridge tsdf_bridge{n};
     fs::bridge::ImuBridge imu_bridge{n};
+    fs::bridge::VelodyneBridge velodyne_bridge{n};
     
     tsdf_bridge.start();
     imu_bridge.start();
+    velodyne_bridge.start();
 
     while(ros::ok())
     {
@@ -31,6 +34,7 @@ int main(int argc, char** argv)
 
     tsdf_bridge.stop();
     imu_bridge.stop();
+    velodyne_bridge.stop();
 
     return 0;
 }

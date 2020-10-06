@@ -31,6 +31,7 @@ add_executable(bridge
   ${FASTSENSE_DIR}/src/msg/magnetic_field.cpp
   src/imu_bridge.cpp
   src/tsdf_bridge.cpp
+  src/velodyne_bridge.cpp
   src/bridge.cpp
 )
 

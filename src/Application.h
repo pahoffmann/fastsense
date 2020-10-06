@@ -17,11 +17,9 @@ private:
 
     data::ImuStampedBufferPtr imuBuffer;
     data::PointCloudStampedBufferPtr pointcloudBuffer;
-    data::SyncedDataBufferPtr syncedDataBuffer;
 
     driver::Imu imuDriver;
     driver::VelodyneDriver lidarDriver;
-    data::SensorSync synchronizer;
 public:
     Application();
     ~Application() = default;

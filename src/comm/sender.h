@@ -16,19 +16,19 @@ template <typename T>
 class Sender
 {
 public:
-    Sender(std::string addr,size_t port, size_t threads = 1)
-    :   addr_{addr}, 
-        port_{port}, 
-        context_{static_cast<int>(threads)}, 
-        socket_{context_, zmq::socket_type::push}
+    Sender(std::string addr, size_t port, size_t threads = 1)
+        :   addr_{addr},
+            port_{port},
+            context_{static_cast<int>(threads)},
+            socket_{context_, zmq::socket_type::push}
     {
         socket_.connect("tcp://" + addr_ + ":" + std::to_string(port));
     }
 
     ~Sender() = default;
 
-    template <typename TT = T, std::enable_if_t<! std::is_base_of_v<msg::ZMQConverter, TT>, int> = 0>
-    void send(T* data, zmq::send_flags flag = zmq::send_flags::dontwait)
+    template < typename TT = T, std::enable_if_t < ! std::is_base_of_v<msg::ZMQConverter, TT>, int > = 0 >
+    void send(const T* data, zmq::send_flags flag = zmq::send_flags::dontwait)
     {
         auto length = sizeof(T);
         zmq::message_t msg(length);
@@ -37,7 +37,7 @@ public:
     }
 
     template <typename TT = T, std::enable_if_t<std::is_base_of_v<msg::ZMQConverter, TT>, int> = 0>
-    void send(const T& data, zmq::send_flags flag = zmq::send_flags::dontwait)
+    void send(const T& data)
     {
         zmq::multipart_t multi = data.to_zmq_msg();
         multi.send(socket_);
