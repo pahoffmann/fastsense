@@ -107,7 +107,7 @@ extern "C"
 
         point_loop: for(int point_index = 0; point_index < NUM_POINTS; ++point_index)
         {
-//#pragma HLS pipeline
+#pragma HLS pipeline
 
             int direction[3];
 
@@ -127,7 +127,7 @@ extern "C"
 
                 ray_step_loop: for(int coor_index = 0; coor_index < 3; ++coor_index)
                 {
-//#pragma HLS unroll
+#pragma HLS unroll
 
                     proj[coor_index] = scannerPos[coor_index] + direction[coor_index] * len / distance;
                     index[coor_index] = proj[coor_index] / MAP_RESOLUTION;
@@ -140,7 +140,7 @@ extern "C"
 
                 prev_loop: for(int coor_index = 0; coor_index < 3; ++coor_index)
                 {
-//#pragma HLS unroll
+#pragma HLS unroll
 
                     prev[coor_index] = index[coor_index];
                 }
@@ -155,7 +155,7 @@ extern "C"
 
                 target_loop: for(int coor_index = 0; coor_index < 3; ++coor_index)
                 {
-//#pragma HLS unroll
+#pragma HLS unroll
 
                     target_center[coor_index] = index[coor_index] * MAP_RESOLUTION + MAP_RESOLUTION / 2;
                 }            
@@ -242,6 +242,41 @@ extern "C"
                 }
             }
         }
+
+
+        for (int i = 0; i < SIZE_X; i++)
+		{
+        	for (int j = 0; j < SIZE_Y; j++)
+			{
+        		for (int k = 0; k < SIZE_Z; k++)
+				{
+#pragma HLS dependence variable=mapData inter false
+#pragma HLS dependence variable=new_entries inter false
+
+#pragma HLS pipeline
+
+        			int index = i + j * SIZE_X + k * SIZE_X * SIZE_Y;
+					IntTuple map_entry = mapData[index];
+					IntTuple new_entry = new_entries[index];
+
+
+					if(new_entry.second == 0)
+					{
+						continue;
+					}
+
+					int new_weight = map_entry.second + new_entry.second;
+
+					if(new_weight > max_weight)
+					{
+						new_weight = max_weight;
+					}
+
+					mapData[index].first = (map_entry.first * map_entry.second + new_entry.first * new_entry.second) / new_weight;
+					mapData[index].second = new_weight;
+				}
+			}
+		}
 
 
 //         for(int point_index = 0; point_index < numPoints; ++point_index)
@@ -388,34 +423,6 @@ extern "C"
 //             map_entry.second = new_weight;
 
 //             map.set(mapData, index_x, index_y, index_z, map_entry);
-//         }
-
-//         for (int i = 0; i < map.sizeX; i++)
-//         {
-//             for (int j = 0; j < map.sizeY; j++)
-//             {
-//                 for (int k = 0; k < map.sizeZ; k++)
-//                 {
-// #pragma HLS PIPELINE
-
-//                     int index = i + j * sizeX + k * sizeX * sizeY;
-
-//                     if(new_entries[index].second == 0)
-//                     {
-//                         continue;
-//                     }
-
-//                     int new_weight = mapData[index].second + new_entries[index].second;
-
-//                     if(new_weight > max_weight)
-//                     {
-//                         new_weight = max_weight;
-//                     }
-
-//                     mapData[index].first = (mapData[index].first * mapData[index].second + new_entries[index].first * new_entries[index].second) / new_weight;
-//                     mapData[index].second = new_weight; 
-//                 }
-//             }
 //         }
 
         // Map access example 
