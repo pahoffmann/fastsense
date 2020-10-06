@@ -47,14 +47,14 @@ void TSDFBridge::run()
 }
 
 // TODO in util, so steffen and my version match
-bool TSDFBridge::inBounds(int x, int y, int z)
+bool TSDFBridge::in_bounds(int x, int y, int z)
 {
     return abs(x - msg().pos_.x()) <= msg().size_.x() / 2 && abs(y - msg().pos_.y()) <= msg().size_.y() / 2 && abs(z - msg().pos_.z()) <= msg().size_.z() / 2;
 }
 
 std::pair<float, float> TSDFBridge::get_tsdf_value(int x, int y, int z)
 {
-    if (!inBounds(x, y, z))
+    if (!in_bounds(x, y, z))
     {
         throw std::out_of_range("Index out of bounds");
     }
