@@ -26,8 +26,9 @@ APP_TEST_XCLBIN = $(BUILD_DIR)/$(APP_NAME)_test.xclbin
 APP_IMAGE_PATH = $(CURDIR)/app_image
 TEST_IMAGE_PATH = $(CURDIR)/test_image
 
-# Add for each port to forward ",hostfwd=<tcp/udp>:<hostport>-::<vmport>"
-QEMU_ARGS = -qemu-args "-netdev user,id=eth0,hostfwd=udp::2368-:2368,hostfwd=tcp::1440-:1534"
+# Add for each port from host to guest ",hostfwd=<tcp/udp>::<hostport>-192.168.1.123:<vmport>"
+# and for each port from guest to host ",guestfwd=tcp:192.168.1.2:<vmport>-tcp:127.0.0.1:<hostport>"
+QEMU_ARGS = -qemu-args "-netdev user,id=eth0,net=192.168.1.0/24,hostfwd=udp::2368-192.168.1.123:2368,hostfwd=tcp::1440-192.168.1.123:1534"
 
 # Software
 SYSROOT = $(PLATFORM_DIR)/sw/FastSense_platform/linux_domain/sysroot/aarch64-xilinx-linux

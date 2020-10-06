@@ -32,7 +32,7 @@ private:
     void publish() override;
     void convert() override;
     void run() override;
-    bool inBounds(int x, int y, int z);
+    bool in_bounds(int x, int y, int z);
     std::pair<float, float> get_tsdf_value(int x, int y, int z);
 
     std::vector<geometry_msgs::Point> points_;
