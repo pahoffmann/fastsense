@@ -65,16 +65,16 @@ std::vector<int>& GlobalMap::activate_chunk(const Vector3i& chunkPos)
         {
             // read chunk from file
             HighFive::DataSet d = g.getDataSet(tag);
-            d.read(newChunk.chunk);
+            d.read(newChunk.data);
         }
         else
         {
             // create new chunk
-            newChunk.chunk = std::vector<int>(TOTAL_SIZE);
+            newChunk.data = std::vector<int>(TOTAL_SIZE);
             for (int i = 0; i < SINGLE_SIZE; i++)
             {
-                newChunk.chunk[2 * i] = initial_tsdf_value_;
-                newChunk.chunk[2 * i + 1] = initial_weight_;
+                newChunk.data[2 * i] = initial_tsdf_value_;
+                newChunk.data[2 * i + 1] = initial_weight_;
             }
         }
         // put new chunk into active_chunks_
@@ -102,11 +102,11 @@ std::vector<int>& GlobalMap::activate_chunk(const Vector3i& chunkPos)
             if (g.exist(tag))
             {
                 auto d = g.getDataSet(tag);
-                d.write(active_chunks_[index].chunk);
+                d.write(active_chunks_[index].data);
             }
             else
             {
-                g.createDataSet(tag, active_chunks_[index].chunk);
+                g.createDataSet(tag, active_chunks_[index].data);
             }
             // overwrite with new chunk
             active_chunks_[index] = newChunk;
@@ -122,7 +122,7 @@ std::vector<int>& GlobalMap::activate_chunk(const Vector3i& chunkPos)
         }
     }
     active_chunks_[index].age = 0;
-    return active_chunks_[index].chunk;
+    return active_chunks_[index].data;
 }
 
 std::pair<int, int> GlobalMap::get_value(const Vector3i& pos)
@@ -154,6 +154,20 @@ void GlobalMap::save_pose(float x, float y, float z, float roll, float pitch, fl
 
 void GlobalMap::write_back()
 {
-    // TODO: write back
+    HighFive::Group g = file_.getGroup("/map");
+    for (auto& chunk : active_chunks_)
+    {
+        auto tag = tag_from_chunk_pos(chunk.pos);
+
+        if (g.exist(tag))
+        {
+            auto d = g.getDataSet(tag);
+            d.write(chunk.data);
+        }
+        else
+        {
+            g.createDataSet(tag, chunk.data);
+        }
+    }
     file_.flush();
 }

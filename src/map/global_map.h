@@ -21,7 +21,7 @@ namespace fastsense::map
 
 struct ActiveChunk
 {
-    std::vector<int> chunk;
+    std::vector<int> data;
     Vector3i pos;
     int age;
 };
@@ -36,27 +36,6 @@ class GlobalMap
 {
 
 private:
-
-    /**
-     * log(CHUNK_SIZE).
-     * The side length is a power of 2 so that divisions by the side length can be accomplished by shifting.
-     */
-    const int CHUNK_SHIFT = 6;
-
-    /// Side length of the cube-shaped chunks (2^CHUNK_SHIFT).
-    const int CHUNK_SIZE = 1 << CHUNK_SHIFT;
-
-    /// Number of voxels in one chunk (CHUNK_SIZE^3). 
-    const int SINGLE_SIZE = 1 << (3 * CHUNK_SHIFT); // = CHUNK_SIZE * CHUNK_SIZE * CHUNK_SIZE
-
-    /**
-     * Number of entries in one chunk (SINGLE_SIZE * 2).
-     * Per voxel a tsdf value and a weight is stored.
-     */
-    const int TOTAL_SIZE = SINGLE_SIZE * 2;
-
-    /// Maximum number of active chunks.
-    const int NUM_CHUNKS = 64;
 
     /**
      * HDF5 file in which the chunks are stored.
@@ -123,6 +102,27 @@ private:
     std::vector<int>& activate_chunk(const Vector3i& chunk);
 
 public:
+
+    /**
+     * log(CHUNK_SIZE).
+     * The side length is a power of 2 so that divisions by the side length can be accomplished by shifting.
+     */
+    static constexpr int CHUNK_SHIFT = 6;
+
+    /// Side length of the cube-shaped chunks (2^CHUNK_SHIFT).
+    static constexpr int CHUNK_SIZE = 1 << CHUNK_SHIFT;
+
+    /// Number of voxels in one chunk (CHUNK_SIZE^3). 
+    static constexpr int SINGLE_SIZE = 1 << (3 * CHUNK_SHIFT); // = CHUNK_SIZE * CHUNK_SIZE * CHUNK_SIZE
+
+    /**
+     * Number of entries in one chunk (SINGLE_SIZE * 2).
+     * Per voxel a tsdf value and a weight is stored.
+     */
+    static constexpr int TOTAL_SIZE = SINGLE_SIZE * 2;
+
+    /// Maximum number of active chunks.
+    static constexpr int NUM_CHUNKS = 64;
 
     /**
      * Constructor of the global map.

@@ -204,7 +204,18 @@ LocalMapHW LocalMap::get_hardware_representation() const
 
 void LocalMap::write_back()
 {
-    // TODO: write back
+    for (int i = pos_.x() - size_.x() / 2; i <= pos_.x() + size_.x() / 2; i++) 
+    {
+        for (int j = pos_.y() - size_.y() / 2; j <= pos_.y() + size_.y() / 2; j++) 
+        {
+            for (int k = pos_.z() - size_.z() / 2; k <= pos_.z() + size_.z() / 2; k++) 
+            {
+                std::pair<int, int> &out = value(i, j, k);
+                map_->set_value(Vector3i(i, j, k), out);
+            }
+        }
+    }
+
     map_->write_back();
 }
 
