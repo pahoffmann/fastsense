@@ -31,10 +31,13 @@ void CloudCallback::stop(){
 
 void CloudCallback::preprocess_scan(const fastsense::msg::PointCloudStamped& cloud, ScanPoints_t& scan_points, float map_resolution, const Matrix4f& pose){
     std::vector<fastsense::msg::Point> cloud_points = cloud.first->points_;
-     
+    
     Eigen::Vector4f v;
 
     for(unsigned int i = 0; i < cloud_points.size(); i++){
+        if(cloud_points[i].x == 0 && cloud_points[i].y == 0 && cloud_points[i].z == 0){
+            continue;
+        }
         Vector3f pointf;
         pointf << cloud_points[i].x, cloud_points[i].y, cloud_points[i].z;
         v << (pointf / map_resolution), 1.0f;
@@ -43,7 +46,7 @@ void CloudCallback::preprocess_scan(const fastsense::msg::PointCloudStamped& clo
         Vector3i point;
         point << std::floor(pointf.x()), std::floor(pointf.y()), std::floor(pointf.z());
 
-        scan_points[i] = point;
+        scan_points.push_back(point);
     }
 }
 
@@ -52,7 +55,7 @@ void CloudCallback::callback(){
         fastsense::msg::PointCloudStamped point_cloud;
         cloud_buffer->pop(&point_cloud);
 
-        ScanPoints_t scan_points(point_cloud.first->points_.size());
+        ScanPoints_t scan_points;
         preprocess_scan(point_cloud, scan_points, ConfigManager::config().slam.map_resolution(), pose);
 
         if(first_iteration){
