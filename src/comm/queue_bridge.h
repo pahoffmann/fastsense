@@ -14,7 +14,7 @@ namespace fastsense::comm
 {
 
 template<typename T_QUEUE, typename T_MSG>
-class QueueBridgeBase
+class QueueBridgeBase : public util::ProcessThread
 {
 public:
     using BufferType = std::shared_ptr<util::ConcurrentRingBuffer<T_QUEUE>>;
@@ -23,13 +23,13 @@ protected:
     BufferType in_;
     BufferType out_;
 
-    Sender<T_MSG> sender;
+    Sender<T_MSG> sender_;
 
     virtual void duplicate() = 0;
 
 public:
-    QueueBridge(const BufferType& in, const BufferType& out, uint16_t port) :
-        in_{in}, out_{out}, sender{port}
+    QueueBridgeBase(const BufferType& in, const BufferType& out, uint16_t port) :
+        in_{in}, out_{out}, sender_{port}
     {}
 
     void start() override
@@ -37,7 +37,7 @@ public:
         if (!running)
         {
             running = true;
-            worker = std::thread(&QueueBridge::duplicate, this);
+            worker = std::thread(&QueueBridgeBase::duplicate, this);
         }
     }
 
@@ -50,32 +50,35 @@ public:
         }
     }
 
-    ~QueueBridge() = default;
+    ~QueueBridgeBase() = default;
 };
 
 template<typename T, bool FORCE>
 class QueueBridge : public QueueBridgeBase<T, T>
 {
 public:
-    using QueueBridgeBase::QueueBridgeBase;
+    using QueueBridgeBase<T, T>::QueueBridgeBase;
     ~QueueBridge() = default;
 
 protected:
     void duplicate() override
     {
-        while (running)
+        while (this->running)
         {
             T val;
-            in_->pop(&val);
-            if constexpr (FORCE)
+            this->in_->pop(&val);
+            if (this->out_)
             {
-                out_->push_nb(val, true);
+                if constexpr (FORCE)
+                {
+                    this->out_->push_nb(val, true);
+                }
+                else
+                {
+                    this->out_->push(val);
+                }
             }
-            else
-            {
-                out_->push(val);
-            }
-            sender.send(val);
+            this->sender_.send(val);
         }
     }
 };
@@ -84,25 +87,28 @@ template<typename T, bool FORCE>
 class QueueBridge<std::shared_ptr<T>, FORCE> : public QueueBridgeBase<std::shared_ptr<T>, T>
 {
 public:
-    using QueueBridgeBase::QueueBridgeBase;
+    using QueueBridgeBase<std::shared_ptr<T>, T>::QueueBridgeBase;
     ~QueueBridge() = default;
 
 protected:
     void duplicate() override
     {
-        while (running)
+        while (this->running)
         {
             std::shared_ptr<T> val;
-            in_->pop(&val);
-            if constexpr (FORCE)
+            this->in_->pop(&val);
+            if (this->out_)
             {
-                out_->push_nb(val, true);
+                if constexpr (FORCE)
+                {
+                    this->out_->push_nb(val, true);
+                }
+                else
+                {
+                    this->out_->push(val);
+                }
             }
-            else
-            {
-                out_->push(val);
-            }
-            sender.send(*val);
+            this->sender_.send(*val);
         }
     }
 };

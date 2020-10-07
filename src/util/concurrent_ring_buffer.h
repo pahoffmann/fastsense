@@ -48,10 +48,11 @@ public:
      * @brief Pop element from the ring buffer
      *
      * @param val Pointer to element to fill with popped value. If val is a nullptr no value is assigned, but an element is popped nonetheless.
+     * @param timeout_ms Time to wait for element to pop.
      * @return true Element popped successfully.
      * @return false The ring buffer is empty.
      */
-    bool pop_nb(T* val);
+    bool pop_nb(T* val, uint32_t timeout_ms = 0);
 
     /**
      * @brief Pop element from the ring buffer. Blocks until an element is pushed.
