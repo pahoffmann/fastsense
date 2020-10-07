@@ -34,7 +34,6 @@ public:
     void run(map::LocalMap& map, ScanPoints_t& scan_points, Eigen::Matrix<long, 6, 6> &local_h, Eigen::Matrix<long, 6, 1> &local_g, int &local_error, int &local_count)
     {
         resetNArg();
-        setArg(map.getBuffer().getBuffer());
 
         auto queue = fastsense::hw::FPGAManager::create_command_queue();
         buffer::InputOutputBuffer<Point> point_data(queue, scan_points.size());
@@ -48,7 +47,11 @@ public:
 
         buffer::OutputBuffer<long> outbuf(queue, 44); //matrix buffer for g matrix TODO: determine if this needs to be in registration.cpp
 
-        auto m = map.getHardwareRepresentation();
+        auto m = map.get_hardware_representation();
+        
+        setArg(point_data.getBuffer());
+        setArg(static_cast<int>(point_data.size()));
+        setArg(map.getBuffer().getBuffer());
         setArg(m.sizeX);
         setArg(m.sizeY);
         setArg(m.sizeZ);
@@ -59,8 +62,6 @@ public:
         setArg(m.offsetY);
         setArg(m.offsetZ);
         setArg(MAP_RESOLUTION);
-        setArg(point_data);
-        setArg(scan_points.size());
         setArg(outbuf.getBuffer());
 
         // Write buffers

@@ -276,9 +276,9 @@ TEST_CASE("Registration", "[registration][slow]")
 
         result[0] = Vector3i{1000, 1000, -1000} * SCALE;
 
-        CHECK((cloud[0].x() - result[0].x()) < ACCURACY);
-        CHECK((cloud[0].y() - result[0].y()) < ACCURACY);
-        CHECK((cloud[0].z() - result[0].z()) < ACCURACY);
+        CHECK(cloud[0].x() == result[0].x());
+        CHECK(cloud[0].y() == result[0].y());
+        CHECK(cloud[0].z() == result[0].z());
     }
 
     SECTION("Test Registration Translation")

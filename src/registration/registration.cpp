@@ -20,7 +20,12 @@ void Registration::transform_point_cloud(ScanPoints_t& in_cloud, const Matrix4f&
     for (auto index = 0u; index < in_cloud.size(); ++index)
     {
         auto& point = in_cloud[index];
-        point = (mat.block<3, 3>(0, 0) * point.cast<float>() + mat.block<3, 1>(0, 3)).cast<int>();
+        Vector3f tmp = (mat.block<3, 3>(0, 0) * point.cast<float>() + mat.block<3, 1>(0, 3));
+        tmp[0] < 0 ? tmp[0] -= 0.5 : tmp[0] += 0.5;
+        tmp[1] < 0 ? tmp[1] -= 0.5 : tmp[1] += 0.5;
+        tmp[2] < 0 ? tmp[2] -= 0.5 : tmp[2] += 0.5;
+
+        point = tmp.cast<int>();
     }
 }
 
