@@ -5,7 +5,7 @@
 
 #include <memory>
 #include <iostream>
-// #include <unordered_map>
+#include <unordered_map>
 #include <utility>
 
 #include "update_tsdf.h"
@@ -17,17 +17,17 @@
 #include "IterativeNormal.h"
 #include "weighting.h"
 
-// namespace std
-// {
-// template<> struct hash<Vector3i>
-// {
-//     std::size_t operator()(Vector3i const& p) const noexcept
-//     {
-//         long long v = ((long long)p.x() << 32) ^ ((long long)p.y() << 16) ^ (long long)p.z();
-//         return std::hash<long long>()(v);
-//     }
-// };
-// }
+namespace std
+{
+template<> struct hash<Vector3i>
+{
+    std::size_t operator()(Vector3i const& p) const noexcept
+    {
+        long long v = ((long long)p.x() << 32) ^ ((long long)p.y() << 16) ^ (long long)p.z();
+        return std::hash<long long>()(v);
+    }
+};
+}
 
 namespace fastsense::tsdf
 {
@@ -43,7 +43,7 @@ void update_tsdf(const ScanPoints_t& scan_points,
 
     int weight_epsilon = tau / 10;
 
-    // std::unordered_map<Vector3i, std::pair<int, int>> values;
+    std::unordered_map<Vector3i, std::pair<int, int>> values;
 
     for (size_t i = 0; i < scan_points.size(); i++)
     {
@@ -65,7 +65,7 @@ void update_tsdf(const ScanPoints_t& scan_points,
                 continue;
             }
             prev = index;
-            if (!buffer.inBounds(index))
+            if (!buffer.in_bounds(index))
             {
                 continue;
             }
@@ -89,7 +89,7 @@ void update_tsdf(const ScanPoints_t& scan_points,
                 continue;
             }
             
-            // auto object = std::make_pair(value, weight);
+            auto object = std::make_pair(value, weight);
 
             int delta_z = dz_per_distance * len / MATRIX_RESOLUTION;
 
@@ -102,55 +102,33 @@ void update_tsdf(const ScanPoints_t& scan_points,
 
             for (index.z() = lowest; index.z() <= highest; index.z()++)
             {
-                if (!buffer.inBounds(index))
+                if (!buffer.in_bounds(index))
                 {
                     continue;
                 }
 
-                // auto existing = values.try_emplace(index, object);
-                // if (!existing.second && abs(value) < abs(existing.first->second.first))
-                // {
-                //     existing.first->second = object;
-                // }
-
-                auto& entry = buffer.value(index);
-                entry.first = (entry.first * entry.second + value * weight) / (entry.second + weight);
-                entry.second = std::min(max_weight, entry.second + weight);
+                auto existing = values.try_emplace(index, object);
+                if (!existing.second && abs(value) < abs(existing.first->second.first))
+                {
+                    existing.first->second = object;
+                }
             }
         }
     }
 
-        // wait for all threads to fill their local_values
-        //#pragma omp barrier
+    // wait for all threads to fill their local_values
+    // #pragma omp barrier
 
-        // for (auto& map_entry : local_values)
-        // {
-        //     bool skip = false;
-        //     for (int i = 0; i < thread_count; i++)
-        //     {
-        //         if (i == current_thread)
-        //         {
-        //             continue;
-        //         }
-        //         auto iter = values[i].find(map_entry.first);
-        //         if (iter != values[i].end() && abs(iter->second.first) < abs(map_entry.second.first))
-        //         {
-        //             skip = true;
-        //             break;
-        //         }
-        //     }
-        //     if (skip)
-        //     {
-        //         continue;
-        //     }
-        //     auto& index = map_entry.first;
-        //     int value = map_entry.second.first;
-        //     int weight = map_entry.second.second;
+    for (auto& map_entry : values)
+    {
+        auto& index = map_entry.first;
+        int value = map_entry.second.first;
+        int weight = map_entry.second.second;
 
-        //     auto& entry = buffer.value(index.x(), index.y(), index.z());
-        //     entry.first = (entry.first * entry.second + value * weight) / (entry.second + weight);
-        //     entry.second = std::min(max_weight, entry.second + weight);
-        // }
+        auto& entry = buffer.value(index);
+        entry.first = (entry.first * entry.second + value * weight) / (entry.second + weight);
+        entry.second = std::min(max_weight, entry.second + weight);
+    }
     
 }
 

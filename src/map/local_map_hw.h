@@ -38,7 +38,7 @@ struct LocalMapHW
     int offsetY;
     int offsetZ;
 
-    bool inBounds(int x, int y, int z) const
+    bool in_bounds(int x, int y, int z) const
     {
 #pragma HLS INLINE
         return hw_abs(x - posX) <= sizeX / 2 && hw_abs(y - posY) <= sizeY / 2 && hw_abs(z - posZ) <= sizeZ / 2;
@@ -57,7 +57,7 @@ struct LocalMapHW
     T& get(T* data, int x, int y, int z) const
     {
 #pragma HLS INLINE
-        if (inBounds(x, y, z))
+        if (in_bounds(x, y, z))
         {
             return data[getIndex(x, y, z)];
         }
@@ -68,7 +68,7 @@ struct LocalMapHW
     void set(T* data, int x, int y, int z, const T& val) const
     {
 #pragma HLS INLINE
-        if (inBounds(x, y, z))
+        if (in_bounds(x, y, z))
         {
             data[getIndex(x, y, z)] = val;
         }

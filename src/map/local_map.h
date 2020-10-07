@@ -16,11 +16,7 @@ namespace fastsense::map
 /**
  * Three dimensional array that can be shifted without needing to copy every entry.
  * This is done by implementing it as a ring in every dimension.
- * The ring buffer can be used as a local map containing truncated signed distance function (tsdf) values.
- * @tparam T type of the values stored in the ring buffer
- *
- * In order to use the global map with the ring buffer, T has to be std::pair<float, float>.
- * Otherwise the function shift will not work.
+ * It is used to store truncated signed distance function (tsdf) values.
  */
 class LocalMap
 {
@@ -28,23 +24,19 @@ class LocalMap
 private:
 
     /**
-     * Side lengths of the ring buffer. They are always odd, so that there is a central cell.
-     * The ring buffer contains sizeX * sizeY * sizeZ values.
+     * Side lengths of the local map. They are always odd, so that there is a central cell.
+     * The local map contains x * y * z values.
      */
-    int sizeX;
-    int sizeY;
-    int sizeZ;
+    Vector3i size_;
 
-    /// Actual data of the ring buffer.
-    buffer::InputOutputBuffer<std::pair<int, int>> data;
+    /// Actual data of the local map.
+    buffer::InputOutputBuffer<std::pair<int, int>> data_;
 
-    /// Position of the center of the cuboid in global coordinates.
-    int posX;
-    int posY;
-    int posZ;
+    /// Position (x, y, z) of the center of the cuboid in global coordinates.
+    Vector3i pos_;
 
     /**
-     * Offset of the data in the ring.
+     * Offset (x, y, z) of the data in the ring.
      * Each variable is the index of the center of the cuboid in the data array in its dimension.
      *
      * If size = 5, pos = 1 (-> indices range from -1 to 3) and offset = 3 (in one dimension),
@@ -53,83 +45,87 @@ private:
      *          ^
      *       offset
      */
-    int offsetX;
-    int offsetY;
-    int offsetZ;
+    Vector3i offset_;
 
     /// Pointer to the global map in which the values outside of the buffer are stored
-    std::shared_ptr<GlobalMap> map;
+    std::shared_ptr<GlobalMap> map_;
 
 public:
 
     /**
-     * Constructor of the ring buffer.
+     * Constructor of the local map.
      * The position is initialized to (0, 0, 0).
      * The sizes are given as parameters. If they are even, they are initialized as s + 1.
      * The offsets are initialized to size / 2, so that the ring boundarys match the array bounds.
-     * @param sX Side length of the ring buffer in the x direction
-     * @param sY Side length of the ring buffer in the y direction
-     * @param sZ Side length of the ring buffer in the z direction
+     * @param sX Side length of the local map in the x direction
+     * @param sY Side length of the local map in the y direction
+     * @param sZ Side length of the local map in the z direction
      * @param map Pointer to the global map
      */
     LocalMap(unsigned int sX, unsigned int sY, unsigned int sZ, const std::shared_ptr<GlobalMap>& map, const CommandQueuePtr& queue);
 
     /**
-     * Destructor of the ring buffer.
+     * Destructor of the local map.
      * Deletes the array in particular.
      */
-    virtual ~LocalMap();
+    virtual ~LocalMap() = default;
 
     /**
-     * Returns a value from the ring buffer per reference.
+     * Returns a value from the local map per reference.
      * Throws an exception if the index is out of bounds i.e. if it is more than size / 2 away from the position.
      * @param x x-coordinate of the index in global coordinates
      * @param y y-coordinate of the index in global coordinates
      * @param z z-coordinate of the index in global coordinates
-     * @return Value of the ring buffer
+     * @return Value of the local map
      */
     std::pair<int, int>& value(int x, int y, int z);
 
     /**
-     * Returns a value from the ring buffer per reference.
+     * Returns a value from the local map per reference.
      * Throws an exception if the index is out of bounds i.e. if it is more than size / 2 away from the position.
      * @param x x-coordinate of the index in global coordinates
      * @param y y-coordinate of the index in global coordinates
      * @param z z-coordinate of the index in global coordinates
-     * @return Value of the ring buffer
+     * @return Value of the local map
      */
     const std::pair<int, int>& value(int x, int y, int z) const;
 
     /**
-     * Returns a value from the ring buffer per reference.
+     * Returns a value from the local map per reference.
      * Throws an exception if the index is out of bounds i.e. if it is more than size / 2 away from the position.
      * @param p position of the index in global coordinates
-     * @return Value of the ring buffer
+     * @return value of the local map
      */
-    std::pair<int, int>& value(const Vector3i& p);
+    std::pair<int, int>& value(Vector3i p);
 
     /**
-     * Returns a value from the ring buffer per reference.
+     * Returns a value from the local map per reference.
      * Throws an exception if the index is out of bounds i.e. if it is more than size / 2 away from the position.
      * @param p position of the index in global coordinates
-     * @return Value of the ring buffer
+     * @return value of the local map
      */
-    const std::pair<int, int>& value(const Vector3i& p) const;
+    const std::pair<int, int>& value(Vector3i p) const;
 
     /**
-     * Returns the size of the ring buffer per reference in an array of length 3.
-     * @param size Array in which the size is stored
+     * Returns the size of the local map
+     * @return size of the local map
      */
-    void getSize(int* size) const;
+    const Vector3i& get_size() const;
 
     /**
-     * Returns the position of the center of the cuboid in global coordinates per reference in an array of length 3.
-     * @param pos Array in which the position is stored
+     * Returns the pos of the local map
+     * @return pos of the local map
      */
-    void getPos(int* pos) const;
+    const Vector3i& get_pos() const;
 
     /**
-     * Shifts the ring buffer, so that a new position is the center of the cuboid.
+     * Returns the offset of the local map
+     * @return offset of the local map
+     */
+    const Vector3i& get_offset() const;
+
+    /**
+     * Shifts the local map, so that a new position is the center of the cuboid.
      * Entries, that stay in the buffer, stay in place.
      * Values outside of the buffer are loaded from and stored in the global map.
      * @param x x-coordinate of the new position
@@ -146,7 +142,7 @@ public:
      * @param z z-coordinate to check
      * @return true if (x, y, z) is within the area of the buffer
      */
-    bool inBounds(int x, int y, int z) const;
+    bool in_bounds(int x, int y, int z) const;
 
     /**
      * Checks if x, y and z are within the current range
@@ -154,16 +150,22 @@ public:
      * @param p position of the index in global coordinates
      * @return true if (x, y, z) is within the area of the buffer
      */
-    bool inBounds(const Vector3i& p) const;
+    bool in_bounds(Vector3i p) const;
 
+    /**
+     * Returns the buffer in which the actual data of the local map is stored.
+     * It can be used with hardware kernels.
+     * @return data buffer
+     */
     const buffer::InputOutputBuffer<std::pair<int, int>>& getBuffer() const;
 
-    LocalMapHW getHardwareRepresentation() const;
+    LocalMapHW get_hardware_representation() const;
 
-    void flush()
-    {
-        map->flush();
-    }
+    /**
+     * Writes all data into the global map.
+     * Calls write_back of the global map to store the data in the file.
+     */
+    void write_back();
 };
 
 } // namespace fastsense::map

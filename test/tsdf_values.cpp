@@ -1,7 +1,6 @@
 /**
  * @author Marc Eisoldt
  */
-
 #include "catch2_config.h"
 #include <tsdf/ProjectionNormal.h>
 #include <tsdf/update_tsdf.h>
@@ -23,8 +22,10 @@ constexpr int WEIGHT_SCALE = SCALE / 8.0;
 
 TEST_CASE("TSDF_Values", "[tsdf_values]")
 {
+    std::cout << "Testing 'TSDF_Values'" << std::endl;
     SECTION("TSDF Generation")
     {
+        std::cout << "    Section 'TSDF Generation'" << std::endl;
         std::shared_ptr<GlobalMap> gm_ptr = std::make_shared<GlobalMap>("MapTest.h5", 0, 0);
         auto commandQueue = FPGAManager::create_command_queue();
         LocalMap localMap{SIZE_X, SIZE_Y, SIZE_Z, gm_ptr, commandQueue};
@@ -71,6 +72,7 @@ TEST_CASE("TSDF_Values", "[tsdf_values]")
 
     SECTION("TSDF Update")
     {
+        std::cout << "    Section 'TSDF Update'" << std::endl;
         // TODO
 
         std::shared_ptr<GlobalMap> gm_ptr = std::make_shared<GlobalMap>("MapTest.h5", 0, 7 * WEIGHT_RESOLUTION);
@@ -109,11 +111,13 @@ TEST_CASE("TSDF_Values", "[tsdf_values]")
 
     SECTION("TSDF Interpolation")
     {
+        std::cout << "    Section 'TSDF Interpolation'" << std::endl;
         // TODO
     }
 
     SECTION("Complete Scan")
     {
+        std::cout << "    Section 'Complete Scan'" << std::endl;
         // TODO
     }
 }
