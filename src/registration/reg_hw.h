@@ -43,17 +43,17 @@ void MatrixMul(
 	// Iterate over the rows of the A matrix
 	for(int i = 0; i < MAT_A_ROWS; i++)
     {
-		#pragma HLS unroll factor=4 skip_exit_check
+		#pragma HLS unroll
 
 		// Iterate over the columns of the B Matrix
 		for(int j = 0; j < MAT_B_COLS; j++)
         {
-				#pragma HLS unroll factor=4 skip_exit_check
+				#pragma HLS unroll
 				res[i][j] = 0;
 
 				for(int k = 0; k < MAT_B_ROWS; k++)
                 {
-					#pragma HLS unroll factor=4 skip_exit_check
+					#pragma HLS unroll
 
 					res[i][j] += (result_t)(a[i][k]) * (result_t)(b[k][j]);
 				}
