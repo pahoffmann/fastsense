@@ -58,7 +58,7 @@ int Application::run()
     Logger::info("Starting Application...");
     // Runner run_synchronizer(synchronizer);
     Runner run_lidarDriver(lidarDriver);
-    // Runner run_imuDriver(imuDriver);
+    Runner run_imuDriver(imuDriver);
     Logger::info("Application started");
 
     /*int sig;
@@ -125,14 +125,18 @@ int Application::run()
 
         msg::PointCloudStamped scan;
         pointcloudBuffer->pop(&scan);
+        std::cout << "Popped scan\n";
         lidar_sender.send(*scan.first);
 
         tsdf_sender.send(tsdf_msg);
 
+        msg::ImuMsgStamped imu_msg_stamped;
+        imuBuffer->pop(&imu_msg_stamped);
+        std::cout << "Popped imu\n";
+        msg::ImuMsg imu_msg = imu_msg_stamped.first;
         imu_sender.send(imu_msg);
 
         std::cout << "Sent\n";
-        std::this_thread::sleep_for(0.5s);
     }
 
     return 0;
