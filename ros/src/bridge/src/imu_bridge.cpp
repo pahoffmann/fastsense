@@ -16,8 +16,8 @@ using namespace fastsense::bridge;
 // TODO init covariance static?
 // TODO params
 
-ImuBridge::ImuBridge(ros::NodeHandle& n) 
-:   BridgeBase{n, "/imu_bridge/raw"}, 
+ImuBridge::ImuBridge(ros::NodeHandle& n, const std::string& board_addr) 
+:   BridgeBase{n, "/imu_bridge/raw", board_addr}, 
     ProcessThread{},
     imu_ros_{},
     mag_ros_{},

@@ -12,8 +12,8 @@
 
 using namespace fastsense::bridge;
 
-TSDFBridge::TSDFBridge(ros::NodeHandle& n) 
-:   BridgeBase{n, "/tsdf_bridge/tsdf"}, 
+TSDFBridge::TSDFBridge(ros::NodeHandle& n, const std::string& board_addr) 
+:   BridgeBase{n, "/tsdf_bridge/tsdf", board_addr}, 
     ProcessThread{},
     points_{},
     colors_{}

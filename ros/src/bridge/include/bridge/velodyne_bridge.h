@@ -20,7 +20,7 @@ class VelodyneBridge :  public BridgeBase<msg::PointCloud, sensor_msgs::PointClo
 {
 public:
     VelodyneBridge() = delete;
-    VelodyneBridge(ros::NodeHandle& n);
+    VelodyneBridge(ros::NodeHandle& n, const std::string& board_addr);
     ~VelodyneBridge() = default;
 
     void start() override;

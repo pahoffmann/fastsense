@@ -23,7 +23,7 @@ class TSDFBridge :  public BridgeBase<msg::TSDFBridgeMessage, visualization_msgs
 {
 public:
     TSDFBridge() = delete;
-    TSDFBridge(ros::NodeHandle& n);
+    TSDFBridge(ros::NodeHandle& n, const std::string& board_addr);
     ~TSDFBridge() = default;
 
     void start() override;

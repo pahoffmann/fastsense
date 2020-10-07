@@ -8,6 +8,7 @@
 #include <zmq.hpp>
 #include <zmq_addon.hpp>
 #include <msg/zmq_converter.h>
+#include <comm/zmq_context_manager.h>
 
 namespace fastsense::comm
 {
@@ -16,23 +17,20 @@ template <typename T>
 class Sender
 {
 public:
-    Sender(std::string addr, size_t port, size_t threads = 1)
-        :   addr_{addr},
-            port_{port},
-            context_{static_cast<int>(threads)},
-            socket_{context_, zmq::socket_type::push}
+    Sender(uint16_t port)
+        :   socket_{ZMQContextManager::getContext(), zmq::socket_type::pub}
     {
-        socket_.connect("tcp://" + addr_ + ":" + std::to_string(port));
+        socket_.bind("tcp://*:" + std::to_string(port));
     }
 
     ~Sender() = default;
 
-    template < typename TT = T, std::enable_if_t < ! std::is_base_of_v<msg::ZMQConverter, TT>, int > = 0 >
-    void send(const T* data, zmq::send_flags flag = zmq::send_flags::dontwait)
+    template <typename TT = T, std::enable_if_t<!std::is_base_of_v<msg::ZMQConverter, TT>, int> = 0>
+    void send(const T& data, zmq::send_flags flag = zmq::send_flags::dontwait)
     {
         auto length = sizeof(T);
         zmq::message_t msg(length);
-        memcpy(msg.data(), data, length);
+        memcpy(msg.data(), &data, length);
         socket_.send(msg, flag);
     }
 
@@ -44,9 +42,6 @@ public:
     }
 
 private:
-    std::string addr_;
-    size_t port_;
-    zmq::context_t context_;
     zmq::socket_t socket_;
 };
 

@@ -11,8 +11,8 @@
 
 using namespace fastsense::bridge;
 
-VelodyneBridge::VelodyneBridge(ros::NodeHandle& n)
-    :   BridgeBase{n, "/velodyne_points"},
+VelodyneBridge::VelodyneBridge(ros::NodeHandle& n, const std::string& board_addr)
+    :   BridgeBase{n, "/velodyne_points", board_addr},
         ProcessThread{},
         points_{}
 {

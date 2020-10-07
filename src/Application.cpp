@@ -107,9 +107,9 @@ int Application::run()
     tsdf_msg.tsdf_data_[7 + 5 * 10 + 5 * 10 * 10].first = -2;
     tsdf_msg.tsdf_data_[7 + 5 * 10 + 5 * 10 * 10].second = 1;
 
-    comm::Sender<msg::PointCloud> lidar_sender{"192.168.1.1", 7777};
-    comm::Sender<msg::TSDFBridgeMessage> tsdf_sender{"192.168.1.1", 6666};
-    comm::Sender<msg::ImuMsg> imu_sender{"192.168.1.1", 5555};
+    comm::Sender<msg::PointCloud> lidar_sender{7777};
+    comm::Sender<msg::TSDFBridgeMessage> tsdf_sender{6666};
+    comm::Sender<msg::ImuMsg> imu_sender{5555};
 
     while (true)
     {
@@ -129,7 +129,7 @@ int Application::run()
 
         tsdf_sender.send(tsdf_msg);
 
-        imu_sender.send(&imu_msg);
+        imu_sender.send(imu_msg);
 
         std::cout << "Sent\n";
         std::this_thread::sleep_for(0.5s);
