@@ -31,6 +31,12 @@ constexpr int SIZE_X = 20 * SCALE / MAP_RESOLUTION;
 constexpr int SIZE_Y = 20 * SCALE / MAP_RESOLUTION;
 constexpr int SIZE_Z = 5 * SCALE / MAP_RESOLUTION; 
 
+constexpr int MAX_DISTANCE = SIZE_X * SIZE_X * MAP_RESOLUTION * MAP_RESOLUTION;
+constexpr int MAX_TSDF_IT = MAX_DISTANCE / (MAP_RESOLUTION / 2) - MAP_RESOLUTION;
+
+// dz_per_distance should be < 18
+constexpr int MAX_INTERPOLATE_IT = 2 * 18 * MAX_DISTANCE / MATRIX_RESOLUTION / MAP_RESOLUTION;
+
 constexpr int NUM_POINTS = 30000;
 
 
@@ -129,6 +135,9 @@ extern "C"
 
             tsdf_loop: for(int len = MAP_RESOLUTION; len <= distance + tau; len += MAP_RESOLUTION / 2)
             {
+#pragma HLS loop_tripcount min=0 max=MAX_TSDF_IT
+#pragma HLS pipeline
+
                 int proj[3];
                 int index[3];
 
@@ -201,6 +210,8 @@ extern "C"
 
                 interpolate_loop: for(int z = lowest; z <= highest; ++z)
                 {
+#pragma HLS loop_tripcount min=1 max=MAX_INTERPOLATE_IT
+#pragma HLS pipeline
 
                     if(!map.inBounds(index[0], index[1], z))
                     {
