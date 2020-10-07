@@ -241,11 +241,11 @@ extern "C"
             }
         }
 
-        for (int i = 0; i < SIZE_X; i++)
+        sync_loop_x: for (int i = 0; i < SIZE_X; i++)
 		{
-        	for (int j = 0; j < SIZE_Y; j++)
+        	sync_loop_y: for (int j = 0; j < SIZE_Y; j++)
 			{
-        		for (int k = 0; k < SIZE_Z; k++)
+        		sync_loop_z: for (int k = 0; k < SIZE_Z; k++)
 				{
 #pragma HLS dependence variable=mapData inter false
 #pragma HLS dependence variable=new_entries inter false

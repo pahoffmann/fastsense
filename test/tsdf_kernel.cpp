@@ -9,7 +9,7 @@
 
 TEST_CASE("TSDF_Kernel", "[tsdf_kernel]")
 {
-    SECTION("TSDF Runtime")
+    SECTION("Compare TSDF Kernel with Software")
     {
         constexpr unsigned int SCALE = 100;
         constexpr float TAU = 1 * SCALE;
@@ -83,8 +83,6 @@ TEST_CASE("TSDF_Kernel", "[tsdf_kernel]")
                 for(int k = 0; k < SIZE_Z; ++k)
                 {
                     auto index = i + j * SIZE_X + k * SIZE_X * SIZE_Y; 
-
-                    //std::cout << local_buffer[index].first << " " << compare_buffer[index].first << std::endl;
 
                     REQUIRE(local_buffer[index].first == compare_buffer[index].first);
                 }
