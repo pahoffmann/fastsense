@@ -43,7 +43,7 @@ constexpr float RY = 15 * (M_PI / 180); //radiants
 constexpr float TAU = 1 * SCALE;
 constexpr float MAX_WEIGHT = 10 * WEIGHT_RESOLUTION;
 
-constexpr int MAX_ITERATIONS = 1000;
+constexpr int MAX_ITERATIONS = 50;
 
 constexpr int SIZE_X = 20 * SCALE / MAP_RESOLUTION;
 constexpr int SIZE_Y = 20 * SCALE / MAP_RESOLUTION;
@@ -206,7 +206,12 @@ TEST_CASE("Registration", "[registration][slow]")
     ScanPoints_t points_pretransformed_rot(scan_points);
 
     std::shared_ptr<fastsense::map::GlobalMap> global_map_ptr(new fastsense::map::GlobalMap("test_global_map.h5", 0.0, 0.0));
+
+    std::cout << "Test " << __LINE__ << std::endl;
+
     fastsense::map::LocalMap local_map(SIZE_Y, SIZE_Y, SIZE_Z, global_map_ptr, q);
+
+    std::cout << "Test " << __LINE__ << std::endl;
 
     // Initialize temporary testing variables
 
@@ -283,10 +288,21 @@ TEST_CASE("Registration", "[registration][slow]")
 
     SECTION("Test Registration Translation")
     {
+        std::cout << "Test " << __LINE__ << std::endl;
+
         std::cout << "    Section 'Test Registration Translation'" << std::endl;
+
         reg.transform_point_cloud(points_pretransformed_trans, translation_mat);
+
+        std::cout << "Test " << __LINE__ << std::endl;
+
         reg.register_cloud(local_map, points_pretransformed_trans);
+
+        std::cout << "Test " << __LINE__ << std::endl;
+
         check_computed_transform(points_pretransformed_trans, scan_points);
+
+        std::cout << "Test " << __LINE__ << std::endl;
     }
 
     SECTION("Registration test Rotation")

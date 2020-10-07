@@ -5,6 +5,7 @@
 #include <map/local_map_hw.h>
 #include <msg/point.h>
 #include <registration/reg_hw.h>
+#include <iostream>
 
 struct IntTuple
 {
@@ -18,6 +19,8 @@ struct Point
     int y;
     int z;
 };
+
+constexpr int MAP_SHIFT = 6;
 
 extern "C"
 {
@@ -41,7 +44,7 @@ extern "C"
 
 #pragma HLS DATA_PACK variable=pointData
 #pragma HLS INTERFACE m_axi port=pointData offset=slave bundle=gmem
-#pragma HLS INTERFACE s_axilite port=scanPoints bundle=control
+#pragma HLS INTERFACE s_axilite port=pointData bundle=control
 #pragma HLS INTERFACE s_axilite port=numPoints bundle=control
 
 #pragma HLS DATA_PACK variable=mapData
@@ -66,40 +69,42 @@ extern "C"
                                        posX, posY, posZ,
                                        offsetX, offsetY, offsetZ};
         //define local variables
-        static long local_h[6][6] = {0};
-        static long local_g[6] = {0};
+        long local_h[6][6] = {0};
+        long local_g[6] = {0};
         long local_error = 0;
         long local_count = 0;
 
-        for (int i = 0; i < numPoints; i += sizeof(Point))
-        {
-            //IntTuple tmp = map.get(mapData, pointData[i].x, pointData[i].y, pointData[i].z);
+        std::cout << "Kernel_CPP " << __LINE__ << " - " << numPoints << std::endl;
 
-            //#pragma omp for schedule(static) nowait
-            
+        for (int i = 0; i < numPoints; i++)
+        {         
             auto point = pointData[i];
 
-            // apply the total transform
-            //Vector3i point = transform(input, next_transform);
+            if(point.x == 0 && point.y == 0 && point.z == 0) continue; //hacky af. TODO: better solution by pascal
 
-            // fastsense::msg::Point buf;    
-            // buf.x = point.x / mapResolution;
-            // buf.y = point.y / mapResolution;
-            // buf.z = point.z / mapResolution;
-            //Vector3i buf = floor_shift(point, MAP_SHIFT);
+
+            //TODO: if transform needs to take place in hw, here is the place ;)
+
+            Point buf;    
+            buf.x = point.x / mapResolution;
+            buf.y = point.y / mapResolution;
+            buf.z = point.z / mapResolution;
             
-            const auto& current = map.get(mapData, pointData[i].x / mapResolution, pointData[i].y / mapResolution, pointData[i].z / mapResolution);
+            //get value of local map
+            const auto& current = map.get(mapData, buf.x, buf.y, buf.z);
 
             if (current.second == 0)
             {
                 continue;
             }
 
-            static int gradient[3] = {};
+            int gradient[3] = {0};
+
+            //std::cout << "Kernel_CPP " << __LINE__ << std::endl;
 
             for (size_t axis = 0; axis < 3; axis++)
             {
-                static int index[3] = {point.x / mapResolution, point.y / mapResolution, point.z / mapResolution};
+                int index[3] = {buf.x, buf.y, buf.z};
                 index[axis] -= 1;
                 const auto last = map.get(mapData, index[0], index[1], index[2]);
                 index[axis] += 2;
@@ -109,44 +114,57 @@ extern "C"
                     gradient[axis] = (next.first - last.first) / 2;
                 }
             }
-            
+
+            //std::cout << "Kernel_CPP " << __LINE__ << std::endl;
 
             //calculate cross_product
-            static long cross_p[3] = {point.y * gradient[2] - point.z * gradient[1],
-                                        point.z * gradient[0] - point.x * gradient[2],
-                                        point.x * gradient[1] - point.y * gradient[0]};
+            long cross_p[3] = {static_cast<long>(point.y) * gradient[2] - static_cast<long>(point.z) * gradient[1],
+                               static_cast<long>(point.z) * gradient[0] - static_cast<long>(point.x) * gradient[2],
+                               static_cast<long>(point.x) * gradient[1] - static_cast<long>(point.y) * gradient[0]};
 
-            static long jacobi[6][1] = {cross_p[0], cross_p[1], cross_p[2], gradient[0], gradient[1], gradient[2]};
+            long jacobi[6][1] = {{cross_p[0]}, {cross_p[1]}, {cross_p[2]}, {gradient[0]}, {gradient[1]}, {gradient[2]}};
             
-            //TODO: ADD PRAGMATA
-            for(int i = 0; i < 6; i++)
-            {
-                local_g[i] += jacobi[i][0] * current.first;
-            }
+            //std::cout << "Kernel_CPP " << __LINE__ << std::endl;
 
-            static long jacobi_transpose[1][6] = {jacobi[0][0],
-                                                    jacobi[1][0],
-                                                    jacobi[2][0],
-                                                    jacobi[3][0],
-                                                    jacobi[4][0],
-                                                    jacobi[5][0]};
+            long jacobi_transpose[1][6] = {{jacobi[0][0],
+                                           jacobi[1][0],
+                                           jacobi[2][0],
+                                           jacobi[3][0],
+                                           jacobi[4][0],
+                                           jacobi[5][0]}};
 
-            static long tmp[6][6];
+            long tmp[6][6];
+            
+            //std::cout << "Kernel_CPP " << __LINE__ << std::endl;
+
             fastsense::registration::MatrixMul(jacobi, jacobi_transpose, tmp);
             
+            //std::cout << "Kernel_CPP " << __LINE__ << std::endl;
+
             //add multiplication result to local_h
             //TODO: pragmas 
             for(int row = 0; row < 6; row++)
             {
-                for(int col = 0; col < 5; col++)
+                for(int col = 0; col < 6; col++)
                 {
                     local_h[row][col] += tmp[row][col];
                 }
             }
+            
+            //TODO: ADD PRAGMATA
+            for(int count = 0; count < 6; count++)
+            {
+                local_g[count] += jacobi[count][0] * current.first;
+            }
 
             local_error += abs(current.first);
             local_count++;
+
+            if(i == 0) std::cout << "Kernel_CPP Iterating trough points......." << __LINE__ << std::endl;
+
         }
+
+        std::cout << "Kernel_CPP " << __LINE__ << std::endl;
 
         //fill output buffer.
         for(int row = 0; row < 6; row++)

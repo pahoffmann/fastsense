@@ -57,6 +57,8 @@ Matrix4f Registration::xi_to_transform(Vector6f xi)
 
 Matrix4f Registration::register_cloud(fastsense::map::LocalMap& localmap, ScanPoints_t& cloud)
 {
+    std::cout << __LINE__ << std::endl;
+    
     mutex_.lock();
     Matrix4f total_transform = imu_accumulator_; //transform used to register the pcl
     imu_accumulator_.setIdentity();
@@ -90,6 +92,8 @@ Matrix4f Registration::register_cloud(fastsense::map::LocalMap& localmap, ScanPo
 
         for (int i = 0; i < max_iterations_ && !finished; i++)
         {
+            std::cout << __LINE__ << std::endl;
+
             local_h = Matrix6i::Zero();
             local_g = Vector6i::Zero();
             local_error = 0;
@@ -97,7 +101,7 @@ Matrix4f Registration::register_cloud(fastsense::map::LocalMap& localmap, ScanPo
 
             //next_transform = (total_transform * MATRIX_RESOLUTION).cast<int>();
            
-            //TODO: doesnt work, because of integer - float konversion, total transform, used in hw or local transform used on entire pcl - you decide.
+            //TODO: total transform, used in hw or local transform used on entire pcl - you decide.
             transform_point_cloud(cloud, next_transform);
 
             //STOP SW IMPLEMENTATION
@@ -110,7 +114,7 @@ Matrix4f Registration::register_cloud(fastsense::map::LocalMap& localmap, ScanPo
 
             //fastsense::buffer::InputBuffer<fastsense::msg::Point> buffer_scan{q, cloud.size()};
 
-            //Output size: local_h matrix (6x6) + local_g matrix (6x1) + local_error (int) + local_count (int)
+            //Output size: local_h matrix (6x6) + local_g matrix (6x1) + local_error (int)  + local_count (int)
             // 36 + 6 + 1 + 1 = 44
             //fastsense::buffer::OutputBuffer<int> buffer_output{q, 44};
 
@@ -119,7 +123,12 @@ Matrix4f Registration::register_cloud(fastsense::map::LocalMap& localmap, ScanPo
             //     buffer_scan[i] = cloud[i];
             // }
 
-            krnl.run(localmap, cloud, local_h, local_g, local_error, local_count); //TODO: is this working?
+            std::cout << __LINE__ << std::endl;
+
+            krnl.synchronized_run(localmap, cloud, local_h, local_g, local_error, local_count); //TODO: is this working?
+
+            std::cout << __LINE__ << std::endl;
+
             //krnl.waitComplete();
 
             //RESUME SOFTWARE IMPLEMENTATION
@@ -129,6 +138,8 @@ Matrix4f Registration::register_cloud(fastsense::map::LocalMap& localmap, ScanPo
             g += local_g;
             error += local_error;
             count += local_count;
+
+            std::cout << __LINE__ << std::endl;
 
 
             // wait for all threads to finish //here should be the exit point of the hw communication, after which the data is being used.
@@ -147,6 +158,8 @@ Matrix4f Registration::register_cloud(fastsense::map::LocalMap& localmap, ScanPo
 
                 //convert xi into transform matrix T
                 next_transform = xi_to_transform(xi);
+
+                std::cout << "Next transform: " <<  next_transform << std::endl;
 
                 total_transform = next_transform * total_transform; //update transform
 
@@ -169,6 +182,8 @@ Matrix4f Registration::register_cloud(fastsense::map::LocalMap& localmap, ScanPo
                 g = Vector6i::Zero();
                 error = 0;
                 count = 0;
+                            
+                std::cout << __LINE__ << std::endl;
             }
         }
     }
