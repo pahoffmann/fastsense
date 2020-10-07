@@ -11,7 +11,9 @@
 
 #pragma once
 
-#include <hls_math.h>
+//#include <hls_math.h>
+#include <cmath>
+
 
 // int norm(const Point& point)
 // {
@@ -22,5 +24,5 @@ int norm(int* point)
 {
 #pragma HLS inline
 
-    return hls::sqrt(point[0] * point[0] + point[1] * point[1] + point[2] * point[2]);
+    return std::sqrt(point[0] * point[0] + point[1] * point[1] + point[2] * point[2]);
 }

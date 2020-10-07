@@ -2,8 +2,10 @@
  * @author Marc Eisoldt
  */
 
-#include <tsdf/tsdf_hw.h>
+#include <tsdf/kernel/tsdf_hw.h>
 #include <map/local_map_hw.h>
+
+#include <iostream>
 
 #include <cmath>
 
@@ -24,18 +26,19 @@ constexpr int RINGS = 16; // TODO: take from Scanner
 const int dz_per_distance = std::tan(30.0 / ((double)RINGS - 1.0) / 180.0 * M_PI) / 2.0 * MATRIX_RESOLUTION;
 
 constexpr unsigned int SCALE = 100;
+
 constexpr int SIZE_X = 20 * SCALE / MAP_RESOLUTION;
 constexpr int SIZE_Y = 20 * SCALE / MAP_RESOLUTION;
-constexpr int SIZE_Z = 5 * SCALE / MAP_RESOLUTION;
+constexpr int SIZE_Z = 5 * SCALE / MAP_RESOLUTION; 
 
 constexpr int NUM_POINTS = 30000;
 
 
 struct Point
 {
-    int x;
-    int y;
-    int z;
+    int x = 0;
+    int y = 0;
+    int z = 0;
 };
 
 struct IntTuple
@@ -109,6 +112,11 @@ extern "C"
         {
 #pragma HLS pipeline
 
+            if(scanPoints[point_index].x == 0 && scanPoints[point_index].y == 0 && scanPoints[point_index].z == 0)
+            {
+                continue;
+            }
+
             int direction[3];
 
             direction[0] = scanPoints[point_index].x - scannerPos[0];
@@ -119,9 +127,8 @@ extern "C"
 
             int prev[] = {0, 0, 0};
 
-            tsdf_loop: for(int len = MAP_RESOLUTION; len <= distance + tau; len += MAP_RESOLUTION)
+            tsdf_loop: for(int len = MAP_RESOLUTION; len <= distance + tau; len += MAP_RESOLUTION / 2)
             {
-
                 int proj[3];
                 int index[3];
 
@@ -178,7 +185,7 @@ extern "C"
 
                 int weight = WEIGHT_RESOLUTION;
 
-                if(value < - weight_epsilon)
+                if(value < -weight_epsilon)
                 {
                     weight = WEIGHT_RESOLUTION * (tau + value) / (tau - weight_epsilon);
                 }
@@ -192,13 +199,6 @@ extern "C"
                 int lowest = (proj[2] - delta_z) / MAP_RESOLUTION;
                 int highest = (proj[2] + delta_z) / MAP_RESOLUTION;
 
-                //auto entry = map.get(new_entries, index[0], index[1], index[2]);
-
-                //entry.first = value;
-                //entry.second = weight;
-
-                //map.set(new_entries, index[0], index[1], index[2], entry);
-
                 interpolate_loop: for(int z = lowest; z <= highest; ++z)
                 {
 
@@ -208,9 +208,6 @@ extern "C"
                     }
 
                     IntTuple entry = map.get(new_entries, index[0], index[1], z);
-
-                    entry.first = value;
-                    entry.second = weight;
 
                     IntTuple new_entry;
 
@@ -229,6 +226,7 @@ extern "C"
 //                        //     ++change_count;
 //                        //}
 //
+
                         new_entry.first = value;
                         new_entry.second = weight;
                     }
@@ -242,7 +240,6 @@ extern "C"
                 }
             }
         }
-
 
         for (int i = 0; i < SIZE_X; i++)
 		{
@@ -267,13 +264,14 @@ extern "C"
 
 					int new_weight = map_entry.second + new_entry.second;
 
-					if(new_weight > max_weight)
+					mapData[index].first = (map_entry.first * map_entry.second + new_entry.first * new_entry.second) / new_weight;
+					
+                    if(new_weight > max_weight)
 					{
 						new_weight = max_weight;
 					}
 
-					mapData[index].first = (map_entry.first * map_entry.second + new_entry.first * new_entry.second) / new_weight;
-					mapData[index].second = new_weight;
+                    mapData[index].second = new_weight;
 				}
 			}
 		}

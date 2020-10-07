@@ -110,70 +110,60 @@ TEST_CASE("TSDF_Values", "[tsdf_values]")
         }
     }
 
-    SECTION("TSDF Runtime")
-    {
-        constexpr unsigned int SCALE = 100;
-        constexpr float TAU = 1 * SCALE;
-        constexpr float MAX_WEIGHT = 10 * WEIGHT_RESOLUTION;
+    // SECTION("TSDF Runtime")
+    // {
+    //     constexpr unsigned int SCALE = 100;
+    //     constexpr float TAU = 1 * SCALE;
+    //     constexpr float MAX_WEIGHT = 10 * WEIGHT_RESOLUTION;
 
-        constexpr int SIZE_X = 20 * SCALE / MAP_RESOLUTION;
-        constexpr int SIZE_Y = 20 * SCALE / MAP_RESOLUTION;
-        constexpr int SIZE_Z = 5 * SCALE / MAP_RESOLUTION; 
+    //     constexpr int SIZE_X = 20 * SCALE / MAP_RESOLUTION;
+    //     constexpr int SIZE_Y = 20 * SCALE / MAP_RESOLUTION;
+    //     constexpr int SIZE_Z = 5 * SCALE / MAP_RESOLUTION; 
 
-        RuntimeEvaluator eval;
+    //     RuntimeEvaluator eval;
 
-        fastsense::CommandQueuePtr q = fastsense::hw::FPGAManager::create_command_queue();
+    //     fastsense::CommandQueuePtr q = fastsense::hw::FPGAManager::create_command_queue();
 
-        std::vector<std::vector<Vector3f>> float_points;
-        unsigned int num_points;
+    //     std::vector<std::vector<Vector3f>> float_points;
+    //     unsigned int num_points;
 
-        fastsense::util::PCDFile file("sim_cloud.pcd");
-        file.readPoints(float_points, num_points);
+    //     fastsense::util::PCDFile file("sim_cloud.pcd");
+    //     file.readPoints(float_points, num_points);
 
-        auto count = 0u;
+    //     auto count = 0u;
 
-        ScanPoints_t scan_points(num_points);
+    //     ScanPoints_t scan_points(num_points);
 
-        for(const auto& ring : float_points)
-        {
-            for(const auto& point : ring)
-            {
-                scan_points[count].x() = point.x() * SCALE;
-                scan_points[count].y() = point.y() * SCALE;
-                scan_points[count].z() = point.z() * SCALE;
+    //     for(const auto& ring : float_points)
+    //     {
+    //         for(const auto& point : ring)
+    //         {
+    //             scan_points[count].x() = point.x() * SCALE;
+    //             scan_points[count].y() = point.y() * SCALE;
+    //             scan_points[count].z() = point.z() * SCALE;
                 
-                ++count;
-            }
-        }
+    //             ++count;
+    //         }
+    //     }
 
-        std::cout << "num points: " << count << std::endl;
+    //     std::cout << "num points: " << count << std::endl;
 
-        std::shared_ptr<fastsense::map::GlobalMap> global_map_ptr(new fastsense::map::GlobalMap("test_global_map", 0.0, 0.0));
-        fastsense::map::LocalMap local_map(SIZE_Y, SIZE_Y, SIZE_Z, global_map_ptr, q);
+    //     std::shared_ptr<fastsense::map::GlobalMap> global_map_ptr(new fastsense::map::GlobalMap("test_global_map", 0.0, 0.0));
+    //     fastsense::map::LocalMap local_map(SIZE_X, SIZE_Y, SIZE_Z, global_map_ptr, q);
 
-        // Initialize temporary testing variables
+    //     // Initialize temporary testing variables
 
-        //calc tsdf values for the points from the pcd and store them in the local map
+    //     //calc tsdf values for the points from the pcd and store them in the local map
 
-        for(int i = 0; i < 100; i++)
-        {
-            eval.start("TSDF update");
+    //     for(int i = 0; i < 100; i++)
+    //     {
+    //         eval.start("TSDF update");
 
-            fastsense::tsdf::update_tsdf(scan_points, Vector3i::Zero(), local_map, TAU, MAX_WEIGHT);
+    //         fastsense::tsdf::update_tsdf(scan_points, Vector3i::Zero(), local_map, TAU, MAX_WEIGHT);
 
-            eval.stop();
-        }
+    //         eval.stop();
+    //     }
 
-        std::cout << eval.to_string() << std::endl;
-    }
-
-    SECTION("TSDF Interpolation")
-    {
-        // TODO
-    }
-
-    SECTION("Complete Scan")
-    {
-        // TODO
-    }
+    //     std::cout << eval.to_string() << std::endl;
+    // }
 }
