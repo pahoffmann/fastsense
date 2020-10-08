@@ -61,7 +61,7 @@ Application::Application()
 int Application::run()
 {
     Logger::info("Starting Application...");
-    Runner<fastsense::data::SensorSync> run_synchronizer(synchronizer);
+    //Runner<fastsense::data::SensorSync> run_synchronizer(synchronizer);
     Runner<fastsense::driver::VelodyneDriver> run_lidarDriver(lidarDriver);
     Runner<fastsense::driver::Imu> run_imuDriver(imuDriver);
     Logger::info("Application started");
