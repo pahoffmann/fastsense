@@ -23,7 +23,7 @@ class ImuBridge :   public BridgeBase<msg::ImuMsg, sensor_msgs::Imu, 5555>,
 {
 public:
     ImuBridge() = delete;
-    ImuBridge(ros::NodeHandle& n);
+    ImuBridge(ros::NodeHandle& n, const std::string& board_addr);
     ~ImuBridge() = default;
 
     void start() override;

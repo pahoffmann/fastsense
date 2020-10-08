@@ -14,6 +14,7 @@ find_package(ZeroMQ 4.3.2 REQUIRED)
 find_package(cppzmq 4.4.1 REQUIRED)
 find_package(HDF5 REQUIRED COMPONENTS CXX C HL)
 find_package(OpenMP REQUIRED)
+find_package(Eigen3 REQUIRED)
 
 set(FASTSENSE_DIR ../../../../fastsense)                               
 set(OpenMP_FLAGS ${OpenMP_CXX_FLAGS})
@@ -27,11 +28,10 @@ catkin_package()
 
 add_executable(bridge 
   ${FASTSENSE_DIR}/src/msg/imu_msg.cpp
-  ${FASTSENSE_DIR}/src/msg/angular_velocity.cpp
-  ${FASTSENSE_DIR}/src/msg/linear_acceleration.cpp
   ${FASTSENSE_DIR}/src/msg/magnetic_field.cpp
   src/imu_bridge.cpp
   src/tsdf_bridge.cpp
+  src/velodyne_bridge.cpp
   src/bridge.cpp
 )
 
@@ -43,6 +43,7 @@ target_include_directories(bridge PRIVATE
   include
   ${catkin_INCLUDE_DIRS}
   ${HDF5_INCLUDE_DIRS}
+  ${Eigen3_INCLUDE_DIRS}
 )
 
 target_link_libraries(bridge

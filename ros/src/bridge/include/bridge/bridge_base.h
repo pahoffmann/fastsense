@@ -24,12 +24,11 @@ private:
 
 public:
     BridgeBase() = delete;
-    inline BridgeBase(ros::NodeHandle& n, std::string name, size_t msg_buffer_size = 1000) 
-    :   receiver_{PORT}, 
+    inline BridgeBase(ros::NodeHandle& n, const std::string& name, const std::string& board_addr, size_t msg_buffer_size = 1000) 
+    :   receiver_{board_addr, PORT}, 
         msg_{},
-        pub_{} 
+        pub_{n.advertise<P>(name, msg_buffer_size)} 
     {
-        pub_ = n.advertise<P>(name, msg_buffer_size);
     }
 
     virtual ~BridgeBase() = default;
@@ -37,9 +36,6 @@ public:
     virtual void run() 
     {
         receiver_.receive(msg_);
-        return;
-
-        // TODO segfault during conversion
         convert();
         publish();
     }

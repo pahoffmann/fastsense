@@ -13,17 +13,17 @@
 
 #include "bridge_base.h"
 #include <util/process_thread.h>
-#include <comm/bridge_messages.h>
+#include <msg/tsdf_bridge_msg.h>
 
 namespace fastsense::bridge
 {
 
-class TSDFBridge :  public BridgeBase<comm::TSDFBridgeMessage, visualization_msgs::Marker, 6666>, 
+class TSDFBridge :  public BridgeBase<msg::TSDFBridgeMessage, visualization_msgs::Marker, 6666>, 
                     public util::ProcessThread
 {
 public:
     TSDFBridge() = delete;
-    TSDFBridge(ros::NodeHandle& n);
+    TSDFBridge(ros::NodeHandle& n, const std::string& board_addr);
     ~TSDFBridge() = default;
 
     void start() override;
