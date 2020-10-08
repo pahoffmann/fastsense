@@ -20,24 +20,32 @@ struct Point
     int z = 0;
 };
 
+struct IntTuple
+{
+    int first = 0;
+    int second = 0;
+};
+
 namespace fastsense::kernels
 {
 
 class TSDFKernel : public BaseKernel
 {
+
 public:
     TSDFKernel(const CommandQueuePtr& queue)
         : BaseKernel{queue, "krnl_tsdf"}
-    {}
+    {
+
+    }
 
     ~TSDFKernel() = default;
 
-    void run(map::LocalMap& map, const buffer::InputOutputBuffer<Point>& scan_points, const Vector3i& scanner_pos, int tau, int max_weight)
+    void run(map::LocalMap& map, const buffer::InputBuffer<Point>& scan_points, int tau, int max_weight)
     {
         resetNArg();
 
         setArg(scan_points.getBuffer());
-        setArg(static_cast<int>(scan_points.size()));
 
         // auto queue = fastsense::hw::FPGAManager::create_command_queue();
         // buffer::InputOutputBuffer<Point> point_data(queue, scan_points.size());
@@ -52,14 +60,6 @@ public:
         // setArg(point_data.getBuffer());
         // setArg(static_cast<int>(scan_points.size()));
 
-        auto queue2 = fastsense::hw::FPGAManager::create_command_queue();
-        buffer::InputOutputBuffer<int> scanner_pos_data(queue2, 3);
-        scanner_pos_data[0] = scanner_pos[0];
-        scanner_pos_data[1] = scanner_pos[1];
-        scanner_pos_data[2] = scanner_pos[2];
-
-        setArg(scanner_pos_data.getBuffer());
-
         setArg(map.getBuffer().getBuffer());
         auto m = map.getHardwareRepresentation();
         setArg(m.sizeX);
@@ -72,11 +72,15 @@ public:
         setArg(m.offsetY);
         setArg(m.offsetZ);
 
+        auto queue = fastsense::hw::FPGAManager::create_command_queue();
+        buffer::InputOutputBuffer<IntTuple> new_entries(queue, m.sizeX * m.sizeY * m.sizeZ);
+        setArg(new_entries.getBuffer());
+
         setArg(tau);
         setArg(max_weight);
 
         // Write buffers
-        cmd_q_->enqueueMigrateMemObjects({map.getBuffer().getBuffer()}, CL_MIGRATE_MEM_OBJECT_DEVICE, nullptr, &pre_events_[0]);
+        cmd_q_->enqueueMigrateMemObjects({map.getBuffer().getBuffer(), scan_points.getBuffer(), new_entries.getBuffer()}, CL_MIGRATE_MEM_OBJECT_DEVICE, nullptr, &pre_events_[0]);
 
         // Launch the Kernel
         cmd_q_->enqueueTask(kernel_, &pre_events_, &execute_events_[0]);

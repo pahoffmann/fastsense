@@ -11,7 +11,7 @@ TEST_CASE("TSDF_Kernel", "[tsdf_kernel]")
 {
     SECTION("Compare TSDF Kernel with Software")
     {
-        constexpr unsigned int SCALE = 100;
+        constexpr unsigned int SCALE = 1000;
         constexpr float TAU = 1 * SCALE;
         constexpr float MAX_WEIGHT = 10 * WEIGHT_RESOLUTION;
 
@@ -30,7 +30,7 @@ TEST_CASE("TSDF_Kernel", "[tsdf_kernel]")
         ScanPoints_t scan_points(num_points);
 
         auto queue = fastsense::hw::FPGAManager::create_command_queue();
-        fastsense::buffer::InputOutputBuffer<Point> kernel_points(queue, 30000);
+        fastsense::buffer::InputBuffer<Point> kernel_points(queue, 30000);
 
         for(const auto& ring : float_points)
         {
@@ -68,13 +68,11 @@ TEST_CASE("TSDF_Kernel", "[tsdf_kernel]")
         auto q3 = fastsense::hw::FPGAManager::create_command_queue();
         fastsense::kernels::TSDFKernel krnl(q3);
 
-        krnl.run(local_map, kernel_points, Vector3i::Zero(), TAU, MAX_WEIGHT);
+        krnl.run(local_map, kernel_points, TAU, MAX_WEIGHT);
         krnl.waitComplete();
 
         const auto& local_buffer = local_map.getBuffer();
         const auto& compare_buffer = local_map_compare.getBuffer(); 
-
-        int err_count = 0;
 
         for(int i = 0; i < SIZE_X; ++i)
         {
@@ -85,6 +83,7 @@ TEST_CASE("TSDF_Kernel", "[tsdf_kernel]")
                     auto index = i + j * SIZE_X + k * SIZE_X * SIZE_Y; 
 
                     REQUIRE(local_buffer[index].first == compare_buffer[index].first);
+                    REQUIRE(local_buffer[index].second == compare_buffer[index].second);
                 }
             }
         }
