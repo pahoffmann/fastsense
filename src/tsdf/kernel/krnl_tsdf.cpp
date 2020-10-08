@@ -63,6 +63,7 @@ extern "C"
 {
 
     void krnl_tsdf(Point* scanPoints,
+    			   int numPoints,
                    IntTuple* mapData,
                    int sizeX,
                    int sizeY,
@@ -78,11 +79,13 @@ extern "C"
                    int max_weight)
     {
 #pragma HLS DATA_PACK variable=scanPoints
-#pragma HLS INTERFACE m_axi port=scanPoints offset=slave bundle=gmem
+#pragma HLS INTERFACE m_axi port=scanPoints offset=slave bundle=scanmem
 #pragma HLS INTERFACE s_axilite port=scanPoints bundle=control
 
+#pragma HLS INTERFACE s_axilite port=numPoints bundle=control
+
 #pragma HLS DATA_PACK variable=mapData
-#pragma HLS INTERFACE m_axi port=mapData offset=slave bundle=gmem
+#pragma HLS INTERFACE m_axi port=mapData offset=slave bundle=mapmem
 #pragma HLS INTERFACE s_axilite port=mapData bundle=control
 #pragma HLS INTERFACE s_axilite port=sizeX bundle=control
 #pragma HLS INTERFACE s_axilite port=sizeY bundle=control
@@ -95,7 +98,7 @@ extern "C"
 #pragma HLS INTERFACE s_axilite port=offsetZ bundle=control
 
 #pragma HLS DATA_PACK variable=new_entries
-#pragma HLS INTERFACE m_axi port=new_entries offset=slave bundle=gmem
+#pragma HLS INTERFACE m_axi port=new_entries offset=slave bundle=entrymem
 #pragma HLS INTERFACE s_axilite port=new_entries bundle=control
 
 #pragma HLS INTERFACE s_axilite port=tau bundle=control
@@ -115,9 +118,9 @@ extern "C"
         int change_count = 0;
 
 #endif
-        point_loop: for(int point_index = 0; point_index < NUM_POINTS; ++point_index)
+        point_loop: for(int point_index = 0; point_index < numPoints; ++point_index)
         {
-#pragma HLS pipeline
+#pragma HLS loop_tripcount min=30000 max=30000
 
         	Point scan_point = scanPoints[point_index];
 
@@ -135,12 +138,16 @@ extern "C"
 
             int distance = norm(direction);
 
-            int prev[] = {0, 0, 0};
+            int prev[3];
+            prev[0] = 0;
+            prev[1] = 0;
+            prev[2] = 0;
+
 #pragma HLS ARRAY_PARTITION variable=prev complete
 
             tsdf_loop: for(int len = MAP_RESOLUTION; len <= distance + tau; len += MAP_RESOLUTION / 2)
             {
-//#pragma HLS loop_tripcount min=0 max=MAX_TSDF_IT
+#pragma HLS loop_tripcount min=0 max=128
 
                 int proj[3];
                 int index[3];
@@ -154,7 +161,6 @@ extern "C"
                 ray_step_loop: for(int coor_index = 0; coor_index < 3; ++coor_index)
                 {
 #pragma HLS unroll
-
                     index[coor_index] = proj[coor_index] / MAP_RESOLUTION;
                 }
 
@@ -168,7 +174,6 @@ extern "C"
                 prev_loop: for(int coor_index = 0; coor_index < 3; ++coor_index)
                 {
 #pragma HLS unroll
-
                     prev[coor_index] = index[coor_index];
                 }
 
@@ -186,7 +191,6 @@ extern "C"
                 target_loop: for(int coor_index = 0; coor_index < 3; ++coor_index)
                 {
 #pragma HLS unroll
-
                     target_center[coor_index] = index[coor_index] * MAP_RESOLUTION + MAP_RESOLUTION / 2;
                 }
 
@@ -224,7 +228,9 @@ extern "C"
 
                 interpolate_loop: for(int z = lowest; z <= highest; ++z)
                 {
-//#pragma HLS loop_tripcount min=1 max=MAX_INTERPOLATE_IT
+#pragma HLS loop_tripcount min=1 max=2
+#pragma HLS pipeline II=1
+#pragma HLS dependence variable=new_entries inter false
 
                     if(!map.inBounds(index[0], index[1], z))
                     {
@@ -296,41 +302,30 @@ extern "C"
         }
 
 #else
-        sync_loop_x: for (int i = 0; i < sizeX; i++)
+        sync_loop: for (int index = 0; index < sizeX * sizeY * sizeZ; index++)
 		{
-        	sync_loop_y: for (int j = 0; j < sizeY; j++)
+#pragma HLS loop_tripcount min=8000000 max=8000000
+#pragma HLS pipeline II=1
+#pragma HLS dependence variable=mapData inter false
+#pragma HLS dependence variable=new_entries inter false
+
+			IntTuple map_entry = mapData[index];
+			IntTuple new_entry = new_entries[index];
+
+			int new_weight = map_entry.second + new_entry.second;
+
+			map_entry.first = (map_entry.first * map_entry.second + new_entry.first * new_entry.second) / new_weight;
+
+			if(new_weight > max_weight)
 			{
-        		sync_loop_z: for (int k = 0; k < sizeZ; k++)
-				{
-//#pragma HLS dependence variable=mapData inter false
-//#pragma HLS dependence variable=new_entries inter false
-
-        			int index = i + j * sizeX + k * sizeX * sizeY;
-					IntTuple map_entry = mapData[index];
-					IntTuple new_entry = new_entries[index];
-
-
-					if(new_entry.second == 0)
-					{
-						continue;
-					}
-
-					int new_weight = map_entry.second + new_entry.second;
-
-					mapData[index].first = (map_entry.first * map_entry.second + new_entry.first * new_entry.second) / new_weight;
-
-                    if(new_weight > max_weight)
-					{
-						new_weight = max_weight;
-					}
-
-                    mapData[index].second = new_weight;
-				}
+				new_weight = max_weight;
 			}
+
+			map_entry.second = new_weight;
+
+			mapData[index] = map_entry;
 		}
-
 #endif
-
     }
 
 }
