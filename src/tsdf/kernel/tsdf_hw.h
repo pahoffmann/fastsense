@@ -11,18 +11,13 @@
 
 #pragma once
 
-//#define NO_SYNTH
+#define NO_SYNTH
 
 #ifdef NO_SYNTH
 	#include <cmath>
 #else
 	#include <hls_math.h>
 #endif
-
-// int norm(const Point& point)
-// {
-//     return std::sqrt(point.x * point.x + point.y * point.y + point.z * point.z);
-// }
 
 int norm(int* point)
 {

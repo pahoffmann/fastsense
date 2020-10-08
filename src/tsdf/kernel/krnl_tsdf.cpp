@@ -9,6 +9,8 @@
 
 #include <cmath>
 
+//#define CHANGE_UPDATE
+
 //#include <util/types.h>
 
 using namespace fastsense::map;
@@ -111,8 +113,13 @@ extern "C"
 
         int weight_epsilon = tau / 10;
         IntTuple new_entries[SIZE_X * SIZE_Y * SIZE_Z];
-        //int map_changes[3 * sizeX * sizeY * sizeZ];
+        
+#ifdef CHANGE_UPDATE
+
+        int map_changes[3 * sizeX * sizeY * sizeZ];
         int change_count = 0;
+
+#endif
 
         point_loop: for(int point_index = 0; point_index < NUM_POINTS; ++point_index)
         {
@@ -225,18 +232,20 @@ extern "C"
                     if(entry.second == 0 || hw_abs(value) < hw_abs(entry.first))
                     {
 
-//                        // if(entry.second == 0)
-//                        // {
-//                        //     int map_pos = index[0] + index[1] * sizeX + index[2] * sizeX * sizeY;
-//                        //     int change_pos = change_count * 3;
-//
-//                        //     map_changes[change_pos]     = index[0];
-//                        //     map_changes[change_pos + 1] = index[1];
-//                        //     map_changes[change_pos + 2] = index[2];
-//
-//                        //     ++change_count;
-//                        //}
-//
+#ifdef CHANGE_UPDATE
+                       if(entry.second == 0)
+                       {
+                           int map_pos = index[0] + index[1] * sizeX + z * sizeX * sizeY;
+                           int change_pos = change_count * 3;
+
+                           map_changes[change_pos]     = index[0];
+                           map_changes[change_pos + 1] = index[1];
+                           map_changes[change_pos + 2] = z;
+
+                           ++change_count;
+                       }
+
+#endif
 
                         new_entry.first = value;
                         new_entry.second = weight;
@@ -251,6 +260,38 @@ extern "C"
                 }
             }
         }
+
+// FIXME: This is very inefficient. Try reducing the number of iterations or removing this completely
+
+#ifdef CHANGE_UPDATE
+
+        for(int i = 0; i < change_count; ++i)
+        {
+#pragma HLS PIPELINE
+
+            int three_times = 3 * i;
+        
+            int index_x = map_changes[three_times];
+            int index_y = map_changes[three_times + 1];
+            int index_z = map_changes[three_times + 2];
+
+            auto map_entry = map.get(mapData, index_x, index_y, index_z);
+            auto new_entry = map.get(new_entries, index_x, index_y, index_z);
+
+            int new_weight = map_entry.second + new_entry.second;
+
+            if(new_weight > max_weight)
+            {
+                new_weight = max_weight;
+            }
+
+            map_entry.first = (map_entry.first * map_entry.second + new_entry.first * new_entry.second) / new_weight;
+            map_entry.second = new_weight;
+
+            map.set(mapData, index_x, index_y, index_z, map_entry);
+        }
+
+#else
 
         sync_loop_x: for (int i = 0; i < SIZE_X; i++)
 		{
@@ -287,180 +328,8 @@ extern "C"
 			}
 		}
 
+#endif
 
-//         for(int point_index = 0; point_index < numPoints; ++point_index)
-//         {
-// #pragma HLS PIPELINE
-
-//             int direction[3];
-
-//             direction[0] = scanPoints[point_index].x - scannerPos[0];
-//             direction[1] = scanPoints[point_index].y - scannerPos[1];
-//             direction[2] = scanPoints[point_index].z - scannerPos[2];
-
-//             int distance = norm(direction);
-
-//             int prev[] = {0, 0, 0};
-
-//             for(int len = MAP_RESOLUTION; len <= distance + tau; len += MAP_RESOLUTION)
-//             {
-// #pragma HLS PIPELINE
-
-//                 int proj[3];
-//                 int index[3];
-
-//                 for(int coor_index = 0; coor_index < 3; ++coor_index)
-//                 {
-// #pragma HLS unroll factor=3 skip_exit_check
-
-//                     proj[coor_index] = scannerPos[coor_index] + direction[coor_index] * len / distance;
-//                     index[coor_index] = proj[coor_index] / MAP_RESOLUTION;
-//                 }
-
-//                 if(index[0] == prev[0] && index[1] == prev[1])
-//                 {
-//                     continue;
-//                 }
-
-//                 for(int coor_index = 0; coor_index < 3; ++coor_index)
-//                 {
-//                     prev[coor_index] = index[coor_index];
-//                 }
-
-//                 if(!map.inBounds(index[0], index[1], index[2]))
-//                 {
-//                     continue;
-//                 }
-
-//                 int target_center[3];
-//                 int value_vec[3];
-
-//                 for(int coor_index = 0; coor_index < 3; ++coor_index)
-//                 {
-// #pragma HLS unroll factor=3 skip_exit_check
-
-//                     target_center[coor_index] = index[coor_index] * MAP_RESOLUTION + MAP_RESOLUTION / 2;
-//                 }            
-
-//                 value_vec[0] = scanPoints[point_index].x - target_center[0];
-//                 value_vec[1] = scanPoints[point_index].y - target_center[1];
-//                 value_vec[2] = scanPoints[point_index].z - target_center[2];
-
-//                 int value = norm(value_vec);
-
-//                 if(tau < value)
-//                 {
-//                     value = tau;
-//                 }
-
-//                 if(len > distance)
-//                 {
-//                     value = -value;
-//                 }
-
-//                 int weight = WEIGHT_RESOLUTION;
-
-//                 if(value < - weight_epsilon)
-//                 {
-//                     weight = WEIGHT_RESOLUTION * (tau + value) / (tau - weight_epsilon);
-//                 }
-
-//                 if(weight == 0)
-//                 {
-//                     continue;
-//                 }
-
-//                 int delta_z = dz_per_distance * len / MATRIX_RESOLUTION;
-//                 int lowest = (proj[2] - delta_z) / MAP_RESOLUTION;
-//                 int highest = (proj[2] + delta_z) / MAP_RESOLUTION;
-
-//                 for(index[2] = lowest; index[2] <= highest; ++index[2])
-//                 {
-//                     if(!map.inBounds(index[0], index[1], index[2]))
-//                     {
-//                         continue;
-//                     }
-
-//                     auto entry = map.get(new_entries, index[0], index[1], index[2]);
-
-//                     if(entry.second == 0 || std::abs(value) < std::abs(entry.first)) 
-//                     {
-//                         // if(entry.second == 0)
-//                         // {
-//                         //     int map_pos = index[0] + index[1] * sizeX + index[2] * sizeX * sizeY;
-//                         //     int change_pos = change_count * 3;
-
-//                         //     map_changes[change_pos]     = index[0];
-//                         //     map_changes[change_pos + 1] = index[1];
-//                         //     map_changes[change_pos + 2] = index[2];
-
-//                         //     ++change_count;
-//                         // }
-
-//                         entry.first = value;
-//                         entry.second = weight;
-
-//                         map.set(new_entries, index[0], index[1], index[2], entry);
-//                     }
-//                 }
-//             }
-//         }
-
-        // FIXME: This is very inefficient. Try reducing the number of iterations or removing this completely
-
-//         for(int i = 0; i < change_count; ++i)
-//         {
-// #pragma HLS PIPELINE
-
-//             int three_times = 3 * i;
-        
-//             int index_x = map_changes[three_times];
-//             int index_y = map_changes[three_times + 1];
-//             int index_z = map_changes[three_times + 2];
-
-//             auto map_entry = map.get(mapData, index_x, index_y, index_z);
-//             auto new_entry = map.get(new_entries, index_x, index_y, index_z);
-
-//             int new_weight = map_entry.second + new_entry.second;
-
-//             if(new_weight > max_weight)
-//             {
-//                 new_weight = max_weight;
-//             }
-
-//             map_entry.first = (map_entry.first * map_entry.second + new_entry.first * new_entry.second) / new_weight;
-//             map_entry.second = new_weight;
-
-//             map.set(mapData, index_x, index_y, index_z, map_entry);
-//         }
-
-        // Map access example 
-
-//         for (int i = map.posX - map.sizeX / 2; i <= map.posX + map.sizeX / 2; i++)
-//         {
-//             for (int j = map.posY - map.sizeY / 2; j <= map.posY + map.sizeY / 2; j++)
-//             {
-//                 for (int k = map.posZ - map.sizeZ / 2; k <= map.posZ + map.sizeZ / 2; k++)
-//                 {
-// #pragma HLS PIPELINE
-//                     IntTuple tmp = map.get(mapData, i, j, k);
-//                     tmp.first *= 2;
-//                     tmp.second /= 2;
-//                     map.set(mapData, i, j, k, tmp);
-//                 }
-//             }
-//         }
-
-        // Map and point combination example
-
-        // for(int i = 0; i < numPoints; ++i)
-        // {
-        //     Point& point = scanPoints[i];
-        //     IntTuple tmp = map.get(mapData, point.x, point.y, point.z);
-        //     tmp.first = 42;
-        //     tmp.second = 17;
-        //     map.set(mapData, point.x, point.y, point.z, tmp);
-        // }
     }
 
 }
