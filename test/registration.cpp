@@ -129,6 +129,7 @@ static const std::string error_message =
 
 TEST_CASE("Registration", "[registration][slow]")
 {
+    std::cout << "Testing 'Registration'" << std::endl;
     // const char* xclbinFilename = "FastSense.xclbin";
 
     // fs::hw::FPGAManager::load_xclbin(xclbinFilename);
@@ -170,7 +171,9 @@ TEST_CASE("Registration", "[registration][slow]")
 
     // create pcl from velodyne sample, create local map, transform pcl and see what the reconstruction can do.
 
+
     fastsense::CommandQueuePtr q = fastsense::hw::FPGAManager::create_command_queue();
+
 
     //test registration
     fastsense::registration::Registration reg(MAX_ITERATIONS);
@@ -201,7 +204,7 @@ TEST_CASE("Registration", "[registration][slow]")
     ScanPoints_t points_pretransformed_trans(scan_points);
     ScanPoints_t points_pretransformed_rot(scan_points);
 
-    std::shared_ptr<fastsense::map::GlobalMap> global_map_ptr(new fastsense::map::GlobalMap("test_global_map", 0.0, 0.0));
+    std::shared_ptr<fastsense::map::GlobalMap> global_map_ptr(new fastsense::map::GlobalMap("test_global_map.h5", 0.0, 0.0));
     fastsense::map::LocalMap local_map(SIZE_Y, SIZE_Y, SIZE_Z, global_map_ptr, q);
 
     // Initialize temporary testing variables
@@ -224,6 +227,7 @@ TEST_CASE("Registration", "[registration][slow]")
 
     SECTION("Test Transform PCL")
     {
+        std::cout << "    Section 'Test Transform PCL'" << std::endl;
         //test pointcloud transform
         ScanPoints_t cloud(5);
         ScanPoints_t result(5);
@@ -278,6 +282,7 @@ TEST_CASE("Registration", "[registration][slow]")
 
     SECTION("Test Registration Translation")
     {
+        std::cout << "    Section 'Test Registration Translation'" << std::endl;
         reg.transform_point_cloud(points_pretransformed_trans, translation_mat);
         reg.register_cloud(local_map, points_pretransformed_trans);
         check_computed_transform(points_pretransformed_trans, scan_points);
@@ -285,6 +290,7 @@ TEST_CASE("Registration", "[registration][slow]")
 
     SECTION("Registration test Rotation")
     {
+        std::cout << "    Section 'Registration test Rotation'" << std::endl;
         reg.transform_point_cloud(points_pretransformed_rot, rotation_mat);
         reg.register_cloud(local_map, points_pretransformed_rot);
         check_computed_transform(points_pretransformed_rot, scan_points_2);

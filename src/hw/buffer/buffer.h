@@ -7,7 +7,7 @@
 
 #include <hw/opencl.h>
 #include <memory>
-#include <cassert>
+#include <stdexcept>
 
 #include <hw/types.h>
 #include <hw/fpga_manager.h>
@@ -17,8 +17,6 @@
 
 namespace fastsense::buffer
 {
-
-// TODO stl container
 
 /**
  * @brief Buffer class: a safe wrapper around cl::Buffer that allocates memory,
@@ -128,33 +126,28 @@ public:
         using pointer = T*;
 
         const_iterator(pointer ptr) : ptr_(ptr) { }
-        self_type& operator++()
+        
+        self_type operator++()
         {
-            self_type i = *this;
-            ptr_++;
-            return i;
-        }
-        self_type operator++(int junk)
-        {
-            ptr_++;
+            ++ptr_;
             return *this;
         }
-        const reference operator*()
+
+        const reference operator*() const
         {
             return *ptr_;
         }
-        pointer operator->() const
-        {
-            return ptr_;
-        }
-        bool operator==(const self_type& rhs)
+
+        bool operator==(const self_type& rhs) const
         {
             return ptr_ == rhs.ptr_;
         }
-        bool operator!=(const self_type& rhs)
+
+        bool operator!=(const self_type& rhs) const 
         {
             return ptr_ != rhs.ptr_;
         }
+
     private:
         pointer ptr_;
     };
@@ -172,33 +165,33 @@ public:
 
         using iterator_category = std::forward_iterator_tag;
         iterator(pointer ptr) : ptr_(ptr) { }
-        self_type& operator++()
+
+        self_type operator++()
         {
-            self_type i = *this;
-            ptr_++;
-            return i;
-        }
-        self_type operator++(int junk)
-        {
-            ptr_++;
+            ++ptr_;
             return *this;
         }
+
         reference operator*()
         {
             return *ptr_;
         }
+
         pointer operator->()
         {
             return ptr_;
         }
-        bool operator==(const self_type& rhs)
+
+        bool operator==(const self_type& rhs) const
         {
             return ptr_ == rhs.ptr_;
         }
-        bool operator!=(const self_type& rhs)
+
+        bool operator!=(const self_type& rhs) const
         {
             return ptr_ != rhs.ptr_;
         }
+
     private:
         pointer ptr_;
     };
@@ -278,7 +271,7 @@ public:
     /**
      * @brief Get the virtual address that buffer was mapped to
      *
-     * @return T* address to virtal address
+     * @return T* address to virtual address
      */
     T* getVirtualAddress()
     {
@@ -317,13 +310,19 @@ public:
 
     T& operator[](size_type index)
     {
-        assert(index < num_elements_);
+        if(index >= num_elements_)
+        {
+            throw std::out_of_range(std::string("Can't access buffer at index: ") + std::to_string(index));
+        }
         return virtual_address_[index];
     }
 
     const T& operator[](size_type index) const
     {
-        assert(index < num_elements_);
+        if(index >= num_elements_)
+        {
+            throw std::out_of_range(std::string("Can't access buffer at index: ") + std::to_string(index));
+        }
         return virtual_address_[index];
     }
 
@@ -337,12 +336,12 @@ public:
         return iterator(virtual_address_ + num_elements_);
     }
 
-    const_iterator begin() const
+    const_iterator cbegin() const
     {
         return const_iterator(virtual_address_);
     }
 
-    const_iterator end() const
+    const_iterator cend() const
     {
         return const_iterator(virtual_address_ + num_elements_);
     }

@@ -6,6 +6,7 @@ using namespace HighFive;
 
 TEST_CASE("HighFive/HDF5 working", "[hdf5][HighFive]")
 {
+    std::cout << "Testing 'HighFive/HDF5 working'" << std::endl;
     // we create a new hdf5 file
     File file("/tmp/HighFiveTest.h5", File::ReadWrite | File::Create | File::Truncate);
 
