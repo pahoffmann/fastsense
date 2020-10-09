@@ -41,7 +41,7 @@ public:
         //TODO: does this even work? - like this, sw and hw are completely encapsulated
         waitComplete();
 
-        std::cout << "Kernel_H " << __LINE__ << std::endl;
+        //std::cout << "Kernel_H " << __LINE__ << std::endl;
 
 
         //TODO: better way to do this? does it work?
@@ -53,15 +53,15 @@ public:
                    outbuf[24], outbuf[25], outbuf[26], outbuf[27], outbuf[28], outbuf[29],
                    outbuf[30], outbuf[31], outbuf[32], outbuf[33], outbuf[34], outbuf[35];
 
-        local_g << outbuf[0],
-                   outbuf[1],
-                   outbuf[2],
-                   outbuf[3],
-                   outbuf[4],
-                   outbuf[5];
+        local_g << outbuf[36],
+                   outbuf[37],
+                   outbuf[38],
+                   outbuf[39],
+                   outbuf[40],
+                   outbuf[41];
 
-        std::cout << "localH: " << local_h << std::endl;
-        std::cout << "localg: " << local_g << std::endl;
+        //std::cout << "localH: " << local_h << std::endl;
+        //std::cout << "localg: " << local_g << std::endl;
 
 
         local_error = outbuf[42];
@@ -70,7 +70,7 @@ public:
 
     void run(map::LocalMap& map, ScanPoints_t& scan_points, buffer::OutputBuffer<long> &outbuf, fastsense::CommandQueuePtr queue)
     {
-        std::cout << "Kernel_H " << __LINE__ << std::endl;
+        //std::cout << "Kernel_H " << __LINE__ << std::endl;
         resetNArg();
 
         buffer::InputOutputBuffer<Point> point_data(queue, scan_points.size());
@@ -82,8 +82,8 @@ public:
             point_data[i].z = scan_points[i].z();
         }
 
-        std::cout << "Kernel_H " << __LINE__ << std::endl;
-        std::cout << "Point data: size: " << static_cast<int>(point_data.size()) << std::endl << std::endl;
+        //std::cout << "Kernel_H " << __LINE__ << std::endl;
+        //std::cout << "Point data: size: " << static_cast<int>(point_data.size()) << std::endl << std::endl;
 
         auto m = map.get_hardware_representation();
         
@@ -102,22 +102,22 @@ public:
         setArg(MAP_RESOLUTION);
         setArg(outbuf.getBuffer());
 
-        std::cout << "Kernel_H " << __LINE__ << std::endl;
+        //std::cout << "Kernel_H " << __LINE__ << std::endl;
 
         // Write buffers
         cmd_q_->enqueueMigrateMemObjects({map.getBuffer().getBuffer()}, CL_MIGRATE_MEM_OBJECT_DEVICE, nullptr, &pre_events_[0]);
 
-        std::cout << "Kernel_H " << __LINE__ << std::endl;
+        //std::cout << "Kernel_H " << __LINE__ << std::endl;
 
         // Launch the Kernel
         cmd_q_->enqueueTask(kernel_, &pre_events_, &execute_events_[0]);
 
-        std::cout << "Kernel_H " << __LINE__ << std::endl;
+        //std::cout << "Kernel_H " << __LINE__ << std::endl;
 
         // Read buffers
         cmd_q_->enqueueMigrateMemObjects({outbuf.getBuffer()}, CL_MIGRATE_MEM_OBJECT_HOST, &execute_events_, &post_events_[0]);
         
-        std::cout << "Kernel_H " << __LINE__ << std::endl;
+        //std::cout << "Kernel_H " << __LINE__ << std::endl;
     }
 };
 

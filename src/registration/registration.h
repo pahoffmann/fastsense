@@ -57,7 +57,7 @@ public:
      * @brief Construct a new Registration object, used to register a pointcloud with the current ring buffer
      *
      */
-    Registration(unsigned int max_iterations = 50, float it_weight_gradient = 0.01) :
+    Registration(unsigned int max_iterations = 50, float it_weight_gradient = 0.0) :
         max_iterations_(max_iterations),
         it_weight_gradient_(it_weight_gradient),
         first_imu_msg_(true)

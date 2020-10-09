@@ -1,5 +1,6 @@
 /**
  * @author Patrick Hoffmann
+ * @author Marc Eisdoldt
  */
 
 #include <map/local_map_hw.h>
@@ -74,7 +75,7 @@ extern "C"
         long local_error = 0;
         long local_count = 0;
 
-        std::cout << "Kernel_CPP " << __LINE__ << " - " << numPoints << std::endl;
+        //std::cout << "Kernel_CPP " << __LINE__ << " - " << numPoints << std::endl;
 
         for (int i = 0; i < numPoints; i++)
         {         
@@ -133,7 +134,7 @@ extern "C"
                                            jacobi[4][0],
                                            jacobi[5][0]}};
 
-            long tmp[6][6];
+            long tmp[6][6] = {0};
             
             //std::cout << "Kernel_CPP " << __LINE__ << std::endl;
 
@@ -160,18 +161,18 @@ extern "C"
             local_error += abs(current.first);
             local_count++;
 
-            if(i == 0) std::cout << "Kernel_CPP Iterating trough points......." << __LINE__ << std::endl;
+            //if(i == 0) std::cout << "Kernel_CPP Iterating trough points......." << __LINE__ << std::endl;
 
         }
 
-        std::cout << "Kernel_CPP " << __LINE__ << std::endl;
+        //std::cout << "Kernel_CPP " << __LINE__ << std::endl;
 
         //fill output buffer.
         for(int row = 0; row < 6; row++)
         {
             for(int col = 0; col < 6; col++)
             {
-                outbuf[row * 6 + col] = local_h[row][col]; //from 0 to 35: local_h
+                outbuf[row + col * 6] = local_h[row][col]; //from 0 to 35: local_h
             }
 
             outbuf[36 + row] = local_g[row]; //from 36 to 41: local_g

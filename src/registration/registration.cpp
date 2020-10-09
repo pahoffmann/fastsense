@@ -57,7 +57,7 @@ Matrix4f Registration::xi_to_transform(Vector6f xi)
 
 Matrix4f Registration::register_cloud(fastsense::map::LocalMap& localmap, ScanPoints_t& cloud)
 {
-    std::cout << __LINE__ << std::endl;
+    //std::cout << __LINE__ << std::endl;
     
     mutex_.lock();
     Matrix4f total_transform = imu_accumulator_; //transform used to register the pcl
@@ -92,12 +92,14 @@ Matrix4f Registration::register_cloud(fastsense::map::LocalMap& localmap, ScanPo
 
         for (int i = 0; i < max_iterations_ && !finished; i++)
         {
-            std::cout << __LINE__ << std::endl;
+            //std::cout << __LINE__ << std::endl;
 
             local_h = Matrix6i::Zero();
             local_g = Vector6i::Zero();
             local_error = 0;
             local_count = 0;
+
+            //std::cout << next_transform << std::endl << std::endl;
 
             //next_transform = (total_transform * MATRIX_RESOLUTION).cast<int>();
            
@@ -123,11 +125,11 @@ Matrix4f Registration::register_cloud(fastsense::map::LocalMap& localmap, ScanPo
             //     buffer_scan[i] = cloud[i];
             // }
 
-            std::cout << __LINE__ << std::endl;
+            //std::cout << __LINE__ << std::endl;
 
             krnl.synchronized_run(localmap, cloud, local_h, local_g, local_error, local_count); //TODO: is this working?
 
-            std::cout << __LINE__ << std::endl;
+            //std::cout << __LINE__ << std::endl;
 
             //krnl.waitComplete();
 
@@ -139,7 +141,7 @@ Matrix4f Registration::register_cloud(fastsense::map::LocalMap& localmap, ScanPo
             error += local_error;
             count += local_count;
 
-            std::cout << __LINE__ << std::endl;
+            //std::cout << __LINE__ << std::endl;
 
 
             // wait for all threads to finish //here should be the exit point of the hw communication, after which the data is being used.
@@ -159,7 +161,7 @@ Matrix4f Registration::register_cloud(fastsense::map::LocalMap& localmap, ScanPo
                 //convert xi into transform matrix T
                 next_transform = xi_to_transform(xi);
 
-                std::cout << "Next transform: " <<  next_transform << std::endl;
+                //std::cout << "Next transform: " <<  next_transform << std::endl;
 
                 total_transform = next_transform * total_transform; //update transform
 
@@ -169,7 +171,7 @@ Matrix4f Registration::register_cloud(fastsense::map::LocalMap& localmap, ScanPo
 
                 if (fabs(err - previous_errors[2]) < epsilon && fabs(err - previous_errors[0]) < epsilon)
                 {
-                    std::cout << "Stopped after " << i << " / " << max_iterations_ << " Iterations" << std::endl;
+                    //std::cout << "Stopped after " << i << " / " << max_iterations_ << " Iterations" << std::endl;
                     finished = true;
                 }
                 for (int e = 1; e < 4; e++)
@@ -183,7 +185,7 @@ Matrix4f Registration::register_cloud(fastsense::map::LocalMap& localmap, ScanPo
                 error = 0;
                 count = 0;
                             
-                std::cout << __LINE__ << std::endl;
+                //std::cout << __LINE__ << std::endl;
             }
         }
     }
