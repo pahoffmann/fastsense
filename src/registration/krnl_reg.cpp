@@ -44,12 +44,12 @@ extern "C"
     {
 
 #pragma HLS DATA_PACK variable=pointData
-#pragma HLS INTERFACE m_axi port=pointData offset=slave bundle=gmem
+#pragma HLS INTERFACE m_axi port=pointData offset=slave bundle=scanmem
 #pragma HLS INTERFACE s_axilite port=pointData bundle=control
 #pragma HLS INTERFACE s_axilite port=numPoints bundle=control
 
 #pragma HLS DATA_PACK variable=mapData
-#pragma HLS INTERFACE m_axi port=mapData offset=slave bundle=gmem
+#pragma HLS INTERFACE m_axi port=mapData offset=slave bundle=mapmem
 #pragma HLS INTERFACE s_axilite port=mapData bundle=control
 #pragma HLS INTERFACE s_axilite port=sizeX bundle=control
 #pragma HLS INTERFACE s_axilite port=sizeY bundle=control
@@ -70,15 +70,70 @@ extern "C"
                                        posX, posY, posZ,
                                        offsetX, offsetY, offsetZ};
         //define local variables
-        long local_h[6][6] = {0};
-        long local_g[6] = {0};
+        long local_h[6][6];
+        long local_g[6];
+
+#pragma HLS ARRAY_RESHAPE variable=local_h complete dim=0
+#pragma HLS ARRAY_RESHAPE variable=local_g complete
+
+        local_h[0][0] = 0;
+        local_h[0][1] = 0;
+        local_h[0][2] = 0;
+        local_h[0][3] = 0;
+        local_h[0][4] = 0;
+        local_h[0][5] = 0;
+
+        local_h[1][0] = 0;
+		local_h[1][1] = 0;
+		local_h[1][2] = 0;
+		local_h[1][3] = 0;
+		local_h[1][4] = 0;
+		local_h[1][5] = 0;
+
+		local_h[2][0] = 0;
+		local_h[2][1] = 0;
+		local_h[2][2] = 0;
+		local_h[2][3] = 0;
+		local_h[2][4] = 0;
+		local_h[2][5] = 0;
+
+		local_h[3][0] = 0;
+		local_h[3][1] = 0;
+		local_h[3][2] = 0;
+		local_h[3][3] = 0;
+		local_h[3][4] = 0;
+		local_h[3][5] = 0;
+
+		local_h[4][0] = 0;
+		local_h[4][1] = 0;
+		local_h[4][2] = 0;
+		local_h[4][3] = 0;
+		local_h[4][4] = 0;
+		local_h[4][5] = 0;
+
+		local_h[5][0] = 0;
+		local_h[5][1] = 0;
+		local_h[5][2] = 0;
+		local_h[5][3] = 0;
+		local_h[5][4] = 0;
+		local_h[5][5] = 0;
+
+        local_g[0] = 0;
+        local_g[1] = 0;
+        local_g[2] = 0;
+        local_g[3] = 0;
+        local_g[4] = 0;
+        local_g[5] = 0;
+
         long local_error = 0;
         long local_count = 0;
 
-        //std::cout << "Kernel_CPP " << __LINE__ << " - " << numPoints << std::endl;
+        point_loop: for (int i = 0; i < numPoints; i++)
+        {
+#pragma HLS loop_tripcount min=0 max=30000
+#pragma HLS dependence variable=pointData inter false
+#pragma HLS dependence variable=mapData intra false
 
-        for (int i = 0; i < numPoints; i++)
-        {         
             auto point = pointData[i];
 
             if(point.x == 0 && point.y == 0 && point.z == 0) continue; //hacky af. TODO: better solution by pascal
@@ -90,7 +145,7 @@ extern "C"
             buf.x = point.x / mapResolution;
             buf.y = point.y / mapResolution;
             buf.z = point.z / mapResolution;
-            
+
             //get value of local map
             const auto& current = map.get(mapData, buf.x, buf.y, buf.z);
 
@@ -99,12 +154,18 @@ extern "C"
                 continue;
             }
 
-            int gradient[3] = {0};
+            int gradient[3];
 
-            //std::cout << "Kernel_CPP " << __LINE__ << std::endl;
+#pragma HLS ARRAY_RESHAPE variable=gradient complete
 
-            for (size_t axis = 0; axis < 3; axis++)
+            gradient[0] = 0;
+            gradient[1] = 0;
+            gradient[2] = 0;
+
+            gradient_loop: for (size_t axis = 0; axis < 3; axis++)
             {
+#pragma HLS unroll
+
                 int index[3] = {buf.x, buf.y, buf.z};
                 index[axis] -= 1;
                 const auto last = map.get(mapData, index[0], index[1], index[2]);
@@ -116,26 +177,71 @@ extern "C"
                 }
             }
 
-            //std::cout << "Kernel_CPP " << __LINE__ << std::endl;
+            long cross_p_x = static_cast<long>(point.y) * gradient[2] - static_cast<long>(point.z) * gradient[1];
+            long cross_p_y = static_cast<long>(point.z) * gradient[0] - static_cast<long>(point.x) * gradient[2];
+            long cross_p_z = static_cast<long>(point.x) * gradient[1] - static_cast<long>(point.y) * gradient[0];
 
-            //calculate cross_product
-            long cross_p[3] = {static_cast<long>(point.y) * gradient[2] - static_cast<long>(point.z) * gradient[1],
-                               static_cast<long>(point.z) * gradient[0] - static_cast<long>(point.x) * gradient[2],
-                               static_cast<long>(point.x) * gradient[1] - static_cast<long>(point.y) * gradient[0]};
+            long jacobi[6][1];
+            long jacobi_transpose[1][6];
 
-            long jacobi[6][1] = {{cross_p[0]}, {cross_p[1]}, {cross_p[2]}, {gradient[0]}, {gradient[1]}, {gradient[2]}};
-            
-            //std::cout << "Kernel_CPP " << __LINE__ << std::endl;
+            jacobi_transpose[0][0] = cross_p_x;
+            jacobi_transpose[0][1] = cross_p_y;
+            jacobi_transpose[0][2] = cross_p_z;
+            jacobi_transpose[0][3] = gradient[0];
+            jacobi_transpose[0][4] = gradient[1];
+            jacobi_transpose[0][5] = gradient[2];
 
-            long jacobi_transpose[1][6] = {{jacobi[0][0],
-                                           jacobi[1][0],
-                                           jacobi[2][0],
-                                           jacobi[3][0],
-                                           jacobi[4][0],
-                                           jacobi[5][0]}};
+            jacobi[0][0] = cross_p_x;
+			jacobi[1][0] = cross_p_y;
+			jacobi[2][0] = cross_p_z;
+			jacobi[3][0] = gradient[0];
+			jacobi[4][0] = gradient[1];
+			jacobi[5][0] = gradient[2];
 
             long tmp[6][6] = {0};
             
+            tmp[0][0] = 0;
+			tmp[0][1] = 0;
+			tmp[0][2] = 0;
+			tmp[0][3] = 0;
+			tmp[0][4] = 0;
+			tmp[0][5] = 0;
+
+			tmp[1][0] = 0;
+			tmp[1][1] = 0;
+			tmp[1][2] = 0;
+			tmp[1][3] = 0;
+			tmp[1][4] = 0;
+			tmp[1][5] = 0;
+
+			tmp[2][0] = 0;
+			tmp[2][1] = 0;
+			tmp[2][2] = 0;
+			tmp[2][3] = 0;
+			tmp[2][4] = 0;
+			tmp[2][5] = 0;
+
+			tmp[3][0] = 0;
+			tmp[3][1] = 0;
+			tmp[3][2] = 0;
+			tmp[3][3] = 0;
+			tmp[3][4] = 0;
+			tmp[3][5] = 0;
+
+			tmp[4][0] = 0;
+			tmp[4][1] = 0;
+			tmp[4][2] = 0;
+			tmp[4][3] = 0;
+			tmp[4][4] = 0;
+			tmp[4][5] = 0;
+
+			tmp[5][0] = 0;
+			tmp[5][1] = 0;
+			tmp[5][2] = 0;
+			tmp[5][3] = 0;
+			tmp[5][4] = 0;
+			tmp[5][5] = 0;
+
             //std::cout << "Kernel_CPP " << __LINE__ << std::endl;
 
             fastsense::registration::MatrixMul(jacobi, jacobi_transpose, tmp);
@@ -144,17 +250,23 @@ extern "C"
 
             //add multiplication result to local_h
             //TODO: pragmas 
-            for(int row = 0; row < 6; row++)
+
+            local_h_loop: for(int row = 0; row < 6; row++)
             {
+#pragma HLS unroll
+
                 for(int col = 0; col < 6; col++)
                 {
+#pragma HLS unroll
                     local_h[row][col] += tmp[row][col];
                 }
             }
             
             //TODO: ADD PRAGMATA
-            for(int count = 0; count < 6; count++)
+            local_g_loop: for(int count = 0; count < 6; count++)
             {
+#pragma HLS unroll
+
                 local_g[count] += jacobi[count][0] * current.first;
             }
 
@@ -168,10 +280,14 @@ extern "C"
         //std::cout << "Kernel_CPP " << __LINE__ << std::endl;
 
         //fill output buffer.
-        for(int row = 0; row < 6; row++)
+        out_row_loop: for(int row = 0; row < 6; row++)
         {
-            for(int col = 0; col < 6; col++)
+#pragma HLS unroll
+
+        	out_col_loop: for(int col = 0; col < 6; col++)
             {
+#pragma HLS unroll
+
                 outbuf[row + col * 6] = local_h[row][col]; //from 0 to 35: local_h
             }
 

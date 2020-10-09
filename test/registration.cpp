@@ -37,7 +37,7 @@ constexpr float MAX_OFFSET = 100; // TODO: this is too much
 
 // Test Translation
 constexpr float TX = 0.5 * SCALE;
-constexpr float TY = 0.0 * SCALE;
+constexpr float TY = 0.5 * SCALE;
 constexpr float TZ = 0.0 * SCALE;
 // Test Rotation
 constexpr float RY = 10 * (M_PI / 180); //radiants

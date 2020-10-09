@@ -22,7 +22,10 @@ typedef long mat_a_t;
 typedef long mat_b_t;
 typedef long result_t; // select the required bit width
 
-namespace fastsense::registration
+namespace fastsense
+{
+
+namespace registration
 {
 
 // Prototype of top level function for C-synthesis
@@ -37,7 +40,7 @@ void MatrixMul(
 	#pragma HLS ARRAY_RESHAPE variable=b complete dim=0
 	#pragma HLS ARRAY_RESHAPE variable=res complete dim=0
 
-	#pragma HLS dataflow
+	//#pragma HLS dataflow
 
 
 	// Iterate over the rows of the A matrix
@@ -61,4 +64,6 @@ void MatrixMul(
 	}
 }
 
-}
+} // namespace registration
+
+} // namespace fastsense
