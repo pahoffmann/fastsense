@@ -54,12 +54,15 @@ void ConcurrentRingBuffer<T>::push(const T& val)
 }
 
 template<typename T>
-bool ConcurrentRingBuffer<T>::pop_nb(T* val)
+bool ConcurrentRingBuffer<T>::pop_nb(T* val, uint32_t timeout_ms)
 {
     std::unique_lock<std::mutex> lock(mutex);
     if (length == 0)
     {
-        return false;
+        if(timeout_ms == 0 || !cvEmpty.wait_for(lock, std::chrono::milliseconds(timeout_ms), [&] { return length != 0; }))
+        {
+            return false;
+        }
     }
 
     doPop(val);

@@ -5,6 +5,7 @@
  */
 
 #include <thread>
+#include <iostream>
 
 namespace fastsense::util
 {
@@ -12,9 +13,15 @@ namespace fastsense::util
 class ProcessThread
 {
 public:
-    ProcessThread();
+    ProcessThread() : worker{}, running{false} {}
 
-    virtual ~ProcessThread() = default;
+    virtual ~ProcessThread()
+    {
+        if (running && worker.joinable())
+        {
+            worker.join();
+        }
+    }
 
     virtual void start() = 0;
 

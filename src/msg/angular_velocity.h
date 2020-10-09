@@ -7,7 +7,7 @@
 #include <cmath>
 
 #include <util/params.h>
-#include <msg/xyz_buffer.h>
+#include <util/xyz_buffer.h>
 
 constexpr double DEEGREES_TO_RADIANS = M_PI / 180.0;
 
@@ -17,7 +17,7 @@ namespace fastsense::msg
 /**
  * @brief Represents angular velocity data from imu
  */
-struct AngularVelocity : public XYZBuffer<double>
+struct AngularVelocity : public util::XYZBuffer<double>
 {
     AngularVelocity() = default;
     AngularVelocity(const double* angular_rate)

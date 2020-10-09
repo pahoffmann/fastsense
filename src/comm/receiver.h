@@ -7,6 +7,8 @@
 
 #include <zmq.hpp>
 #include <msg/point_cloud.h>
+#include <msg/zmq_converter.h>
+#include <comm/zmq_context_manager.h>
 
 namespace fastsense::comm
 {
@@ -15,19 +17,49 @@ template <typename T>
 class Receiver
 {
 public:
-    Receiver(int port, size_t threads = 1);
-    virtual ~Receiver() = default;
-    T receive(zmq::recv_flags flags = zmq::recv_flags::none);
-    inline int getPort() const
+    Receiver(std::string addr, uint16_t port)
+        :   socket_(ZMQContextManager::getContext(), zmq::socket_type::sub)
     {
-        return port_;
+        socket_.connect("tcp://" + addr + ":" + std::to_string(port));
+        socket_.setsockopt(ZMQ_SUBSCRIBE, "", 0);
     }
+
+    ~Receiver() = default;
+
+    template <typename TT = T, std::enable_if_t<!std::is_base_of_v<msg::ZMQConverter, TT>, int> = 0>
+    T receive(zmq::recv_flags flags = zmq::recv_flags::none)
+    {
+        T target;
+        receive(target, flags);
+        return target;
+    }
+
+    template <typename TT = T, std::enable_if_t<!std::is_base_of_v<msg::ZMQConverter, TT>, int> = 0>
+    void receive(T& target, zmq::recv_flags flags = zmq::recv_flags::none)
+    {
+        zmq::message_t msg;
+        socket_.recv(msg, flags);
+        memcpy(&target, msg.data(), sizeof(T));
+    }
+
+    template <typename TT = T, std::enable_if_t<std::is_base_of_v<msg::ZMQConverter, TT>, int> = 0>
+    T receive()
+    {
+        T target;
+        receive(target);
+        return target;
+    }
+
+    template <typename TT = T, std::enable_if_t<std::is_base_of_v<msg::ZMQConverter, TT>, int> = 0>
+    void receive(T& target)
+    {
+        zmq::multipart_t multi;
+        multi.recv(socket_);
+        target.from_zmq_msg(multi);
+    }
+
 private:
-    zmq::context_t context_;
     zmq::socket_t socket_;
-    int port_;
 };
 
 } // namespace fastsense::comm
-
-#include "receiver.tcc"

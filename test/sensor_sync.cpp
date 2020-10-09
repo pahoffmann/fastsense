@@ -17,6 +17,7 @@ using namespace fs::util::logging;
 
 TEST_CASE("sync sensor data", "[!hide][SensorSyncData")
 {
+    std::cout << "Testing 'sync sensor data'" << std::endl;
     Logger::addSink(std::make_shared<sink::CoutSink>());
     Logger::setLoglevel(LogLevel::Debug);
 

@@ -26,8 +26,9 @@ APP_TEST_XCLBIN = $(BUILD_DIR)/$(APP_NAME)_test.xclbin
 APP_IMAGE_PATH = $(CURDIR)/app_image
 TEST_IMAGE_PATH = $(CURDIR)/test_image
 
-# Add for each port to forward ",hostfwd=<tcp/udp>:<hostport>-::<vmport>"
-QEMU_ARGS = -qemu-args "-netdev user,id=eth0,hostfwd=udp::2368-:2368,hostfwd=tcp::1440-:1534"
+# Add for each port from host to guest ",hostfwd=<tcp/udp>::<hostport>-192.168.1.123:<vmport>"
+# and for each port from guest to host ",guestfwd=tcp:192.168.1.1:<vmport>-tcp:127.0.0.1:<hostport>"
+QEMU_ARGS = -qemu-args "-netdev user,id=eth0,net=192.168.1.0/24,hostfwd=udp::2368-192.168.1.123:2368,hostfwd=tcp::1440-192.168.1.123:1534,hostfwd=tcp::5555-192.168.1.123:5555,hostfwd=tcp::6666-192.168.1.123:6666,hostfwd=tcp::7777-192.168.1.123:7777"
 
 # Software
 SYSROOT = $(PLATFORM_DIR)/sw/FastSense_platform/linux_domain/sysroot/aarch64-xilinx-linux
@@ -209,7 +210,7 @@ copy_binaries_to_board:
 	@rsync --ignore-missing-args -r $(APP_EXE) $(APP_XCLBIN) student@$(BOARD_ADDRESS):
 
 copy_binaries_to_qemu:
-	xsct -eval "set filelist {"build/FastSense.exe" "/mnt/FastSense.exe" "build/FastSense.xclbin" "/mnt/FastSense.xclbin" "runtime_data/config.json" "/mnt/config.json"}; source copy_to_qemu.tcl"
+	xsct -eval "set filelist {"build/FastSense.exe" "/mnt/FastSense.exe" "build/FastSense.xclbin" "/mnt/FastSense.xclbin" "app_data/config.json" "/mnt/config.json"}; source copy_to_qemu.tcl"
 
 copy_test_to_qemu:
 	xsct -eval 'set filelist {"build/FastSense_test.exe" "/mnt/FastSense_test.exe" "build/FastSense_test.xclbin" "/mnt/FastSense_test.xclbin" "test_data/config.json" "/mnt/config.json" "pcd_files/sim_cloud.pcd" "/mnt/sim_cloud.pcd" "pcd_files/bagfile_cloud.pcd" "/mnt/bagfile_cloud.pcd"}; source copy_to_qemu.tcl'

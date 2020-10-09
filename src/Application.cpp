@@ -2,15 +2,24 @@
  * @author Marcel Flottmann
  */
 
-#include "Application.h"
-#include <util/config/config_manager.h>
-#include <util/logging/logger.h>
+#include <chrono>
 #include <csignal>
 #include <cstring>
+#include <algorithm>
+#include <iostream>
+
+#include "Application.h"
+#include <msg/imu_msg.h>
+#include <msg/tsdf_bridge_msg.h>
+#include <util/config/config_manager.h>
+#include <util/logging/logger.h>
+#include <comm/sender.h>
+#include <comm/queue_bridge.h>
 
 using namespace fastsense;
 using namespace fastsense::util::config;
 using namespace fastsense::util::logging;
+using namespace std::chrono_literals;
 
 template<typename T>
 class Runner
@@ -33,10 +42,8 @@ Application::Application()
     : signal_set{},
       imuBuffer{std::make_shared<data::ImuStampedBuffer>(ConfigManager::config().imu.bufferSize())},
       pointcloudBuffer{std::make_shared<data::PointCloudStampedBuffer>(ConfigManager::config().lidar.bufferSize())},
-      syncedDataBuffer{std::make_shared<data::SyncedDataBuffer>(ConfigManager::config().sensorSync.bufferSize())},
       imuDriver{imuBuffer},
-      lidarDriver{ConfigManager::config().lidar.port(), pointcloudBuffer},
-      synchronizer{imuBuffer, pointcloudBuffer, syncedDataBuffer}
+      lidarDriver{ConfigManager::config().lidar.port(), pointcloudBuffer}
 {
     // block signals
     sigemptyset(&signal_set);
@@ -50,7 +57,6 @@ Application::Application()
 int Application::run()
 {
     Logger::info("Starting Application...");
-    Runner run_synchronizer(synchronizer);
     Runner run_lidarDriver(lidarDriver);
     Runner run_imuDriver(imuDriver);
     Logger::info("Application started");

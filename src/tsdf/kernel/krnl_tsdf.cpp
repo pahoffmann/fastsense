@@ -177,7 +177,7 @@ extern "C"
                     prev[coor_index] = index[coor_index];
                 }
 
-                if(!map.inBounds(index[0], index[1], index[2]))
+                if(!map.in_bounds(index[0], index[1], index[2]))
                 {
                     continue;
                 }
@@ -232,7 +232,7 @@ extern "C"
 #pragma HLS pipeline II=1
 #pragma HLS dependence variable=new_entries inter false
 
-                    if(!map.inBounds(index[0], index[1], z))
+                    if(!map.in_bounds(index[0], index[1], z))
                     {
                         continue;
                     }

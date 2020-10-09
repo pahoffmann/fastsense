@@ -4,12 +4,12 @@
  * @author Julian Gaal
  */
 
-#include <msg/xyz_buffer.h>
+#include <util/xyz_buffer.h>
 
 namespace fastsense::msg
 {
 
-struct Quaternion : public XYZBuffer<double>
+struct Quaternion : public util::XYZBuffer<double>
 {
     Quaternion() = delete;
 
