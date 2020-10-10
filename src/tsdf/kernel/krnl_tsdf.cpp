@@ -7,22 +7,21 @@
 
 #include <iostream>
 
-#include <cmath>
-
-//#define CHANGE_UPDATE
+#include <ap_fixed.h>
+#include <hls_stream.h>
 
 //#include <util/types.h>
 
 using namespace fastsense::map;
 
-constexpr int MAP_SHIFT = 6; 							// bitshift for a faster way to apply MAP_RESOLUTION
-constexpr int MAP_RESOLUTION = 1 << MAP_SHIFT; 			// Resolution of the Map in Millimeter per Cell
+constexpr int MAP_SHIFT = 6;                            // bitshift for a faster way to apply MAP_RESOLUTION
+constexpr int MAP_RESOLUTION = 1 << MAP_SHIFT;          // Resolution of the Map in Millimeter per Cell
 
-constexpr int WEIGHT_SHIFT = 6; 						// bitshift for a faster way to apply WEIGHT_RESOLUTION
-constexpr int WEIGHT_RESOLUTION = 1 << WEIGHT_SHIFT; 	// Resolution of the Weights. A weight of 1.0f is represented as WEIGHT_RESOLUTION
+constexpr int WEIGHT_SHIFT = 6;                         // bitshift for a faster way to apply WEIGHT_RESOLUTION
+constexpr int WEIGHT_RESOLUTION = 1 << WEIGHT_SHIFT;    // Resolution of the Weights. A weight of 1.0f is represented as WEIGHT_RESOLUTION
 
-constexpr int MATRIX_SHIFT = 10; 						// bitshift for a faster way to apply MATRIX_RESOLUTION
-constexpr int MATRIX_RESOLUTION = 1 << MATRIX_SHIFT; 	// Resolutions of calculations with Matrixes
+constexpr int MATRIX_SHIFT = 10;                        // bitshift for a faster way to apply MATRIX_RESOLUTION
+constexpr int MATRIX_RESOLUTION = 1 << MATRIX_SHIFT;    // Resolutions of calculations with Matrixes
 
 constexpr int RINGS = 16; // TODO: take from Scanner
 const int dz_per_distance = (int)(std::tan(30.0 / ((double)RINGS - 1.0) / 180.0 * M_PI) / 2.0 * MATRIX_RESOLUTION);
@@ -31,7 +30,7 @@ const int dz_per_distance = (int)(std::tan(30.0 / ((double)RINGS - 1.0) / 180.0 
 
 //constexpr int SIZE_X = 20 * SCALE / MAP_RESOLUTION;
 //constexpr int SIZE_Y = 20 * SCALE / MAP_RESOLUTION;
-//constexpr int SIZE_Z = 5 * SCALE / MAP_RESOLUTION; 
+//constexpr int SIZE_Z = 5 * SCALE / MAP_RESOLUTION;
 
 //constexpr int MAX_DISTANCE = (SIZE_X + SIZE_Y + SIZE_Z) / 2 * MAP_RESOLUTION;//(int)(std::sqrt(SIZE_X * SIZE_X + SIZE_Y * SIZE_Y + SIZE_Z * SIZE_Z) / 2 * MAP_RESOLUTION);
 //constexpr int MAX_TSDF_IT = MAX_DISTANCE / (MAP_RESOLUTION / 2);
@@ -40,12 +39,92 @@ const int dz_per_distance = (int)(std::tan(30.0 / ((double)RINGS - 1.0) / 180.0 
 
 constexpr int NUM_POINTS = 30000;
 
-
 struct Point
 {
-    int x = 0;
-    int y = 0;
-    int z = 0;
+    int x;
+    int y;
+    int z;
+    int dummy; //128 bit padding
+
+    Point operator-(const Point& rhs)
+    {
+        Point p;
+        p.x = x - rhs.x;
+        p.y = y - rhs.y;
+        p.z = z - rhs.z;
+        return p;
+    }
+
+    Point operator*(int rhs)
+    {
+        Point p;
+        p.x = x * rhs;
+        p.y = y * rhs;
+        p.z = z * rhs;
+        return p;
+    }
+
+    Point& operator=(const Point& rhs)
+    {
+        x = rhs.x;
+        y = rhs.y;
+        z = rhs.z;
+        return *this;
+    }
+
+    Point& operator=(int rhs)
+    {
+        x = rhs;
+        y = rhs;
+        z = rhs;
+        return *this;
+    }
+
+    int norm2()
+    {
+        return x * x + y * y + z * z;
+    }
+
+    int norm()
+    {
+        return hls::sqrt(norm2());
+    }
+
+    Point abs()
+    {
+        Point p;
+        p.x = hls::abs(x);
+        p.y = hls::abs(y);
+        p.z = hls::abs(z);
+        return p;
+    }
+
+    Point sign()
+    {
+        Point p;
+        p.x = x < 0 ? -1 : 1;
+        p.y = y < 0 ? -1 : 1;
+        p.z = z < 0 ? -1 : 1;
+        return p;
+    }
+
+    Point to_map()
+    {
+        Point p;
+        p.x = x >> MAP_SHIFT;
+        p.y = y >> MAP_SHIFT;
+        p.z = z >> MAP_SHIFT;
+        return p;
+    }
+
+    Point to_mm()
+    {
+        Point p;
+        p.x = (x << MAP_SHIFT) + MAP_RESOLUTION / 2;
+        p.y = (y << MAP_SHIFT) + MAP_RESOLUTION / 2;
+        p.z = (z << MAP_SHIFT) + MAP_RESOLUTION / 2;
+        return p;
+    }
 };
 
 struct IntTuple
@@ -54,16 +133,262 @@ struct IntTuple
     int second = 0;
 };
 
-// constexpr int SCALE = MAP_RESOLUTION;
-// constexpr int SIZE_X = 50 * SCALE / MAP_RESOLUTION;
-// constexpr int SIZE_Y = 50 * SCALE / MAP_RESOLUTION;
-// constexpr int SIZE_Z = 10 * SCALE / MAP_RESOLUTION;
-
 extern "C"
 {
+    void read_points(Point* scanPoints,
+                     int numPoints,
+                     int tau,
+                     hls::stream<Point>& point_fifo,
+                     hls::stream<int>& distance_fifo,
+                     hls::stream<int>& distance_tau_fifo)
+    {
+    points_loop:
+        for (int i = 0; i < numPoints; i++)
+        {
+#pragma HLS loop_tripcount max=30000
+            Point p = scanPoints[i];
+            int dist = p.norm2();
+            int dist_tau = dist + 2 * hls::sqrt(dist) * tau + tau * tau; // (distance + tau)^2
+            point_fifo << p;
+            distance_fifo << dist;
+            distance_tau_fifo << dist_tau;
+        }
+    }
+
+    void update_tsdf(int numPoints,
+                     int sizeX,
+                     int sizeY,
+                     int sizeZ,
+                     int posX,
+                     int posY,
+                     int posZ,
+                     int offsetX,
+                     int offsetY,
+                     int offsetZ,
+                     IntTuple* new_entries,
+                     int tau,
+                     ap_fixed<32, 2> tau_inverse,
+                     int weight_epsilon,
+                     hls::stream<Point>& point_fifo,
+                     hls::stream<int>& distance_fifo,
+                     hls::stream<int>& distance_tau_fifo)
+    {
+        fastsense::map::LocalMapHW map{sizeX, sizeY, sizeZ,
+                                       posX, posY, posZ,
+                                       offsetX, offsetY, offsetZ};
+        Point map_pos{posX, posY, posZ};
+        Point map_offset{offsetX, offsetY, offsetZ};
+
+        // squared distances
+        int distance;
+        int distance_tau;
+        int current_distance;
+
+        Point current_point;
+        Point current_cell;
+        Point cell_center;
+        Point direction;
+        Point direction2;
+        Point increment;
+        Point abs_direction;
+
+        int err_1;
+        int err_2;
+
+        int interpolate_z;
+        int interpolate_z_end;
+
+        int point_idx = 0;
+
+        bool load_new_point = true;
+    tsdf_loop:
+        while (point_idx < numPoints)
+        {
+#pragma HLS loop_tripcount max=30000*128*2
+
+            // Load point and init Bresenham
+            if (load_new_point)
+            {
+                point_fifo >> current_point;
+                distance_fifo >> distance;
+                distance_tau_fifo >> distance_tau;
+
+                current_distance = 0;
+                current_cell = map_pos;
+
+                direction = current_point.to_map() - map_pos;
+                increment = direction.sign();
+                abs_direction = direction.abs();
+                direction2 = abs_direction * 2;
+
+                if ((abs_direction.x >= abs_direction.y) && (abs_direction.x >= abs_direction.z))
+                {
+                    err_1 = direction2.y - abs_direction.x;
+                    err_2 = direction2.z - abs_direction.x;
+                }
+                else if ((abs_direction.y >= abs_direction.x) && (abs_direction.y >= abs_direction.z))
+                {
+                    err_1 = direction2.x - abs_direction.y;
+                    err_2 = direction2.z - abs_direction.y;
+                }
+                else
+                {
+                    err_1 = direction2.y - abs_direction.z;
+                    err_2 = direction2.x - abs_direction.z;
+                }
+
+                interpolate_z = 0;
+                interpolate_z_end = 0;
+
+                load_new_point = false;
+            }
+
+            // Calculate and update TSDF value
+            int tsdf_value = (current_point - current_cell.to_mm()).norm();
+            if (tsdf_value > tau)
+            {
+                tsdf_value = tau;
+            }
+
+            if (current_distance > distance)
+            {
+                tsdf_value = -tsdf_value;
+            }
+
+            int weight = WEIGHT_RESOLUTION;
+
+            if (tsdf_value < -weight_epsilon)
+            {
+                weight = WEIGHT_RESOLUTION * (tau + tsdf_value) * tau_inverse;
+            }
+
+            if (weight != 0 && map.in_bounds(current_cell.x, current_cell.y, interpolate_z))
+            {
+#pragma HLS dependence variable=new_entries inter false
+                IntTuple entry = map.get(new_entries, current_cell.x, current_cell.y, interpolate_z);
+                IntTuple new_entry;
+
+                if (entry.second == 0 || hls::abs(tsdf_value) < hls::abs(entry.first))
+                {
+                    new_entry.first = tsdf_value;
+                    new_entry.second = weight;
+                }
+                else
+                {
+                    new_entry.first = entry.first;
+                    new_entry.second = entry.second;
+                }
+
+                map.set(new_entries, current_cell.x, current_cell.y, interpolate_z, new_entry);
+            }
+
+            // Update current_cell with Bresenham and interpolation
+            if (interpolate_z == interpolate_z_end)
+            {
+                if (current_distance < distance_tau)
+                {
+                    if ((abs_direction.x >= abs_direction.y) && (abs_direction.x >= abs_direction.z))
+                    {
+                        if (err_1 > 0)
+                        {
+                            current_cell.y += increment.y;
+                            err_1 -= direction2.x;
+                        }
+                        if (err_2 > 0)
+                        {
+                            current_cell.z += increment.z;
+                            err_2 -= direction2.x;
+                        }
+                        err_1 += direction2.y;
+                        err_2 += direction2.z;
+                        current_cell.x += increment.x;
+                    }
+                    else if ((abs_direction.y >= abs_direction.x) && (abs_direction.y >= abs_direction.z))
+                    {
+                        if (err_1 > 0)
+                        {
+                            current_cell.x += increment.x;
+                            err_1 -= direction2.y;
+                        }
+                        if (err_2 > 0)
+                        {
+                            current_cell.y += increment.z;
+                            err_2 -= direction2.y;
+                        }
+                        err_1 += direction2.x;
+                        err_2 += direction2.z;
+                        current_cell.z += increment.y;
+                    }
+                    else
+                    {
+                        if (err_1 > 0)
+                        {
+                            current_cell.y += increment.y;
+                            err_1 -= direction2.z;
+                        }
+                        if (err_2 > 0)
+                        {
+                            current_cell.x += increment.x;
+                            err_2 -= direction2.z;
+                        }
+                        err_1 += direction2.y;
+                        err_2 += direction2.x;
+                        current_cell.z += increment.z;
+                    }
+
+                    current_distance = (current_cell - map_pos).to_mm().norm2();
+                    int delta_z = (dz_per_distance * current_distance) >> MATRIX_SHIFT;
+                    interpolate_z = (current_cell.z - delta_z) >> MAP_SHIFT;
+                    interpolate_z_end = (current_cell.z + delta_z) >> MAP_SHIFT;
+                }
+                else
+                {
+                    point_idx++;
+                    load_new_point = true;
+                }
+            }
+            else
+            {
+                interpolate_z++;
+            }
+        }
+    }
+
+    void tsdf_dataflow(Point* scanPoints,
+                       int numPoints,
+                       int sizeX,
+                       int sizeY,
+                       int sizeZ,
+                       int posX,
+                       int posY,
+                       int posZ,
+                       int offsetX,
+                       int offsetY,
+                       int offsetZ,
+                       IntTuple* new_entries,
+                       int tau,
+                       ap_fixed<32, 2> tau_inverse,
+                       int weight_epsilon)
+    {
+#pragma HLS dataflow
+        hls::stream<Point> point_fifo;
+        hls::stream<int> distance_fifo;
+        hls::stream<int> distance_tau_fifo;
+#pragma HLS stream variable=point_fifo depth=16
+#pragma HLS stream variable=distance_fifo depth=16
+#pragma HLS stream variable=distance_tau_fifo depth=16
+
+        read_points(scanPoints, numPoints, tau, point_fifo, distance_fifo, distance_tau_fifo);
+        update_tsdf(numPoints,
+                    sizeX, sizeY, sizeZ,
+                    posX, posY, posZ,
+                    offsetX, offsetY, offsetZ,
+                    new_entries, tau, tau_inverse, weight_epsilon,
+                    point_fifo, distance_fifo, distance_tau_fifo);
+    }
 
     void krnl_tsdf(Point* scanPoints,
-    			   int numPoints,
+                   int numPoints,
                    IntTuple* mapData,
                    int sizeX,
                    int sizeY,
@@ -78,254 +403,46 @@ extern "C"
                    int tau,
                    int max_weight)
     {
-#pragma HLS DATA_PACK variable=scanPoints
-#pragma HLS INTERFACE m_axi port=scanPoints offset=slave bundle=scanmem
-#pragma HLS INTERFACE s_axilite port=scanPoints bundle=control
-
-#pragma HLS INTERFACE s_axilite port=numPoints bundle=control
-
-#pragma HLS DATA_PACK variable=mapData
-#pragma HLS INTERFACE m_axi port=mapData offset=slave bundle=mapmem
-#pragma HLS INTERFACE s_axilite port=mapData bundle=control
-#pragma HLS INTERFACE s_axilite port=sizeX bundle=control
-#pragma HLS INTERFACE s_axilite port=sizeY bundle=control
-#pragma HLS INTERFACE s_axilite port=sizeZ bundle=control
-#pragma HLS INTERFACE s_axilite port=posX bundle=control
-#pragma HLS INTERFACE s_axilite port=posY bundle=control
-#pragma HLS INTERFACE s_axilite port=posZ bundle=control
-#pragma HLS INTERFACE s_axilite port=offsetX bundle=control
-#pragma HLS INTERFACE s_axilite port=offsetY bundle=control
-#pragma HLS INTERFACE s_axilite port=offsetZ bundle=control
-
-#pragma HLS DATA_PACK variable=new_entries
-#pragma HLS INTERFACE m_axi port=new_entries offset=slave bundle=entrymem
-#pragma HLS INTERFACE s_axilite port=new_entries bundle=control
-
-#pragma HLS INTERFACE s_axilite port=tau bundle=control
-#pragma HLS INTERFACE s_axilite port=max_weight bundle=control
-
-#pragma HLS INTERFACE s_axilite port=return bundle=control
+#pragma HLS INTERFACE m_axi port=scanPoints offset=slave bundle=scanmem latency=8
+#pragma HLS INTERFACE m_axi port=mapData offset=slave bundle=mapmem  latency=8
+#pragma HLS INTERFACE m_axi port=new_entries offset=slave bundle=entrymem  latency=8
 
         fastsense::map::LocalMapHW map{sizeX, sizeY, sizeZ,
                                        posX, posY, posZ,
                                        offsetX, offsetY, offsetZ};
 
         int weight_epsilon = tau / 10;
-        
-#ifdef CHANGE_UPDATE
+        ap_fixed<32, 2> tau_inverse = 1.f / (tau - weight_epsilon);
 
-        int map_changes[3 * SIZE_X * SIZE_Y * SIZE_Z];
-        int change_count = 0;
+        tsdf_dataflow(scanPoints, numPoints,
+                      sizeX, sizeY, sizeZ,
+                      posX, posY, posZ,
+                      offsetX, offsetY, offsetZ,
+                      new_entries, tau, tau_inverse, weight_epsilon);
 
-#endif
-        point_loop: for(int point_index = 0; point_index < numPoints; ++point_index)
+    sync_loop:
+        for (int index = 0; index < sizeX * sizeY * sizeZ; index++)
         {
-#pragma HLS loop_tripcount min=30000 max=30000
-
-        	Point scan_point = scanPoints[point_index];
-
-            if(scan_point.x == 0 && scan_point.y == 0 && scan_point.z == 0)
-            {
-                continue;
-            }
-
-            int direction[3];
-#pragma HLS ARRAY_PARTITION variable=direction complete
-
-            direction[0] = scan_point.x - posX;
-            direction[1] = scan_point.y - posY;
-            direction[2] = scan_point.z - posZ;
-
-            int distance = norm(direction);
-
-            int prev[3];
-            prev[0] = 0;
-            prev[1] = 0;
-            prev[2] = 0;
-
-#pragma HLS ARRAY_PARTITION variable=prev complete
-
-            tsdf_loop: for(int len = MAP_RESOLUTION; len <= distance + tau; len += MAP_RESOLUTION / 2)
-            {
-#pragma HLS loop_tripcount min=0 max=128
-
-                int proj[3];
-                int index[3];
-#pragma HLS ARRAY_PARTITION variable=proj complete
-#pragma HLS ARRAY_PARTITION variable=index complete
-
-                proj[0] = posX + direction[0] * len / distance;
-                proj[1] = posY + direction[1] * len / distance;
-                proj[2] = posZ + direction[2] * len / distance;
-
-                ray_step_loop: for(int coor_index = 0; coor_index < 3; ++coor_index)
-                {
-#pragma HLS unroll
-                    index[coor_index] = proj[coor_index] / MAP_RESOLUTION;
-                }
-
-
-
-                if(index[0] == prev[0] && index[1] == prev[1])
-                {
-                    continue;
-                }
-
-                prev_loop: for(int coor_index = 0; coor_index < 3; ++coor_index)
-                {
-#pragma HLS unroll
-                    prev[coor_index] = index[coor_index];
-                }
-
-                if(!map.in_bounds(index[0], index[1], index[2]))
-                {
-                    continue;
-                }
-
-                int target_center[3];
-                int value_vec[3];
-
-#pragma HLS ARRAY_PARTITION variable=target_center complete
-#pragma HLS ARRAY_PARTITION variable=value_vec complete
-
-                target_loop: for(int coor_index = 0; coor_index < 3; ++coor_index)
-                {
-#pragma HLS unroll
-                    target_center[coor_index] = index[coor_index] * MAP_RESOLUTION + MAP_RESOLUTION / 2;
-                }
-
-                value_vec[0] = scan_point.x - target_center[0];
-                value_vec[1] = scan_point.y - target_center[1];
-                value_vec[2] = scan_point.z - target_center[2];
-
-                int value = norm(value_vec);
-
-                if(tau < value)
-                {
-                    value = tau;
-                }
-
-                if(len > distance)
-                {
-                    value = -value;
-                }
-
-                int weight = WEIGHT_RESOLUTION;
-
-                if(value < -weight_epsilon)
-                {
-                    weight = WEIGHT_RESOLUTION * (tau + value) / (tau - weight_epsilon);
-                }
-
-                if(weight == 0)
-                {
-                    continue;
-                }
-
-                int delta_z = dz_per_distance * len / MATRIX_RESOLUTION;
-                int lowest = (proj[2] - delta_z) / MAP_RESOLUTION;
-                int highest = (proj[2] + delta_z) / MAP_RESOLUTION;
-
-                interpolate_loop: for(int z = lowest; z <= highest; ++z)
-                {
-#pragma HLS loop_tripcount min=1 max=2
-#pragma HLS pipeline II=1
-#pragma HLS dependence variable=new_entries inter false
-
-                    if(!map.in_bounds(index[0], index[1], z))
-                    {
-                        continue;
-                    }
-
-                    IntTuple entry = map.get(new_entries, index[0], index[1], z);
-
-                    IntTuple new_entry;
-
-                    if(entry.second == 0 || hw_abs(value) < hw_abs(entry.first))
-                    {
-
-#ifdef CHANGE_UPDATE
-                       if(entry.second == 0)
-                       {
-                           int map_pos = index[0] + index[1] * sizeX + z * sizeX * sizeY;
-                           int change_pos = change_count * 3;
-
-                           map_changes[change_pos]     = index[0];
-                           map_changes[change_pos + 1] = index[1];
-                           map_changes[change_pos + 2] = z;
-
-                           ++change_count;
-                       }
-
-#endif
-
-                        new_entry.first = value;
-                        new_entry.second = weight;
-                    }
-                    else
-                    {
-                    	new_entry.first = entry.first;
-                    	new_entry.second = entry.second;
-                    }
-
-                    map.set(new_entries, index[0], index[1], z, new_entry);
-                }
-            }
-        }
-
-// FIXME: This is very inefficient. Try reducing the number of iterations or removing this completely
-
-#ifdef CHANGE_UPDATE
-
-        for(int i = 0; i < change_count; ++i)
-        {
-            int three_times = 3 * i;
-        
-            int index_x = map_changes[three_times];
-            int index_y = map_changes[three_times + 1];
-            int index_z = map_changes[three_times + 2];
-
-            auto map_entry = map.get(mapData, index_x, index_y, index_z);
-            auto new_entry = map.get(new_entries, index_x, index_y, index_z);
-
-            int new_weight = map_entry.second + new_entry.second;
-
-            if(new_weight > max_weight)
-            {
-                new_weight = max_weight;
-            }
-
-            map_entry.first = (map_entry.first * map_entry.second + new_entry.first * new_entry.second) / new_weight;
-            map_entry.second = new_weight;
-
-            map.set(mapData, index_x, index_y, index_z, map_entry);
-        }
-
-#else
-        sync_loop: for (int index = 0; index < sizeX * sizeY * sizeZ; index++)
-		{
 #pragma HLS loop_tripcount min=8000000 max=8000000
 #pragma HLS pipeline II=1
 #pragma HLS dependence variable=mapData inter false
 #pragma HLS dependence variable=new_entries inter false
 
-			IntTuple map_entry = mapData[index];
-			IntTuple new_entry = new_entries[index];
+            IntTuple map_entry = mapData[index];
+            IntTuple new_entry = new_entries[index];
 
-			int new_weight = map_entry.second + new_entry.second;
+            int new_weight = map_entry.second + new_entry.second;
 
-			map_entry.first = (map_entry.first * map_entry.second + new_entry.first * new_entry.second) / new_weight;
+            map_entry.first = (map_entry.first * map_entry.second + new_entry.first * new_entry.second) / new_weight;
 
-			if(new_weight > max_weight)
-			{
-				new_weight = max_weight;
-			}
+            if (new_weight > max_weight)
+            {
+                new_weight = max_weight;
+            }
 
-			map_entry.second = new_weight;
+            map_entry.second = new_weight;
 
-			mapData[index] = map_entry;
-		}
-#endif
+            mapData[index] = map_entry;
+        }
     }
-
 }

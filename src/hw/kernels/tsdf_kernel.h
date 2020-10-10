@@ -31,7 +31,7 @@ namespace fastsense::kernels
 
 class TSDFKernel : public BaseKernel
 {
-
+    std::unique_ptr<buffer::InputOutputBuffer<IntTuple>> new_entries;
 public:
     TSDFKernel(const CommandQueuePtr& queue)
         : BaseKernel{queue, "krnl_tsdf"}
@@ -43,44 +43,27 @@ public:
 
     void run(map::LocalMap& map, const buffer::InputBuffer<Point>& scan_points, int tau, int max_weight)
     {
+        new_entries = std::make_unique<buffer::InputOutputBuffer<IntTuple>>(cmd_q_, map.get_size().x() * map.get_size().y() * map.get_size().z());
+
         resetNArg();
-
         setArg(scan_points.getBuffer());
-
-        // auto queue = fastsense::hw::FPGAManager::create_command_queue();
-        // buffer::InputOutputBuffer<Point> point_data(queue, scan_points.size());
-
-        // for(size_t i = 0; i < scan_points.size(); ++i)
-        // {
-        //     point_data[i].x = scan_points[i].x();
-        //     point_data[i].y = scan_points[i].y();
-        //     point_data[i].z = scan_points[i].z();
-        // }
-
-        // setArg(point_data.getBuffer());
-        // setArg(static_cast<int>(scan_points.size()));
-
+        setArg(scan_points.size());
         setArg(map.getBuffer().getBuffer());
-        auto m = map.get_hardware_representation();
-        setArg(m.sizeX);
-        setArg(m.sizeY);
-        setArg(m.sizeZ);
-        setArg(m.posX);
-        setArg(m.posY);
-        setArg(m.posZ);
-        setArg(m.offsetX);
-        setArg(m.offsetY);
-        setArg(m.offsetZ);
-
-        auto queue = fastsense::hw::FPGAManager::create_command_queue();
-        buffer::InputOutputBuffer<IntTuple> new_entries(queue, m.sizeX * m.sizeY * m.sizeZ);
-        setArg(new_entries.getBuffer());
-
+        setArg(map.get_size().x());
+        setArg(map.get_size().y());
+        setArg(map.get_size().z());
+        setArg(map.get_pos().x());
+        setArg(map.get_pos().y());
+        setArg(map.get_pos().z());
+        setArg(map.get_offset().x());
+        setArg(map.get_offset().y());
+        setArg(map.get_offset().z());
+        setArg(new_entries->getBuffer());
         setArg(tau);
         setArg(max_weight);
 
         // Write buffers
-        cmd_q_->enqueueMigrateMemObjects({map.getBuffer().getBuffer(), scan_points.getBuffer(), new_entries.getBuffer()}, CL_MIGRATE_MEM_OBJECT_DEVICE, nullptr, &pre_events_[0]);
+        cmd_q_->enqueueMigrateMemObjects({map.getBuffer().getBuffer(), scan_points.getBuffer()}, CL_MIGRATE_MEM_OBJECT_DEVICE, nullptr, &pre_events_[0]);
 
         // Launch the Kernel
         cmd_q_->enqueueTask(kernel_, &pre_events_, &execute_events_[0]);

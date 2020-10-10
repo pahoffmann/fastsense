@@ -4,6 +4,8 @@
  * @author Marcel Flottmann
  */
 
+#include <hls_math.h>
+
 namespace fastsense
 {
 
@@ -16,13 +18,6 @@ T overflow(T val, T max)
 #pragma HLS INLINE
     return (val >= max) ? val - max : val;
     //return val % max;
-}
-
-template<typename T>
-T hw_abs(T val)
-{
-#pragma HLS INLINE
-    return (val >= 0) ? val : -val;
 }
 
 /**
@@ -44,7 +39,7 @@ struct LocalMapHW
     bool in_bounds(int x, int y, int z) const
     {
 #pragma HLS INLINE
-        return hw_abs(x - posX) <= sizeX / 2 && hw_abs(y - posY) <= sizeY / 2 && hw_abs(z - posZ) <= sizeZ / 2;
+        return hls::abs(x - posX) <= sizeX / 2 && hls::abs(y - posY) <= sizeY / 2 && hls::abs(z - posZ) <= sizeZ / 2;
     }
 
     int getIndex(int x, int y, int z) const
