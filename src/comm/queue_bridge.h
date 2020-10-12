@@ -9,6 +9,7 @@
 #include <util/concurrent_ring_buffer.h>
 #include <util/process_thread.h>
 #include <comm/sender.h>
+#include <util/time_stamp.h>
 
 namespace fastsense::comm
 {
