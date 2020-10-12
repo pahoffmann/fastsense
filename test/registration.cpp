@@ -302,7 +302,7 @@ TEST_CASE("Registration", "[registration][slow]")
 
         std::cout << "Test " << __LINE__ << std::endl;
 
-        reg.register_cloud(local_map, points_pretransformed_trans);
+        reg.register_cloud(local_map, points_pretransformed_trans, q);
 
         std::cout << "Test " << __LINE__ << std::endl;
 
@@ -315,7 +315,7 @@ TEST_CASE("Registration", "[registration][slow]")
     {
         std::cout << "    Section 'Registration test Rotation'" << std::endl;
         reg.transform_point_cloud(points_pretransformed_rot, rotation_mat);
-        reg.register_cloud(local_map, points_pretransformed_rot);
+        reg.register_cloud(local_map, points_pretransformed_rot, q);
         check_computed_transform(points_pretransformed_rot, scan_points_2);
     }
 }

@@ -78,7 +78,7 @@ public:
      * @param cloud
      * @return Matrix4f
      */
-    Matrix4f register_cloud(fastsense::map::LocalMap& localmap, ScanPoints_t& cloud);
+    Matrix4f register_cloud(fastsense::map::LocalMap& localmap, ScanPoints_t& cloud, fastsense::CommandQueuePtr q);
 
     /**
      * @brief Updates the IMU data used by the registration method

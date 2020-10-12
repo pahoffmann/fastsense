@@ -44,10 +44,19 @@ public:
      */
     void synchronized_run(map::LocalMap& map, ScanPoints_t& scan_points, Eigen::Matrix<long, 6, 6> &local_h, Eigen::Matrix<long, 6, 1> &local_g, int &local_error, int &local_count)
     {
-        auto queue = fastsense::hw::FPGAManager::create_command_queue();
-         buffer::OutputBuffer<long> outbuf(queue, 44); //matrix buffer for g matrix TODO: determine if this needs to be in registration.cpp
+        buffer::OutputBuffer<long> outbuf(cmd_q_, 44); //matrix buffer for g matrix TODO: determine if this needs to be in registration.cpp
 
-        run(map, scan_points, outbuf, queue);
+        buffer::InputBuffer<Point> point_data(cmd_q_, scan_points.size());
+
+        for(size_t i = 0; i < scan_points.size(); ++i)
+        {
+            point_data[i].x = scan_points[i].x();
+            point_data[i].y = scan_points[i].y();
+            point_data[i].z = scan_points[i].z();
+        }
+
+        //run the encapsulated kernel
+        run(map, point_data, outbuf);
         
         waitComplete();
 
@@ -79,19 +88,10 @@ public:
      * @param outbuf 
      * @param queue 
      */
-    void run(map::LocalMap& map, ScanPoints_t& scan_points, buffer::OutputBuffer<long> &outbuf, fastsense::CommandQueuePtr queue)
+    void run(map::LocalMap& map, buffer::InputBuffer<Point> &point_data, buffer::OutputBuffer<long> &outbuf)
     {
         //std::cout << "Kernel_H " << __LINE__ << std::endl;
         resetNArg();
-
-        buffer::InputOutputBuffer<Point> point_data(queue, scan_points.size());
-
-        for(size_t i = 0; i < scan_points.size(); ++i)
-        {
-            point_data[i].x = scan_points[i].x();
-            point_data[i].y = scan_points[i].y();
-            point_data[i].z = scan_points[i].z();
-        }
 
         //std::cout << "Kernel_H " << __LINE__ << std::endl;
         //std::cout << "Point data: size: " << static_cast<int>(point_data.size()) << std::endl << std::endl;
@@ -100,6 +100,8 @@ public:
         
         setArg(point_data.getBuffer());
         setArg(static_cast<int>(point_data.size()));
+        setArg(map.getBuffer().getBuffer());
+        setArg(map.getBuffer().getBuffer());
         setArg(map.getBuffer().getBuffer());
         setArg(m.sizeX);
         setArg(m.sizeY);
@@ -110,7 +112,6 @@ public:
         setArg(m.offsetX);
         setArg(m.offsetY);
         setArg(m.offsetZ);
-        setArg(MAP_RESOLUTION);
         setArg(outbuf.getBuffer());
 
         //std::cout << "Kernel_H " << __LINE__ << std::endl;

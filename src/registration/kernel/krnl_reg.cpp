@@ -5,7 +5,7 @@
 
 #include <map/local_map_hw.h>
 #include <msg/point.h>
-#include <registration/reg_hw.h>
+#include <registration/kernel/reg_hw.h>
 #include <iostream>
 
 struct IntTuple
@@ -19,10 +19,10 @@ struct Point
     int x;
     int y;
     int z;
-    int dummy;
 };
 
 constexpr int MAP_SHIFT = 6;
+constexpr int MAP_RESOLUTION = 64;
 
 extern "C"
 {
@@ -41,7 +41,6 @@ extern "C"
                   int offsetX,
                   int offsetY,
                   int offsetZ,
-                  int mapResolution,
                   long* outbuf
                  )
     {
@@ -125,9 +124,9 @@ extern "C"
             //TODO: if transform needs to take place in hw, here is the place ;)
 
             Point buf;
-            buf.x = point.x >> MAP_SHIFT;
-            buf.y = point.y >> MAP_SHIFT;
-            buf.z = point.z >> MAP_SHIFT;
+            buf.x = point.x / MAP_RESOLUTION;
+            buf.y = point.y / MAP_RESOLUTION;
+            buf.z = point.z / MAP_RESOLUTION;
 
             //get value of local map
             const auto& current = map.get(mapData0, buf.x, buf.y, buf.z);

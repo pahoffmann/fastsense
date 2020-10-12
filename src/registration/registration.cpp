@@ -15,6 +15,7 @@ Vector3i transform(const Vector3i& input, const Matrix4i& mat)
 
 //todo: check whether data exchange has a negative consequences regarding the runtime
 //TODO: test functionality
+//TODO: extract to hw. -> no need to copy points to hw
 void Registration::transform_point_cloud(ScanPoints_t& in_cloud, const Matrix4f& mat)
 {
     for (auto index = 0u; index < in_cloud.size(); ++index)
@@ -55,7 +56,7 @@ Matrix4f Registration::xi_to_transform(Vector6f xi)
     return transform;
 }
 
-Matrix4f Registration::register_cloud(fastsense::map::LocalMap& localmap, ScanPoints_t& cloud)
+Matrix4f Registration::register_cloud(fastsense::map::LocalMap& localmap, ScanPoints_t& cloud, fastsense::CommandQueuePtr q)
 {
     //std::cout << __LINE__ << std::endl;
     
@@ -109,9 +110,7 @@ Matrix4f Registration::register_cloud(fastsense::map::LocalMap& localmap, ScanPo
             //STOP SW IMPLEMENTATION
             //BEGIN HW IMPLEMENTATION
 
-            //kernel, run, wait
-
-            fastsense::CommandQueuePtr q = fastsense::hw::FPGAManager::create_command_queue();
+            //kernel - run
             fastsense::kernels::RegistrationKernel krnl{q};
 
             //fastsense::buffer::InputBuffer<fastsense::msg::Point> buffer_scan{q, cloud.size()};
@@ -127,7 +126,7 @@ Matrix4f Registration::register_cloud(fastsense::map::LocalMap& localmap, ScanPo
 
             //std::cout << __LINE__ << std::endl;
 
-            krnl.synchronized_run(localmap, cloud, local_h, local_g, local_error, local_count); //TODO: is this working?
+            krnl.synchronized_run(localmap, cloud, local_h, local_g, local_error, local_count); 
 
             //std::cout << __LINE__ << std::endl;
 
@@ -212,7 +211,7 @@ void Registration::update_imu_data(const fastsense::msg::ImuMsgStamped& imu)
         return;
     }
 
-    float acc_time = std::chrono::duration_cast<std::chrono::milliseconds>(imu.second.time - imu_time_.time).count() / 100.0f;
+    float acc_time = std::chrono::duration_cast<std::chrono::milliseconds>(imu.second.time - imu_time_.time).count() / 1000.0f;
 
     Vector3f ang_vel(imu.first.ang.x(), imu.first.ang.y(), imu.first.ang.z());
 
