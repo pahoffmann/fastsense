@@ -32,7 +32,7 @@ TEST_CASE("TSDF_Kernel", "[tsdf_kernel]")
         ScanPoints_t scan_points(num_points);
 
         auto queue = fastsense::hw::FPGAManager::create_command_queue();
-        fastsense::buffer::InputBuffer<Point> kernel_points(queue, 30000);
+        fastsense::buffer::InputBuffer<PointHW> kernel_points(queue, 30000);
 
         for(const auto& ring : float_points)
         {

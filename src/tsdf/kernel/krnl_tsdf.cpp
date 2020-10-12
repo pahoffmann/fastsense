@@ -2,14 +2,15 @@
  * @author Marc Eisoldt
  */
 
-#include <tsdf/kernel/tsdf_hw.h>
 #include <map/local_map_hw.h>
+#include <tsdf/kernel/tsdf_hw.h>
+#include <util/constants.h>
+#include <util/point_hw.h>
 
 #include <iostream>
 
 #include <hls_stream.h>
 
-#include <util/constants.h>
 
 using namespace fastsense::map;
 
@@ -26,94 +27,6 @@ using namespace fastsense::map;
 
 constexpr int NUM_POINTS = 30000;
 
-struct Point
-{
-    int x;
-    int y;
-    int z;
-    int dummy; //128 bit padding
-
-    Point operator-(const Point& rhs)
-    {
-        Point p;
-        p.x = x - rhs.x;
-        p.y = y - rhs.y;
-        p.z = z - rhs.z;
-        return p;
-    }
-
-    Point operator*(int rhs)
-    {
-        Point p;
-        p.x = x * rhs;
-        p.y = y * rhs;
-        p.z = z * rhs;
-        return p;
-    }
-
-    Point& operator=(const Point& rhs)
-    {
-        x = rhs.x;
-        y = rhs.y;
-        z = rhs.z;
-        return *this;
-    }
-
-    Point& operator=(int rhs)
-    {
-        x = rhs;
-        y = rhs;
-        z = rhs;
-        return *this;
-    }
-
-    int norm2()
-    {
-        return x * x + y * y + z * z;
-    }
-
-    int norm()
-    {
-        return hls::sqrt(norm2());
-    }
-
-    Point abs()
-    {
-        Point p;
-        p.x = hls::abs(x);
-        p.y = hls::abs(y);
-        p.z = hls::abs(z);
-        return p;
-    }
-
-    Point sign()
-    {
-        Point p;
-        p.x = x < 0 ? -1 : 1;
-        p.y = y < 0 ? -1 : 1;
-        p.z = z < 0 ? -1 : 1;
-        return p;
-    }
-
-    Point to_map()
-    {
-        Point p;
-        p.x = x >> MAP_SHIFT;
-        p.y = y >> MAP_SHIFT;
-        p.z = z >> MAP_SHIFT;
-        return p;
-    }
-
-    Point to_mm()
-    {
-        Point p;
-        p.x = (x << MAP_SHIFT) + MAP_RESOLUTION / 2;
-        p.y = (y << MAP_SHIFT) + MAP_RESOLUTION / 2;
-        p.z = (z << MAP_SHIFT) + MAP_RESOLUTION / 2;
-        return p;
-    }
-};
-
 struct IntTuple
 {
     int first = 0;
@@ -122,10 +35,10 @@ struct IntTuple
 
 extern "C"
 {
-    void read_points(Point* scanPoints,
+    void read_points(PointHW* scanPoints,
                      int numPoints,
                      int tau,
-                     hls::stream<Point>& point_fifo,
+                     hls::stream<PointHW>& point_fifo,
                      hls::stream<int>& distance_fifo,
                      hls::stream<int>& distance_tau_fifo)
     {
@@ -133,7 +46,7 @@ extern "C"
         for (int i = 0; i < numPoints; i++)
         {
 #pragma HLS loop_tripcount max=30000
-            Point p = scanPoints[i];
+            PointHW p = scanPoints[i];
             int dist = p.norm2();
             int dist_tau = dist + 2 * hls::sqrt(dist) * tau + tau * tau; // (distance + tau)^2
             point_fifo << p;
@@ -156,27 +69,27 @@ extern "C"
                      int tau,
                      int tau_inverse,
                      int weight_epsilon,
-                     hls::stream<Point>& point_fifo,
+                     hls::stream<PointHW>& point_fifo,
                      hls::stream<int>& distance_fifo,
                      hls::stream<int>& distance_tau_fifo)
     {
         fastsense::map::LocalMapHW map{sizeX, sizeY, sizeZ,
                                        posX, posY, posZ,
                                        offsetX, offsetY, offsetZ};
-        Point map_pos{posX, posY, posZ};
-        Point map_offset{offsetX, offsetY, offsetZ};
+        PointHW map_pos{posX, posY, posZ};
+        PointHW map_offset{offsetX, offsetY, offsetZ};
 
         // squared distances
         int distance;
         int distance_tau;
         int current_distance;
 
-        Point current_point;
-        Point current_cell;
-        Point direction;
-        Point direction2;
-        Point increment;
-        Point abs_direction;
+        PointHW current_point;
+        PointHW current_cell;
+        PointHW direction;
+        PointHW direction2;
+        PointHW increment;
+        PointHW abs_direction;
 
         int err_1;
         int err_2;
@@ -341,7 +254,7 @@ extern "C"
         }
     }
 
-    void tsdf_dataflow(Point* scanPoints,
+    void tsdf_dataflow(PointHW* scanPoints,
                        int numPoints,
                        int sizeX,
                        int sizeY,
@@ -358,7 +271,7 @@ extern "C"
                        int weight_epsilon)
     {
 #pragma HLS dataflow
-        hls::stream<Point> point_fifo;
+        hls::stream<PointHW> point_fifo;
         hls::stream<int> distance_fifo;
         hls::stream<int> distance_tau_fifo;
 #pragma HLS stream variable=point_fifo depth=16
@@ -374,7 +287,7 @@ extern "C"
                     point_fifo, distance_fifo, distance_tau_fifo);
     }
 
-    void krnl_tsdf(Point* scanPoints,
+    void krnl_tsdf(PointHW* scanPoints,
                    int numPoints,
                    IntTuple* mapData,
                    int sizeX,

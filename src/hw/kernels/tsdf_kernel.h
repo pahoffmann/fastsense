@@ -8,17 +8,11 @@
 #include <hw/buffer/buffer.h>
 #include <map/local_map.h>
 #include <util/types.h>
+#include <util/point_hw.h>
 #include <hw/fpga_manager.h>
 #include <hw/buffer/buffer.h>
 
 #include <iostream>
-
-struct Point
-{
-    int x = 0;
-    int y = 0;
-    int z = 0;
-};
 
 struct IntTuple
 {
@@ -41,7 +35,7 @@ public:
 
     ~TSDFKernel() = default;
 
-    void run(map::LocalMap& map, const buffer::InputBuffer<Point>& scan_points, int tau, int max_weight)
+    void run(map::LocalMap& map, const buffer::InputBuffer<PointHW>& scan_points, int tau, int max_weight)
     {
         new_entries = std::make_unique<buffer::InputOutputBuffer<IntTuple>>(cmd_q_, map.get_size().x() * map.get_size().y() * map.get_size().z());
 
