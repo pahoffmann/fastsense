@@ -17,7 +17,7 @@ public:
 
     virtual ~ProcessThread()
     {
-        if (running)
+        if (running && worker.joinable())
         {
             worker.join();
         }

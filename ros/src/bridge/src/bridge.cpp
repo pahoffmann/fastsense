@@ -1,5 +1,5 @@
 /**
- * @file sender.tcc
+ * @file bridge.cpp
  * @author Julian Gaal
  * @date 2020-09-06
  */
@@ -8,6 +8,7 @@
 #include <ros/ros.h>
 #include <bridge/tsdf_bridge.h>
 #include <bridge/imu_bridge.h>
+#include <bridge/velodyne_bridge.h>
 
 namespace fs = fastsense;
 using namespace std::chrono_literals;
@@ -18,11 +19,20 @@ int main(int argc, char** argv)
     ros::init(argc, argv, "bridge");
     ros::NodeHandle n;
 
-    fs::bridge::TSDFBridge tsdf_bridge{n};
-    fs::bridge::ImuBridge imu_bridge{n};
+    std::string board_addr;
+    if(!ros::param::get("~board_addr", board_addr))
+    {
+        board_addr = "192.168.1.123"; // default hardware board
+    }
+    std::cout << "Board address is \"" << board_addr << "\"\n";
+
+    fs::bridge::TSDFBridge tsdf_bridge{n, board_addr};
+    fs::bridge::ImuBridge imu_bridge{n, board_addr};
+    fs::bridge::VelodyneBridge velodyne_bridge{n, board_addr};
     
     tsdf_bridge.start();
     imu_bridge.start();
+    velodyne_bridge.start();
 
     while(ros::ok())
     {
@@ -31,6 +41,7 @@ int main(int argc, char** argv)
 
     tsdf_bridge.stop();
     imu_bridge.stop();
+    velodyne_bridge.stop();
 
     return 0;
 }

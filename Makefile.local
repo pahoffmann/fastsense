@@ -60,8 +60,13 @@ format:
 test_sensor_sync:
 	make -f Makefile.local ENTRY_POINT=test/sensor_sync.cpp APP_NAME=test_sensor_sync.exe software 
 
-test_zmq_client: 
-	make -f Makefile.local ENTRY_POINT=test/zmq_client.cpp APP_NAME=test_zmq_client.exe software 
+test_zmq: test_receiver test_sender
+
+test_receiver: 
+	make -f Makefile.local ENTRY_POINT=test/receiver.cpp APP_NAME=test_receiver.exe software 
+
+test_sender: 
+	make -f Makefile.local ENTRY_POINT=test/sender.cpp APP_NAME=test_sender.exe software 
 
 test_hdf5: 
 	make -f Makefile.local ENTRY_POINT=test/hdf5.cpp APP_NAME=test_hdf5.exe software 

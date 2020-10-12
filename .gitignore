@@ -13,6 +13,8 @@ v++*
 app_image/
 test_image/
 
+scripts/install/libphidget-2.1.9.20190409
+
 ### CLion ###
 *.idea
 */build/*
