@@ -9,8 +9,10 @@
 
 TEST_CASE("TSDF_Kernel", "[tsdf_kernel]")
 {
+    std::cout << "Testing 'TSDF_Kernel'" << std::endl;   
     SECTION("Compare TSDF Kernel with Software")
     {
+        std::cout << "    Section 'Compare TSDF Kernel with Software'" << std::endl;
         constexpr unsigned int SCALE = 1000;
         constexpr float TAU = 1 * SCALE;
         constexpr float MAX_WEIGHT = 10 * WEIGHT_RESOLUTION;

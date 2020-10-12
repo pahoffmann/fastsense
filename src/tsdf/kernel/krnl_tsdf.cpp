@@ -245,7 +245,7 @@ extern "C"
 
             if (tsdf_value < -weight_epsilon)
             {
-                weight = (WEIGHT_RESOLUTION * (tau + tsdf_value) * tau_inverse) >> MATRIX_SHIFT;
+                weight = (WEIGHT_RESOLUTION * (tau + tsdf_value) * tau_inverse) / MATRIX_RESOLUTION;
             }
 
             if (weight != 0 && map.in_bounds(current_cell.x, current_cell.y, interpolate_z))
@@ -324,7 +324,7 @@ extern "C"
 
                     current_distance = (current_cell - map_pos).to_mm().norm2();
                     // FIXME: current_distance is (dist)^2, but delta_z needs dist. sqrt is too slow here
-                    int delta_z = (dz_per_distance * current_distance) >> (MATRIX_SHIFT + MAP_SHIFT);
+                    int delta_z = (dz_per_distance * current_distance) / MATRIX_RESOLUTION / MAP_RESOLUTION;
                     interpolate_z = current_cell.z - delta_z;
                     interpolate_z_end = current_cell.z + delta_z;
                 }

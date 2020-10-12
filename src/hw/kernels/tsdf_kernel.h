@@ -47,7 +47,7 @@ public:
 
         resetNArg();
         setArg(scan_points.getBuffer());
-        setArg(scan_points.size());
+        setArg((int)scan_points.size());
         setArg(map.getBuffer().getBuffer());
         setArg(map.get_size().x());
         setArg(map.get_size().y());
