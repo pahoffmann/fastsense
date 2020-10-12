@@ -19,6 +19,7 @@ struct Point
     int x;
     int y;
     int z;
+    int dummy;
 };
 
 constexpr int MAP_SHIFT = 6;
@@ -27,44 +28,27 @@ extern "C"
 {
 
     void krnl_reg(Point* pointData,
-                             int numPoints,
-                             IntTuple* mapData,
-                             int sizeX,
-                             int sizeY,
-                             int sizeZ,
-                             int posX,
-                             int posY,
-                             int posZ,
-                             int offsetX,
-                             int offsetY,
-                             int offsetZ,
-                             int mapResolution,
-                             long* outbuf
-                            )
+                  int numPoints,
+                  IntTuple* mapData0,
+                  IntTuple* mapData1,
+                  IntTuple* mapData2,
+                  int sizeX,
+                  int sizeY,
+                  int sizeZ,
+                  int posX,
+                  int posY,
+                  int posZ,
+                  int offsetX,
+                  int offsetY,
+                  int offsetZ,
+                  int mapResolution,
+                  long* outbuf
+                 )
     {
-
-#pragma HLS DATA_PACK variable=pointData
-#pragma HLS INTERFACE m_axi port=pointData offset=slave bundle=scanmem
-#pragma HLS INTERFACE s_axilite port=pointData bundle=control
-#pragma HLS INTERFACE s_axilite port=numPoints bundle=control
-
-#pragma HLS DATA_PACK variable=mapData
-#pragma HLS INTERFACE m_axi port=mapData offset=slave bundle=mapmem
-#pragma HLS INTERFACE s_axilite port=mapData bundle=control
-#pragma HLS INTERFACE s_axilite port=sizeX bundle=control
-#pragma HLS INTERFACE s_axilite port=sizeY bundle=control
-#pragma HLS INTERFACE s_axilite port=sizeZ bundle=control
-#pragma HLS INTERFACE s_axilite port=posX bundle=control
-#pragma HLS INTERFACE s_axilite port=posY bundle=control
-#pragma HLS INTERFACE s_axilite port=posZ bundle=control
-#pragma HLS INTERFACE s_axilite port=offsetX bundle=control
-#pragma HLS INTERFACE s_axilite port=offsetY bundle=control
-#pragma HLS INTERFACE s_axilite port=offsetZ bundle=control
-#pragma HLS INTERFACE s_axilite port=mapResolution bundle=control
-
-#pragma HLS INTERFACE s_axilite port=outbuf bundle=control //outbuf
-
-#pragma HLS INTERFACE s_axilite port=return bundle=control
+#pragma HLS INTERFACE m_axi port=pointData offset=slave bundle=scanmem latency=8
+#pragma HLS INTERFACE m_axi port=mapData0 offset=slave bundle=mapmem0 latency=8
+#pragma HLS INTERFACE m_axi port=mapData1 offset=slave bundle=mapmem1 latency=8
+#pragma HLS INTERFACE m_axi port=mapData2 offset=slave bundle=mapmem2 latency=8
 
         fastsense::map::LocalMapHW map{sizeX, sizeY, sizeZ,
                                        posX, posY, posZ,
@@ -84,39 +68,39 @@ extern "C"
         local_h[0][5] = 0;
 
         local_h[1][0] = 0;
-		local_h[1][1] = 0;
-		local_h[1][2] = 0;
-		local_h[1][3] = 0;
-		local_h[1][4] = 0;
-		local_h[1][5] = 0;
+        local_h[1][1] = 0;
+        local_h[1][2] = 0;
+        local_h[1][3] = 0;
+        local_h[1][4] = 0;
+        local_h[1][5] = 0;
 
-		local_h[2][0] = 0;
-		local_h[2][1] = 0;
-		local_h[2][2] = 0;
-		local_h[2][3] = 0;
-		local_h[2][4] = 0;
-		local_h[2][5] = 0;
+        local_h[2][0] = 0;
+        local_h[2][1] = 0;
+        local_h[2][2] = 0;
+        local_h[2][3] = 0;
+        local_h[2][4] = 0;
+        local_h[2][5] = 0;
 
-		local_h[3][0] = 0;
-		local_h[3][1] = 0;
-		local_h[3][2] = 0;
-		local_h[3][3] = 0;
-		local_h[3][4] = 0;
-		local_h[3][5] = 0;
+        local_h[3][0] = 0;
+        local_h[3][1] = 0;
+        local_h[3][2] = 0;
+        local_h[3][3] = 0;
+        local_h[3][4] = 0;
+        local_h[3][5] = 0;
 
-		local_h[4][0] = 0;
-		local_h[4][1] = 0;
-		local_h[4][2] = 0;
-		local_h[4][3] = 0;
-		local_h[4][4] = 0;
-		local_h[4][5] = 0;
+        local_h[4][0] = 0;
+        local_h[4][1] = 0;
+        local_h[4][2] = 0;
+        local_h[4][3] = 0;
+        local_h[4][4] = 0;
+        local_h[4][5] = 0;
 
-		local_h[5][0] = 0;
-		local_h[5][1] = 0;
-		local_h[5][2] = 0;
-		local_h[5][3] = 0;
-		local_h[5][4] = 0;
-		local_h[5][5] = 0;
+        local_h[5][0] = 0;
+        local_h[5][1] = 0;
+        local_h[5][2] = 0;
+        local_h[5][3] = 0;
+        local_h[5][4] = 0;
+        local_h[5][5] = 0;
 
         local_g[0] = 0;
         local_g[1] = 0;
@@ -128,26 +112,25 @@ extern "C"
         long local_error = 0;
         long local_count = 0;
 
-        point_loop: for (int i = 0; i < numPoints; i++)
+    point_loop:
+        for (int i = 0; i < numPoints; i++)
         {
 #pragma HLS loop_tripcount min=0 max=30000
-#pragma HLS dependence variable=pointData inter false
-#pragma HLS dependence variable=mapData intra false
 
             auto point = pointData[i];
 
-            if(point.x == 0 && point.y == 0 && point.z == 0) continue; //hacky af. TODO: better solution by pascal
+            //if(point.x == 0 && point.y == 0 && point.z == 0) continue; //hacky af. TODO: better solution by pascal
 
 
             //TODO: if transform needs to take place in hw, here is the place ;)
 
-            Point buf;    
-            buf.x = point.x / mapResolution;
-            buf.y = point.y / mapResolution;
-            buf.z = point.z / mapResolution;
+            Point buf;
+            buf.x = point.x >> MAP_SHIFT;
+            buf.y = point.y >> MAP_SHIFT;
+            buf.z = point.z >> MAP_SHIFT;
 
             //get value of local map
-            const auto& current = map.get(mapData, buf.x, buf.y, buf.z);
+            const auto& current = map.get(mapData0, buf.x, buf.y, buf.z);
 
             if (current.second == 0)
             {
@@ -162,15 +145,16 @@ extern "C"
             gradient[1] = 0;
             gradient[2] = 0;
 
-            gradient_loop: for (size_t axis = 0; axis < 3; axis++)
+        gradient_loop:
+            for (size_t axis = 0; axis < 3; axis++)
             {
 #pragma HLS unroll
 
                 int index[3] = {buf.x, buf.y, buf.z};
                 index[axis] -= 1;
-                const auto last = map.get(mapData, index[0], index[1], index[2]);
+                const auto last = map.get(mapData1, index[0], index[1], index[2]);
                 index[axis] += 2;
-                const auto next = map.get(mapData, index[0], index[1], index[2]);
+                const auto next = map.get(mapData2, index[0], index[1], index[2]);
                 if (last.second != 0 && next.second != 0 && (next.first > 0.0) == (last.first > 0.0))
                 {
                     gradient[axis] = (next.first - last.first) / 2;
@@ -192,78 +176,38 @@ extern "C"
             jacobi_transpose[0][5] = gradient[2];
 
             jacobi[0][0] = cross_p_x;
-			jacobi[1][0] = cross_p_y;
-			jacobi[2][0] = cross_p_z;
-			jacobi[3][0] = gradient[0];
-			jacobi[4][0] = gradient[1];
-			jacobi[5][0] = gradient[2];
+            jacobi[1][0] = cross_p_y;
+            jacobi[2][0] = cross_p_z;
+            jacobi[3][0] = gradient[0];
+            jacobi[4][0] = gradient[1];
+            jacobi[5][0] = gradient[2];
 
-            long tmp[6][6] = {0};
-            
-            tmp[0][0] = 0;
-			tmp[0][1] = 0;
-			tmp[0][2] = 0;
-			tmp[0][3] = 0;
-			tmp[0][4] = 0;
-			tmp[0][5] = 0;
-
-			tmp[1][0] = 0;
-			tmp[1][1] = 0;
-			tmp[1][2] = 0;
-			tmp[1][3] = 0;
-			tmp[1][4] = 0;
-			tmp[1][5] = 0;
-
-			tmp[2][0] = 0;
-			tmp[2][1] = 0;
-			tmp[2][2] = 0;
-			tmp[2][3] = 0;
-			tmp[2][4] = 0;
-			tmp[2][5] = 0;
-
-			tmp[3][0] = 0;
-			tmp[3][1] = 0;
-			tmp[3][2] = 0;
-			tmp[3][3] = 0;
-			tmp[3][4] = 0;
-			tmp[3][5] = 0;
-
-			tmp[4][0] = 0;
-			tmp[4][1] = 0;
-			tmp[4][2] = 0;
-			tmp[4][3] = 0;
-			tmp[4][4] = 0;
-			tmp[4][5] = 0;
-
-			tmp[5][0] = 0;
-			tmp[5][1] = 0;
-			tmp[5][2] = 0;
-			tmp[5][3] = 0;
-			tmp[5][4] = 0;
-			tmp[5][5] = 0;
+            long tmp[6][6];
 
             //std::cout << "Kernel_CPP " << __LINE__ << std::endl;
 
             fastsense::registration::MatrixMul(jacobi, jacobi_transpose, tmp);
-            
+
             //std::cout << "Kernel_CPP " << __LINE__ << std::endl;
 
             //add multiplication result to local_h
-            //TODO: pragmas 
+            //TODO: pragmas
 
-            local_h_loop: for(int row = 0; row < 6; row++)
+        local_h_loop:
+            for (int row = 0; row < 6; row++)
             {
 #pragma HLS unroll
 
-                for(int col = 0; col < 6; col++)
+                for (int col = 0; col < 6; col++)
                 {
 #pragma HLS unroll
                     local_h[row][col] += tmp[row][col];
                 }
             }
-            
+
             //TODO: ADD PRAGMATA
-            local_g_loop: for(int count = 0; count < 6; count++)
+        local_g_loop:
+            for (int count = 0; count < 6; count++)
             {
 #pragma HLS unroll
 
@@ -280,11 +224,13 @@ extern "C"
         //std::cout << "Kernel_CPP " << __LINE__ << std::endl;
 
         //fill output buffer.
-        out_row_loop: for(int row = 0; row < 6; row++)
+    out_row_loop:
+        for (int row = 0; row < 6; row++)
         {
 #pragma HLS unroll
 
-        	out_col_loop: for(int col = 0; col < 6; col++)
+        out_col_loop:
+            for (int col = 0; col < 6; col++)
             {
 #pragma HLS unroll
 
