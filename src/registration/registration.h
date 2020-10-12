@@ -20,6 +20,7 @@
 #include <msg/msgs_stamped.h>
 #include <msg/point.h>
 #include <hw/kernels/reg_kernel.h>
+#include <hw/buffer/buffer.h>
 
 namespace fastsense::registration
 {

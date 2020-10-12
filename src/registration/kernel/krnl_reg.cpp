@@ -4,7 +4,7 @@
  */
 
 #include <map/local_map_hw.h>
-#include <msg/point.h>
+//#include <msg/point.h>
 #include <registration/kernel/reg_hw.h>
 #include <iostream>
 
@@ -19,6 +19,7 @@ struct Point
     int x;
     int y;
     int z;
+    int w = 1;
 };
 
 constexpr int MAP_SHIFT = 6;
@@ -41,6 +42,7 @@ extern "C"
                   int offsetX,
                   int offsetY,
                   int offsetZ,
+                  long* transform,
                   long* outbuf
                  )
     {
@@ -111,22 +113,41 @@ extern "C"
         long local_error = 0;
         long local_count = 0;
 
+                    
+        int transform_matrix[4][4];
+
+    transform_loop:
+        for (int row = 0; row < 4; row++)
+        {
+#pragma HLS unroll
+            for (int col = 0; col < 4; col++)
+            {
+#pragma HLS unroll
+                transform_matrix[row][col] = transform[row * 4 + col]; //TODO: check indexing
+            }         
+        }
+
     point_loop:
         for (int i = 0; i < numPoints; i++)
         {
 #pragma HLS loop_tripcount min=0 max=30000
 
-            auto point = pointData[i];
+            auto point_tmp = pointData[i];
 
-            //if(point.x == 0 && point.y == 0 && point.z == 0) continue; //hacky af. TODO: better solution by pascal
+            //TODO: check if copy is needed
+            int point[4][1], point_mul[4][1];
+            point_mul[0][0] = point_tmp.x;
+            point_mul[1][0] = point_tmp.y;
+            point_mul[2][0] = point_tmp.z;
+            point_mul[3][0] = point_tmp.w;
 
-
-            //TODO: if transform needs to take place in hw, here is the place ;)
+            //apply transform for point.
+            fastsense::registration::MatrixMulTransform(transform_matrix, point_mul, point);
 
             Point buf;
-            buf.x = point.x / MAP_RESOLUTION;
-            buf.y = point.y / MAP_RESOLUTION;
-            buf.z = point.z / MAP_RESOLUTION;
+            buf.x = point[0][0] / MAP_RESOLUTION;
+            buf.y = point[1][0] / MAP_RESOLUTION;
+            buf.z = point[2][0] / MAP_RESOLUTION;
 
             //get value of local map
             const auto& current = map.get(mapData0, buf.x, buf.y, buf.z);
@@ -160,9 +181,9 @@ extern "C"
                 }
             }
 
-            long cross_p_x = static_cast<long>(point.y) * gradient[2] - static_cast<long>(point.z) * gradient[1];
-            long cross_p_y = static_cast<long>(point.z) * gradient[0] - static_cast<long>(point.x) * gradient[2];
-            long cross_p_z = static_cast<long>(point.x) * gradient[1] - static_cast<long>(point.y) * gradient[0];
+            long cross_p_x = static_cast<long>(point[0][0]) * gradient[2] - static_cast<long>(point[0][0]) * gradient[1];
+            long cross_p_y = static_cast<long>(point[1][0]) * gradient[0] - static_cast<long>(point[1][0]) * gradient[2];
+            long cross_p_z = static_cast<long>(point[2][0]) * gradient[1] - static_cast<long>(point[2][0]) * gradient[0];
 
             long jacobi[6][1];
             long jacobi_transpose[1][6];

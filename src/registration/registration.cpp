@@ -56,7 +56,7 @@ Matrix4f Registration::xi_to_transform(Vector6f xi)
     return transform;
 }
 
-Matrix4f Registration::register_cloud(fastsense::map::LocalMap& localmap, ScanPoints_t& cloud, fastsense::CommandQueuePtr q)
+Matrix4f Registration::register_cloud(fastsense::map::LocalMap& localmap, fastsense::buffer::InputBuffer<Point> cloud, fastsense::CommandQueuePtr q)
 {
     //std::cout << __LINE__ << std::endl;
     
@@ -105,7 +105,7 @@ Matrix4f Registration::register_cloud(fastsense::map::LocalMap& localmap, ScanPo
             //next_transform = (total_transform * MATRIX_RESOLUTION).cast<int>();
            
             //TODO: total transform, used in hw or local transform used on entire pcl - you decide.
-            transform_point_cloud(cloud, next_transform);
+            //transform_point_cloud(cloud, next_transform);
 
             //STOP SW IMPLEMENTATION
             //BEGIN HW IMPLEMENTATION
@@ -126,7 +126,7 @@ Matrix4f Registration::register_cloud(fastsense::map::LocalMap& localmap, ScanPo
 
             //std::cout << __LINE__ << std::endl;
 
-            krnl.synchronized_run(localmap, cloud, local_h, local_g, local_error, local_count); 
+            krnl.synchronized_run(localmap, cloud, local_h, local_g, local_error, local_count, next_transform); 
 
             //std::cout << __LINE__ << std::endl;
 
