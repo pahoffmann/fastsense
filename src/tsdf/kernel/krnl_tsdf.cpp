@@ -1,9 +1,10 @@
 /**
  * @author Marc Eisoldt
+ * @author Malte Hillmann
+ * @author Marcel Flottmann
  */
 
 #include <map/local_map_hw.h>
-#include <tsdf/kernel/tsdf_hw.h>
 #include <util/constants.h>
 #include <util/point_hw.h>
 
@@ -27,11 +28,7 @@ using namespace fastsense::map;
 
 constexpr int NUM_POINTS = 30000;
 
-struct IntTuple
-{
-    int first = 0;
-    int second = 0;
-};
+using IntTuple = std::pair<int, int>;
 
 extern "C"
 {
@@ -186,6 +183,7 @@ extern "C"
             {
                 if (current_distance < distance_tau)
                 {
+                    int approx_distance;
                     if ((abs_direction.x >= abs_direction.y) && (abs_direction.x >= abs_direction.z))
                     {
                         if (err_1 > 0)
@@ -201,6 +199,8 @@ extern "C"
                         err_1 += direction2.y;
                         err_2 += direction2.z;
                         current_cell.x += increment.x;
+
+                        approx_distance = current_cell.x;
                     }
                     else if ((abs_direction.y >= abs_direction.x) && (abs_direction.y >= abs_direction.z))
                     {
@@ -217,6 +217,8 @@ extern "C"
                         err_1 += direction2.x;
                         err_2 += direction2.z;
                         current_cell.z += increment.y;
+
+                        approx_distance = current_cell.y;
                     }
                     else
                     {
@@ -233,11 +235,14 @@ extern "C"
                         err_1 += direction2.y;
                         err_2 += direction2.x;
                         current_cell.z += increment.z;
+
+                        approx_distance = current_cell.z;
                     }
 
                     current_distance = (current_cell - map_pos).to_mm().norm2();
                     // FIXME: current_distance is (dist)^2, but delta_z needs dist. sqrt is too slow here
-                    int delta_z = (dz_per_distance * current_distance) / MATRIX_RESOLUTION / MAP_RESOLUTION;
+                    // TODO: the current fix is to approximate the distance as Moore distance
+                    int delta_z = (dz_per_distance * std::abs(approx_distance)) / MATRIX_RESOLUTION / MAP_RESOLUTION;
                     interpolate_z = current_cell.z - delta_z;
                     interpolate_z_end = current_cell.z + delta_z;
                 }

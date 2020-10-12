@@ -1,3 +1,9 @@
+/**
+ * @author Marc Eisoldt
+ * @author Malte Hillmann
+ * @author Marcel Flottmann
+ */
+
 #include <map/local_map.h>
 #include <hw/fpga_manager.h>
 #include <hw/kernels/tsdf_kernel.h>
@@ -32,7 +38,7 @@ TEST_CASE("TSDF_Kernel", "[tsdf_kernel]")
         ScanPoints_t scan_points(num_points);
 
         auto queue = fastsense::hw::FPGAManager::create_command_queue();
-        fastsense::buffer::InputBuffer<PointHW> kernel_points(queue, 30000);
+        fastsense::buffer::InputBuffer<PointHW> kernel_points(queue, num_points);
 
         for(const auto& ring : float_points)
         {
