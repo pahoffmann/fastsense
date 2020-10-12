@@ -7,24 +7,11 @@
 
 #include <iostream>
 
-#include <ap_fixed.h>
 #include <hls_stream.h>
 
-//#include <util/types.h>
+#include <util/constants.h>
 
 using namespace fastsense::map;
-
-constexpr int MAP_SHIFT = 6;                            // bitshift for a faster way to apply MAP_RESOLUTION
-constexpr int MAP_RESOLUTION = 1 << MAP_SHIFT;          // Resolution of the Map in Millimeter per Cell
-
-constexpr int WEIGHT_SHIFT = 6;                         // bitshift for a faster way to apply WEIGHT_RESOLUTION
-constexpr int WEIGHT_RESOLUTION = 1 << WEIGHT_SHIFT;    // Resolution of the Weights. A weight of 1.0f is represented as WEIGHT_RESOLUTION
-
-constexpr int MATRIX_SHIFT = 10;                        // bitshift for a faster way to apply MATRIX_RESOLUTION
-constexpr int MATRIX_RESOLUTION = 1 << MATRIX_SHIFT;    // Resolutions of calculations with Matrixes
-
-constexpr int RINGS = 16; // TODO: take from Scanner
-const int dz_per_distance = (int)(std::tan(30.0 / ((double)RINGS - 1.0) / 180.0 * M_PI) / 2.0 * MATRIX_RESOLUTION);
 
 //constexpr unsigned int SCALE = 1000;
 
@@ -167,7 +154,7 @@ extern "C"
                      int offsetZ,
                      IntTuple* new_entries,
                      int tau,
-                     ap_fixed<32, 2> tau_inverse,
+                     int tau_inverse,
                      int weight_epsilon,
                      hls::stream<Point>& point_fifo,
                      hls::stream<int>& distance_fifo,
@@ -186,7 +173,6 @@ extern "C"
 
         Point current_point;
         Point current_cell;
-        Point cell_center;
         Point direction;
         Point direction2;
         Point increment;
@@ -259,7 +245,7 @@ extern "C"
 
             if (tsdf_value < -weight_epsilon)
             {
-                weight = WEIGHT_RESOLUTION * (tau + tsdf_value) * tau_inverse;
+                weight = (WEIGHT_RESOLUTION * (tau + tsdf_value) * tau_inverse) >> MATRIX_SHIFT;
             }
 
             if (weight != 0 && map.in_bounds(current_cell.x, current_cell.y, interpolate_z))
@@ -337,9 +323,10 @@ extern "C"
                     }
 
                     current_distance = (current_cell - map_pos).to_mm().norm2();
-                    int delta_z = (dz_per_distance * current_distance) >> MATRIX_SHIFT;
-                    interpolate_z = (current_cell.z - delta_z) >> MAP_SHIFT;
-                    interpolate_z_end = (current_cell.z + delta_z) >> MAP_SHIFT;
+                    // FIXME: current_distance is (dist)^2, but delta_z needs dist. sqrt is too slow here
+                    int delta_z = (dz_per_distance * current_distance) >> (MATRIX_SHIFT + MAP_SHIFT);
+                    interpolate_z = current_cell.z - delta_z;
+                    interpolate_z_end = current_cell.z + delta_z;
                 }
                 else
                 {
@@ -367,7 +354,7 @@ extern "C"
                        int offsetZ,
                        IntTuple* new_entries,
                        int tau,
-                       ap_fixed<32, 2> tau_inverse,
+                       int tau_inverse,
                        int weight_epsilon)
     {
 #pragma HLS dataflow
@@ -412,7 +399,7 @@ extern "C"
                                        offsetX, offsetY, offsetZ};
 
         int weight_epsilon = tau / 10;
-        ap_fixed<32, 2> tau_inverse = 1.f / (tau - weight_epsilon);
+        int tau_inverse = MATRIX_RESOLUTION / (tau - weight_epsilon);
 
         tsdf_dataflow(scanPoints, numPoints,
                       sizeX, sizeY, sizeZ,
