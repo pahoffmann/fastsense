@@ -30,7 +30,7 @@ TEST_CASE("QueueBridge", "[communication]")
     std::thread receive_thread{[&]()
     {
         Receiver<int> receiver{"127.0.0.1", 1234};
-        std::this_thread::sleep_for(std::chrono::seconds(2));
+        std::this_thread::sleep_for(std::chrono::milliseconds(200));
         value_received = receiver.receive();
         received = true;
     }};
@@ -75,7 +75,7 @@ TEST_CASE("QueueBridge shared_ptr", "[communication]")
     std::thread receive_thread{[&]()
     {
         Receiver<int> receiver{"127.0.0.1", 1234};
-        std::this_thread::sleep_for(std::chrono::seconds(2));
+        std::this_thread::sleep_for(std::chrono::milliseconds(200));
         value_received = receiver.receive();
         received = true;
     }};
