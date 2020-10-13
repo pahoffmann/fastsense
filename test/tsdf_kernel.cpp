@@ -82,20 +82,56 @@ TEST_CASE("TSDF_Kernel", "[tsdf_kernel]")
         const auto& local_buffer = local_map.getBuffer();
         const auto& compare_buffer = local_map_compare.getBuffer(); 
 
+        int only_hw = 0;
+        int only_sw = 0;
+        int same = 0;
+        int different = 0;
+
         for(int i = 0; i < SIZE_X; ++i)
         {
             for(int j = 0; j < SIZE_Y; ++j)
             {
                 for(int k = 0; k < SIZE_Z; ++k)
                 {
-                    auto index = i + j * SIZE_X + k * SIZE_X * SIZE_Y; 
+                    auto index = i + j * SIZE_X + k * SIZE_X * SIZE_Y;
+                    const auto& sw = compare_buffer[index];
+                    const auto& hw = local_buffer[index];
 
-                    REQUIRE(local_buffer[index].first == compare_buffer[index].first);
-                    REQUIRE(local_buffer[index].second == compare_buffer[index].second);
+                    if (sw.second == 0 && hw.second != 0)
+                    {
+                        only_hw++;
+                    }
+                    if (sw.second != 0 && hw.second == 0)
+                    {
+                        only_sw++;
+                    }
+                    if (sw.second != 0 && hw.second != 0)
+                    {
+                        if (sw.first == hw.first && sw.second == hw.second)
+                        {
+                            same++;
+                        }
+                        else
+                        {
+                            if (different % 1000 == 0)
+                            {
+                                std::cout << sw.first << ", " << sw.second << "  " << hw.first << ", " << hw.second << std::endl;
+                            }
+                            different++;
+                        }
+                    }
+
+                    // REQUIRE(local_buffer[index].first == compare_buffer[index].first);
+                    // REQUIRE(local_buffer[index].second == compare_buffer[index].second);
                 }
             }
         }
 
-        //REQUIRE(err_count == 0);
+        std::cout << "only_hw: " << only_hw << std::endl;
+        std::cout << "only_sw: " << only_sw << std::endl;
+        std::cout << "same: " << same << std::endl;
+        std::cout << "different: " << different << std::endl;
+
+        REQUIRE(different == 0);
     }
 }

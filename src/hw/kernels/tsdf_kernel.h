@@ -39,10 +39,18 @@ public:
     {
         new_entries = std::make_unique<buffer::InputOutputBuffer<IntTuple>>(cmd_q_, map.get_size().x() * map.get_size().y() * map.get_size().z());
 
+        constexpr int SPLIT_FACTOR = 4;
+
         resetNArg();
-        setArg(scan_points.getBuffer());
+        for (int i = 0; i < SPLIT_FACTOR; i++)
+        {
+            setArg(scan_points.getBuffer());
+        }
         setArg((int)scan_points.size());
-        setArg(map.getBuffer().getBuffer());
+        for (int i = 0; i < SPLIT_FACTOR; i++)
+        {
+            setArg(map.getBuffer().getBuffer());
+        }
         setArg(map.get_size().x());
         setArg(map.get_size().y());
         setArg(map.get_size().z());
@@ -52,7 +60,10 @@ public:
         setArg(map.get_offset().x());
         setArg(map.get_offset().y());
         setArg(map.get_offset().z());
-        setArg(new_entries->getBuffer());
+        for (int i = 0; i < SPLIT_FACTOR; i++)
+        {
+            setArg(new_entries->getBuffer());
+        }
         setArg(tau);
         setArg(max_weight);
 
