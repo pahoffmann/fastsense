@@ -17,6 +17,8 @@
 #include "IterativeNormal.h"
 #include "weighting.h"
 
+#include <util/hls_functions.h>
+
 namespace std
 {
 template<> struct hash<Vector3i>
