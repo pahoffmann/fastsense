@@ -45,7 +45,7 @@ extern "C"
 #pragma HLS loop_tripcount max=30000
             PointHW p = scanPoints[i];
             int dist = p.norm2();
-            int dist_tau = dist + 2 * hls::sqrt(dist) * tau + tau * tau; // (distance + tau)^2
+            int dist_tau = dist + 2 * hls_sqrt_approx(dist) * tau + tau * tau; // (distance + tau)^2
             point_fifo << p;
             distance_fifo << dist;
             distance_tau_fifo << dist_tau;
@@ -64,8 +64,6 @@ extern "C"
                      int offsetZ,
                      IntTuple* new_entries,
                      int tau,
-                     int tau_inverse,
-                     int weight_epsilon,
                      hls::stream<PointHW>& point_fifo,
                      hls::stream<int>& distance_fifo,
                      hls::stream<int>& distance_tau_fifo)
@@ -75,6 +73,8 @@ extern "C"
                                        offsetX, offsetY, offsetZ};
         PointHW map_pos{posX, posY, posZ};
         PointHW map_offset{offsetX, offsetY, offsetZ};
+
+        int weight_epsilon = tau / 10;
 
         // squared distances
         int distance;
@@ -155,7 +155,7 @@ extern "C"
 
             if (tsdf_value < -weight_epsilon)
             {
-                weight = (WEIGHT_RESOLUTION * (tau + tsdf_value) * tau_inverse) / MATRIX_RESOLUTION;
+                weight = WEIGHT_RESOLUTION * (tau + tsdf_value) / (tau - weight_epsilon);
             }
 
             if (weight != 0 && map.in_bounds(current_cell.x, current_cell.y, interpolate_z))
@@ -164,7 +164,7 @@ extern "C"
                 IntTuple entry = map.get(new_entries, current_cell.x, current_cell.y, interpolate_z);
                 IntTuple new_entry;
 
-                if (entry.second == 0 || hls::abs(tsdf_value) < hls::abs(entry.first))
+                if (entry.second == 0 || hls_abs(tsdf_value) < hls_abs(entry.first))
                 {
                     new_entry.first = tsdf_value;
                     new_entry.second = weight;
@@ -242,7 +242,7 @@ extern "C"
                     current_distance = (current_cell - map_pos).to_mm().norm2();
                     // FIXME: current_distance is (dist)^2, but delta_z needs dist. sqrt is too slow here
                     // TODO: the current fix is to approximate the distance as Moore distance
-                    int delta_z = (dz_per_distance * std::abs(approx_distance)) / MATRIX_RESOLUTION / MAP_RESOLUTION;
+                    int delta_z = (dz_per_distance * hls_sqrt_approx(current_distance)) / MATRIX_RESOLUTION / MAP_RESOLUTION;
                     interpolate_z = current_cell.z - delta_z;
                     interpolate_z_end = current_cell.z + delta_z;
                 }
@@ -271,9 +271,7 @@ extern "C"
                        int offsetY,
                        int offsetZ,
                        IntTuple* new_entries,
-                       int tau,
-                       int tau_inverse,
-                       int weight_epsilon)
+                       int tau)
     {
 #pragma HLS dataflow
         hls::stream<PointHW> point_fifo;
@@ -288,7 +286,7 @@ extern "C"
                     sizeX, sizeY, sizeZ,
                     posX, posY, posZ,
                     offsetX, offsetY, offsetZ,
-                    new_entries, tau, tau_inverse, weight_epsilon,
+                    new_entries, tau,
                     point_fifo, distance_fifo, distance_tau_fifo);
     }
 
@@ -316,14 +314,11 @@ extern "C"
                                        posX, posY, posZ,
                                        offsetX, offsetY, offsetZ};
 
-        int weight_epsilon = tau / 10;
-        int tau_inverse = MATRIX_RESOLUTION / (tau - weight_epsilon);
-
         tsdf_dataflow(scanPoints, numPoints,
                       sizeX, sizeY, sizeZ,
                       posX, posY, posZ,
                       offsetX, offsetY, offsetZ,
-                      new_entries, tau, tau_inverse, weight_epsilon);
+                      new_entries, tau);
 
     sync_loop:
         for (int index = 0; index < sizeX * sizeY * sizeZ; index++)
