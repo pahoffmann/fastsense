@@ -55,7 +55,7 @@ bool TSDFBridge::in_bounds(int x, int y, int z)
     return abs(x - msg().pos_[0] <= msg().size_[0] / 2 && abs(y - msg().pos_[1]) <= msg().size_[1] / 2 && abs(z - msg().pos_[2]) <= msg().size_[2] / 2);
 }
 
-std::pair<float, float> TSDFBridge::get_tsdf_value(int x, int y, int z)
+std::pair<int, int> TSDFBridge::get_tsdf_value(int x, int y, int z)
 {
     if (!in_bounds(x, y, z))
     {

@@ -114,87 +114,9 @@ protected:
     }
 
 public:
-    class const_iterator
-    {
-    public:
-        using self_type = const_iterator;
-        using value_type = T;
-        using reference = T&;
-        using const_reference = const T&;
-        using difference_type = ssize_t;
-        using size_type = size_t;
-        using pointer = T*;
 
-        const_iterator(pointer ptr) : ptr_(ptr) { }
-        
-        self_type operator++()
-        {
-            ++ptr_;
-            return *this;
-        }
-
-        const reference operator*() const
-        {
-            return *ptr_;
-        }
-
-        bool operator==(const self_type& rhs) const
-        {
-            return ptr_ == rhs.ptr_;
-        }
-
-        bool operator!=(const self_type& rhs) const 
-        {
-            return ptr_ != rhs.ptr_;
-        }
-
-    private:
-        pointer ptr_;
-    };
-
-    class iterator
-    {
-    public:
-        using self_type = iterator;
-        using value_type = T;
-        using reference = T&;
-        using const_reference = const T&;
-        using difference_type = ssize_t;
-        using size_type = size_t;
-        using pointer = T*;
-
-        using iterator_category = std::forward_iterator_tag;
-        iterator(pointer ptr) : ptr_(ptr) { }
-
-        self_type operator++()
-        {
-            ++ptr_;
-            return *this;
-        }
-
-        reference operator*()
-        {
-            return *ptr_;
-        }
-
-        pointer operator->()
-        {
-            return ptr_;
-        }
-
-        bool operator==(const self_type& rhs) const
-        {
-            return ptr_ == rhs.ptr_;
-        }
-
-        bool operator!=(const self_type& rhs) const
-        {
-            return ptr_ != rhs.ptr_;
-        }
-
-    private:
-        pointer ptr_;
-    };
+    using const_iterator = const T*;
+    using iterator = T*;
 
     /**
      * @brief Move construct a new Buffer object

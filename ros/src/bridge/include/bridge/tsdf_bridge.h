@@ -33,7 +33,7 @@ private:
     void convert() override;
     void run() override;
     bool in_bounds(int x, int y, int z);
-    std::pair<float, float> get_tsdf_value(int x, int y, int z);
+    std::pair<int, int> get_tsdf_value(int x, int y, int z);
 
     std::vector<geometry_msgs::Point> points_;
     std::vector<std_msgs::ColorRGBA> colors_;
