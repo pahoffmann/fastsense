@@ -2,9 +2,10 @@
 
 /**
  * @author Marcel Flottmann
+ * @author Malte Hillmann
  */
 
-#include <hls_math.h>
+#include "hls_functions.h"
 
 #include <util/constants.h>
 
@@ -14,6 +15,18 @@ struct PointHW
     int y;
     int z;
     int dummy; //128 bit padding
+
+    PointHW()
+    {}
+
+    PointHW(int x, int y, int z)
+        : x(x), y(y), z(z)
+    {}
+
+    PointHW(const PointHW& rhs)
+    {
+        *this = rhs;
+    }
 
     PointHW operator-(const PointHW& rhs)
     {
@@ -61,15 +74,15 @@ struct PointHW
 
     int norm()
     {
-        return hls::sqrt(norm2());
+        return hls_sqrt_approx(norm2());
     }
 
     PointHW abs()
     {
         PointHW p;
-        p.x = std::abs(x);
-        p.y = std::abs(y);
-        p.z = std::abs(z);
+        p.x = hls_abs(x);
+        p.y = hls_abs(y);
+        p.z = hls_abs(z);
         return p;
     }
 
@@ -85,9 +98,9 @@ struct PointHW
     PointHW to_map()
     {
         PointHW p;
-        p.x = x / MATRIX_RESOLUTION;
-        p.y = y / MATRIX_RESOLUTION;
-        p.z = z / MATRIX_RESOLUTION;
+        p.x = x / MAP_RESOLUTION;
+        p.y = y / MAP_RESOLUTION;
+        p.z = z / MAP_RESOLUTION;
         return p;
     }
 

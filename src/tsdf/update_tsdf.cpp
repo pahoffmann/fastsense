@@ -79,7 +79,7 @@ void update_tsdf(const ScanPoints_t& scan_points,
 
             // use the distance to the center of the cell, since 'proj' can be anywhere in the cell
             Vector3i target_center = index * MAP_RESOLUTION + Vector3i::Constant(MAP_RESOLUTION / 2);
-            int value = (point - target_center).norm();
+            int value = hls_sqrt_approx((point - target_center).squaredNorm());
 
 
             //std::cout << "vs: " << target_center[0] << " " << target_center[1] << " " << target_center[2] << std::endl;
@@ -103,10 +103,10 @@ void update_tsdf(const ScanPoints_t& scan_points,
             
             auto object = std::make_pair(value, weight);
 
-            int delta_z = dz_per_distance * len / MATRIX_RESOLUTION;
+            int delta_z = dz_per_distance * len / MATRIX_RESOLUTION / MAP_RESOLUTION;
 
-            int lowest = (proj.z() - delta_z) / MAP_RESOLUTION;
-            int highest = (proj.z() + delta_z) / MAP_RESOLUTION;
+            int lowest = index.z() - delta_z;
+            int highest = index.z() + delta_z;
 
             //int lowest = (proj.z() - delta_z) >> MAP_SHIFT;
             //int highest = (proj.z() + delta_z) >> MAP_SHIFT;

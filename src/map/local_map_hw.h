@@ -4,7 +4,7 @@
  * @author Marcel Flottmann
  */
 
-#include <hls_math.h>
+#include <util/hls_functions.h>
 
 namespace fastsense
 {
@@ -39,7 +39,7 @@ struct LocalMapHW
     bool in_bounds(int x, int y, int z) const
     {
 #pragma HLS INLINE
-        return hls::abs(x - posX) <= sizeX / 2 && hls::abs(y - posY) <= sizeY / 2 && hls::abs(z - posZ) <= sizeZ / 2;
+        return hls_abs(x - posX) <= sizeX / 2 && hls_abs(y - posY) <= sizeY / 2 && hls_abs(z - posZ) <= sizeZ / 2;
     }
 
     int getIndex(int x, int y, int z) const
