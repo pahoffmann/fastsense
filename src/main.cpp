@@ -14,6 +14,7 @@ int main()
     auto coutSink = std::make_shared<CoutSink>();
     auto fileSink = std::make_shared<FileSink>("FastSense.log");
     Logger::addSink(coutSink);
+    Logger::setLoglevel(LogLevel::Debug);
 
     // Initialize Config
     try
@@ -27,6 +28,17 @@ int main()
         Logger::fatal("Cannot load configuration: ", e.what());
         return -1;
     }
+
+    try
+    {
+        FPGAManager::load_xclbin("FastSense.xclbin");
+    }
+    catch(const std::exception& e)
+    {
+        Logger::fatal("Cannot load XCLBIN: ", e.what());
+        return -1;
+    }
+    
 
     // Run Application
     fastsense::Application app;

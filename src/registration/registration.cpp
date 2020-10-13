@@ -15,14 +15,18 @@ Vector3i transform(const Vector3i& input, const Matrix4i& mat)
 
 //todo: check whether data exchange has a negative consequences regarding the runtime
 //TODO: test functionality
+//TODO: extract to hw. -> no need to copy points to hw
 void Registration::transform_point_cloud(ScanPoints_t& in_cloud, const Matrix4f& mat)
 {
-    Matrix4i tf = (mat * MATRIX_RESOLUTION).cast<int>();
-
     for (auto index = 0u; index < in_cloud.size(); ++index)
     {
         auto& point = in_cloud[index];
-        point = transform(point, tf);
+        Vector3f tmp = (mat.block<3, 3>(0, 0) * point.cast<float>() + mat.block<3, 1>(0, 3));
+        tmp[0] < 0 ? tmp[0] -= 0.5 : tmp[0] += 0.5;
+        tmp[1] < 0 ? tmp[1] -= 0.5 : tmp[1] += 0.5;
+        tmp[2] < 0 ? tmp[2] -= 0.5 : tmp[2] += 0.5;
+
+        point = tmp.cast<int>();
     }
 }
 
@@ -52,12 +56,16 @@ Matrix4f Registration::xi_to_transform(Vector6f xi)
     return transform;
 }
 
-Matrix4f Registration::register_cloud(fastsense::map::LocalMap& localmap, ScanPoints_t& cloud)
+Matrix4f Registration::register_cloud(fastsense::map::LocalMap& localmap, ScanPoints_t& cloud, fastsense::CommandQueuePtr q)
 {
+    //std::cout << __LINE__ << std::endl;
+    
     mutex_.lock();
     Matrix4f total_transform = imu_accumulator_; //transform used to register the pcl
     imu_accumulator_.setIdentity();
     mutex_.unlock();
+
+    Matrix4f next_transform = total_transform;
 
     float alpha = 0;
 
@@ -79,105 +87,62 @@ Matrix4f Registration::register_cloud(fastsense::map::LocalMap& localmap, ScanPo
         Vector6i local_g;
         int local_error;
         int local_count;
-        Matrix4i next_transform;
 
         Vector3i gradient;
         Vector6i jacobi;
 
         for (int i = 0; i < max_iterations_ && !finished; i++)
         {
+            //std::cout << __LINE__ << std::endl;
+
             local_h = Matrix6i::Zero();
             local_g = Vector6i::Zero();
             local_error = 0;
             local_count = 0;
 
-            next_transform = (total_transform * MATRIX_RESOLUTION).cast<int>();
+            //std::cout << next_transform << std::endl << std::endl;
+
+            //next_transform = (total_transform * MATRIX_RESOLUTION).cast<int>();
+           
+            //TODO: total transform, used in hw or local transform used on entire pcl - you decide.
+            transform_point_cloud(cloud, next_transform);
 
             //STOP SW IMPLEMENTATION
             //BEGIN HW IMPLEMENTATION
 
-            //kernel, run, wait
+            //kernel - run
+            fastsense::kernels::RegistrationKernel krnl{q};
 
-            /*fastsense::CommandQueuePtr q = fastsense::hw::FPGAManager::create_command_queue();
-            fastsense::kernels::RegKernel krnl{q};
+            //fastsense::buffer::InputBuffer<fastsense::msg::Point> buffer_scan{q, cloud.size()};
 
-            fastsense::buffer::InputBuffer<fastsense::msg::Point> buffer_scan{q, cloud.size()};
-
-            //Output size: local_h matrix (6x6) + local_g matrix (6x1) + local_error (int) + local_count (int)
+            //Output size: local_h matrix (6x6) + local_g matrix (6x1) + local_error (int)  + local_count (int)
             // 36 + 6 + 1 + 1 = 44
-            fastsense::buffer::OutputBuffer<int> buffer_output{q, 44};
+            //fastsense::buffer::OutputBuffer<int> buffer_output{q, 44};
 
             //Write scan points into buffer
-            for(int i = 0; i < cloud.size(); i++){
-                buffer_scan[i] = cloud[i];
-            }
+            // for(int i = 0; i < cloud.size(); i++){
+            //     buffer_scan[i] = cloud[i];
+            // }
 
-            //krnl.run(localmap, buffer_scan, buffer_output, cloud.size());
+            //std::cout << __LINE__ << std::endl;
+
+            krnl.synchronized_run(localmap, cloud, local_h, local_g, local_error, local_count); 
+
+            //std::cout << __LINE__ << std::endl;
+
             //krnl.waitComplete();
 
-            */
-
-            //#pragma omp for schedule(static) nowait
-            for (size_t i = 0; i < cloud.size(); i++)
-            {
-                auto& input = cloud[i];
-                if (input == INVALID_POINT)
-                {
-                    continue;
-                }
-
-                // apply the total transform
-                Vector3i point = transform(input, next_transform);
-
-                Vector3i buf = point / MAP_RESOLUTION;
-                //Vector3i buf = floor_shift(point, MAP_SHIFT);
-
-                
-                try
-                {
-                    const auto& current = localmap.value(buf);
-                    if (current.second == 0)
-                    {
-                        continue;
-                    }
-
-                    gradient = Vector3i::Zero();
-                    for (size_t axis = 0; axis < 3; axis++)
-                    {
-                        Vector3i index = buf;
-                        index[axis] -= 1;
-                        const auto last = localmap.value(index);
-                        index[axis] += 2;
-                        const auto next = localmap.value(index);
-                        if (last.second != 0 && next.second != 0 && (next.first > 0.0) == (last.first > 0.0))
-                        {
-                            gradient[axis] = (next.first - last.first) / 2;
-                        }
-                    }
-
-                    jacobi << point.cross(gradient).cast<long>(), gradient.cast<long>();
-
-                    local_h += jacobi * jacobi.transpose();
-                    local_g += jacobi * current.first;
-                    local_error += abs(current.first);
-                    local_count++;
-                }
-                catch (const std::out_of_range&)
-                {
-
-                }
-            }
-            // write local results back into shared variables
-            //#pragma omp critical
-            {
-                h += local_h;
-                g += local_g;
-                error += local_error;
-                count += local_count;
-            }
-
-
             //RESUME SOFTWARE IMPLEMENTATION
+            // write local results back into shared variables
+
+            h += local_h;
+            g += local_g;
+            error += local_error;
+            count += local_count;
+
+            //std::cout << __LINE__ << std::endl;
+
+
             // wait for all threads to finish //here should be the exit point of the hw communication, after which the data is being used.
             //#pragma omp barrier
             // only execute on a single thread, all others wait - use the data coming from hw to calculate diff things.
@@ -193,9 +158,11 @@ Matrix4f Registration::register_cloud(fastsense::map::LocalMap& localmap, ScanPo
                 // alternative: Vector6f xi = hf.completeOrthogonalDecomposition().solve(-gf);
 
                 //convert xi into transform matrix T
-                Matrix4f transform = xi_to_transform(xi);
+                next_transform = xi_to_transform(xi);
 
-                total_transform = transform * total_transform; //update transform
+                //std::cout << "Next transform: " <<  next_transform << std::endl;
+
+                total_transform = next_transform * total_transform; //update transform
 
                 alpha += it_weight_gradient_;
 
@@ -203,7 +170,7 @@ Matrix4f Registration::register_cloud(fastsense::map::LocalMap& localmap, ScanPo
 
                 if (fabs(err - previous_errors[2]) < epsilon && fabs(err - previous_errors[0]) < epsilon)
                 {
-                    std::cout << "Stopped after " << i << " / " << max_iterations_ << " Iterations" << std::endl;
+                    //std::cout << "Stopped after " << i << " / " << max_iterations_ << " Iterations" << std::endl;
                     finished = true;
                 }
                 for (int e = 1; e < 4; e++)
@@ -216,12 +183,14 @@ Matrix4f Registration::register_cloud(fastsense::map::LocalMap& localmap, ScanPo
                 g = Vector6i::Zero();
                 error = 0;
                 count = 0;
+                            
+                //std::cout << __LINE__ << std::endl;
             }
         }
     }
 
     // apply final transformation
-    transform_point_cloud(cloud, total_transform);
+    transform_point_cloud(cloud, next_transform);
 
     return total_transform;
 }
@@ -242,7 +211,7 @@ void Registration::update_imu_data(const fastsense::msg::ImuMsgStamped& imu)
         return;
     }
 
-    float acc_time = std::chrono::duration_cast<std::chrono::milliseconds>(imu.second.time - imu_time_.time).count() / 100.0f;
+    float acc_time = std::chrono::duration_cast<std::chrono::milliseconds>(imu.second.time - imu_time_.time).count() / 1000.0f;
 
     Vector3f ang_vel(imu.first.ang.x(), imu.first.ang.y(), imu.first.ang.z());
 

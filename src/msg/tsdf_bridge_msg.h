@@ -21,7 +21,7 @@ struct TSDFBridgeMessage : public ZMQConverter
     std::array<int, 3> size_;
     std::array<int, 3> pos_;
     std::array<int, 3> offset_;
-    std::vector<std::pair<float, float>> tsdf_data_;
+    std::vector<std::pair<int, int>> tsdf_data_;
 
     void from_zmq_msg(zmq::multipart_t& msg)
     {
@@ -32,10 +32,10 @@ struct TSDFBridgeMessage : public ZMQConverter
         offset_ = msg.poptyp<std::array<int, 3>>();
 
         zmq::message_t tsdf_data_msg = msg.pop();
-        size_t n_tsdf_values = tsdf_data_msg.size() / sizeof(std::pair<float, float>);
-        tsdf_data_.reserve(n_tsdf_values);
+        size_t n_tsdf_values = tsdf_data_msg.size() / sizeof(std::pair<int, int>);
         tsdf_data_.clear();
-        std::copy_n(static_cast<std::pair<float,float>*>(tsdf_data_msg.data()), n_tsdf_values, std::back_inserter(tsdf_data_));
+        tsdf_data_.reserve(n_tsdf_values);
+        std::copy_n(static_cast<std::pair<int,int>*>(tsdf_data_msg.data()), n_tsdf_values, std::back_inserter(tsdf_data_));
     }
 
     zmq::multipart_t to_zmq_msg() const

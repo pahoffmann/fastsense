@@ -21,6 +21,7 @@ public:
         :   socket_{ZMQContextManager::getContext(), zmq::socket_type::pub}
     {
         socket_.bind("tcp://*:" + std::to_string(port));
+        socket_.setsockopt(ZMQ_SNDHWM, 2);
     }
 
     ~Sender() = default;

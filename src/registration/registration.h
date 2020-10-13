@@ -19,7 +19,7 @@
 #include <map/local_map.h>
 #include <msg/msgs_stamped.h>
 #include <msg/point.h>
-//#include <hw/kernels/reg_kernel.h>
+#include <hw/kernels/reg_kernel.h>
 
 namespace fastsense::registration
 {
@@ -57,7 +57,7 @@ public:
      * @brief Construct a new Registration object, used to register a pointcloud with the current ring buffer
      *
      */
-    Registration(unsigned int max_iterations = 500, float it_weight_gradient = 0.01) :
+    Registration(unsigned int max_iterations = 50, float it_weight_gradient = 0.0) :
         max_iterations_(max_iterations),
         it_weight_gradient_(it_weight_gradient),
         first_imu_msg_(true)
@@ -78,7 +78,7 @@ public:
      * @param cloud
      * @return Matrix4f
      */
-    Matrix4f register_cloud(fastsense::map::LocalMap& localmap, ScanPoints_t& cloud);
+    Matrix4f register_cloud(fastsense::map::LocalMap& localmap, ScanPoints_t& cloud, fastsense::CommandQueuePtr q);
 
     /**
      * @brief Updates the IMU data used by the registration method

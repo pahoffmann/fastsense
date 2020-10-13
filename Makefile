@@ -44,6 +44,7 @@ SW_SRCS = src/Application.cpp \
 	src/data/sensor_sync.cpp \
 	$(wildcard src/map/*.cpp) \
 	$(wildcard src/tsdf/*.cpp) \
+	$(wildcard src/callback/*.cpp) \
 	$(wildcard src/registration/*.cpp) \
 	$(wildcard src/util/*.cpp) \
 	$(wildcard src/util/pcd/*.cpp) \
@@ -97,7 +98,7 @@ PACKAGE_TEST_CFG = $(CURDIR)/package_test.cfg
 HW_TARGET ?= sw_emu
 HW_PLATFORM = $(PLATFORM_DIR)/FastSense_platform.xpfm
 
-HW_SRCS = src/example/krnl_vadd.cpp
+HW_SRCS = src/registration/kernel/krnl_reg.cpp
 HW_OBJS = $(HW_SRCS:%.cpp=$(BUILD_DIR)/%.xo)
 HW_DEPS = $(HW_OBJS:.xo=.d)
 

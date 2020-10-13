@@ -10,5 +10,20 @@
 
     "sensorSync": {
         "bufferSize": 16
+    },
+
+    "registration": {
+        "max_iterations": 500,
+        "it_weight_gradient": 0.01
+    },
+
+    "slam": {
+        "max_distance": 800,
+        "map_resolution": 64,
+        "map_size_x": 151,
+        "map_size_y": 151,
+        "map_size_z": 75,
+        "max_weight": 10,
+        "initial_map_weight": 0.0
     }
 }

@@ -114,7 +114,6 @@ protected:
     }
 
 public:
-
     using const_iterator = const T*;
     using iterator = T*;
 

@@ -9,6 +9,7 @@
 #include <util/concurrent_ring_buffer.h>
 #include <util/process_thread.h>
 #include <comm/sender.h>
+#include <util/time_stamp.h>
 
 namespace fastsense::comm
 {
@@ -109,6 +110,66 @@ protected:
                 }
             }
             this->sender_.send(*val);
+        }
+    }
+};
+
+template<typename T, bool FORCE>
+class QueueBridge<std::pair<T, util::TimeStamp>, FORCE> : public QueueBridgeBase<std::pair<T, util::TimeStamp>, T>
+{
+public:
+    using QueueBridgeBase<std::pair<T, util::TimeStamp>, T>::QueueBridgeBase;
+    ~QueueBridge() = default;
+
+protected:
+    void duplicate() override
+    {
+        while (this->running)
+        {
+            std::pair<T, util::TimeStamp> val;
+            this->in_->pop(&val);
+            if (this->out_)
+            {
+                if constexpr (FORCE)
+                {
+                    this->out_->push_nb(val, true);
+                }
+                else
+                {
+                    this->out_->push(val);
+                }
+            }
+            this->sender_.send(val.first);
+        }
+    }
+};
+
+template<typename T, bool FORCE>
+class QueueBridge<std::pair<std::shared_ptr<T>, util::TimeStamp>, FORCE> : public QueueBridgeBase<std::pair<std::shared_ptr<T>, util::TimeStamp>, T>
+{
+public:
+    using QueueBridgeBase<std::pair<std::shared_ptr<T>, util::TimeStamp>, T>::QueueBridgeBase;
+    ~QueueBridge() = default;
+
+protected:
+    void duplicate() override
+    {
+        while (this->running)
+        {
+            std::pair<std::shared_ptr<T>, util::TimeStamp> val;
+            this->in_->pop(&val);
+            if (this->out_)
+            {
+                if constexpr (FORCE)
+                {
+                    this->out_->push_nb(val, true);
+                }
+                else
+                {
+                    this->out_->push(val);
+                }
+            }
+            this->sender_.send(*val.first);
         }
     }
 };
