@@ -29,10 +29,12 @@ public:
 
     static CommandQueuePtr create_command_queue();
 
+    static void release();
+
 private:
     FPGAManager();
 
-    static FPGAManager& inst();
+    static std::unique_ptr<FPGAManager>& inst();
 
     std::vector<cl::Device> devices_;
     cl::Context context_;
