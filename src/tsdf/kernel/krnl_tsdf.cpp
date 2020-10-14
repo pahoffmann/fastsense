@@ -15,17 +15,6 @@
 
 using namespace fastsense::map;
 
-//constexpr unsigned int SCALE = 1000;
-
-//constexpr int SIZE_X = 20 * SCALE / MAP_RESOLUTION;
-//constexpr int SIZE_Y = 20 * SCALE / MAP_RESOLUTION;
-//constexpr int SIZE_Z = 5 * SCALE / MAP_RESOLUTION;
-
-//constexpr int MAX_DISTANCE = (SIZE_X + SIZE_Y + SIZE_Z) / 2 * MAP_RESOLUTION;//(int)(std::sqrt(SIZE_X * SIZE_X + SIZE_Y * SIZE_Y + SIZE_Z * SIZE_Z) / 2 * MAP_RESOLUTION);
-//constexpr int MAX_TSDF_IT = MAX_DISTANCE / (MAP_RESOLUTION / 2);
-
-//constexpr int MAX_INTERPOLATE_IT = 2 * dz_per_distance * MAX_DISTANCE / MATRIX_RESOLUTION / MAP_RESOLUTION;
-
 constexpr int NUM_POINTS = 6000;
 constexpr int SPLIT_FACTOR = 4;
 
@@ -54,23 +43,17 @@ extern "C"
     }
 
     void update_tsdf(int numPoints,
-                     int sizeX,
-                     int sizeY,
-                     int sizeZ,
-                     int posX,
-                     int posY,
-                     int posZ,
-                     int offsetX,
-                     int offsetY,
-                     int offsetZ,
+                     int sizeX,   int sizeY,   int sizeZ,
+                     int posX,    int posY,    int posZ,
+                     int offsetX, int offsetY, int offsetZ,
                      IntTuple* new_entries,
                      int tau,
                      hls::stream<PointHW>& point_fifo,
                      hls::stream<int>& distance_fifo,
                      hls::stream<int>& distance_tau_fifo)
     {
-        fastsense::map::LocalMapHW map{sizeX, sizeY, sizeZ,
-                                       posX, posY, posZ,
+        fastsense::map::LocalMapHW map{sizeX,   sizeY,   sizeZ,
+                                       posX,    posY,    posZ,
                                        offsetX, offsetY, offsetZ};
         PointHW map_pos{posX, posY, posZ};
         PointHW map_offset{offsetX, offsetY, offsetZ};
@@ -184,7 +167,6 @@ extern "C"
             {
                 if (current_distance < distance_tau)
                 {
-                    int approx_distance;
                     if ((abs_direction.x >= abs_direction.y) && (abs_direction.x >= abs_direction.z))
                     {
                         if (err_1 > 0)
@@ -200,8 +182,6 @@ extern "C"
                         err_1 += direction2.y;
                         err_2 += direction2.z;
                         current_cell.x += increment.x;
-
-                        approx_distance = current_cell.x;
                     }
                     else if ((abs_direction.y >= abs_direction.x) && (abs_direction.y >= abs_direction.z))
                     {
@@ -218,8 +198,6 @@ extern "C"
                         err_1 += direction2.x;
                         err_2 += direction2.z;
                         current_cell.z += increment.y;
-
-                        approx_distance = current_cell.y;
                     }
                     else
                     {
@@ -236,8 +214,6 @@ extern "C"
                         err_1 += direction2.y;
                         err_2 += direction2.x;
                         current_cell.z += increment.z;
-
-                        approx_distance = current_cell.z;
                     }
 
                     current_distance = (current_cell - map_pos).to_mm().norm2();
@@ -262,15 +238,9 @@ extern "C"
 
     void tsdf_dataflow(PointHW* scanPoints,
                        int numPoints,
-                       int sizeX,
-                       int sizeY,
-                       int sizeZ,
-                       int posX,
-                       int posY,
-                       int posZ,
-                       int offsetX,
-                       int offsetY,
-                       int offsetZ,
+                       int sizeX,   int sizeY,   int sizeZ,
+                       int posX,    int posY,    int posZ,
+                       int offsetX, int offsetY, int offsetZ,
                        IntTuple* new_entries,
                        int tau)
     {
@@ -284,8 +254,8 @@ extern "C"
 
         read_points(scanPoints, numPoints, tau, point_fifo, distance_fifo, distance_tau_fifo);
         update_tsdf(numPoints,
-                    sizeX, sizeY, sizeZ,
-                    posX, posY, posZ,
+                    sizeX,   sizeY,   sizeZ,
+                    posX,    posY,    posZ,
                     offsetX, offsetY, offsetZ,
                     new_entries, tau,
                     point_fifo, distance_fifo, distance_tau_fifo);
@@ -334,41 +304,35 @@ extern "C"
         IntTuple* new_entries1,
         IntTuple* new_entries2,
         IntTuple* new_entries3,
-        int sizeX,
-        int sizeY,
-        int sizeZ,
-        int posX,
-        int posY,
-        int posZ,
-        int offsetX,
-        int offsetY,
-        int offsetZ,
+        int sizeX,   int sizeY,   int sizeZ,
+        int posX,    int posY,    int posZ,
+        int offsetX, int offsetY, int offsetZ,
         int tau,
         int max_weight)
     {
 #pragma HLS dataflow
 
         tsdf_dataflow(scanPoints0 + 0 * step, step,
-                      sizeX, sizeY, sizeZ,
-                      posX, posY, posZ,
+                      sizeX,   sizeY,   sizeZ,
+                      posX,    posY,    posZ,
                       offsetX, offsetY, offsetZ,
                       new_entries0, tau);
 
         tsdf_dataflow(scanPoints1 + 1 * step, step,
-                      sizeX, sizeY, sizeZ,
-                      posX, posY, posZ,
+                      sizeX,   sizeY,   sizeZ,
+                      posX,    posY,    posZ,
                       offsetX, offsetY, offsetZ,
                       new_entries1, tau);
 
         tsdf_dataflow(scanPoints2 + 2 * step, step,
-                      sizeX, sizeY, sizeZ,
-                      posX, posY, posZ,
+                      sizeX,   sizeY,   sizeZ,
+                      posX,    posY,    posZ,
                       offsetX, offsetY, offsetZ,
                       new_entries2, tau);
 
         tsdf_dataflow(scanPoints3 + 3 * step, last_step,
-                      sizeX, sizeY, sizeZ,
-                      posX, posY, posZ,
+                      sizeX,   sizeY,   sizeZ,
+                      posX,    posY,    posZ,
                       offsetX, offsetY, offsetZ,
                       new_entries3, tau);
 
@@ -403,15 +367,9 @@ extern "C"
                    IntTuple* mapData1,
                    IntTuple* mapData2,
                    IntTuple* mapData3,
-                   int sizeX,
-                   int sizeY,
-                   int sizeZ,
-                   int posX,
-                   int posY,
-                   int posZ,
-                   int offsetX,
-                   int offsetY,
-                   int offsetZ,
+                   int sizeX,   int sizeY,   int sizeZ,
+                   int posX,    int posY,    int posZ,
+                   int offsetX, int offsetY, int offsetZ,
                    IntTuple* new_entries0,
                    IntTuple* new_entries1,
                    IntTuple* new_entries2,
@@ -444,8 +402,8 @@ extern "C"
                         new_entries1,
                         new_entries2,
                         new_entries3,
-                        sizeX, sizeY, sizeZ,
-                        posX, posY, posZ,
+                        sizeX,   sizeY,   sizeZ,
+                        posX,    posY,    posZ,
                         offsetX, offsetY, offsetZ,
                         tau, max_weight);
 
