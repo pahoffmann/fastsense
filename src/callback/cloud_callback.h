@@ -15,6 +15,7 @@
 #include <util/config/config_manager.h>
 #include <tsdf/update_tsdf.h>
 #include <msg/tsdf_bridge_msg.h>
+#include <util/types.h>
 
 namespace fastsense::callback
 {
@@ -36,7 +37,7 @@ namespace fastsense::callback
 
             void callback();
 
-            void preprocess_scan(const fastsense::msg::PointCloudStamped& cloud, InputBuffer<Point>& scan_point);
+            void preprocess_scan(const fastsense::msg::PointCloudStamped& cloud, InputBuffer<Point32>& scan_points);
 
             int determineBufferSize(const fastsense::msg::PointCloudStamped& cloud);
 

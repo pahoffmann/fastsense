@@ -67,8 +67,7 @@ public:
     }
 
     /**
-     * Destructor of the ring buffer.
-     * Deletes the array in particular.
+     * Destructor of the registration.
      */
     virtual ~Registration() = default;
 

@@ -8,7 +8,7 @@
 #include <vector>
 #include <iostream>
 
-#include <msg/point.h>
+//#include <msg/point.h>
 
 using Eigen::Vector3i;
 using Eigen::Vector3f;
@@ -26,6 +26,8 @@ constexpr int MATRIX_SHIFT = 10; 						// bitshift for a faster way to apply MAT
 constexpr int MATRIX_RESOLUTION = 1 << MATRIX_SHIFT; 	// Resolutions of calculations with Matrixes
 
 static const Vector3i INVALID_POINT(0, 0, 0);
+
+
 
 /**
  * @brief calculates floor(a / b), except that a is a Vector of integers and b is a power of 2

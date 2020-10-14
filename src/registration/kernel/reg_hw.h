@@ -57,9 +57,10 @@ void MatrixMul(
     }
 }
 
+//TODO: template this..
 void MatrixMulTransform(
-    mat_a_t a[4][4],
-    mat_b_t b[4][1],
+    int a[4][4],
+    int b[4][1],
     int res[4][1])
 {
 #pragma HLS INLINE

@@ -34,11 +34,12 @@ void CloudCallback::stop(){
     running = false;
 }
 
-void CloudCallback::preprocess_scan(const fastsense::msg::PointCloudStamped& cloud, InputBuffer<Point>& scan_point){
+void CloudCallback::preprocess_scan(const fastsense::msg::PointCloudStamped& cloud, InputBuffer<Point32>& scan_points){
     const std::vector<fastsense::msg::Point>& cloud_points = cloud.first->points_;
     
     Eigen::Vector4f v;
 
+    int scan_points_index = 0;
     for(unsigned int i = 0; i < cloud_points.size(); i++){
         if(cloud_points[i].x == 0 && cloud_points[i].y == 0 && cloud_points[i].z == 0){
             continue;
@@ -46,10 +47,12 @@ void CloudCallback::preprocess_scan(const fastsense::msg::PointCloudStamped& clo
         v << cloud_points[i].x, cloud_points[i].y, cloud_points[i].z, 1.0f;
         Vector3f pointf = (pose * v).block<3, 1>(0, 0);
 
-        Vector3i point;
-        point << std::floor(pointf.x()), std::floor(pointf.y()), std::floor(pointf.z());
-
-        //scan_points.push_back(point);
+        //Vector3i point;
+        //point << std::floor(pointf.x()), std::floor(pointf.y()), std::floor(pointf.z());
+        Point32 point{std::floor(pointf.x()), std::floor(pointf.y()), std::floor(pointf.z()), 0};
+        scan_points[scan_points_index] = point;
+        scan_points_index++;
+        
     }
 }
 
@@ -60,8 +63,9 @@ int CloudCallback::determineBufferSize(const fastsense::msg::PointCloudStamped& 
 
     for(unsigned int i = 0; i < cloud_points.size(); i++){
         if(cloud_points[i].x == 0 && cloud_points[i].y && cloud_points[i].z == 0){
-            count++;
+            continue;
         }
+        count++;
     }
 
     return count;
@@ -72,9 +76,9 @@ void CloudCallback::callback(){
         fastsense::msg::PointCloudStamped point_cloud;
         cloud_buffer->pop(&point_cloud);
 
-        InputBuffer<Point> scan_point_buffer{q, determineBufferSize(point_cloud)};
+        InputBuffer<Point32> scan_point_buffer{q, determineBufferSize(point_cloud)};
         preprocess_scan(point_cloud, scan_point_buffer);
-
+        
         // if(first_iteration){
         //     first_iteration = false;
         // }else{

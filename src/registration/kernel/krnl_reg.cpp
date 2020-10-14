@@ -24,6 +24,7 @@ struct Point
 
 constexpr int MAP_SHIFT = 6;
 constexpr int MAP_RESOLUTION = 64;
+constexpr int MATRIX_RESOLUTION = 1024;
 
 extern "C"
 {
@@ -143,6 +144,15 @@ extern "C"
 
             //apply transform for point.
             fastsense::registration::MatrixMulTransform(transform_matrix, point_mul, point);
+
+            //revert matrix resolution step => point has real data
+            point[0][0] /= MATRIX_RESOLUTION;
+            point[1][0] /= MATRIX_RESOLUTION;
+            point[2][0] /= MATRIX_RESOLUTION;
+            point[3][0] /= MATRIX_RESOLUTION;
+
+            std::cout << "Point b.t.: " << point_mul[0][0] << point_mul[0][1] << point_mul[0][2] << point_mul[0][3] << std::endl;
+            std::cout << "Point a.t.: " << point[0][0] << point[0][1] << point[0][2] << point[0][3] << std::endl;
 
             Point buf;
             buf.x = point[0][0] / MAP_RESOLUTION;
