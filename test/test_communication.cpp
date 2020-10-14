@@ -24,15 +24,15 @@ TEST_CASE("Simple Sender Receiver Test", "[communication]")
     std::thread receive_thread{[&]()
     {
         Receiver<int> receiver{"127.0.0.1", 1234};
-        std::this_thread::sleep_for(std::chrono::seconds(2));
+        std::this_thread::sleep_for(std::chrono::milliseconds(200));
         value_received = receiver.receive();
     }};
 
     std::thread send_thread{[&]()
     {
-        std::this_thread::sleep_for(std::chrono::seconds(1));
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
         Sender<int> sender{1234};
-        std::this_thread::sleep_for(std::chrono::seconds(2));
+        std::this_thread::sleep_for(std::chrono::milliseconds(200));
         sender.send(value_to_send);
     }};
 
@@ -54,15 +54,15 @@ TEST_CASE("PointCloud Sender Receiver Test", "[communication]")
     std::thread receive_thread{[&]()
     {
         Receiver<PointCloud> receiver{"127.0.0.1", 1234};
-        std::this_thread::sleep_for(std::chrono::seconds(2));
+        std::this_thread::sleep_for(std::chrono::milliseconds(200));
         receiver.receive(pc_received);
     }};
 
     std::thread send_thread{[&]()
     {
-        std::this_thread::sleep_for(std::chrono::seconds(1));
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
         Sender<PointCloud> sender{1234};
-        std::this_thread::sleep_for(std::chrono::seconds(2));
+        std::this_thread::sleep_for(std::chrono::milliseconds(200));
         sender.send(pc_to_send);
     }};
 
@@ -105,15 +105,15 @@ TEST_CASE("TSDFBridgeMessage Sender Receiver Test", "[communication]")
     std::thread receive_thread{[&]()
     {
         Receiver<TSDFBridgeMessage> receiver{"127.0.0.1", 1234};
-        std::this_thread::sleep_for(std::chrono::seconds(2));
+        std::this_thread::sleep_for(std::chrono::milliseconds(200));
         receiver.receive(tsdf_received);
     }};
 
     std::thread send_thread{[&]()
     {
-        std::this_thread::sleep_for(std::chrono::seconds(1));
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
         Sender<TSDFBridgeMessage> sender{1234};
-        std::this_thread::sleep_for(std::chrono::seconds(2));
+        std::this_thread::sleep_for(std::chrono::milliseconds(200));
         sender.send(tsdf_msg);
     }};
 
