@@ -211,12 +211,12 @@ extern "C"
                         }
                         if (err_2 > 0)
                         {
-                            current_cell.y += increment.z;
+                            current_cell.z += increment.z;
                             err_2 -= direction2.y;
                         }
                         err_1 += direction2.x;
                         err_2 += direction2.z;
-                        current_cell.z += increment.y;
+                        current_cell.y += increment.y;
 
                         approx_distance = current_cell.y;
                     }
