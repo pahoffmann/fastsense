@@ -56,7 +56,7 @@ Matrix4f Registration::xi_to_transform(Vector6f xi)
     return transform;
 }
 
-Matrix4f Registration::register_cloud(fastsense::map::LocalMap& localmap, fastsense::buffer::InputBuffer<Point> cloud, fastsense::CommandQueuePtr q)
+Matrix4f Registration::register_cloud(fastsense::map::LocalMap& localmap, fastsense::buffer::InputBuffer<PointHW>& cloud, fastsense::CommandQueuePtr q)
 {
     //std::cout << __LINE__ << std::endl;
     
@@ -189,8 +189,9 @@ Matrix4f Registration::register_cloud(fastsense::map::LocalMap& localmap, fastse
         }
     }
 
+    //TODO: transform at the end needs to be executed! (just like below) -> do it
     // apply final transformation
-    transform_point_cloud(cloud, next_transform);
+    //transform_point_cloud(cloud, next_transform);
 
     return total_transform;
 }

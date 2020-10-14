@@ -14,10 +14,10 @@
 #include <hw/types.h>
 #include <hw/fpga_manager.h>
 #include <registration/registration.h>
-#include <msg/point.h>
 #include <map/local_map.h>
 #include <util/pcd/PCDFile.h>
 #include <tsdf/update_tsdf.h>
+#include <util/point_hw.h>
 
 #include "catch2_config.h"
 
@@ -129,11 +129,35 @@ void check_computed_transform(const ScanPoints_t& points_posttransform, ScanPoin
     REQUIRE((average / points_pretransform.size()) < MAX_OFFSET);
 }
 
+std::shared_ptr<fastsense::buffer::InputBuffer<PointHW>> scan_points_to_input_buffer(ScanPoints_t& cloud, const fastsense::CommandQueuePtr q)
+{
+    auto buffer_ptr = std::make_shared<fastsense::buffer::InputBuffer<PointHW>>(q, cloud.size());
+    for(int i = 0; i < cloud.size(); i++)
+    {
+        auto point = cloud[i];
+        PointHW tmp(point.x(), point.y(), point.z());
+        (*buffer_ptr)[i] = tmp;
+    }
+    return buffer_ptr;
+}
+
+ScanPoints_t input_buffer_to_scan_points(fastsense::buffer::InputBuffer<PointHW>& cloud, const fastsense::CommandQueuePtr q)
+{
+    ScanPoints_t points;
+    for(int i = 0; i < cloud.size(); i++)
+    {
+        auto point = cloud[i];
+        Vector3i tmp(point.x, point.y, point.z);
+        points.push_back(tmp);
+    }
+    return points;
+}
+
 static const std::string error_message =
     "Error: Result mismatch:\n"
     "i = %d CPU result = %d Device result = %d\n";
 
-/*TEST_CASE("Registration", "[registration][slow]")
+TEST_CASE("Registration", "[registration][slow]")
 {
     std::cout << "Testing 'Registration'" << std::endl;
     // const char* xclbinFilename = "FastSense.xclbin";
@@ -302,7 +326,13 @@ static const std::string error_message =
 
         std::cout << "Test " << __LINE__ << std::endl;
 
-        reg.register_cloud(local_map, points_pretransformed_trans, q);
+        //copy from scanpoints to  inputbuffer
+        auto buffer_ptr = scan_points_to_input_buffer(points_pretransformed_trans, q);
+        auto& buffer = *buffer_ptr;
+        reg.register_cloud(local_map, buffer, q);
+
+        points_pretransformed_trans = input_buffer_to_scan_points(buffer, q);
+        //copy from inputbuffer to scanpoints
 
         std::cout << "Test " << __LINE__ << std::endl;
 
@@ -315,9 +345,12 @@ static const std::string error_message =
     {
         std::cout << "    Section 'Registration test Rotation'" << std::endl;
         reg.transform_point_cloud(points_pretransformed_rot, rotation_mat);
-        reg.register_cloud(local_map, points_pretransformed_rot, q);
+        auto buffer_ptr = scan_points_to_input_buffer(points_pretransformed_rot, q);
+        auto& buffer = *buffer_ptr;
+        reg.register_cloud(local_map, buffer, q);
+        points_pretransformed_rot = input_buffer_to_scan_points(buffer, q);
         check_computed_transform(points_pretransformed_rot, scan_points_2);
     }
-}*/
+}
 
 } //namespace fastsense::registration  

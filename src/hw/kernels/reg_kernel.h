@@ -8,18 +8,8 @@
 #include <hw/buffer/buffer.h>
 #include <map/local_map.h>
 #include <iostream>
-#include <util/types.h>
 #include <eigen3/Eigen/Dense>
-
-
-struct Point
-{
-    int x;
-    int y;
-    int z;
-    int w = 1;
-};
-
+#include <util/point_hw.h>
 
 namespace fastsense::kernels
 {
@@ -45,7 +35,7 @@ public:
      * @param local_count   local count ref
      * @param transform     transform from last registration iteration (including imu one) - needs to be applied in the kernel
      */
-    void synchronized_run(map::LocalMap& map, buffer::InputBuffer<Point>& point_data, Eigen::Matrix<long, 6, 6> &local_h, Eigen::Matrix<long, 6, 1> &local_g, int &local_error, int &local_count, Eigen::Matrix4f &transform)
+    void synchronized_run(map::LocalMap& map, buffer::InputBuffer<PointHW>& point_data, Eigen::Matrix<long, 6, 6> &local_h, Eigen::Matrix<long, 6, 1> &local_g, int &local_error, int &local_count, Eigen::Matrix4f &transform)
     {
         buffer::OutputBuffer<long> outbuf(cmd_q_, 44); //matrix buffer for g matrix TODO: determine if this needs to be in registration.cpp
 
@@ -98,7 +88,7 @@ public:
      * @param outbuf 
      * @param queue 
      */
-    void run(map::LocalMap& map, buffer::InputBuffer<Point>& point_data, buffer::InputBuffer<long>& transform, buffer::OutputBuffer<long>& outbuf)
+    void run(map::LocalMap& map, buffer::InputBuffer<PointHW>& point_data, buffer::InputBuffer<long>& transform, buffer::OutputBuffer<long>& outbuf)
     {
         //std::cout << "Kernel_H " << __LINE__ << std::endl;
         resetNArg();

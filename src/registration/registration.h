@@ -21,6 +21,7 @@
 #include <msg/point.h>
 #include <hw/kernels/reg_kernel.h>
 #include <hw/buffer/buffer.h>
+#include <util/point_hw.h>
 
 namespace fastsense::registration
 {
@@ -78,7 +79,7 @@ public:
      * @param cloud
      * @return Matrix4f
      */
-    Matrix4f register_cloud(fastsense::map::LocalMap& localmap, ScanPoints_t& cloud, fastsense::CommandQueuePtr q);
+    Matrix4f register_cloud(fastsense::map::LocalMap& localmap, fastsense::buffer::InputBuffer<PointHW>& cloud, fastsense::CommandQueuePtr q);
 
     /**
      * @brief Updates the IMU data used by the registration method

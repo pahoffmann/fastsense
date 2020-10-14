@@ -4,7 +4,7 @@
  */
 
 #include <map/local_map_hw.h>
-//#include <msg/point.h>
+#include <util/point_hw.h>
 #include <registration/kernel/reg_hw.h>
 #include <iostream>
 
@@ -14,22 +14,14 @@ struct IntTuple
     int second;
 };
 
-struct Point
-{
-    int x;
-    int y;
-    int z;
-    int w = 1;
-};
-
-constexpr int MAP_SHIFT = 6;
-constexpr int MAP_RESOLUTION = 64;
-constexpr int MATRIX_RESOLUTION = 1024;
+// constexpr int MAP_SHIFT = 6;
+// constexpr int MAP_RESOLUTION = 64;
+// constexpr int MATRIX_RESOLUTION = 1024;
 
 extern "C"
 {
 
-    void krnl_reg(Point* pointData,
+    void krnl_reg(PointHW* pointData,
                   int numPoints,
                   IntTuple* mapData0,
                   IntTuple* mapData1,
@@ -133,14 +125,14 @@ extern "C"
         {
 #pragma HLS loop_tripcount min=0 max=30000
 
-            auto point_tmp = pointData[i];
+            auto& point_tmp = pointData[i];
 
             //TODO: check if copy is needed
             int point[4][1], point_mul[4][1];
             point_mul[0][0] = point_tmp.x;
             point_mul[1][0] = point_tmp.y;
             point_mul[2][0] = point_tmp.z;
-            point_mul[3][0] = point_tmp.w;
+            point_mul[3][0] = 1;
 
             //apply transform for point.
             fastsense::registration::MatrixMulTransform(transform_matrix, point_mul, point);
@@ -151,14 +143,21 @@ extern "C"
             point[2][0] /= MATRIX_RESOLUTION;
             point[3][0] /= MATRIX_RESOLUTION;
 
-            std::cout << "Point b.t.: " << point_mul[0][0] << point_mul[0][1] << point_mul[0][2] << point_mul[0][3] << std::endl;
-            std::cout << "Point a.t.: " << point[0][0] << point[0][1] << point[0][2] << point[0][3] << std::endl;
+            point_tmp.x =     point[0][0];
+            point_tmp.y =     point[1][0];
+            point_tmp.z =     point[2][0];
+            point_tmp.dummy = 1;
 
-            Point buf;
+            //std::cout << "Point b.t.: " << point_mul[1][0] << point_mul[1][0] << point_mul[2][0] << point_mul[3][0] << std::endl;
+            //std::cout << "Point a.t.: " << point[0][0] << point[0][1] << point[0][2] << point[0][3] << std::endl;
+
+            PointHW buf;
             buf.x = point[0][0] / MAP_RESOLUTION;
             buf.y = point[1][0] / MAP_RESOLUTION;
             buf.z = point[2][0] / MAP_RESOLUTION;
+            buf.dummy = 1;
 
+            //NO CHANGES FROM HERE
             //get value of local map
             const auto& current = map.get(mapData0, buf.x, buf.y, buf.z);
 
