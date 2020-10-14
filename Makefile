@@ -47,6 +47,8 @@ SW_SRCS = src/Application.cpp \
 	$(wildcard src/callback/*.cpp) \
 	$(wildcard src/registration/*.cpp) \
 	$(wildcard src/util/*.cpp) \
+	$(wildcard src/util/pcd/*.cpp) \
+	$(wildcard src/eval/*.cpp) \
 	$(wildcard src/msg/*.cpp) \
 	$(wildcard src/util/config/*.cpp) \
 	$(wildcard src/hw/*.cpp) \
@@ -100,7 +102,7 @@ HW_SRCS = src/registration/kernel/krnl_reg.cpp
 HW_OBJS = $(HW_SRCS:%.cpp=$(BUILD_DIR)/%.xo)
 HW_DEPS = $(HW_OBJS:.xo=.d)
 
-HW_TEST_SRCS = test/kernels/krnl_local_map_test.cpp
+HW_TEST_SRCS = test/kernels/krnl_local_map_test.cpp src/tsdf/kernel/krnl_tsdf.cpp
 HW_TEST_OBJS = $(HW_TEST_SRCS:%.cpp=$(BUILD_DIR)/%.xo)
 HW_TEST_DEPS = $(HW_TEST_OBJS:.xo=.d)
 
