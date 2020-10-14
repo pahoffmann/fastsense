@@ -1,13 +1,11 @@
 #pragma once
 
 /**
+ * @file imu.h
  * @author Julian Gaal
  */
 
 #include <data/sensor_sync.h>
-#include <msg/msgs_stamped.h>
-#include <util/process_thread.h>
-#include <util/concurrent_ring_buffer.h>
 #include "api/phidget.h"
 
 // TODO singleton

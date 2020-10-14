@@ -3,6 +3,7 @@
 #include <algorithm>
 
 /**
+ * @file ScanOrderNeighbors.tcc
  * @author Malte Hillmann
  * @author Marc Eisoldt
  */

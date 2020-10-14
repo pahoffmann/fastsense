@@ -1,6 +1,7 @@
 #pragma once
 
 /**
+ * @file AverageNormal.h
  * @author Malte Hillmann
  * @author Marc Eisoldt
  */

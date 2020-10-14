@@ -6,30 +6,62 @@
 
 #pragma once
 
-#include <ros/node_handle.h>
 #include <sensor_msgs/PointCloud.h>
-
 #include "bridge_base.h"
-#include <util/process_thread.h>
 
 namespace fastsense::bridge
 {
 
+/**
+ * @brief VelodyneBridge converts Velodyne data from custom driver running 
+ * on Trenz board and publishes a sensor_msgs::PointCloud
+ * 
+ */
 class VelodyneBridge :  public BridgeBase<msg::PointCloud, sensor_msgs::PointCloud, 7777>,
     public util::ProcessThread
 {
 public:
-    VelodyneBridge() = delete;
+    /**
+     * @brief Construct a new Velodyne Bridge object
+     * 
+     * @param n nodehandle
+     * @param board_addr ip addr of Trenz board
+     */
     VelodyneBridge(ros::NodeHandle& n, const std::string& board_addr);
+
+    /**
+     * @brief Destroy the Velodyne Bridge object
+     */
     ~VelodyneBridge() = default;
 
+    /**
+     * @brief Starts the velodyne bridge in its own thread
+     */
     void start() override;
+
+    /**
+     * @brief Stops the velodyne bridge thread
+     */
     void stop() override;
 private:
+
+    /**
+     * @brief Publishes a sensor_msgs::PointCloud (convert() FIRST for newest data)
+     */
     void publish() override;
+
+    /**
+     * @brief Converts msg::PointCloud into std::vector<geometry_msgs::Point32>>
+     */
     void convert() override;
+   
+    /**
+     * @brief Run listens for lidar data, converts it to ROS PointCloud message
+     * and publishes in an endless loop (running in its own thread)
+     */
     void run() override;
 
+    /// Local vector of lidar points that are published
     std::vector<geometry_msgs::Point32> points_;
 };
 

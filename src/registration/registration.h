@@ -1,6 +1,7 @@
 #pragma once
 
 /**
+ * @file registration.h
  * @author Patrick Hoffmann
  * @author Adrian Nitschmann
  * @author Pascal Buschermöhle
@@ -8,17 +9,12 @@
  * @author Marc Eisoldt
  */
 
-#include <cmath>
 #include <mutex>
-#include <chrono>
-#include <utility>
 #include <algorithm>
 
-#include <util/types.h>
 #include <util/time_stamp.h>
 #include <map/local_map.h>
 #include <msg/msgs_stamped.h>
-#include <msg/point.h>
 #include <hw/kernels/reg_kernel.h>
 
 namespace fastsense::registration

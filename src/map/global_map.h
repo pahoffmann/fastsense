@@ -1,17 +1,16 @@
 #pragma once
 
 /**
+ * @file global_map.h
  * @author Steffen Hinderink
  * @author Juri Vana
  * @author Malte Hillmann
  */
 
 #include <highfive/H5File.hpp>
-#include <vector>
 #include <cmath>
 #include <string>
 #include <utility>
-
 #include <util/types.h>
 
 // TODO: (maybe) handle existing/missing folder, where hdf5 will write

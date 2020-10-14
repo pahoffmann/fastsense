@@ -1,9 +1,8 @@
 #pragma once
 
 /**
- * 
+ * @file imu_callback.h
  * @author Pascal Buschermöhle
- * 
  */
 
 #include <util/process_thread.h> 

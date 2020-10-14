@@ -1,5 +1,9 @@
-#include "RuntimeEvaluator.h"
+/**
+ * @file runtime_evaluator.cpp
+ * @author Marc Eisoldt (meisoldt)
+ */
 
+#include "runtime_evaluator.h"
 #include <sstream>
 
 using namespace std::chrono;

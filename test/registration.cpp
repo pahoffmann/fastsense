@@ -11,12 +11,12 @@
 
 #include <hw/buffer/buffer.h>
 #include <hw/kernels/vadd_kernel.h>
-#include <hw/types.h>
+#include <hw/opencl.h>
 #include <hw/fpga_manager.h>
 #include <registration/registration.h>
 #include <msg/point.h>
 #include <map/local_map.h>
-#include <util/pcd/PCDFile.h>
+#include <util/pcd/pcd_file.h>
 #include <tsdf/update_tsdf.h>
 
 #include "catch2_config.h"

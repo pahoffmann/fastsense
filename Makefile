@@ -39,7 +39,7 @@ ENTRY_POINT_OBJS = $(ENTRY_POINT_SRCS:%.cpp=$(BUILD_DIR)/%.o)
 ENTRY_POINT_DEPS = $(ENTRY_POINT_OBJS:.o=.d)
 
 # Software sources
-SW_SRCS = src/Application.cpp \
+SW_SRCS = src/application.cpp \
 	src/driver/lidar/velodyne.cpp \
 	src/data/sensor_sync.cpp \
 	$(wildcard src/map/*.cpp) \
@@ -236,6 +236,13 @@ rsync:
 format:
 	@echo "Formatting"
 	@astyle -q -n --project=.astylerc --recursive "src/*.c??" "src/*.h" "test/*.c??" "test/*.h"
+
+gen_docs:
+	@echo "Generating doxygen docs"
+	@doxygen Doxygen.config
+
+open_docs: gen_docs
+	@xdg-open docs/html/index.html
 
 -include $(ENTRY_POINT_DEPS)
 -include $(SW_DEPS)

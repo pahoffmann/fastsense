@@ -1,10 +1,10 @@
 #pragma once
 
 /**
+ * @file point_cloud.h
  * @author Marcel Flottmann
  */
 
-#include <cstdint>
 #include <vector>
 #include <memory>
 

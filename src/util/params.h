@@ -1,6 +1,7 @@
 #pragma once
 
 /**
+ * @file params.h
  * @author Julian Gaal
  */
 

@@ -1,15 +1,12 @@
 #pragma once
 
 /**
+ * @file reg_kernel.h
  * @author Patrick Hoffmann
  */
 
 #include <hw/kernels/base_kernel.h>
-#include <hw/buffer/buffer.h>
 #include <map/local_map.h>
-#include <iostream>
-#include <util/types.h>
-#include <eigen3/Eigen/Dense>
 
 struct Point
 {

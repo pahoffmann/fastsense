@@ -1,6 +1,7 @@
 #pragma once
 
 /**
+ * @file linear_acceleration.h
  * @author Julian Gaal
  */
 

@@ -1,6 +1,7 @@
 #pragma once
 
 /**
+ * @file config.h
  * @author Marcel Flottmann
  */
 

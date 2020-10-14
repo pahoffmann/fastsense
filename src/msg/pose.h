@@ -1,6 +1,7 @@
 #pragma once
 
 /**
+ * @file pose.h
  * @author Julian Gaal
  */
 

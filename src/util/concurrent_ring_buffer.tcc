@@ -1,6 +1,7 @@
 #pragma once
 
 /**
+ * @file concurrent_ring_buffer.tcc
  * @author Marcel Flottmann
  */
 

@@ -1,6 +1,7 @@
 #pragma once
 
 /**
+ * @file NeighborsBase.h
  * @author Malte Hillmann
  * @author Marc Eisoldt
  */
