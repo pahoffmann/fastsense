@@ -9,8 +9,10 @@
 #include <algorithm>
 
 using namespace fastsense::callback;
+using fastsense::buffer::InputBuffer;
+using fastsense::msg::Point;
 
-CloudCallback::CloudCallback(Registration& registration, const std::shared_ptr<PointCloudBuffer>& cloud_buffer, LocalMap& local_map, const std::shared_ptr<GlobalMap>& global_map, Matrix4f& pose, const std::shared_ptr<TSDFBuffer>& tsdf_buffer)
+CloudCallback::CloudCallback(Registration& registration, const std::shared_ptr<PointCloudBuffer>& cloud_buffer, LocalMap& local_map, const std::shared_ptr<GlobalMap>& global_map, Matrix4f& pose, const std::shared_ptr<TSDFBuffer>& tsdf_buffer, fastsense::CommandQueuePtr& q)
      : ProcessThread(), 
      registration{registration},
      cloud_buffer{cloud_buffer},
@@ -18,7 +20,8 @@ CloudCallback::CloudCallback(Registration& registration, const std::shared_ptr<P
      global_map{global_map},
      pose{pose},
      tsdf_buffer{tsdf_buffer},
-     first_iteration{true}{}
+     first_iteration{true},
+     q{q}{}
 
 void CloudCallback::start(){
     if(not running){
@@ -31,7 +34,7 @@ void CloudCallback::stop(){
     running = false;
 }
 
-void CloudCallback::preprocess_scan(const fastsense::msg::PointCloudStamped& cloud, ScanPoints_t& scan_points, const Matrix4f& pose){
+void CloudCallback::preprocess_scan(const fastsense::msg::PointCloudStamped& cloud, InputBuffer<Point>& scan_point){
     const std::vector<fastsense::msg::Point>& cloud_points = cloud.first->points_;
     
     Eigen::Vector4f v;
@@ -46,8 +49,22 @@ void CloudCallback::preprocess_scan(const fastsense::msg::PointCloudStamped& clo
         Vector3i point;
         point << std::floor(pointf.x()), std::floor(pointf.y()), std::floor(pointf.z());
 
-        scan_points.push_back(point);
+        //scan_points.push_back(point);
     }
+}
+
+
+int CloudCallback::determineBufferSize(const fastsense::msg::PointCloudStamped& cloud){
+    const std::vector<fastsense::msg::Point>& cloud_points = cloud.first->points_;
+    int count = 0;
+
+    for(unsigned int i = 0; i < cloud_points.size(); i++){
+        if(cloud_points[i].x == 0 && cloud_points[i].y && cloud_points[i].z == 0){
+            count++;
+        }
+    }
+
+    return count;
 }
 
 void CloudCallback::callback(){
@@ -55,8 +72,8 @@ void CloudCallback::callback(){
         fastsense::msg::PointCloudStamped point_cloud;
         cloud_buffer->pop(&point_cloud);
 
-        ScanPoints_t scan_points;
-        preprocess_scan(point_cloud, scan_points, pose);
+        InputBuffer<Point> scan_point_buffer{q, determineBufferSize(point_cloud)};
+        preprocess_scan(point_cloud, scan_point_buffer);
 
         // if(first_iteration){
         //     first_iteration = false;
