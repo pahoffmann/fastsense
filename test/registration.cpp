@@ -133,7 +133,7 @@ static const std::string error_message =
     "Error: Result mismatch:\n"
     "i = %d CPU result = %d Device result = %d\n";
 
-TEST_CASE("Registration", "[registration][slow]")
+/*TEST_CASE("Registration", "[registration][slow]")
 {
     std::cout << "Testing 'Registration'" << std::endl;
     // const char* xclbinFilename = "FastSense.xclbin";
@@ -318,6 +318,6 @@ TEST_CASE("Registration", "[registration][slow]")
         reg.register_cloud(local_map, points_pretransformed_rot, q);
         check_computed_transform(points_pretransformed_rot, scan_points_2);
     }
-}
+}*/
 
 } //namespace fastsense::registration  

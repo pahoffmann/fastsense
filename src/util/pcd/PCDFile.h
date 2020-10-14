@@ -31,5 +31,3 @@ private:
 };
 
 } //namespace fastsense::util
-
-#include "PCDFile.tcc"

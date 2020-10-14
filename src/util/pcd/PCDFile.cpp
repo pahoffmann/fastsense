@@ -1,4 +1,4 @@
-#pragma once
+#include "PCDFile.h"
 
 #include <utility>
 #include <sstream>
