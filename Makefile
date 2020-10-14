@@ -84,9 +84,9 @@ INC_FLAGS = $(addprefix -I,$(INC_DIRS))
 CXX_STD = c++17
 CXX_OPTFGLAGS ?= -O2 -ftree-loop-vectorize
 GCCFLAGS = -Wall -Wextra -Wnon-virtual-dtor -ansi -pedantic -Wfatal-errors  -fexceptions -Wno-unknown-pragmas
-CXXFLAGS = $(INC_FLAGS) $(GCCFLAGS) $(CXX_OPTFGLAGS) -MMD -MP -D__USE_XOPEN2K8 -c -fmessage-length=0 -std=$(CXX_STD) --sysroot=$(SYSROOT)
+CXXFLAGS = $(INC_FLAGS) $(GCCFLAGS) $(CXX_OPTFGLAGS) -MMD -MP -D__USE_XOPEN2K8 -c -fmessage-length=0 -std=$(CXX_STD) --sysroot=$(SYSROOT) $(CXX_EXTRA)
 
-LDFLAGS = $(LIBS) --sysroot=$(SYSROOT)
+LDFLAGS = $(LIBS) --sysroot=$(SYSROOT) $(LD_EXTRA)
 
 # Hardware
 LINK_CFG = $(CURDIR)/link.cfg
@@ -109,8 +109,13 @@ HW_TEST_DEPS = $(HW_TEST_OBJS:.xo=.d)
 HW_INC_DIRS = src
 HW_INC_FLAGS = $(addprefix -I,$(HW_INC_DIRS))
 
-VXXFLAGS = -t $(HW_TARGET) -f $(HW_PLATFORM) -c $(HW_INC_FLAGS) --config $(BUILD_CFG)
-VXXLDFLAGS = -t $(HW_TARGET) -f $(HW_PLATFORM) --config $(LINK_CFG) --link
+ifdef PROFILING
+VXX_EXTRA += --profile_kernel stall:all:all:all
+VXX_LD_EXTRA += --profile_kernel data:all:all:all --profile_kernel stall:all:all:all
+endif
+
+VXXFLAGS = -t $(HW_TARGET) -f $(HW_PLATFORM) -c $(HW_INC_FLAGS) --config $(BUILD_CFG) $(VXX_EXTRA)
+VXXLDFLAGS = -t $(HW_TARGET) -f $(HW_PLATFORM) --config $(LINK_CFG) --link $(VXX_LD_EXTRA)
 
 HW_DEPS_FLAGS = $(HW_INC_FLAGS) -isystem $(XILINX_VIVADO)/include -MM -MP
 
