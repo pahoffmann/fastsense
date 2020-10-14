@@ -13,6 +13,11 @@
 
 #include <comm/queue_bridge.h>
 #include <msg/tsdf_bridge_msg.h>
+#include <msg/msgs_stamped.h>
+
+#include <data/sensor_sync.h>
+
+#include <util/config/config_manager.h>
 
 #include <iostream>
 
@@ -26,9 +31,9 @@ TEST_CASE("TSDF_Kernel_Vis", "[tsdf_kernel_vis]")
         constexpr float TAU = 1 * SCALE;
         constexpr float MAX_WEIGHT = 10 * WEIGHT_RESOLUTION;
 
-        constexpr int SIZE_X = 20 * SCALE / MAP_RESOLUTION;
-        constexpr int SIZE_Y = 20 * SCALE / MAP_RESOLUTION;
-        constexpr int SIZE_Z = 5 * SCALE / MAP_RESOLUTION; 
+        constexpr int SIZE_X = 20 * SCALE / MAP_RESOLUTION + 1;
+        constexpr int SIZE_Y = 20 * SCALE / MAP_RESOLUTION + 1;
+        constexpr int SIZE_Z = 5 * SCALE / MAP_RESOLUTION + 1; 
 
         std::vector<std::vector<Vector3f>> float_points;
         unsigned int num_points;
@@ -77,59 +82,37 @@ TEST_CASE("TSDF_Kernel_Vis", "[tsdf_kernel_vis]")
 
         tsdf_bridge.start();
 
-        //while(true)
-        //{
-            fastsense::msg::TSDFBridgeMessage tsdf_msg;
+        fastsense::CommandQueuePtr q2 = fastsense::hw::FPGAManager::create_command_queue();    
+        std::shared_ptr<fastsense::map::GlobalMap> global_map_ptr(new fastsense::map::GlobalMap("test_global_map2", 0.0, 0.0));
+        fastsense::map::LocalMap local_map(SIZE_X, SIZE_Y, SIZE_Z, global_map_ptr, q2);
 
-            tsdf_msg.tau_ = TAU;
-            tsdf_msg.size_[0] = SIZE_X;
-            tsdf_msg.size_[1] = SIZE_Y;
-            tsdf_msg.size_[2] = SIZE_Z;
-            tsdf_msg.pos_[0] = 0;
-            tsdf_msg.pos_[1] = 0;
-            tsdf_msg.pos_[2] = 0;
-            tsdf_msg.offset_[0] = 0;
-            tsdf_msg.offset_[1] = 0;
-            tsdf_msg.offset_[2] = 0;
-            tsdf_msg.map_resolution_ = MAP_RESOLUTION;
-            tsdf_msg.tsdf_data_.reserve(SIZE_X * SIZE_Y * SIZE_Z);
-            std::copy(local_map_compare.getBuffer().cbegin(), local_map_compare.getBuffer().cend(), std::back_inserter(tsdf_msg.tsdf_data_));
-            //tsdf_msg.tsdf_data_.reserve(1);
-            //tsdf_msg.tsdf_data_[0].first = TAU;
-            //tsdf_msg.tsdf_data_[0].second = 1.0;
+        auto q3 = fastsense::hw::FPGAManager::create_command_queue();
+        fastsense::kernels::TSDFKernel krnl(q3);
 
-            tsdf_buffer->push_nb(tsdf_msg, true);
-        //}
+        krnl.run(local_map, kernel_points, TAU, MAX_WEIGHT);
+        krnl.waitComplete();
+
+        const auto& local_buffer = local_map.getBuffer();
+        const auto& compare_buffer = local_map_compare.getBuffer(); 
+
+        fastsense::msg::TSDFBridgeMessage tsdf_msg;
+
+        tsdf_msg.tau_ = TAU;
+        tsdf_msg.size_[0] = SIZE_X;
+        tsdf_msg.size_[1] = SIZE_Y;
+        tsdf_msg.size_[2] = SIZE_Z;
+        tsdf_msg.pos_[0] = 0;
+        tsdf_msg.pos_[1] = 0;
+        tsdf_msg.pos_[2] = 0;
+        tsdf_msg.offset_[0] = SIZE_X / 2;
+        tsdf_msg.offset_[1] = SIZE_Y / 2;
+        tsdf_msg.offset_[2] = SIZE_Z / 2;
+        tsdf_msg.map_resolution_ = MAP_RESOLUTION;
+        tsdf_msg.tsdf_data_.reserve(SIZE_X * SIZE_Y * SIZE_Z);
+        std::copy(local_map.getBuffer().cbegin(), local_map.getBuffer().cend(), std::back_inserter(tsdf_msg.tsdf_data_));
+
+        tsdf_buffer->push_nb(tsdf_msg, true);
 
         tsdf_bridge.stop();
-
-        // fastsense::CommandQueuePtr q2 = fastsense::hw::FPGAManager::create_command_queue();    
-        // std::shared_ptr<fastsense::map::GlobalMap> global_map_ptr(new fastsense::map::GlobalMap("test_global_map2", 0.0, 0.0));
-        // fastsense::map::LocalMap local_map(SIZE_X, SIZE_Y, SIZE_Z, global_map_ptr, q2);
-
-        // auto q3 = fastsense::hw::FPGAManager::create_command_queue();
-        // fastsense::kernels::TSDFKernel krnl(q3);
-
-        // krnl.run(local_map, kernel_points, TAU, MAX_WEIGHT);
-        // krnl.waitComplete();
-
-        // const auto& local_buffer = local_map.getBuffer();
-        // const auto& compare_buffer = local_map_compare.getBuffer(); 
-
-        // for(int i = 0; i < SIZE_X; ++i)
-        // {
-        //     for(int j = 0; j < SIZE_Y; ++j)
-        //     {
-        //         for(int k = 0; k < SIZE_Z; ++k)
-        //         {
-        //             auto index = i + j * SIZE_X + k * SIZE_X * SIZE_Y; 
-
-        //             REQUIRE(local_buffer[index].first == compare_buffer[index].first);
-        //             REQUIRE(local_buffer[index].second == compare_buffer[index].second);
-        //         }
-        //     }
-        // }
-
-        //REQUIRE(err_count == 0);
     }
 }
