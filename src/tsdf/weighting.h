@@ -1,6 +1,7 @@
 #pragma once
 
 /**
+ * @file weighting.h
  * @author Malte Hillmann
  * @author Marc Eisoldt
  */

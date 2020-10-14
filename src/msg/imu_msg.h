@@ -1,17 +1,16 @@
 #pragma once
 
 /**
+ * @file imu_msg.h
  * @author Julian Gaal
  */
 
 #include <iostream>
-#include <cmath>
 #include <memory>
 
 #include <msg/linear_acceleration.h>
 #include <msg/angular_velocity.h>
 #include <msg/magnetic_field.h>
-#include <util/params.h>
 
 namespace fastsense::msg
 {

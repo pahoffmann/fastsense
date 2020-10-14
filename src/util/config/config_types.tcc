@@ -1,6 +1,7 @@
 #pragma once
 
 /**
+ * @file config_types.tcc
  * @author Marcel Flottmann
  */
 

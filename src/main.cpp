@@ -1,4 +1,9 @@
-#include <Application.h>
+/**
+ * @file main.cpp
+ * @author Employees Washroom
+ */
+
+#include <application.h>
 #include <util/logging/logger.h>
 #include <util/config/config_manager.h>
 #include <hw/fpga_manager.h>

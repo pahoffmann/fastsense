@@ -1,22 +1,31 @@
 #pragma once
 
 /**
+ * @file sender.h
  * @author Julian Gaal
  */
 
 #include <string>
-#include <zmq.hpp>
-#include <zmq_addon.hpp>
 #include <msg/zmq_converter.h>
 #include <comm/zmq_context_manager.h>
 
 namespace fastsense::comm
 {
 
+/**
+ * @brief Wrapper around ZeroMQ publisher that can send arbitrary data type T
+ * 
+ * @tparam T data type to send
+ */
 template <typename T>
 class Sender
 {
 public:
+    /**
+     * @brief Construct a new Sender object
+     * 
+     * @param port Port to send on
+     */
     Sender(uint16_t port)
         :   socket_{ZMQContextManager::getContext(), zmq::socket_type::pub}
     {
@@ -24,8 +33,19 @@ public:
         socket_.setsockopt(ZMQ_SNDHWM, 2);
     }
 
+    /**
+     * @brief Destroy the Sender object
+     */
     ~Sender() = default;
 
+
+    /**
+     * @brief Send data (with size known at compile time)
+     * 
+     * @tparam TT type used to compile only if T does NOT inherit from msg::ZMQConverter (therefore only static members)
+     * @param data data to send
+     * @param flag zeromq send flags, default: dontwait (non-blocking)
+     */
     template <typename TT = T, std::enable_if_t<!std::is_base_of_v<msg::ZMQConverter, TT>, int> = 0>
     void send(const T& data, zmq::send_flags flag = zmq::send_flags::dontwait)
     {
@@ -35,6 +55,12 @@ public:
         socket_.send(msg, flag);
     }
 
+    /**
+     * @brief Send data (with size not known at compile time)
+     * 
+     * @tparam TT type used to compile ONLY IF T does inherits from msg::ZMQConverter (therefore data with dynamic size)
+     * @param data Data to send (must inherit from msg::ZMQConverter)
+     */
     template <typename TT = T, std::enable_if_t<std::is_base_of_v<msg::ZMQConverter, TT>, int> = 0>
     void send(const T& data)
     {
@@ -43,6 +69,7 @@ public:
     }
 
 private:
+    /// ZeroMQ socket handles connection 
     zmq::socket_t socket_;
 };
 

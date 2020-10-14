@@ -1,6 +1,7 @@
 #pragma once
 
 /**
+ * @file constants.h
  * @author Malte Hillmann
  */
 

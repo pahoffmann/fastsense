@@ -1,12 +1,11 @@
 #pragma once
 
 /**
+ * @file config_types.h
  * @author Marcel Flottmann
  */
 
 #include <unordered_map>
-#include <functional>
-#include <mutex>
 #include <boost/property_tree/ptree.hpp>
 
 #include <util/event_handler_list.h>

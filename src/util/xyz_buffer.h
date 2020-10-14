@@ -1,21 +1,19 @@
+#pragma once
+
 /**
  * @file xyz_buffer.h
  * @author Julian Gaal
  * @date 2020-08-17
  */
 
-#pragma once
-
 #include <stdexcept>
-
-// TODO operator * - + / = 
-// TODO length of buffer
 
 namespace fastsense::util
 {
 
 /**
- * @brief represents a data point with x, y and z "coordinates"
+ * @brief represents a data point with x, y and z "coordinates", as a buffer: Buffer received data from
+ * phidgets api
  */
 template <typename T>
 class XYZBuffer

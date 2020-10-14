@@ -1,6 +1,7 @@
 #pragma once
 
 /**
+ * @file magnetic_field.h
  * @author Julian Gaal
  */
 

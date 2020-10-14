@@ -1,6 +1,7 @@
 #pragma once
 
 /**
+ * @file IterativeNormal.tcc
  * @author Malte Hillmann
  * @author Marc Eisoldt
  */

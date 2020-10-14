@@ -1,13 +1,12 @@
 #pragma once
 
 /**
+ * @file config_manager.tcc
  * @author Marcel Flottmann
  */
 
 #include <boost/property_tree/json_parser.hpp>
 #include <type_traits>
-
-#include "config_manager.h"
 
 namespace fastsense::util::config
 {

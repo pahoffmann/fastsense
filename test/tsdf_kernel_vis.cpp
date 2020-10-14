@@ -8,7 +8,7 @@
 #include <hw/fpga_manager.h>
 #include <hw/kernels/tsdf_kernel.h>
 #include <tsdf/update_tsdf.h>
-#include <util/pcd/PCDFile.h>
+#include <util/pcd/pcd_file.h>
 #include "catch2_config.h"
 
 #include <comm/queue_bridge.h>

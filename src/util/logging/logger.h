@@ -1,6 +1,7 @@
 #pragma once
 
 /**
+ * @file logger.h
  * @author Marcel Flottmann
  */
 

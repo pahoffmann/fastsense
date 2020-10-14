@@ -1,6 +1,7 @@
 #pragma once
 
 /**
+ * @file fpga_manager.h
  * @author Julian Gaal
  * @author Marcel Flottmann
  */
@@ -8,7 +9,6 @@
 #include <fstream>
 
 #include <hw/opencl.h>
-#include <hw/types.h>
 
 namespace fastsense::hw
 {

@@ -1,12 +1,10 @@
 /**
+ * @file update_tsdf.cpp
  * @author Malte Hillmann
  * @author Marc Eisoldt
  */
 
-#include <memory>
-#include <iostream>
 #include <unordered_map>
-#include <utility>
 
 #include "update_tsdf.h"
 #include "ScanOrderNeighbors.h"

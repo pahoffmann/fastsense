@@ -1,6 +1,7 @@
 #pragma once
 
 /**
+ * @file ProjectionNormal.h
  * @author Malte Hillmann
  * @author Marc Eisoldt
  */

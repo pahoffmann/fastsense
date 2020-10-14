@@ -1,6 +1,7 @@
 #pragma once
 
 /**
+ * @file local_map_hw.h
  * @author Marcel Flottmann
  */
 
