@@ -74,7 +74,7 @@ std::pair<int, int> TSDFBridge::get_tsdf_value(int x, int y, int z)
 
 void TSDFBridge::convert()
 {   
-    constexpr size_t thread_count = 10;
+    constexpr size_t thread_count = 8;
     std::vector<std::pair<geometry_msgs::Point, std_msgs::ColorRGBA>> results[thread_count];
 
     int left[3], right[3];
@@ -106,9 +106,9 @@ void TSDFBridge::convert()
                     }
 
                     geometry_msgs::Point point;
-                    point.x = x * msg().map_resolution_;
-                    point.y = y * msg().map_resolution_;
-                    point.z = z * msg().map_resolution_;
+                    point.x = x * msg().map_resolution_ * 0.001;
+                    point.y = y * msg().map_resolution_ * 0.001;
+                    point.z = z * msg().map_resolution_ * 0.001;
 
                     // color.a = std::min(val.second, 1.0f);
                     if (val.first >= 0)
@@ -141,9 +141,8 @@ void TSDFBridge::convert()
         return;
     }
 
-    size_t length = msg_.tsdf_data_.size();
-    points_.resize(length);
-    colors_.resize(length);
+    points_.resize(total_results);
+    colors_.resize(total_results);
 
     #pragma omp parallel num_threads(thread_count)
     {   
@@ -169,10 +168,10 @@ void TSDFBridge::publish()
     marker.action = visualization_msgs::Marker::ADD;
     marker.ns = "window";
     marker.id = 0;
-    marker.scale.x = marker.scale.y = msg().map_resolution_ * 0.6;
+    marker.scale.x = marker.scale.y = msg().map_resolution_ * 0.6 * 0.001;
     marker.points = points_;
     marker.colors = colors_;
     pub().publish(marker);
 
-    std::cout << "Published tsdf values\n";
+    std::cout << "Published " << points_.size() << " tsdf values\n";
 }

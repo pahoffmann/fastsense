@@ -52,14 +52,14 @@ struct LocalMapHW
     }
 
     template<typename T>
-    T& get(T* data, int x, int y, int z) const
+    T get(T* data, int x, int y, int z) const
     {
 #pragma HLS INLINE
         if (in_bounds(x, y, z))
         {
             return data[getIndex(x, y, z)];
         }
-        return data[0];
+        return T();
     }
 
     template<typename T>

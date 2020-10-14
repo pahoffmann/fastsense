@@ -147,7 +147,7 @@ extern "C"
 #pragma HLS dependence variable=new_entries inter false
                 IntTuple entry = map.get(new_entries, current_cell.x, current_cell.y, interpolate_z);
                 IntTuple new_entry;
-
+                
                 if (entry.second == 0 || hls_abs(tsdf_value) < hls_abs(entry.first))
                 {
                     new_entry.first = tsdf_value;
@@ -192,12 +192,12 @@ extern "C"
                         }
                         if (err_2 > 0)
                         {
-                            current_cell.y += increment.z;
+                            current_cell.z += increment.z;
                             err_2 -= direction2.y;
                         }
                         err_1 += direction2.x;
                         err_2 += direction2.z;
-                        current_cell.z += increment.y;
+                        current_cell.y += increment.y;
                     }
                     else
                     {

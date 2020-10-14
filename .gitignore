@@ -2,6 +2,8 @@ build/
 test/build/
 test/build-local/
 
+qemu*
+
 _*
 v++*
 *.log
