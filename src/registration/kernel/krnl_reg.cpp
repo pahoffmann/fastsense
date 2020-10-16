@@ -54,54 +54,16 @@ extern "C"
 #pragma HLS ARRAY_RESHAPE variable=local_h complete dim=0
 #pragma HLS ARRAY_RESHAPE variable=local_g complete
 
-        local_h[0][0] = 0;
-        local_h[0][1] = 0;
-        local_h[0][2] = 0;
-        local_h[0][3] = 0;
-        local_h[0][4] = 0;
-        local_h[0][5] = 0;
-
-        local_h[1][0] = 0;
-        local_h[1][1] = 0;
-        local_h[1][2] = 0;
-        local_h[1][3] = 0;
-        local_h[1][4] = 0;
-        local_h[1][5] = 0;
-
-        local_h[2][0] = 0;
-        local_h[2][1] = 0;
-        local_h[2][2] = 0;
-        local_h[2][3] = 0;
-        local_h[2][4] = 0;
-        local_h[2][5] = 0;
-
-        local_h[3][0] = 0;
-        local_h[3][1] = 0;
-        local_h[3][2] = 0;
-        local_h[3][3] = 0;
-        local_h[3][4] = 0;
-        local_h[3][5] = 0;
-
-        local_h[4][0] = 0;
-        local_h[4][1] = 0;
-        local_h[4][2] = 0;
-        local_h[4][3] = 0;
-        local_h[4][4] = 0;
-        local_h[4][5] = 0;
-
-        local_h[5][0] = 0;
-        local_h[5][1] = 0;
-        local_h[5][2] = 0;
-        local_h[5][3] = 0;
-        local_h[5][4] = 0;
-        local_h[5][5] = 0;
-
-        local_g[0] = 0;
-        local_g[1] = 0;
-        local_g[2] = 0;
-        local_g[3] = 0;
-        local_g[4] = 0;
-        local_g[5] = 0;
+        for (int row = 0; row < 6; row++)
+        {
+#pragma HLS unroll
+            for (int col = 0; col < 6; col++)
+            {
+#pragma HLS unroll
+                local_h[row][col] = 0;
+            }
+            local_g[row] = 0;
+        }
 
         long local_error = 0;
         long local_count = 0;
@@ -143,16 +105,12 @@ extern "C"
             point[2][0] /= MATRIX_RESOLUTION;
             point[3][0] /= MATRIX_RESOLUTION;
 
-            //std::cout << "Point b.t.: " << point_mul[1][0] << point_mul[1][0] << point_mul[2][0] << point_mul[3][0] << std::endl;
-            //std::cout << "Point a.t.: " << point[0][0] << point[0][1] << point[0][2] << point[0][3] << std::endl;
-
             PointHW buf;
             buf.x = point[0][0] / MAP_RESOLUTION;
             buf.y = point[1][0] / MAP_RESOLUTION;
             buf.z = point[2][0] / MAP_RESOLUTION;
             buf.dummy = 1;
 
-            //NO CHANGES FROM HERE
             //get value of local map
             const auto& current = map.get(mapData0, buf.x, buf.y, buf.z);
 
@@ -162,7 +120,6 @@ extern "C"
             }
 
             int gradient[3];
-
 #pragma HLS ARRAY_RESHAPE variable=gradient complete
 
             gradient[0] = 0;
@@ -189,26 +146,15 @@ extern "C"
             long cross_p_y = static_cast<long>(point[2][0]) * gradient[0] - static_cast<long>(point[0][0]) * gradient[2];
             long cross_p_z = static_cast<long>(point[0][0]) * gradient[1] - static_cast<long>(point[1][0]) * gradient[0];
 
-            long jacobi[6][1];
-            long jacobi_transpose[1][6];
+            long jacobi[6];
+#pragma HLS ARRAY_RESHAPE variable=jacobi complete
 
-            jacobi_transpose[0][0] = cross_p_x;
-            jacobi_transpose[0][1] = cross_p_y;
-            jacobi_transpose[0][2] = cross_p_z;
-            jacobi_transpose[0][3] = gradient[0];
-            jacobi_transpose[0][4] = gradient[1];
-            jacobi_transpose[0][5] = gradient[2];
-
-            jacobi[0][0] = cross_p_x;
-            jacobi[1][0] = cross_p_y;
-            jacobi[2][0] = cross_p_z;
-            jacobi[3][0] = gradient[0];
-            jacobi[4][0] = gradient[1];
-            jacobi[5][0] = gradient[2];
-
-            long tmp[6][6];
-
-            fastsense::registration::MatrixMul(jacobi, jacobi_transpose, tmp);
+            jacobi[0] = cross_p_x;
+            jacobi[1] = cross_p_y;
+            jacobi[2] = cross_p_z;
+            jacobi[3] = gradient[0];
+            jacobi[4] = gradient[1];
+            jacobi[5] = gradient[2];
 
             //add multiplication result to local_h
             //TODO: pragmas
@@ -217,11 +163,12 @@ extern "C"
             for (int row = 0; row < 6; row++)
             {
 #pragma HLS unroll
-
                 for (int col = 0; col < 6; col++)
                 {
 #pragma HLS unroll
-                    local_h[row][col] += tmp[row][col];
+                    // local_h += jacobi * jacobi.transpose()
+                    // transpose === swap row and column
+                    local_h[row][col] += jacobi[row] * jacobi[col];
                 }
             }
 
@@ -231,7 +178,7 @@ extern "C"
             {
 #pragma HLS unroll
 
-                local_g[count] += jacobi[count][0] * current.first;
+                local_g[count] += jacobi[count] * current.first;
             }
 
             local_error += abs(current.first);

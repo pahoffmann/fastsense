@@ -15,6 +15,7 @@ Vector3i transform(const Vector3i& input, const Matrix4i& mat)
 
 void Registration::transform_point_cloud(ScanPoints_t& in_cloud, const Matrix4f& mat)
 {
+    #pragma omp parallel for schedule(static)
     for (auto index = 0u; index < in_cloud.size(); ++index)
     {
         auto& point = in_cloud[index];
@@ -29,6 +30,8 @@ void Registration::transform_point_cloud(ScanPoints_t& in_cloud, const Matrix4f&
 
 void Registration::transform_point_cloud(fastsense::buffer::InputBuffer<PointHW>& in_cloud, const Matrix4f& mat)
 {
+    // TODO: test if this is faster on HW
+    #pragma omp parallel for schedule(static)
     for (auto index = 0u; index < in_cloud.size(); ++index)
     {
         auto& point = in_cloud[index];
