@@ -50,7 +50,7 @@ int main()
     {
         // Run Application
         fastsense::Application app;
-        int ret = app.run();
+        ret = app.run();
     }
     catch (const std::exception& e)
     {
