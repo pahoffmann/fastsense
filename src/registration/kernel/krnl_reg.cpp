@@ -125,7 +125,7 @@ extern "C"
         {
 #pragma HLS loop_tripcount min=0 max=30000
 
-            auto& point_tmp = pointData[i];
+            PointHW point_tmp = pointData[i];
 
             //TODO: check if copy is needed
             int point[4][1], point_mul[4][1];
@@ -142,11 +142,6 @@ extern "C"
             point[1][0] /= MATRIX_RESOLUTION;
             point[2][0] /= MATRIX_RESOLUTION;
             point[3][0] /= MATRIX_RESOLUTION;
-
-            point_tmp.x =     point[0][0];
-            point_tmp.y =     point[1][0];
-            point_tmp.z =     point[2][0];
-            point_tmp.dummy = 1;
 
             //std::cout << "Point b.t.: " << point_mul[1][0] << point_mul[1][0] << point_mul[2][0] << point_mul[3][0] << std::endl;
             //std::cout << "Point a.t.: " << point[0][0] << point[0][1] << point[0][2] << point[0][3] << std::endl;
@@ -190,9 +185,9 @@ extern "C"
                 }
             }
 
-            long cross_p_x = static_cast<long>(point[0][0]) * gradient[2] - static_cast<long>(point[0][0]) * gradient[1];
-            long cross_p_y = static_cast<long>(point[1][0]) * gradient[0] - static_cast<long>(point[1][0]) * gradient[2];
-            long cross_p_z = static_cast<long>(point[2][0]) * gradient[1] - static_cast<long>(point[2][0]) * gradient[0];
+            long cross_p_x = static_cast<long>(point[1][0]) * gradient[2] - static_cast<long>(point[2][0]) * gradient[1];
+            long cross_p_y = static_cast<long>(point[2][0]) * gradient[0] - static_cast<long>(point[0][0]) * gradient[2];
+            long cross_p_z = static_cast<long>(point[0][0]) * gradient[1] - static_cast<long>(point[1][0]) * gradient[0];
 
             long jacobi[6][1];
             long jacobi_transpose[1][6];
@@ -213,11 +208,7 @@ extern "C"
 
             long tmp[6][6];
 
-            //std::cout << "Kernel_CPP " << __LINE__ << std::endl;
-
             fastsense::registration::MatrixMul(jacobi, jacobi_transpose, tmp);
-
-            //std::cout << "Kernel_CPP " << __LINE__ << std::endl;
 
             //add multiplication result to local_h
             //TODO: pragmas
@@ -245,12 +236,7 @@ extern "C"
 
             local_error += abs(current.first);
             local_count++;
-
-            //if(i == 0) std::cout << "Kernel_CPP Iterating trough points......." << __LINE__ << std::endl;
-
         }
-
-        //std::cout << "Kernel_CPP " << __LINE__ << std::endl;
 
         //fill output buffer.
     out_row_loop:

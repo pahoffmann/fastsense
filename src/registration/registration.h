@@ -85,13 +85,20 @@ public:
     void update_imu_data(const fastsense::msg::ImuMsgStamped& imu);
 
     /**
-     * @brief Transforms a given pointcloud with the transform and stores it inside the out_cloud
+     * @brief Transforms a given pointcloud with the transform
      *
      * @param in_cloud
-     * @param out_cloud
      * @param transform
      */
     static void transform_point_cloud(ScanPoints_t& in_cloud, const Matrix4f& transform);
+
+    /**
+     * @brief Transforms a given pointcloud with the transform
+     *
+     * @param in_cloud
+     * @param transform
+     */
+    static void transform_point_cloud(fastsense::buffer::InputBuffer<PointHW>& in_cloud, const Matrix4f& transform);
 };
 
 

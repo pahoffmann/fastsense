@@ -36,8 +36,8 @@ constexpr unsigned int SCALE = 1000;
 constexpr float MAX_OFFSET = 100; // TODO: this is too much
 
 // Test Translation
-constexpr float TX = 0.5 * SCALE;
-constexpr float TY = 0.5 * SCALE;
+constexpr float TX = 0.3 * SCALE;
+constexpr float TY = 0.3 * SCALE;
 constexpr float TZ = 0.0 * SCALE;
 // Test Rotation
 constexpr float RY = 10 * (M_PI / 180); //radiants
@@ -132,7 +132,7 @@ void check_computed_transform(const ScanPoints_t& points_posttransform, ScanPoin
 std::shared_ptr<fastsense::buffer::InputBuffer<PointHW>> scan_points_to_input_buffer(ScanPoints_t& cloud, const fastsense::CommandQueuePtr q)
 {
     auto buffer_ptr = std::make_shared<fastsense::buffer::InputBuffer<PointHW>>(q, cloud.size());
-    for(int i = 0; i < cloud.size(); i++)
+    for(size_t i = 0; i < cloud.size(); i++)
     {
         auto point = cloud[i];
         PointHW tmp(point.x(), point.y(), point.z());
@@ -144,7 +144,7 @@ std::shared_ptr<fastsense::buffer::InputBuffer<PointHW>> scan_points_to_input_bu
 ScanPoints_t input_buffer_to_scan_points(fastsense::buffer::InputBuffer<PointHW>& cloud, const fastsense::CommandQueuePtr q)
 {
     ScanPoints_t points;
-    for(int i = 0; i < cloud.size(); i++)
+    for(size_t i = 0; i < cloud.size(); i++)
     {
         auto point = cloud[i];
         Vector3i tmp(point.x, point.y, point.z);
@@ -196,11 +196,7 @@ TEST_CASE("Registration", "[registration][slow]")
 
     std::shared_ptr<fastsense::map::GlobalMap> global_map_ptr(new fastsense::map::GlobalMap("test_global_map.h5", 0.0, 0.0));
 
-    std::cout << "Test " << __LINE__ << std::endl;
-
     fastsense::map::LocalMap local_map(SIZE_Y, SIZE_Y, SIZE_Z, global_map_ptr, q);
-
-    std::cout << "Test " << __LINE__ << std::endl;
 
     // Initialize temporary testing variables
 
@@ -278,27 +274,18 @@ TEST_CASE("Registration", "[registration][slow]")
 
     SECTION("Test Registration Translation")
     {
-        std::cout << "Test " << __LINE__ << std::endl;
-
         std::cout << "    Section 'Test Registration Translation'" << std::endl;
 
         reg.transform_point_cloud(points_pretransformed_trans, translation_mat);
 
-        std::cout << "Test " << __LINE__ << std::endl;
-
         //copy from scanpoints to  inputbuffer
         auto buffer_ptr = scan_points_to_input_buffer(points_pretransformed_trans, q);
         auto& buffer = *buffer_ptr;
-        reg.register_cloud(local_map, buffer, q);
+        auto result_matrix = reg.register_cloud(local_map, buffer, q);
 
-        points_pretransformed_trans = input_buffer_to_scan_points(buffer, q);
-        //copy from inputbuffer to scanpoints
-
-        std::cout << "Test " << __LINE__ << std::endl;
-
+        reg.transform_point_cloud(points_pretransformed_trans, result_matrix);
         check_computed_transform(points_pretransformed_trans, scan_points);
 
-        std::cout << "Test " << __LINE__ << std::endl;
     }
 
     SECTION("Registration test Rotation")
@@ -307,8 +294,9 @@ TEST_CASE("Registration", "[registration][slow]")
         reg.transform_point_cloud(points_pretransformed_rot, rotation_mat);
         auto buffer_ptr = scan_points_to_input_buffer(points_pretransformed_rot, q);
         auto& buffer = *buffer_ptr;
-        reg.register_cloud(local_map, buffer, q);
-        points_pretransformed_rot = input_buffer_to_scan_points(buffer, q);
+        auto result_matrix = reg.register_cloud(local_map, buffer, q);
+
+        reg.transform_point_cloud(points_pretransformed_rot, result_matrix);
         check_computed_transform(points_pretransformed_rot, scan_points_2);
     }
 }
