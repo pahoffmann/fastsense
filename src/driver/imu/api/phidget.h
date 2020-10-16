@@ -1,4 +1,5 @@
-/*
+/**
+ * @file phidget.h
  * Copyright (c) 2009, Tully Foote
  * Copyright (c) 2011, Ivan Dryanovski
  * All rights reserved.

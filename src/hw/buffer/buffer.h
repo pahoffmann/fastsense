@@ -1,15 +1,13 @@
 #pragma once
 
 /**
+ * @file buffer.h
  * @author Julian Gaal
  * @author Marcel Flottmann
  */
 
-#include <hw/opencl.h>
-#include <memory>
 #include <stdexcept>
 
-#include <hw/types.h>
 #include <hw/fpga_manager.h>
 
 // because xilinx missed this: Host -> Device, CL_MIGRATE_MEM_OBJECT_HOST defined in cl.h

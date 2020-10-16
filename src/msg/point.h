@@ -1,6 +1,7 @@
 #pragma once
 
 /**
+ * @file point.h
  * @author Julian Gaal
  */
 

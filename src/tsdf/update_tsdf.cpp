@@ -1,12 +1,10 @@
 /**
+ * @file update_tsdf.cpp
  * @author Malte Hillmann
  * @author Marc Eisoldt
  */
 
-#include <memory>
-#include <iostream>
 #include <unordered_map>
-#include <utility>
 
 #include "update_tsdf.h"
 #include "ScanOrderNeighbors.h"
@@ -16,6 +14,8 @@
 #include "RANSACNormal.h"
 #include "IterativeNormal.h"
 #include "weighting.h"
+
+#include <util/hls_functions.h>
 
 namespace std
 {
@@ -38,8 +38,8 @@ void update_tsdf(const ScanPoints_t& scan_points,
                  int tau,
                  int max_weight)
 {
-    constexpr int RINGS = 16; // TODO: take from Scanner
-    int dz_per_distance = std::tan(30.0 / ((double)RINGS - 1.0) / 180.0 * M_PI) / 2.0 * MATRIX_RESOLUTION;
+    //constexpr int RINGS = 16; // TODO: take from Scanner
+    //int dz_per_distance = std::tan(30.0 / ((double)RINGS - 1.0) / 180.0 * M_PI) / 2.0 * MATRIX_RESOLUTION;
 
     int weight_epsilon = tau / 10;
 
@@ -52,9 +52,14 @@ void update_tsdf(const ScanPoints_t& scan_points,
         Vector3i direction_vector = point - scanner_pos;
         int distance = direction_vector.norm();
 
+        //std::cout << "dv: " << direction_vector[0] << " " << direction_vector[1] << " " << direction_vector[2] << std::endl;
+        //std::cout << "dis_v: " << distance << std::endl;
+
         Vector3i prev(0, 0, 0);
         for (int len = MAP_RESOLUTION; len <= distance + tau; len += MAP_RESOLUTION / 2)
         {
+            //std::cout << "len_s: " << len << std::endl;
+
             Vector3i proj = scanner_pos + direction_vector * len / distance;
             
             Vector3i index = proj / MAP_RESOLUTION;
@@ -70,9 +75,16 @@ void update_tsdf(const ScanPoints_t& scan_points,
                 continue;
             }
 
+            //std::cout << "vs: " << index[0] << " " << index[1] << " " << index[2] << std::endl;
+
             // use the distance to the center of the cell, since 'proj' can be anywhere in the cell
             Vector3i target_center = index * MAP_RESOLUTION + Vector3i::Constant(MAP_RESOLUTION / 2);
-            int value = (point - target_center).norm();
+            int value = hls_sqrt_approx((point - target_center).squaredNorm());
+
+
+            //std::cout << "vs: " << target_center[0] << " " << target_center[1] << " " << target_center[2] << std::endl;
+            //std::cout << "s: " << value << std::endl;
+
             value = std::min(value, tau);
             if (len > distance)
             {
@@ -91,14 +103,16 @@ void update_tsdf(const ScanPoints_t& scan_points,
             
             auto object = std::make_pair(value, weight);
 
-            int delta_z = dz_per_distance * len / MATRIX_RESOLUTION;
+            int delta_z = dz_per_distance * len / MATRIX_RESOLUTION / MAP_RESOLUTION;
 
-            int lowest = (proj.z() - delta_z) / MAP_RESOLUTION;
-            int highest = (proj.z() + delta_z) / MAP_RESOLUTION;
+            int lowest = index.z() - delta_z;
+            int highest = index.z() + delta_z;
 
             //int lowest = (proj.z() - delta_z) >> MAP_SHIFT;
             //int highest = (proj.z() + delta_z) >> MAP_SHIFT;
 
+
+            //std::cout << "val_s: " << value << std::endl;
 
             for (index.z() = lowest; index.z() <= highest; index.z()++)
             {

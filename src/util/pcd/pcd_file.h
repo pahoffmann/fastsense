@@ -1,12 +1,11 @@
 #pragma once
 
 /**
+ * @file pcd_file.h
  * @author Marc Eisoldt
  */
 
 #include <string>
-#include <vector>
-#include <iostream>
 #include <fstream>
 #include <map>
 #include <memory>
@@ -31,5 +30,3 @@ private:
 };
 
 } //namespace fastsense::util
-
-#include "PCDFile.tcc"

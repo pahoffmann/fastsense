@@ -1,10 +1,9 @@
 #pragma once
 
 /**
+ * @file angular_velocity.h
  * @author Julian Gaal
  */
-
-#include <cmath>
 
 #include <util/params.h>
 #include <util/xyz_buffer.h>

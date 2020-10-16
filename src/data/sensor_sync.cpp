@@ -1,12 +1,11 @@
-//
-// Created by julian on 8/31/20.
-//
+/**
+ * @file sensor_sync.cpp
+ * @author Julian Gaal
+ */
 
 #include <msg/point_cloud.h>
 #include <msg/imu_msg.h>
-#include <util/time_stamp.h>
 #include <data/sensor_sync.h>
-#include <iostream>
 #include <data/sensor_sync.h>
 
 

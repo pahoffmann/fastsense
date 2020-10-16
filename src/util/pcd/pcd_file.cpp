@@ -1,5 +1,9 @@
-#pragma once
+/**
+ * @file pcd_file.cpp
+ * @author Marc Eisoldt
+ */
 
+#include "pcd_file.h"
 #include <utility>
 #include <sstream>
 #include <typeinfo>

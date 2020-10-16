@@ -1,11 +1,9 @@
 #pragma once
 
 /**
+ * @file velodyne.h
  * @author Marcel Flottmann
  */
-
-#include <memory>
-#include <thread>
 
 #include <msg/msgs_stamped.h>
 #include <util/process_thread.h>

@@ -1,6 +1,7 @@
 #pragma once
 
 /**
+ * @file application.h
  * @author Marcel Flottmann
  */
 

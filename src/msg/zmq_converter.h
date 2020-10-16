@@ -1,6 +1,10 @@
 #pragma once
 
-// TODO authors
+/**
+ * @file zmq_converter.h
+ * @author Julian Gaal
+ * @author Marcel Flottmann
+ */
 
 #include <zmq.hpp>
 #include <zmq_addon.hpp>

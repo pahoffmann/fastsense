@@ -5,7 +5,6 @@
  */
 
 #include <omp.h>
-#include <iostream>
 #include <iterator>
 #include <ros/ros.h>
 #include <bridge/tsdf_bridge.h>
@@ -45,7 +44,7 @@ void TSDFBridge::run()
     while (running && ros::ok())
     {
         BridgeBase::run();
-        std::cout << "Received " << msg_.tsdf_data_.size() << " tsdf values\n";
+        ROS_INFO_STREAM("Received " << msg_.tsdf_data_.size() << " tsdf values\n");
     }
 }
 
@@ -155,7 +154,7 @@ void TSDFBridge::convert()
             colors_[i + offset] = p.second;
         }
     }
-    std::cout << "Converted tsdf values: " << msg_.tsdf_data_.size() << "/" << points_.size() << " points\n";
+    ROS_INFO_STREAM("Converted tsdf values: " << msg_.tsdf_data_.size() << "/" << points_.size() << " points\n");
 }
 
 void TSDFBridge::publish()
@@ -173,5 +172,5 @@ void TSDFBridge::publish()
     marker.colors = colors_;
     pub().publish(marker);
 
-    std::cout << "Published " << points_.size() << " tsdf values\n";
+    ROS_INFO_STREAM("Published " << points_.size() << " tsdf values\n");
 }

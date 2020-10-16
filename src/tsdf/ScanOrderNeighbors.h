@@ -1,6 +1,7 @@
 #pragma once
 
 /**
+ * @file ScanOrderNeighbors.h
  * @author Malte Hillmann
  * @author Marc Eisoldt
  */

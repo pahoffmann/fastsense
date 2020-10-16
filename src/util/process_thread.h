@@ -1,11 +1,11 @@
 #pragma once
 
 /**
+ * @file process_thread.h
  * @author Julian Gaal
  */
 
 #include <thread>
-#include <iostream>
 
 namespace fastsense::util
 {

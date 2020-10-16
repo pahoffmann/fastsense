@@ -1,10 +1,10 @@
 #pragma once
 
 /**
+ * @file concurrent_ring_buffer.h
  * @author Marcel Flottmann
  */
 
-#include <vector>
 #include <mutex>
 #include <condition_variable>
 

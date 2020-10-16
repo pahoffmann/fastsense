@@ -1,6 +1,7 @@
 #pragma once
 
 /**
+ * @file event_handler_list.h
  * @author Marcel Flottmann
  */
 

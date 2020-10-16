@@ -1,6 +1,7 @@
 #pragma once
 
 /**
+ * @file NormalBase.h
  * @author Malte Hillmann
  * @author Marc Eisoldt
  */

@@ -1,11 +1,9 @@
 #pragma once
 
 /**
+ * @file config_manager.h
  * @author Marcel Flottmann
  */
-
-#include <list>
-#include <boost/property_tree/ptree.hpp>
 
 #include "config.h"
 

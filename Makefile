@@ -39,7 +39,7 @@ ENTRY_POINT_OBJS = $(ENTRY_POINT_SRCS:%.cpp=$(BUILD_DIR)/%.o)
 ENTRY_POINT_DEPS = $(ENTRY_POINT_OBJS:.o=.d)
 
 # Software sources
-SW_SRCS = src/Application.cpp \
+SW_SRCS = src/application.cpp \
 	src/driver/lidar/velodyne.cpp \
 	src/data/sensor_sync.cpp \
 	$(wildcard src/map/*.cpp) \
@@ -47,6 +47,8 @@ SW_SRCS = src/Application.cpp \
 	$(wildcard src/callback/*.cpp) \
 	$(wildcard src/registration/*.cpp) \
 	$(wildcard src/util/*.cpp) \
+	$(wildcard src/util/pcd/*.cpp) \
+	$(wildcard src/eval/*.cpp) \
 	$(wildcard src/msg/*.cpp) \
 	$(wildcard src/util/config/*.cpp) \
 	$(wildcard src/hw/*.cpp) \
@@ -82,9 +84,9 @@ INC_FLAGS = $(addprefix -I,$(INC_DIRS))
 CXX_STD = c++17
 CXX_OPTFGLAGS ?= -O2 -ftree-loop-vectorize
 GCCFLAGS = -Wall -Wextra -Wnon-virtual-dtor -ansi -pedantic -Wfatal-errors  -fexceptions -Wno-unknown-pragmas
-CXXFLAGS = $(INC_FLAGS) $(GCCFLAGS) $(CXX_OPTFGLAGS) -MMD -MP -D__USE_XOPEN2K8 -c -fmessage-length=0 -std=$(CXX_STD) --sysroot=$(SYSROOT)
+CXXFLAGS = $(INC_FLAGS) $(GCCFLAGS) $(CXX_OPTFGLAGS) -MMD -MP -D__USE_XOPEN2K8 -c -fmessage-length=0 -std=$(CXX_STD) --sysroot=$(SYSROOT) $(CXX_EXTRA)
 
-LDFLAGS = $(LIBS) --sysroot=$(SYSROOT)
+LDFLAGS = $(LIBS) --sysroot=$(SYSROOT) $(LD_EXTRA)
 
 # Hardware
 LINK_CFG = $(CURDIR)/link.cfg
@@ -100,15 +102,20 @@ HW_SRCS = src/registration/kernel/krnl_reg.cpp
 HW_OBJS = $(HW_SRCS:%.cpp=$(BUILD_DIR)/%.xo)
 HW_DEPS = $(HW_OBJS:.xo=.d)
 
-HW_TEST_SRCS = test/kernels/krnl_local_map_test.cpp
+HW_TEST_SRCS = test/kernels/krnl_local_map_test.cpp src/tsdf/kernel/krnl_tsdf.cpp
 HW_TEST_OBJS = $(HW_TEST_SRCS:%.cpp=$(BUILD_DIR)/%.xo)
 HW_TEST_DEPS = $(HW_TEST_OBJS:.xo=.d)
 
 HW_INC_DIRS = src
 HW_INC_FLAGS = $(addprefix -I,$(HW_INC_DIRS))
 
-VXXFLAGS = -t $(HW_TARGET) -f $(HW_PLATFORM) -c $(HW_INC_FLAGS) --config $(BUILD_CFG)
-VXXLDFLAGS = -t $(HW_TARGET) -f $(HW_PLATFORM) --config $(LINK_CFG) --link
+ifdef PROFILING
+VXX_EXTRA += --profile_kernel stall:all:all:all
+VXX_LD_EXTRA += --profile_kernel data:all:all:all --profile_kernel stall:all:all:all
+endif
+
+VXXFLAGS = -t $(HW_TARGET) -f $(HW_PLATFORM) -c $(HW_INC_FLAGS) --config $(BUILD_CFG) $(VXX_EXTRA)
+VXXLDFLAGS = -t $(HW_TARGET) -f $(HW_PLATFORM) --config $(LINK_CFG) --link $(VXX_LD_EXTRA)
 
 HW_DEPS_FLAGS = $(HW_INC_FLAGS) -isystem $(XILINX_VIVADO)/include -MM -MP
 
@@ -229,6 +236,13 @@ rsync:
 format:
 	@echo "Formatting"
 	@astyle -q -n --project=.astylerc --recursive "src/*.c??" "src/*.h" "test/*.c??" "test/*.h"
+
+gen_docs:
+	@echo "Generating doxygen docs"
+	@doxygen Doxygen.config
+
+open_docs: gen_docs
+	@xdg-open docs/html/index.html
 
 -include $(ENTRY_POINT_DEPS)
 -include $(SW_DEPS)

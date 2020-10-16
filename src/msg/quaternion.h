@@ -1,6 +1,7 @@
 #pragma once
 
 /**
+ * @file quaternion.h
  * @author Julian Gaal
  */
 
