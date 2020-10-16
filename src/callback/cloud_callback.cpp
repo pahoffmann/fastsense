@@ -9,7 +9,7 @@
 #include <algorithm>
 
 using namespace fastsense::callback;
-using fastsense::buffer::InputBuffer;
+using fastsense::buffer::InputOutputBuffer;
 using fastsense::msg::Point;
 
 CloudCallback::CloudCallback(Registration& registration, const std::shared_ptr<PointCloudBuffer>& cloud_buffer, LocalMap& local_map, const std::shared_ptr<GlobalMap>& global_map, Matrix4f& pose, const std::shared_ptr<TSDFBuffer>& tsdf_buffer, fastsense::CommandQueuePtr& q)
@@ -34,7 +34,7 @@ void CloudCallback::stop(){
     running = false;
 }
 
-void CloudCallback::preprocess_scan(const fastsense::msg::PointCloudStamped& cloud, InputBuffer<PointHW>& scan_points){
+void CloudCallback::preprocess_scan(const fastsense::msg::PointCloudStamped& cloud, InputOutputBuffer<PointHW>& scan_points){
     const std::vector<fastsense::msg::Point>& cloud_points = cloud.first->points_;
     
     Eigen::Vector4f v;
@@ -76,7 +76,7 @@ void CloudCallback::callback(){
         fastsense::msg::PointCloudStamped point_cloud;
         cloud_buffer->pop(&point_cloud);
 
-        InputBuffer<PointHW> scan_point_buffer{q, determineBufferSize(point_cloud)};
+        InputOutputBuffer<PointHW> scan_point_buffer{q, determineBufferSize(point_cloud)};
         preprocess_scan(point_cloud, scan_point_buffer);
 
         // if(first_iteration){

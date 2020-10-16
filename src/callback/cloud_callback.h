@@ -26,7 +26,7 @@ namespace fastsense::callback
     using Eigen::Matrix4f;
     using fastsense::util::config::ConfigManager;
     using TSDFBuffer = util::ConcurrentRingBuffer<msg::TSDFBridgeMessage>;
-    using fastsense::buffer::InputBuffer;
+    using fastsense::buffer::InputOutputBuffer;
 
     class CloudCallback : public fastsense::util::ProcessThread{
         public:
@@ -36,7 +36,7 @@ namespace fastsense::callback
 
             void callback();
 
-            void preprocess_scan(const fastsense::msg::PointCloudStamped& cloud, InputBuffer<PointHW>& scan_points);
+            void preprocess_scan(const fastsense::msg::PointCloudStamped& cloud, InputOutputBuffer<PointHW>& scan_points);
 
             int determineBufferSize(const fastsense::msg::PointCloudStamped& cloud);
 
