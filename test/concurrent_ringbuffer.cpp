@@ -13,34 +13,37 @@ using namespace fastsense::util;
 
 TEST_CASE("ConcRingBuffer", "[ConcRingBuffer]")
 {
-    std::cout << "Testing 'Concurrent Ring Buffer'" << std::endl;
     constexpr size_t buffer_size = 5;
 
-    ConcurrentRingBuffer<int> crb(buffer_size);
+    ConcurrentRingBuffer<size_t> crb(buffer_size);
 
-    // test getLength and push
+    std::cout << "    Section 'Test push, length'" << std::endl;
     REQUIRE(crb.getLength() == 0);
 
-    for (uint i = 0; i < buffer_size; i++)
+    for(size_t i = 0; i < buffer_size; ++i)
     {
         crb.push(i);
     }
 
     REQUIRE(crb.getLength() == buffer_size);
 
+
     SECTION("Test push_nb, pop, and pop_nb")
     {
+        std::cout << "    Section 'Test push_nb, pop, and pop_nb'" << std::endl;
+
         // test push_nb, pop
         REQUIRE(!crb.push_nb(0));
         REQUIRE(crb.push_nb(buffer_size, true));
 
-        int val;
+        // Pop first value
+        size_t val;
         crb.pop(&val);
         REQUIRE(val == 1);
         REQUIRE(crb.getLength() == buffer_size - 1);
 
-        // test pop_nb
-        for (int i = 2; i <= (int) buffer_size; i++)
+        // test pop_nb, buffer begins with 2
+        for (size_t i = 2; i <= buffer_size; i++)
         {
             REQUIRE(crb.pop_nb(&val));
             REQUIRE(val == i);
@@ -53,14 +56,20 @@ TEST_CASE("ConcRingBuffer", "[ConcRingBuffer]")
 
     SECTION("Test clear")
     {
+        std::cout << "    Section 'clear'" << std::endl;
+
         crb.clear();
         REQUIRE(crb.getLength() == 0);
     }
 
     SECTION("Test multithreading")
     {
-        int val;
+        std::cout << "    Section 'Test multithreading'" << std::endl;
+
+        size_t val;
         size_t length;
+        
+        REQUIRE(crb.getLength() == buffer_size);
 
         // test waiting to push
         std::thread push_thread{[&]()
