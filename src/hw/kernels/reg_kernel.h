@@ -1,14 +1,12 @@
 #pragma once
 
 /**
+ * @file reg_kernel.h
  * @author Patrick Hoffmann
  */
 
 #include <hw/kernels/base_kernel.h>
-#include <hw/buffer/buffer.h>
 #include <map/local_map.h>
-#include <iostream>
-#include <eigen3/Eigen/Dense>
 #include <util/point_hw.h>
 
 namespace fastsense::kernels
@@ -39,14 +37,14 @@ public:
     {
         buffer::OutputBuffer<long> outbuf(cmd_q_, 44); //matrix buffer for g matrix TODO: determine if this needs to be in registration.cpp
 
-        buffer::InputBuffer<long> transform_matrix(cmd_q_, 16);
+        buffer::InputBuffer<int> transform_matrix(cmd_q_, 16);
 
         //write last transform to buffer
         for (int i = 0; i < 4; i++)
         {
             for (int j = 0; j < 4; j++)
             {
-                transform_matrix[4 * i + j] = static_cast<long>(transform(i, j) * MATRIX_RESOLUTION); //TODO:   CHECK CAST
+                transform_matrix[4 * i + j] = static_cast<int>(transform(i, j) * MATRIX_RESOLUTION); //TODO:   CHECK CAST
             }
         }
 
@@ -88,7 +86,7 @@ public:
      * @param outbuf 
      * @param queue 
      */
-    void run(map::LocalMap& map, buffer::InputBuffer<PointHW>& point_data, buffer::InputBuffer<long>& transform, buffer::OutputBuffer<long>& outbuf)
+    void run(map::LocalMap& map, buffer::InputBuffer<PointHW>& point_data, buffer::InputBuffer<int>& transform, buffer::OutputBuffer<long>& outbuf)
     {
         //std::cout << "Kernel_H " << __LINE__ << std::endl;
         resetNArg();

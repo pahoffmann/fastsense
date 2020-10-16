@@ -1,9 +1,8 @@
 #pragma once
 
 /**
- * 
+ * @file cloud_callback.h
  * @author Pascal Buschermöhle
- * 
  */
 
 #include <util/process_thread.h> 

@@ -1,4 +1,9 @@
-#include <Application.h>
+/**
+ * @file main.cpp
+ * @author Employees Washroom
+ */
+
+#include <application.h>
 #include <util/logging/logger.h>
 #include <util/config/config_manager.h>
 #include <hw/fpga_manager.h>
@@ -33,14 +38,27 @@ int main()
     {
         FPGAManager::load_xclbin("FastSense.xclbin");
     }
-    catch(const std::exception& e)
+    catch (const std::exception& e)
     {
         Logger::fatal("Cannot load XCLBIN: ", e.what());
         return -1;
     }
-    
 
-    // Run Application
-    fastsense::Application app;
-    return app.run();
+
+    int ret = 0;
+    try
+    {
+        // Run Application
+        fastsense::Application app;
+        int ret = app.run();
+    }
+    catch (const std::exception& e)
+    {
+        Logger::fatal("Run Application failed: ", e.what());
+        return -1;
+    }
+
+    FPGAManager::release();
+
+    return ret;
 }

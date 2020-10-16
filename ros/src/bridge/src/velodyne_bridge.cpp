@@ -4,7 +4,6 @@
  * @date 2020-09-29
  */
 
-#include <iostream>
 #include <iterator>
 #include <ros/ros.h>
 #include <bridge/velodyne_bridge.h>
@@ -41,14 +40,14 @@ void VelodyneBridge::run()
     while (running && ros::ok())
     {
         BridgeBase::run();
-        std::cout << "Received " << msg_.points_.size() << " points\n";
+        ROS_INFO_STREAM("Received " << msg_.points_.size() << " points\n");
     }
 }
 
 void VelodyneBridge::convert()
 {
     points_.clear();
-    std::transform(msg_.points_.begin(), msg_.points_.end(), std::back_inserter(points_), [](fastsense::msg::Point p)
+    std::transform(msg_.points_.begin(), msg_.points_.end(), std::back_inserter(points_), [](const fastsense::msg::Point& p)
     {
         geometry_msgs::Point32 out;
         out.x = p.x * 0.001f;
@@ -56,7 +55,7 @@ void VelodyneBridge::convert()
         out.z = p.z * 0.001f;
         return out;
     });
-    std::cout << "Converted points: " << msg_.points_.size() << "->" << points_.size() << " points\n";
+    ROS_INFO_STREAM("Converted points: " << msg_.points_.size() << "->" << points_.size() << " points\n");
 }
 
 void VelodyneBridge::publish()
@@ -67,5 +66,5 @@ void VelodyneBridge::publish()
     pc.points = points_;
     pub().publish(pc);
 
-    std::cout << "Published points values\n";
+    ROS_INFO_STREAM("Published points values\n");
 }

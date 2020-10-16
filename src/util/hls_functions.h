@@ -1,6 +1,7 @@
 #pragma once
 
 /**
+ * @file hls_functions.h
  * @author Malte Hillmann
  */
 

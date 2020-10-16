@@ -1,6 +1,7 @@
 #pragma once
 
 /**
+ * @file tsdf_kernel.h
  * @author Marc Eisoldt
  */
 

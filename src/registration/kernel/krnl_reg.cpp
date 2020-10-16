@@ -35,7 +35,7 @@ extern "C"
                   int offsetX,
                   int offsetY,
                   int offsetZ,
-                  long* transform,
+                  int* transform,
                   long* outbuf
                  )
     {

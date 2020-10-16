@@ -7,36 +7,74 @@
  */
 
 #include <array>
-#include <ros/node_handle.h>
 #include <sensor_msgs/Imu.h>
 #include <sensor_msgs/MagneticField.h>
 
 #include "bridge_base.h"
 #include <msg/imu_msg.h>
-#include <util/process_thread.h>
 
 namespace fastsense::bridge
 {
 
+/**
+ * @brief ImuBridge converts msg::ImuMsg. received with the zeromq receiver,
+ *        to sensor_msgs::Imu and publishes the message
+ */
 class ImuBridge :   public BridgeBase<msg::ImuMsg, sensor_msgs::Imu, 5555>, 
                     public util::ProcessThread
 {
 public:
-    ImuBridge() = delete;
+    /**
+     * @brief Construct a new Imu Bridge object
+     * 
+     * @param n nodehandle
+     * @param board_addr ip addr of Trenz board
+     */
     ImuBridge(ros::NodeHandle& n, const std::string& board_addr);
+
+    /**
+     * @brief Destroy the Imu Bridge object
+     */
     ~ImuBridge() = default;
 
+    /**
+     * @brief Starts the imu bridge in its own thread
+     */
     void start() override;
+    
+    /**
+     * @brief Stops the imu bridge thread
+     */
     void stop() override;
 private:
+    /**
+     * @brief Publishes an sensor_msgs::Imu (convert() FIRST for newest data)
+     */
     void publish() override;
+
+    /**
+     * @brief Convert msg::ImuMsg into sensor_msgs::Imu
+     */
     void convert() override;
+    
+    /**
+     * @brief Run listens for data, converts into sensor_msgs::Imu
+     * and publishes in an endless loop (running in its own thread)
+     */
     void run() override;
 
+    /**
+     * @brief Initialize covariance matrices (in accordance with imu driver)
+     */
     void initCovariance();
-
+    
+    /// IMU ROS message
     sensor_msgs::Imu imu_ros_;
+    
+    /// MagneticField ROS message
     sensor_msgs::MagneticField mag_ros_;
+
+    /// Magnetic Field publisher
     ros::Publisher mag_pub_;
 
     /// angular velocity covariance

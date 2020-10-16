@@ -1,6 +1,7 @@
 #pragma once
 
 /**
+ * @file FittingNormalBase.h
  * @author Malte Hillmann
  * @author Marc Eisoldt
  */

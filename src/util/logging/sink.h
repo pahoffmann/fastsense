@@ -1,6 +1,7 @@
 #pragma once
 
 /**
+ * @file sink.h
  * @author Marcel Flottmann
  */
 

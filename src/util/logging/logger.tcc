@@ -1,6 +1,7 @@
 #pragma once
 
 /**
+ * @file logger.tcc
  * @author Marcel Flottmann
  */
 

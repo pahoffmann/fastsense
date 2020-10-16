@@ -1,6 +1,7 @@
 #pragma once
 
 /**
+ * @file IterativeNormal.h
  * @author Malte Hillmann
  * @author Marc Eisoldt
  */

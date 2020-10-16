@@ -1,4 +1,5 @@
 /**
+ * @file application.cpp
  * @author Marcel Flottmann
  */
 
@@ -8,7 +9,7 @@
 #include <algorithm>
 #include <iostream>
 
-#include "Application.h"
+#include "application.h"
 #include <msg/imu_msg.h>
 #include <msg/tsdf_bridge_msg.h>
 #include <util/config/config_manager.h>

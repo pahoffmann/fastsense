@@ -1,6 +1,7 @@
 #pragma once
 
 /**
+ * @file types.h
  * @author Malte Hillmann
  */
 

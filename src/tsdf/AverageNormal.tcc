@@ -1,6 +1,7 @@
 #pragma once
 
 /**
+ * @file AverageNormal.tcc
  * @author Malte Hillmann
  * @author Marc Eisoldt
  */

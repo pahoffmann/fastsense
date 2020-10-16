@@ -5,9 +5,9 @@
  */
 
 #include "catch2_config.h"
-#include "Application.h"
 #include <util/config/config_manager.h>
 #include <util/logging/logger.h>
+#include <data/sensor_sync.h>
 #include <msg/imu_msg.h>
 
 using namespace fastsense;
