@@ -61,7 +61,7 @@ constexpr int ACCURACY = 5;
  * @param trans_offset 
  * @param rot_offset 
  */
-void compare_mats(const Eigen::Matrix4f& a, const Eigen::Matrix4f& b, float trans_offset, float rot_offset)
+static void compare_mats(const Eigen::Matrix4f& a, const Eigen::Matrix4f& b, float trans_offset, float rot_offset)
 {
     //std::cout << a << std::endl << std::endl;
     //std::cout << b << std::endl;
@@ -78,7 +78,7 @@ void compare_mats(const Eigen::Matrix4f& a, const Eigen::Matrix4f& b, float tran
     }
 }
 
-void check_computed_transform(const ScanPoints_t& points_posttransform, ScanPoints_t& points_pretransform)
+static void check_computed_transform(const ScanPoints_t& points_posttransform, ScanPoints_t& points_pretransform)
 {
     int minimum = std::numeric_limits<int>::infinity();
     int maximum = -std::numeric_limits<int>::infinity();
@@ -129,7 +129,7 @@ void check_computed_transform(const ScanPoints_t& points_posttransform, ScanPoin
     REQUIRE((average / points_pretransform.size()) < MAX_OFFSET);
 }
 
-std::shared_ptr<fastsense::buffer::InputBuffer<PointHW>> scan_points_to_input_buffer(ScanPoints_t& cloud, const fastsense::CommandQueuePtr q)
+static std::shared_ptr<fastsense::buffer::InputBuffer<PointHW>> scan_points_to_input_buffer(ScanPoints_t& cloud, const fastsense::CommandQueuePtr q)
 {
     auto buffer_ptr = std::make_shared<fastsense::buffer::InputBuffer<PointHW>>(q, cloud.size());
     for(size_t i = 0; i < cloud.size(); i++)
@@ -141,7 +141,7 @@ std::shared_ptr<fastsense::buffer::InputBuffer<PointHW>> scan_points_to_input_bu
     return buffer_ptr;
 }
 
-ScanPoints_t input_buffer_to_scan_points(fastsense::buffer::InputBuffer<PointHW>& cloud, const fastsense::CommandQueuePtr q)
+static ScanPoints_t input_buffer_to_scan_points(fastsense::buffer::InputBuffer<PointHW>& cloud, const fastsense::CommandQueuePtr q)
 {
     ScanPoints_t points;
     for(size_t i = 0; i < cloud.size(); i++)
