@@ -345,8 +345,6 @@ extern "C"
                    int offsetX, int offsetY, int offsetZ,
                    IntTuple* new_entries0,
                    IntTuple* new_entries1,
-                   IntTuple* new_entries2,
-                   IntTuple* new_entries3,
                    int tau,
                    int max_weight)
     {
@@ -376,7 +374,7 @@ extern "C"
         sync_looper(mapData0,
                     mapData1,
                     sync_step,
-                    numPoints,
+                    total_size,
                     new_entries0,
                     new_entries1,
                     max_weight);
