@@ -9,6 +9,8 @@
 #include <tuple>
 #include <chrono>
 
+#define TIME_MEASUREMENT
+
 namespace fastsense::util
 {
 
@@ -74,7 +76,7 @@ private:
     /// Temporary variable for storing the name of the task which is considered in the current measurement
     std::string curr_task_name_;
     /// Was a measurement already started?
-    bool started_ = false;    
+    bool started_ = false;
 };
 
 /**

@@ -14,6 +14,7 @@
 #include "RANSACNormal.h"
 #include "IterativeNormal.h"
 #include "weighting.h"
+#include "util/runtime_evaluator.h"
 
 #include <util/hls_functions.h>
 
@@ -38,6 +39,12 @@ void update_tsdf(const ScanPoints_t& scan_points,
                  int tau,
                  int max_weight)
 {
+    #ifdef TIME_MEASUREMENT
+    std::cout << "HALLIHALLÖCHEN" << std::endl;
+    util::RuntimeEvaluator re;
+    re.start("TEST");
+    #endif
+
     //constexpr int RINGS = 16; // TODO: take from Scanner
     //int dz_per_distance = std::tan(30.0 / ((double)RINGS - 1.0) / 180.0 * M_PI) / 2.0 * MATRIX_RESOLUTION;
 
@@ -143,7 +150,11 @@ void update_tsdf(const ScanPoints_t& scan_points,
         entry.first = (entry.first * entry.second + value * weight) / (entry.second + weight);
         entry.second = std::min(max_weight, entry.second + weight);
     }
-    
+
+    #ifdef TIME_MEASUREMENT
+    std::cout << "BIS BALDRIAN" << std::endl;    
+    re.stop();
+    #endif   
 }
 
 } // namespace fastsense::tsdf
