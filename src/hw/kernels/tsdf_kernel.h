@@ -40,7 +40,7 @@ public:
     {
         new_entries = std::make_unique<buffer::InputOutputBuffer<IntTuple>>(cmd_q_, map.get_size().x() * map.get_size().y() * map.get_size().z());
 
-        constexpr int SPLIT_FACTOR = 4;
+        constexpr int SPLIT_FACTOR = 2;
 
         resetNArg();
         for (int i = 0; i < SPLIT_FACTOR; i++)

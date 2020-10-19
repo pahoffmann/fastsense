@@ -13,11 +13,9 @@ Vector3i transform(const Vector3i& input, const Matrix4i& mat)
     return (mat.block<3, 3>(0, 0) * input + mat.block<3, 1>(0, 3)) / MATRIX_RESOLUTION;
 }
 
-//todo: check whether data exchange has a negative consequences regarding the runtime
-//TODO: test functionality
-//TODO: extract to hw. -> no need to copy points to hw
 void Registration::transform_point_cloud(ScanPoints_t& in_cloud, const Matrix4f& mat)
 {
+    #pragma omp parallel for schedule(static)
     for (auto index = 0u; index < in_cloud.size(); ++index)
     {
         auto& point = in_cloud[index];
@@ -27,6 +25,25 @@ void Registration::transform_point_cloud(ScanPoints_t& in_cloud, const Matrix4f&
         tmp[2] < 0 ? tmp[2] -= 0.5 : tmp[2] += 0.5;
 
         point = tmp.cast<int>();
+    }
+}
+
+void Registration::transform_point_cloud(fastsense::buffer::InputBuffer<PointHW>& in_cloud, const Matrix4f& mat)
+{
+    // TODO: test if this is faster on HW
+    #pragma omp parallel for schedule(static)
+    for (auto index = 0u; index < in_cloud.size(); ++index)
+    {
+        auto& point = in_cloud[index];
+        Vector3f eigen_point(point.x, point.y, point.z);
+        Vector3f tmp = (mat.block<3, 3>(0, 0) * eigen_point + mat.block<3, 1>(0, 3));
+        tmp[0] < 0 ? tmp[0] -= 0.5 : tmp[0] += 0.5;
+        tmp[1] < 0 ? tmp[1] -= 0.5 : tmp[1] += 0.5;
+        tmp[2] < 0 ? tmp[2] -= 0.5 : tmp[2] += 0.5;
+
+        point.x = static_cast<int>(tmp.x());
+        point.y = static_cast<int>(tmp.y());
+        point.z = static_cast<int>(tmp.z());
     }
 }
 
@@ -56,10 +73,8 @@ Matrix4f Registration::xi_to_transform(Vector6f xi)
     return transform;
 }
 
-Matrix4f Registration::register_cloud(fastsense::map::LocalMap& localmap, ScanPoints_t& cloud, fastsense::CommandQueuePtr q)
+Matrix4f Registration::register_cloud(fastsense::map::LocalMap& localmap, fastsense::buffer::InputBuffer<PointHW>& cloud, fastsense::CommandQueuePtr q)
 {
-    //std::cout << __LINE__ << std::endl;
-    
     mutex_.lock();
     Matrix4f total_transform = imu_accumulator_; //transform used to register the pcl
     imu_accumulator_.setIdentity();
@@ -93,8 +108,6 @@ Matrix4f Registration::register_cloud(fastsense::map::LocalMap& localmap, ScanPo
 
         for (int i = 0; i < max_iterations_ && !finished; i++)
         {
-            //std::cout << __LINE__ << std::endl;
-
             local_h = Matrix6i::Zero();
             local_g = Vector6i::Zero();
             local_error = 0;
@@ -103,9 +116,9 @@ Matrix4f Registration::register_cloud(fastsense::map::LocalMap& localmap, ScanPo
             //std::cout << next_transform << std::endl << std::endl;
 
             //next_transform = (total_transform * MATRIX_RESOLUTION).cast<int>();
-           
+
             //TODO: total transform, used in hw or local transform used on entire pcl - you decide.
-            transform_point_cloud(cloud, next_transform);
+            //transform_point_cloud(cloud, next_transform);
 
             //STOP SW IMPLEMENTATION
             //BEGIN HW IMPLEMENTATION
@@ -124,11 +137,9 @@ Matrix4f Registration::register_cloud(fastsense::map::LocalMap& localmap, ScanPo
             //     buffer_scan[i] = cloud[i];
             // }
 
-            //std::cout << __LINE__ << std::endl;
+            std::cout << "\rIteration " << i << " / " << max_iterations_ << std::flush;
 
-            krnl.synchronized_run(localmap, cloud, local_h, local_g, local_error, local_count); 
-
-            //std::cout << __LINE__ << std::endl;
+            krnl.synchronized_run(localmap, cloud, local_h, local_g, local_error, local_count, total_transform);
 
             //krnl.waitComplete();
 
@@ -139,8 +150,6 @@ Matrix4f Registration::register_cloud(fastsense::map::LocalMap& localmap, ScanPo
             g += local_g;
             error += local_error;
             count += local_count;
-
-            //std::cout << __LINE__ << std::endl;
 
 
             // wait for all threads to finish //here should be the exit point of the hw communication, after which the data is being used.
@@ -183,14 +192,13 @@ Matrix4f Registration::register_cloud(fastsense::map::LocalMap& localmap, ScanPo
                 g = Vector6i::Zero();
                 error = 0;
                 count = 0;
-                            
-                //std::cout << __LINE__ << std::endl;
             }
         }
     }
+    std::cout << std::endl;
 
     // apply final transformation
-    transform_point_cloud(cloud, next_transform);
+    transform_point_cloud(cloud, total_transform);
 
     return total_transform;
 }
@@ -217,8 +225,8 @@ void Registration::update_imu_data(const fastsense::msg::ImuMsgStamped& imu)
 
     Vector3f orientation = ang_vel * acc_time; //in radiants [rad, rad, rad]
     auto rotation =   Eigen::AngleAxisf(orientation.x(), Vector3f::UnitX())
-                    * Eigen::AngleAxisf(orientation.y(), Vector3f::UnitY())
-                    * Eigen::AngleAxisf(orientation.z(), Vector3f::UnitZ());
+                      * Eigen::AngleAxisf(orientation.y(), Vector3f::UnitY())
+                      * Eigen::AngleAxisf(orientation.z(), Vector3f::UnitZ());
 
     Matrix4f local_transform = Matrix4f::Identity();
     local_transform.block<3, 3>(0, 0) = rotation.toRotationMatrix();

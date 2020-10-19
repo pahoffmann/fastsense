@@ -14,6 +14,7 @@
 #include <util/config/config_manager.h>
 #include <tsdf/update_tsdf.h>
 #include <msg/tsdf_bridge_msg.h>
+#include <util/point_hw.h>
 
 namespace fastsense::callback
 {
@@ -25,16 +26,19 @@ namespace fastsense::callback
     using Eigen::Matrix4f;
     using fastsense::util::config::ConfigManager;
     using TSDFBuffer = util::ConcurrentRingBuffer<msg::TSDFBridgeMessage>;
+    using fastsense::buffer::InputOutputBuffer;
 
     class CloudCallback : public fastsense::util::ProcessThread{
         public:
-            CloudCallback(Registration& registration, const std::shared_ptr<PointCloudBuffer>& cloud_buffer, LocalMap& local_map, const std::shared_ptr<GlobalMap>& global_map, Matrix4f& pose, const std::shared_ptr<TSDFBuffer>& tsdf_buffer);
+            CloudCallback(Registration& registration, const std::shared_ptr<PointCloudBuffer>& cloud_buffer, LocalMap& local_map, const std::shared_ptr<GlobalMap>& global_map, Matrix4f& pose, const std::shared_ptr<TSDFBuffer>& tsdf_buffer, fastsense::CommandQueuePtr& q);
 
             void start() override;
 
             void callback();
 
-            void preprocess_scan(const fastsense::msg::PointCloudStamped& cloud, ScanPoints_t& scan_points, const Matrix4f& pose);
+            void preprocess_scan(const fastsense::msg::PointCloudStamped& cloud, InputOutputBuffer<PointHW>& scan_points);
+
+            int determineBufferSize(const fastsense::msg::PointCloudStamped& cloud);
 
             void stop() override;
 
@@ -45,6 +49,8 @@ namespace fastsense::callback
             std::shared_ptr<GlobalMap> global_map;
             Matrix4f& pose;
             std::shared_ptr<TSDFBuffer> tsdf_buffer;
+            fastsense::CommandQueuePtr& q;
+
             bool first_iteration;
     };
 }

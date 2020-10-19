@@ -103,10 +103,10 @@ void update_tsdf(const ScanPoints_t& scan_points,
             
             auto object = std::make_pair(value, weight);
 
-            int delta_z = dz_per_distance * len / MATRIX_RESOLUTION / MAP_RESOLUTION;
+            int delta_z = dz_per_distance * len / MATRIX_RESOLUTION;
 
-            int lowest = index.z() - delta_z;
-            int highest = index.z() + delta_z;
+            int lowest = (proj.z() - delta_z) / MAP_RESOLUTION;
+            int highest = (proj.z() + delta_z) / MAP_RESOLUTION;
 
             //int lowest = (proj.z() - delta_z) >> MAP_SHIFT;
             //int highest = (proj.z() + delta_z) >> MAP_SHIFT;
