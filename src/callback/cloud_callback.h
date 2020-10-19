@@ -38,7 +38,7 @@ namespace fastsense::callback
 
             void preprocess_scan(const fastsense::msg::PointCloudStamped& cloud, InputOutputBuffer<PointHW>& scan_points);
 
-            int determineBufferSize(const fastsense::msg::PointCloudStamped& cloud);
+            size_t determineBufferSize(const fastsense::msg::PointCloudStamped& cloud);
 
             void stop() override;
 
@@ -49,8 +49,7 @@ namespace fastsense::callback
             std::shared_ptr<GlobalMap> global_map;
             Matrix4f& pose;
             std::shared_ptr<TSDFBuffer> tsdf_buffer;
-            fastsense::CommandQueuePtr& q;
-
             bool first_iteration;
+            fastsense::CommandQueuePtr& q;
     };
 }

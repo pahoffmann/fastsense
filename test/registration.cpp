@@ -141,7 +141,7 @@ std::shared_ptr<fastsense::buffer::InputBuffer<PointHW>> scan_points_to_input_bu
     return buffer_ptr;
 }
 
-ScanPoints_t input_buffer_to_scan_points(fastsense::buffer::InputBuffer<PointHW>& cloud, const fastsense::CommandQueuePtr q)
+ScanPoints_t input_buffer_to_scan_points(fastsense::buffer::InputBuffer<PointHW>& cloud)
 {
     ScanPoints_t points;
     for(size_t i = 0; i < cloud.size(); i++)
