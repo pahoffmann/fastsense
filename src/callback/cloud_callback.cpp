@@ -56,19 +56,14 @@ void CloudCallback::preprocess_scan(const fastsense::msg::PointCloudStamped& clo
     }
 }
 
-
-int CloudCallback::determineBufferSize(const fastsense::msg::PointCloudStamped& cloud){
+size_t CloudCallback::determineBufferSize(const fastsense::msg::PointCloudStamped& cloud)
+{
     const std::vector<fastsense::msg::Point>& cloud_points = cloud.first->points_;
-    int count = 0;
 
-    for(unsigned int i = 0; i < cloud_points.size(); i++){
-        if(cloud_points[i].x == 0 && cloud_points[i].y && cloud_points[i].z == 0){
-            continue;
-        }
-        count++;
-    }
-
-    return count;
+    return std::count_if(cloud_points.begin(), cloud_points.end(), [](const fastsense::msg::Point& p) 
+    {  
+        return p.x != 0 && p.y != 0 && p.z != 0;
+    });
 }
 
 void CloudCallback::callback(){

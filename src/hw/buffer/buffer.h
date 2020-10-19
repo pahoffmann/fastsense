@@ -25,9 +25,6 @@ namespace fastsense::buffer
 template <typename T>
 class Buffer
 {
-
-    using size_type = size_t;
-
 private:
     /**
      * @brief unmap buffer: deattach virtual address from buffer
@@ -112,6 +109,8 @@ protected:
     }
 
 public:
+    using size_type = size_t;
+    using value_type = T;
     using const_iterator = const T*;
     using iterator = T*;
 
@@ -276,13 +275,6 @@ class InputBuffer : public Buffer<T>
 {
 public:
     /**
-     * @brief Construct an empty Input Buffer object
-     *
-     */
-    InputBuffer() : Buffer<T>()
-    {}
-
-    /**
      * @brief Construct a new Input Buffer object
      *
      * @param queue
@@ -308,13 +300,6 @@ class OutputBuffer : public Buffer<T>
 {
 public:
     /**
-     * @brief Construct an empty Output Buffer object
-     *
-     */
-    OutputBuffer() : Buffer<T>()
-    {}
-
-    /**
      * @brief Construct a new Output Buffer object
      *
      * @param queue
@@ -339,13 +324,6 @@ template <typename T>
 class InputOutputBuffer : public Buffer<T>
 {
 public:
-    /**
-     * @brief Construct an empty Input Output Buffer object
-     *
-     */
-    InputOutputBuffer() : Buffer<T>()
-    {}
-
     /**
      * @brief Construct a new Input Output Buffer object
      *

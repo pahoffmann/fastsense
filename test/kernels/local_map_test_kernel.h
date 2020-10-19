@@ -1,13 +1,12 @@
 #pragma once
 
 /**
+ * @file local_map_test_kernel.h
  * @author Marcel Flottmann
  */
 
 #include <hw/kernels/base_kernel.h>
-#include <hw/buffer/buffer.h>
 #include <map/local_map.h>
-#include <iostream>
 
 namespace fastsense::kernels
 {
