@@ -5,8 +5,8 @@
 #include <tsdf/ProjectionNormal.h>
 #include <tsdf/update_tsdf.h>
 #include <hw/buffer/buffer.h>
-#include <eval/RuntimeEvaluator.h>
-#include <util/pcd/PCDFile.h>
+#include <eval/runtime_evaluator.h>
+#include <util/pcd/pcd_file.h>
 #include <iostream>
 
 using namespace fastsense::tsdf;

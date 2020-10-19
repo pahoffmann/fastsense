@@ -1,4 +1,10 @@
-#include <chrono>
+#pragma once
+
+/**
+ * @file msgs_stamped.h
+ * @author Julian Gaal
+ */
+
 #include <ostream>
 
 #include <util/time_stamp.h>

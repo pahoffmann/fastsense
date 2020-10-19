@@ -11,13 +11,13 @@
 
 #include <hw/buffer/buffer.h>
 #include <hw/kernels/vadd_kernel.h>
-#include <hw/types.h>
+#include <hw/opencl.h>
 #include <hw/fpga_manager.h>
 #include <registration/registration.h>
-#include <msg/point.h>
 #include <map/local_map.h>
-#include <util/pcd/PCDFile.h>
+#include <util/pcd/pcd_file.h>
 #include <tsdf/update_tsdf.h>
+#include <util/point_hw.h>
 
 #include "catch2_config.h"
 
@@ -36,8 +36,8 @@ constexpr unsigned int SCALE = 1000;
 constexpr float MAX_OFFSET = 100; // TODO: this is too much
 
 // Test Translation
-constexpr float TX = 0.5 * SCALE;
-constexpr float TY = 0.5 * SCALE;
+constexpr float TX = 0.3 * SCALE;
+constexpr float TY = 0.3 * SCALE;
 constexpr float TZ = 0.0 * SCALE;
 // Test Rotation
 constexpr float RY = 10 * (M_PI / 180); //radiants
@@ -129,53 +129,37 @@ void check_computed_transform(const ScanPoints_t& points_posttransform, ScanPoin
     REQUIRE((average / points_pretransform.size()) < MAX_OFFSET);
 }
 
+std::shared_ptr<fastsense::buffer::InputBuffer<PointHW>> scan_points_to_input_buffer(ScanPoints_t& cloud, const fastsense::CommandQueuePtr q)
+{
+    auto buffer_ptr = std::make_shared<fastsense::buffer::InputBuffer<PointHW>>(q, cloud.size());
+    for(size_t i = 0; i < cloud.size(); i++)
+    {
+        auto point = cloud[i];
+        PointHW tmp(point.x(), point.y(), point.z());
+        (*buffer_ptr)[i] = tmp;
+    }
+    return buffer_ptr;
+}
+
+ScanPoints_t input_buffer_to_scan_points(fastsense::buffer::InputBuffer<PointHW>& cloud, const fastsense::CommandQueuePtr q)
+{
+    ScanPoints_t points;
+    for(size_t i = 0; i < cloud.size(); i++)
+    {
+        auto point = cloud[i];
+        Vector3i tmp(point.x, point.y, point.z);
+        points.push_back(tmp);
+    }
+    return points;
+}
+
 static const std::string error_message =
     "Error: Result mismatch:\n"
     "i = %d CPU result = %d Device result = %d\n";
 
-/*TEST_CASE("Registration", "[registration][slow]")
+TEST_CASE("Registration", "[registration][slow]")
 {
     std::cout << "Testing 'Registration'" << std::endl;
-    // const char* xclbinFilename = "FastSense.xclbin";
-
-    // fs::hw::FPGAManager::load_xclbin(xclbinFilename);
-
-
-
-    // // These commands will allocate memory on the Device. The cl::Buffer objects can
-    // // be used to reference the memory locations on the device.
-    // fs::buffer::InputBuffer<int> buffer_a{q, DATA_SIZE};
-    // fs::buffer::InputBuffer<int> buffer_b{q, DATA_SIZE};
-    // fs::buffer::OutputBuffer<int> buffer_result{q, DATA_SIZE};
-
-    // //setting input data
-    // for (int i = 0 ; i < DATA_SIZE; i++)
-    // {
-    //     buffer_a[i] = 10;
-    //     buffer_b[i] = 20;
-    // }
-
-    // fs::kernels::VaddKernel krnl_vadd{q};
-
-    // krnl_vadd.run(buffer_a, buffer_b, buffer_result, DATA_SIZE);
-    // krnl_vadd.waitComplete();
-
-    // //Verify the result
-    // for (int i = 0; i < DATA_SIZE; i++)
-    // {
-    //     int host_result = buffer_a[i] + buffer_b[i];
-    //     REQUIRE(buffer_result[i] == host_result);
-    // }
-
-
-    // //create a registration object:
-    // Registration registration = new Registration();
-
-    // //use registration object to calculate a specific transformation, for example: create a pointcloud, transform it and calculate the transformation using the registration
-    // //might be a basic cloud with random data - or to make it random, but repeatable: use seeds.
-
-
-    // create pcl from velodyne sample, create local map, transform pcl and see what the reconstruction can do.
 
 
     fastsense::CommandQueuePtr q = fastsense::hw::FPGAManager::create_command_queue();
@@ -212,11 +196,7 @@ static const std::string error_message =
 
     std::shared_ptr<fastsense::map::GlobalMap> global_map_ptr(new fastsense::map::GlobalMap("test_global_map.h5", 0.0, 0.0));
 
-    std::cout << "Test " << __LINE__ << std::endl;
-
     fastsense::map::LocalMap local_map(SIZE_Y, SIZE_Y, SIZE_Z, global_map_ptr, q);
-
-    std::cout << "Test " << __LINE__ << std::endl;
 
     // Initialize temporary testing variables
 
@@ -294,30 +274,31 @@ static const std::string error_message =
 
     SECTION("Test Registration Translation")
     {
-        std::cout << "Test " << __LINE__ << std::endl;
-
         std::cout << "    Section 'Test Registration Translation'" << std::endl;
 
         reg.transform_point_cloud(points_pretransformed_trans, translation_mat);
 
-        std::cout << "Test " << __LINE__ << std::endl;
+        //copy from scanpoints to  inputbuffer
+        auto buffer_ptr = scan_points_to_input_buffer(points_pretransformed_trans, q);
+        auto& buffer = *buffer_ptr;
+        auto result_matrix = reg.register_cloud(local_map, buffer, q);
 
-        reg.register_cloud(local_map, points_pretransformed_trans, q);
-
-        std::cout << "Test " << __LINE__ << std::endl;
-
+        reg.transform_point_cloud(points_pretransformed_trans, result_matrix);
         check_computed_transform(points_pretransformed_trans, scan_points);
 
-        std::cout << "Test " << __LINE__ << std::endl;
     }
 
     SECTION("Registration test Rotation")
     {
         std::cout << "    Section 'Registration test Rotation'" << std::endl;
         reg.transform_point_cloud(points_pretransformed_rot, rotation_mat);
-        reg.register_cloud(local_map, points_pretransformed_rot, q);
+        auto buffer_ptr = scan_points_to_input_buffer(points_pretransformed_rot, q);
+        auto& buffer = *buffer_ptr;
+        auto result_matrix = reg.register_cloud(local_map, buffer, q);
+
+        reg.transform_point_cloud(points_pretransformed_rot, result_matrix);
         check_computed_transform(points_pretransformed_rot, scan_points_2);
     }
-}*/
+}
 
 } //namespace fastsense::registration  

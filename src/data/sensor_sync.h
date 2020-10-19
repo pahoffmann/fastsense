@@ -1,12 +1,10 @@
 #pragma once
 
 /**
+ * @file sensor_sync.h
  * @author Julian Gaal
  */
 
-#include <memory>
-
-#include <util/params.h>
 #include <util/process_thread.h>
 #include <msg/msgs_stamped.h>
 #include <util/concurrent_ring_buffer.h>

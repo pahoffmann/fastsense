@@ -1,10 +1,10 @@
+#pragma once
+
 /**
  * @file queue_bridge.h
  * @author Marcel Flottmann
  * @date 2020-10-06
  */
-
-#pragma once
 
 #include <util/concurrent_ring_buffer.h>
 #include <util/process_thread.h>

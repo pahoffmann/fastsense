@@ -1,6 +1,7 @@
 #pragma once
 
 /**
+ * @file PriorityNeighbors.h
  * @author Malte Hillmann
  * @author Marc Eisoldt
  */

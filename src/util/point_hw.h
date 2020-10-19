@@ -1,6 +1,7 @@
 #pragma once
 
 /**
+ * @file point_hw.h
  * @author Marcel Flottmann
  * @author Malte Hillmann
  */

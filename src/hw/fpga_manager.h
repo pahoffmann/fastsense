@@ -1,6 +1,7 @@
 #pragma once
 
 /**
+ * @file fpga_manager.h
  * @author Julian Gaal
  * @author Marcel Flottmann
  */
@@ -8,7 +9,6 @@
 #include <fstream>
 
 #include <hw/opencl.h>
-#include <hw/types.h>
 
 namespace fastsense::hw
 {
@@ -29,10 +29,12 @@ public:
 
     static CommandQueuePtr create_command_queue();
 
+    static void release();
+
 private:
     FPGAManager();
 
-    static FPGAManager& inst();
+    static std::unique_ptr<FPGAManager>& inst();
 
     std::vector<cl::Device> devices_;
     cl::Context context_;

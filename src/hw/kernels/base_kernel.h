@@ -1,12 +1,11 @@
 #pragma once
 
 /**
+ * @file base_kernel.h
  * @author Julian Gaal
  * @author Marcel Flottmann
  */
 
-#include <hw/opencl.h>
-#include <hw/types.h>
 #include <hw/fpga_manager.h>
 
 namespace fastsense::kernels

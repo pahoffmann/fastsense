@@ -1,4 +1,5 @@
 /**
+ * @file application.cpp
  * @author Marcel Flottmann
  */
 
@@ -8,7 +9,7 @@
 #include <algorithm>
 #include <iostream>
 
-#include "Application.h"
+#include "application.h"
 #include <msg/imu_msg.h>
 #include <msg/tsdf_bridge_msg.h>
 #include <util/config/config_manager.h>
@@ -82,7 +83,7 @@ int Application::run()
     Matrix4f pose = Matrix4f::Identity();
     auto tsdf_buffer = std::make_shared<util::ConcurrentRingBuffer<msg::TSDFBridgeMessage>>(2);
 
-    CloudCallback cloud_callback{registration, pointcloud_bridge_buffer, local_map, global_map_ptr, pose, tsdf_buffer};
+    CloudCallback cloud_callback{registration, pointcloud_bridge_buffer, local_map, global_map_ptr, pose, tsdf_buffer, q};
 
     ImuCallback imu_callback{registration, imu_bridge_buffer};
 

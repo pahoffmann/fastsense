@@ -1,6 +1,7 @@
 #pragma once
 
 /**
+ * @file types.h
  * @author Malte Hillmann
  */
 
@@ -8,7 +9,7 @@
 #include <vector>
 #include <iostream>
 
-#include <msg/point.h>
+//#include <msg/point.h>
 
 using Eigen::Vector3i;
 using Eigen::Vector3f;
@@ -19,6 +20,8 @@ using ScanPoints_t = std::vector<Vector3i>;
 #include "constants.h"
 
 static const Vector3i INVALID_POINT(0, 0, 0);
+
+
 
 /**
  * @brief calculates floor(a / b), except that a is a Vector of integers and b is a power of 2

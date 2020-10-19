@@ -1,23 +1,13 @@
 #pragma once
 
 /**
+ * @file reg_kernel.h
  * @author Patrick Hoffmann
  */
 
 #include <hw/kernels/base_kernel.h>
-#include <hw/buffer/buffer.h>
 #include <map/local_map.h>
-#include <iostream>
-#include <util/types.h>
-#include <eigen3/Eigen/Dense>
-
-struct Point
-{
-    int x;
-    int y;
-    int z;
-};
-
+#include <util/point_hw.h>
 
 namespace fastsense::kernels
 {
@@ -32,35 +22,39 @@ public:
     ~RegistrationKernel() = default;
 
     /**
-     * @brief interface between the software and the hw, calls the run method of the kernel, writes all the data coming from the kernel 
+     * @brief interface between the software and the hw, calls the run method of the kernel, writes all the data coming from the kernel
      *        into the datatypes used by the software
-     * 
+     *
      * @param map           current local map
      * @param scan_points   points from the current velodyne scan
      * @param local_h       reference for the local h matrix used by the software
      * @param local_g       reference for the local g matrix used by the software
      * @param local_error   local error ref
      * @param local_count   local count ref
+     * @param transform     transform from last registration iteration (including imu one) - needs to be applied in the kernel
      */
-    void synchronized_run(map::LocalMap& map, ScanPoints_t& scan_points, Eigen::Matrix<long, 6, 6> &local_h, Eigen::Matrix<long, 6, 1> &local_g, int &local_error, int &local_count)
+    void synchronized_run(map::LocalMap& map, buffer::InputBuffer<PointHW>& point_data, Eigen::Matrix<long, 6, 6>& local_h, Eigen::Matrix<long, 6, 1>& local_g, int& local_error, int& local_count,
+                          Eigen::Matrix4f& transform)
     {
         buffer::OutputBuffer<long> outbuf(cmd_q_, 44); //matrix buffer for g matrix TODO: determine if this needs to be in registration.cpp
 
-        buffer::InputBuffer<Point> point_data(cmd_q_, scan_points.size());
+        buffer::InputBuffer<int> transform_matrix(cmd_q_, 16);
 
-        for(size_t i = 0; i < scan_points.size(); ++i)
+        //write last transform to buffer
+        for (int i = 0; i < 4; i++)
         {
-            point_data[i].x = scan_points[i].x();
-            point_data[i].y = scan_points[i].y();
-            point_data[i].z = scan_points[i].z();
+            for (int j = 0; j < 4; j++)
+            {
+                transform_matrix[4 * i + j] = static_cast<int>(transform(i, j) * MATRIX_RESOLUTION); //TODO:   CHECK CAST
+            }
         }
 
-        //run the encapsulated kernel
-        run(map, point_data, outbuf);
-        
-        waitComplete();
+        // std::cout << "Transform matrix sw kernel:\n" << transform << std::endl;
 
-        //std::cout << "Kernel_H " << __LINE__ << std::endl;
+        //run the encapsulated kernel
+        run(map, point_data, transform_matrix, outbuf);
+
+        waitComplete();
 
         local_h << outbuf[0],  outbuf[1], outbuf[2], outbuf[3], outbuf[4], outbuf[5],
                    outbuf[6], outbuf[7], outbuf[8], outbuf[9], outbuf[10], outbuf[11],
@@ -82,22 +76,20 @@ public:
 
     /**
      * @brief Called by the synchronized run method, uses the kernel to register
-     * 
-     * @param map 
-     * @param scan_points 
-     * @param outbuf 
-     * @param queue 
+     *
+     * @param map
+     * @param scan_points
+     * @param outbuf
+     * @param queue
      */
-    void run(map::LocalMap& map, buffer::InputBuffer<Point> &point_data, buffer::OutputBuffer<long> &outbuf)
+    void run(map::LocalMap& map, buffer::InputBuffer<PointHW>& point_data, buffer::InputBuffer<int>& transform, buffer::OutputBuffer<long>& outbuf)
     {
-        //std::cout << "Kernel_H " << __LINE__ << std::endl;
         resetNArg();
 
-        //std::cout << "Kernel_H " << __LINE__ << std::endl;
         //std::cout << "Point data: size: " << static_cast<int>(point_data.size()) << std::endl << std::endl;
 
         auto m = map.get_hardware_representation();
-        
+
         setArg(point_data.getBuffer());
         setArg(static_cast<int>(point_data.size()));
         setArg(map.getBuffer().getBuffer());
@@ -112,24 +104,17 @@ public:
         setArg(m.offsetX);
         setArg(m.offsetY);
         setArg(m.offsetZ);
+        setArg(transform.getBuffer());
         setArg(outbuf.getBuffer());
 
-        //std::cout << "Kernel_H " << __LINE__ << std::endl;
-
         // Write buffers
-        cmd_q_->enqueueMigrateMemObjects({map.getBuffer().getBuffer()}, CL_MIGRATE_MEM_OBJECT_DEVICE, nullptr, &pre_events_[0]);
-
-        //std::cout << "Kernel_H " << __LINE__ << std::endl;
+        cmd_q_->enqueueMigrateMemObjects({map.getBuffer().getBuffer(), point_data.getBuffer(), transform.getBuffer()}, CL_MIGRATE_MEM_OBJECT_DEVICE, nullptr, &pre_events_[0]);
 
         // Launch the Kernel
         cmd_q_->enqueueTask(kernel_, &pre_events_, &execute_events_[0]);
 
-        //std::cout << "Kernel_H " << __LINE__ << std::endl;
-
         // Read buffers
         cmd_q_->enqueueMigrateMemObjects({outbuf.getBuffer()}, CL_MIGRATE_MEM_OBJECT_HOST, &execute_events_, &post_events_[0]);
-        
-        //std::cout << "Kernel_H " << __LINE__ << std::endl;
     }
 };
 

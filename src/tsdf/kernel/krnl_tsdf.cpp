@@ -15,8 +15,8 @@
 
 using namespace fastsense::map;
 
-constexpr int NUM_POINTS = 6000;
-constexpr int SPLIT_FACTOR = 4;
+constexpr int NUM_POINTS = 12000; //6000;
+constexpr int SPLIT_FACTOR = 2;
 
 using IntTuple = std::pair<int, int>;
 
@@ -296,14 +296,10 @@ extern "C"
     void tsdf_dataflower(
         PointHW* scanPoints0,
         PointHW* scanPoints1,
-        PointHW* scanPoints2,
-        PointHW* scanPoints3,
         int step,
         int last_step,
         IntTuple* new_entries0,
         IntTuple* new_entries1,
-        IntTuple* new_entries2,
-        IntTuple* new_entries3,
         int sizeX,   int sizeY,   int sizeZ,
         int posX,    int posY,    int posZ,
         int offsetX, int offsetY, int offsetZ,
@@ -318,90 +314,55 @@ extern "C"
                       offsetX, offsetY, offsetZ,
                       new_entries0, tau);
 
-        tsdf_dataflow(scanPoints1 + 1 * step, step,
+        tsdf_dataflow(scanPoints1 + 1 * step, last_step,
                       sizeX,   sizeY,   sizeZ,
                       posX,    posY,    posZ,
                       offsetX, offsetY, offsetZ,
                       new_entries1, tau);
-
-        tsdf_dataflow(scanPoints2 + 2 * step, step,
-                      sizeX,   sizeY,   sizeZ,
-                      posX,    posY,    posZ,
-                      offsetX, offsetY, offsetZ,
-                      new_entries2, tau);
-
-        tsdf_dataflow(scanPoints3 + 3 * step, last_step,
-                      sizeX,   sizeY,   sizeZ,
-                      posX,    posY,    posZ,
-                      offsetX, offsetY, offsetZ,
-                      new_entries3, tau);
-
     }
 
     void sync_looper(
         IntTuple* mapData0,
         IntTuple* mapData1,
-        IntTuple* mapData2,
-        IntTuple* mapData3,
         int step,
-        int last_step,
+        int numPoints,
         IntTuple* new_entries0,
         IntTuple* new_entries1,
-        IntTuple* new_entries2,
-        IntTuple* new_entries3,
         int max_weight)
     {
 #pragma HLS dataflow
         sync_loop(mapData0, step * 0, step * (0 + 1), new_entries0, max_weight);
-        sync_loop(mapData1, step * 1, step * (1 + 1), new_entries1, max_weight);
-        sync_loop(mapData2, step * 2, step * (2 + 1), new_entries2, max_weight);
-        sync_loop(mapData3, step * 3, last_step, new_entries3, max_weight);
+        sync_loop(mapData1, step * 1, numPoints, new_entries1, max_weight);
     }
 
     void krnl_tsdf(PointHW* scanPoints0,
                    PointHW* scanPoints1,
-                   PointHW* scanPoints2,
-                   PointHW* scanPoints3,
                    int numPoints,
                    IntTuple* mapData0,
                    IntTuple* mapData1,
-                   IntTuple* mapData2,
-                   IntTuple* mapData3,
                    int sizeX,   int sizeY,   int sizeZ,
                    int posX,    int posY,    int posZ,
                    int offsetX, int offsetY, int offsetZ,
                    IntTuple* new_entries0,
                    IntTuple* new_entries1,
-                   IntTuple* new_entries2,
-                   IntTuple* new_entries3,
                    int tau,
                    int max_weight)
     {
 #pragma HLS INTERFACE m_axi port=scanPoints0  offset=slave bundle=scan0mem  latency=22
 #pragma HLS INTERFACE m_axi port=scanPoints1  offset=slave bundle=scan1mem  latency=22
-#pragma HLS INTERFACE m_axi port=scanPoints2  offset=slave bundle=scan2mem  latency=22
-#pragma HLS INTERFACE m_axi port=scanPoints3  offset=slave bundle=scan3mem  latency=22
 #pragma HLS INTERFACE m_axi port=mapData0     offset=slave bundle=map0mem   latency=22
 #pragma HLS INTERFACE m_axi port=mapData1     offset=slave bundle=map1mem   latency=22
-#pragma HLS INTERFACE m_axi port=mapData2     offset=slave bundle=map2mem   latency=22
-#pragma HLS INTERFACE m_axi port=mapData3     offset=slave bundle=map3mem   latency=22
 #pragma HLS INTERFACE m_axi port=new_entries0 offset=slave bundle=entry0mem latency=22
 #pragma HLS INTERFACE m_axi port=new_entries1 offset=slave bundle=entry1mem latency=22
-#pragma HLS INTERFACE m_axi port=new_entries2 offset=slave bundle=entry2mem latency=22
-#pragma HLS INTERFACE m_axi port=new_entries3 offset=slave bundle=entry3mem latency=22
 
         int step = numPoints / SPLIT_FACTOR + 1;
         int last_step = numPoints - (SPLIT_FACTOR - 1) * step;
         tsdf_dataflower(scanPoints0,
                         scanPoints1,
-                        scanPoints2,
-                        scanPoints3,
                         step,
                         last_step,
                         new_entries0,
                         new_entries1,
-                        new_entries2,
-                        new_entries3,
                         sizeX,   sizeY,   sizeZ,
                         posX,    posY,    posZ,
                         offsetX, offsetY, offsetZ,
@@ -410,17 +371,13 @@ extern "C"
 
         int total_size = sizeX * sizeY * sizeZ;
         int sync_step = total_size / SPLIT_FACTOR + 1;
-        int sync_last_step = total_size - (SPLIT_FACTOR - 1) * sync_step;
+        
         sync_looper(mapData0,
                     mapData1,
-                    mapData2,
-                    mapData3,
                     sync_step,
-                    sync_last_step,
+                    total_size,
                     new_entries0,
                     new_entries1,
-                    new_entries2,
-                    new_entries3,
                     max_weight);
     }
 }

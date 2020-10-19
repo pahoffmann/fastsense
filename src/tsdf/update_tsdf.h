@@ -1,12 +1,12 @@
 #pragma once
 
 /**
+ * @file update_tsdf.h
  * @author Malte Hillmann
  * @author Marc Eisoldt
  */
 
 #include <map/local_map.h>
-#include <util/types.h>
 
 namespace fastsense::tsdf
 {

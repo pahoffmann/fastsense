@@ -1,7 +1,7 @@
 #pragma once
 
 /**
- * @file bridge_messages.h
+ * @file tsdf_bridge_msg.h
  * @author Julian Gaal
  * @date 2020-09-29
  */

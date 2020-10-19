@@ -1,6 +1,7 @@
 #pragma once
 
 /**
+ * @file RANSACNormal.h
  * @author Malte Hillmann
  * @author Marc Eisoldt
  */

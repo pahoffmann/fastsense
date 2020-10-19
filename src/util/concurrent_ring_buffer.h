@@ -1,10 +1,10 @@
 #pragma once
 
 /**
+ * @file concurrent_ring_buffer.h
  * @author Marcel Flottmann
  */
 
-#include <vector>
 #include <mutex>
 #include <condition_variable>
 
@@ -110,6 +110,7 @@ private:
 
     /// Condition variable to wait on, if the ring buffer is empty
     std::condition_variable cvEmpty;
+    
     /// Condition variable to wait on, if the ring bufer is full
     std::condition_variable cvFull;
 };

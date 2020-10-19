@@ -39,7 +39,7 @@ ENTRY_POINT_OBJS = $(ENTRY_POINT_SRCS:%.cpp=$(BUILD_DIR)/%.o)
 ENTRY_POINT_DEPS = $(ENTRY_POINT_OBJS:.o=.d)
 
 # Software sources
-SW_SRCS = src/Application.cpp \
+SW_SRCS = src/application.cpp \
 	src/driver/lidar/velodyne.cpp \
 	src/data/sensor_sync.cpp \
 	$(wildcard src/map/*.cpp) \
@@ -87,7 +87,7 @@ CXX_OPTFGLAGS ?= -O2 -ftree-loop-vectorize
 GCCFLAGS = -Wall -Wextra -Wnon-virtual-dtor -ansi -pedantic -Wfatal-errors  -fexceptions -Wno-unknown-pragmas -fopenmp
 CXXFLAGS = $(INC_FLAGS) $(GCCFLAGS) $(CXX_OPTFGLAGS) -MMD -MP -D__USE_XOPEN2K8 -c -fmessage-length=0 -std=$(CXX_STD) --sysroot=$(SYSROOT)
 
-LDFLAGS = $(LIBS) --sysroot=$(SYSROOT)
+LDFLAGS = $(LIBS) --sysroot=$(SYSROOT) $(LD_EXTRA)
 
 # Hardware
 LINK_CFG = $(CURDIR)/link.cfg
@@ -110,8 +110,13 @@ HW_TEST_DEPS = $(HW_TEST_OBJS:.xo=.d)
 HW_INC_DIRS = src
 HW_INC_FLAGS = $(addprefix -I,$(HW_INC_DIRS))
 
-VXXFLAGS = -t $(HW_TARGET) -f $(HW_PLATFORM) -c $(HW_INC_FLAGS) --config $(BUILD_CFG)
-VXXLDFLAGS = -t $(HW_TARGET) -f $(HW_PLATFORM) --config $(LINK_CFG) --link
+ifdef PROFILING
+VXX_EXTRA += --profile_kernel stall:all:all:all
+VXX_LD_EXTRA += --profile_kernel data:all:all:all --profile_kernel stall:all:all:all
+endif
+
+VXXFLAGS = -t $(HW_TARGET) -f $(HW_PLATFORM) -c $(HW_INC_FLAGS) --config $(BUILD_CFG) $(VXX_EXTRA)
+VXXLDFLAGS = -t $(HW_TARGET) -f $(HW_PLATFORM) --config $(LINK_CFG) --link $(VXX_LD_EXTRA)
 
 HW_DEPS_FLAGS = $(HW_INC_FLAGS) -isystem $(XILINX_VIVADO)/include -MM -MP
 
@@ -232,6 +237,13 @@ rsync:
 format:
 	@echo "Formatting"
 	@astyle -q -n --project=.astylerc --recursive "src/*.c??" "src/*.h" "test/*.c??" "test/*.h"
+
+gen_docs:
+	@echo "Generating doxygen docs"
+	@doxygen Doxygen.config
+
+open_docs: gen_docs
+	@xdg-open docs/html/index.html
 
 -include $(ENTRY_POINT_DEPS)
 -include $(SW_DEPS)

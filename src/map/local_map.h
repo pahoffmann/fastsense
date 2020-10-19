@@ -1,6 +1,7 @@
 #pragma once
 
 /**
+ * @file local_map.h
  * @author Steffen Hinderink
  * @author Juri Vana
  */
@@ -8,7 +9,6 @@
 #include <hw/buffer/buffer.h>
 #include <map/local_map_hw.h>
 #include "global_map.h"
-#include <util/types.h>
 
 namespace fastsense::map
 {

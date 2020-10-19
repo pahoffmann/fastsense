@@ -20,34 +20,34 @@ FPGAManager::FPGAManager()
 
 void FPGAManager::load_xclbin(const std::string& xclbin_filename)
 {
-    inst().init_devices();
-    inst().init_context();
-    inst().load_program(xclbin_filename);
+    inst()->init_devices();
+    inst()->init_context();
+    inst()->load_program(xclbin_filename);
 }
 
-FPGAManager& FPGAManager::inst()
+std::unique_ptr<FPGAManager>& FPGAManager::inst()
 {
-    static FPGAManager manager;
+    static std::unique_ptr<FPGAManager> manager{new FPGAManager{}};
     return manager;
 }
 
 const cl::Device& FPGAManager::get_device()
 {
-    if (not inst().devices_.size())
+    if (not inst()->devices_.size())
     {
         throw std::runtime_error("Error: Unable to init Context. No devices found");
     }
-    return inst().devices_[0];
+    return inst()->devices_[0];
 }
 
 const cl::Context& FPGAManager::get_context()
 {
-    return inst().context_;
+    return inst()->context_;
 }
 
 const cl::Program& FPGAManager::get_program()
 {
-    return inst().program_;
+    return inst()->program_;
 }
 
 fastsense::CommandQueuePtr FPGAManager::create_command_queue()
@@ -113,4 +113,9 @@ void FPGAManager::load_program(const std::string& xclbin_filename)
     program_ = cl::Program{context_, devices_, binaries};
 
     delete[] buf;
+}
+
+void FPGAManager::release()
+{
+    inst().reset();
 }

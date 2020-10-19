@@ -6,7 +6,6 @@
 
 #include <omp.h>
 #include <algorithm>
-#include <util/params.h>
 #include <ros/ros.h>
 #include <bridge/imu_bridge.h>
 
@@ -53,7 +52,7 @@ void ImuBridge::run()
     while (running && ros::ok())
     {
         BridgeBase::run();
-        std::cout << "Received imu msg\n";
+        ROS_INFO_STREAM("Received imu msg\n");
     }
 }
 
@@ -138,12 +137,12 @@ void ImuBridge::convert()
                 magnetic_field_covariance_.end(), 
                 mag_ros_.magnetic_field_covariance.begin());
 
-    std::cout << "Converted imu values\n";
+    ROS_INFO_STREAM("Converted imu values\n");
 }
 
 void ImuBridge::publish()
 {
     pub().publish(imu_ros_);
     mag_pub_.publish(mag_ros_);
-    std::cout << "published imu values\n";
+    ROS_INFO_STREAM("published imu values\n");
 }

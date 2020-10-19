@@ -1,6 +1,7 @@
 #pragma once
 
 /**
+ * @file constants.h
  * @author Malte Hillmann
  */
 
@@ -12,7 +13,7 @@ constexpr int MAP_RESOLUTION = 1 << MAP_SHIFT; 			// Resolution of the Map in Mi
 constexpr int WEIGHT_SHIFT = 6; 						// bitshift for a faster way to apply WEIGHT_RESOLUTION
 constexpr int WEIGHT_RESOLUTION = 1 << WEIGHT_SHIFT; 	// Resolution of the Weights. A weight of 1.0f is represented as WEIGHT_RESOLUTION
 
-constexpr int MATRIX_SHIFT = 10; 						// bitshift for a faster way to apply MATRIX_RESOLUTION
+constexpr int MATRIX_SHIFT = 15; 						// bitshift for a faster way to apply MATRIX_RESOLUTION
 constexpr int MATRIX_RESOLUTION = 1 << MATRIX_SHIFT; 	// Resolution of calculations (Matrices, division, ...)
 
 constexpr int RINGS = 16; // TODO: take from Scanner

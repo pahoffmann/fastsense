@@ -1,6 +1,7 @@
 #pragma once
 
 /**
+ * @file registration.h
  * @author Patrick Hoffmann
  * @author Adrian Nitschmann
  * @author Pascal Buschermöhle
@@ -8,18 +9,15 @@
  * @author Marc Eisoldt
  */
 
-#include <cmath>
 #include <mutex>
-#include <chrono>
-#include <utility>
 #include <algorithm>
 
-#include <util/types.h>
 #include <util/time_stamp.h>
 #include <map/local_map.h>
 #include <msg/msgs_stamped.h>
-#include <msg/point.h>
 #include <hw/kernels/reg_kernel.h>
+#include <hw/buffer/buffer.h>
+#include <util/point_hw.h>
 
 namespace fastsense::registration
 {
@@ -66,8 +64,7 @@ public:
     }
 
     /**
-     * Destructor of the ring buffer.
-     * Deletes the array in particular.
+     * Destructor of the registration.
      */
     virtual ~Registration() = default;
 
@@ -78,7 +75,7 @@ public:
      * @param cloud
      * @return Matrix4f
      */
-    Matrix4f register_cloud(fastsense::map::LocalMap& localmap, ScanPoints_t& cloud, fastsense::CommandQueuePtr q);
+    Matrix4f register_cloud(fastsense::map::LocalMap& localmap, fastsense::buffer::InputBuffer<PointHW>& cloud, fastsense::CommandQueuePtr q);
 
     /**
      * @brief Updates the IMU data used by the registration method
@@ -88,13 +85,20 @@ public:
     void update_imu_data(const fastsense::msg::ImuMsgStamped& imu);
 
     /**
-     * @brief Transforms a given pointcloud with the transform and stores it inside the out_cloud
+     * @brief Transforms a given pointcloud with the transform
      *
      * @param in_cloud
-     * @param out_cloud
      * @param transform
      */
     static void transform_point_cloud(ScanPoints_t& in_cloud, const Matrix4f& transform);
+
+    /**
+     * @brief Transforms a given pointcloud with the transform
+     *
+     * @param in_cloud
+     * @param transform
+     */
+    static void transform_point_cloud(fastsense::buffer::InputBuffer<PointHW>& in_cloud, const Matrix4f& transform);
 };
 
 
