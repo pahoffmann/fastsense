@@ -102,7 +102,7 @@ HW_SRCS = src/registration/kernel/krnl_reg.cpp
 HW_OBJS = $(HW_SRCS:%.cpp=$(BUILD_DIR)/%.xo)
 HW_DEPS = $(HW_OBJS:.xo=.d)
 
-HW_TEST_SRCS = test/kernels/krnl_io_buffer_test.cpp test/kernels/krnl_local_map_test.cpp src/tsdf/kernel/krnl_tsdf.cpp
+HW_TEST_SRCS = $(wildcard test/kernels/*.cpp) src/tsdf/kernel/krnl_tsdf.cpp
 HW_TEST_OBJS = $(HW_TEST_SRCS:%.cpp=$(BUILD_DIR)/%.xo)
 HW_TEST_DEPS = $(HW_TEST_OBJS:.xo=.d)
 
