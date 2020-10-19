@@ -137,6 +137,8 @@ Matrix4f Registration::register_cloud(fastsense::map::LocalMap& localmap, fastse
             //     buffer_scan[i] = cloud[i];
             // }
 
+            std::cout << "\rIteration " << i << " / " << max_iterations_ << std::flush;
+
             krnl.synchronized_run(localmap, cloud, local_h, local_g, local_error, local_count, total_transform);
 
             //krnl.waitComplete();
@@ -193,6 +195,7 @@ Matrix4f Registration::register_cloud(fastsense::map::LocalMap& localmap, fastse
             }
         }
     }
+    std::cout << std::endl;
 
     // apply final transformation
     transform_point_cloud(cloud, total_transform);
