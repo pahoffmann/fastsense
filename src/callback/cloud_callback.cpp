@@ -65,7 +65,7 @@ size_t CloudCallback::determineBufferSize(const fastsense::msg::PointCloudStampe
 
     return std::count_if(cloud_points.begin(), cloud_points.end(), [](const fastsense::msg::Point& p) 
     {  
-        return p.x != 0 && p.y != 0 && p.z != 0;
+        return p.x != 0 || p.y != 0 || p.z != 0;
     });
 }
 
@@ -91,10 +91,21 @@ void CloudCallback::callback(){
         // Vector3i position_integer;
         // position_integer << (int)std::floor(pose(0, 3)), (int)std::floor(pose(1, 3)), (int)std::floor(pose(2, 3));
 
-        int tau = (int)ConfigManager::config().slam.max_distance();
         // fastsense::tsdf::update_tsdf(scan_point_buffer, position_integer, local_map, tau, ConfigManager::config().slam.max_weight());
 
+        if(!first_iteration)
+        {
+            return;
+        }
+
+        int tau = (int)ConfigManager::config().slam.max_distance();
+        
+        std::cout << "Started" << std::endl;
+        
         tsdf_krnl.run(local_map, scan_point_buffer, tau, ConfigManager::config().slam.max_weight());
+        tsdf_krnl.waitComplete();
+
+        std::cout << "Finished" << std::endl;
 
         msg::TSDFBridgeMessage tsdf_msg;
         tsdf_msg.tau_ = tau;
@@ -109,7 +120,14 @@ void CloudCallback::callback(){
         tsdf_msg.offset_[2] = local_map.get_offset().z();
         tsdf_msg.map_resolution_ = ConfigManager::config().slam.map_resolution();
         tsdf_msg.tsdf_data_.reserve(local_map.getBuffer().size());
+        //tsdf_msg.tsdf_data_.resize(local_map.getBuffer().size());
         std::copy(local_map.getBuffer().cbegin(), local_map.getBuffer().cend(), std::back_inserter(tsdf_msg.tsdf_data_));
         tsdf_buffer->push_nb(tsdf_msg, true);
+
+        std::cout << local_map.get_size().x() << std::endl;
+        std::cout << local_map.get_size().y() << std::endl;
+        std::cout << local_map.get_size().z() << std::endl;
+
+        first_iteration = false;
     }
 }
