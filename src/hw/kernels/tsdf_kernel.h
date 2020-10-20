@@ -36,7 +36,7 @@ public:
 
     ~TSDFKernel() = default;
 
-    void run(map::LocalMap& map, const buffer::InputOutputBuffer<PointHW>& scan_points, int tau, int max_weight)
+    void run(map::LocalMap& map, const buffer::InputBuffer<PointHW>& scan_points, int tau, int max_weight)
     {
         new_entries = std::make_unique<buffer::InputOutputBuffer<IntTuple>>(cmd_q_, map.get_size().x() * map.get_size().y() * map.get_size().z());
 
