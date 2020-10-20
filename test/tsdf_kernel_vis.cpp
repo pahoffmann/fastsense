@@ -92,9 +92,6 @@ TEST_CASE("TSDF_Kernel_Vis", "[tsdf_kernel_vis]")
         krnl.run(local_map, kernel_points, TAU, MAX_WEIGHT);
         krnl.waitComplete();
 
-        const auto& local_buffer = local_map.getBuffer();
-        const auto& compare_buffer = local_map_compare.getBuffer(); 
-
         fastsense::msg::TSDFBridgeMessage tsdf_msg;
 
         tsdf_msg.tau_ = TAU;
