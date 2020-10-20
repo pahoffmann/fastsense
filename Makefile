@@ -94,15 +94,16 @@ LINK_TEST_CFG = $(CURDIR)/link_test.cfg
 BUILD_CFG = $(CURDIR)/build.cfg
 PACKAGE_CFG = $(CURDIR)/package.cfg
 PACKAGE_TEST_CFG = $(CURDIR)/package_test.cfg
+POST_LINK_TCL = $(CURDIR)/postSysLink.tcl
 
 HW_TARGET ?= sw_emu
 HW_PLATFORM = $(PLATFORM_DIR)/FastSense_platform.xpfm
 
-HW_SRCS = src/registration/kernel/krnl_reg.cpp
+HW_SRCS = src/registration/kernel/krnl_reg.cpp src/tsdf/kernel/krnl_tsdf.cpp
 HW_OBJS = $(HW_SRCS:%.cpp=$(BUILD_DIR)/%.xo)
 HW_DEPS = $(HW_OBJS:.xo=.d)
 
-HW_TEST_SRCS = $(wildcard test/kernels/*.cpp) src/tsdf/kernel/krnl_tsdf.cpp
+HW_TEST_SRCS = $(wildcard test/kernels/*.cpp)
 HW_TEST_OBJS = $(HW_TEST_SRCS:%.cpp=$(BUILD_DIR)/%.xo)
 HW_TEST_DEPS = $(HW_TEST_OBJS:.xo=.d)
 
@@ -115,7 +116,7 @@ VXX_LD_EXTRA += --profile_kernel data:all:all:all --profile_kernel stall:all:all
 endif
 
 VXXFLAGS = -t $(HW_TARGET) -f $(HW_PLATFORM) -c $(HW_INC_FLAGS) --config $(BUILD_CFG) $(VXX_EXTRA)
-VXXLDFLAGS = -t $(HW_TARGET) -f $(HW_PLATFORM) --config $(LINK_CFG) --link $(VXX_LD_EXTRA)
+VXXLDFLAGS = -t $(HW_TARGET) -f $(HW_PLATFORM) --config $(LINK_CFG) --linkhook.custom postSysLink,$(POST_LINK_TCL) --link $(VXX_LD_EXTRA)
 
 HW_DEPS_FLAGS = $(HW_INC_FLAGS) -isystem $(XILINX_VIVADO)/include -MM -MP
 
@@ -173,13 +174,13 @@ $(BUILD_DIR)/%.o: %.cpp
 	@$(CXX) $(CXXFLAGS) $< -o $@
 
 # Link hardware
-$(APP_XCLBIN): $(HW_OBJS) $(LINK_CFG)
+$(APP_XCLBIN): $(HW_OBJS) $(LINK_CFG) $(POST_LINK_TCL)
 	@echo "Link hardware: $(APP_XCLBIN)"
 	@$(MKDIR_P) $(dir $@)
 	@$(VXX) $(HW_OBJS) -o $@ $(VXXLDFLAGS) > $@.out || (cat $@.out && false)
 
 # Link test hardware
-$(APP_TEST_XCLBIN): $(HW_OBJS) $(HW_TEST_OBJS) $(LINK_CFG) $(LINK_TEST_CFG)
+$(APP_TEST_XCLBIN): $(HW_OBJS) $(HW_TEST_OBJS) $(LINK_CFG) $(LINK_TEST_CFG) $(POST_LINK_TCL)
 	@echo "Link hardware: $(APP_TEST_XCLBIN)"
 	@$(MKDIR_P) $(dir $@)
 	@$(VXX) $(HW_OBJS) $(HW_TEST_OBJS) -o $@ $(VXXLDFLAGS) --config $(LINK_TEST_CFG) > $@.out || (cat $@.out && false)
