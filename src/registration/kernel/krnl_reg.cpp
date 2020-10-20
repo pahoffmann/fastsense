@@ -39,10 +39,12 @@ extern "C"
                   long* outbuf
                  )
     {
-#pragma HLS INTERFACE m_axi port=pointData offset=slave bundle=scanmem latency=8
-#pragma HLS INTERFACE m_axi port=mapData0 offset=slave bundle=mapmem0 latency=8
-#pragma HLS INTERFACE m_axi port=mapData1 offset=slave bundle=mapmem1 latency=8
-#pragma HLS INTERFACE m_axi port=mapData2 offset=slave bundle=mapmem2 latency=8
+#pragma HLS INTERFACE m_axi port=pointData offset=slave bundle=scanmem latency=22
+#pragma HLS INTERFACE m_axi port=mapData0 offset=slave bundle=mapmem0 latency=22
+#pragma HLS INTERFACE m_axi port=mapData1 offset=slave bundle=mapmem1 latency=22
+#pragma HLS INTERFACE m_axi port=mapData2 offset=slave bundle=mapmem2 latency=22
+#pragma HLS INTERFACE m_axi port=transform offset=slave bundle=gmem latency=22
+#pragma HLS INTERFACE m_axi port=outbuf offset=slave bundle=gmem latency=22
 
         fastsense::map::LocalMapHW map{sizeX, sizeY, sizeZ,
                                        posX, posY, posZ,
@@ -51,8 +53,8 @@ extern "C"
         long local_h[6][6];
         long local_g[6];
 
-#pragma HLS ARRAY_RESHAPE variable=local_h complete dim=0
-#pragma HLS ARRAY_RESHAPE variable=local_g complete
+#pragma HLS array_partition variable=local_h complete dim=0
+#pragma HLS array_partition variable=local_g complete
 
         for (int row = 0; row < 6; row++)
         {
@@ -68,18 +70,16 @@ extern "C"
         long local_error = 0;
         long local_count = 0;
 
-                    
+
         int transform_matrix[4][4];
 
     transform_loop:
         for (int row = 0; row < 4; row++)
         {
-#pragma HLS unroll
             for (int col = 0; col < 4; col++)
             {
-#pragma HLS unroll
                 transform_matrix[row][col] = transform[row * 4 + col]; //TODO: check indexing
-            }         
+            }
         }
 
     point_loop:
@@ -120,7 +120,7 @@ extern "C"
             }
 
             int gradient[3];
-#pragma HLS ARRAY_RESHAPE variable=gradient complete
+#pragma HLS array_partition variable=gradient complete
 
             gradient[0] = 0;
             gradient[1] = 0;
@@ -147,7 +147,7 @@ extern "C"
             long cross_p_z = static_cast<long>(point[0][0]) * gradient[1] - static_cast<long>(point[1][0]) * gradient[0];
 
             long jacobi[6];
-#pragma HLS ARRAY_RESHAPE variable=jacobi complete
+#pragma HLS array_partition variable=jacobi complete
 
             jacobi[0] = cross_p_x;
             jacobi[1] = cross_p_y;
@@ -177,7 +177,6 @@ extern "C"
             for (int count = 0; count < 6; count++)
             {
 #pragma HLS unroll
-
                 local_g[count] += jacobi[count] * current.first;
             }
 
@@ -186,23 +185,29 @@ extern "C"
         }
 
         //fill output buffer.
+        long tmp[44];
+#pragma HLS array_partition variable=tmp complete
     out_row_loop:
         for (int row = 0; row < 6; row++)
         {
 #pragma HLS unroll
-
         out_col_loop:
             for (int col = 0; col < 6; col++)
             {
 #pragma HLS unroll
-
-                outbuf[row + col * 6] = local_h[row][col]; //from 0 to 35: local_h
+                tmp[row + col * 6] = local_h[row][col]; //from 0 to 35: local_h
             }
 
-            outbuf[36 + row] = local_g[row]; //from 36 to 41: local_g
+            tmp[36 + row] = local_g[row]; //from 36 to 41: local_g
         }
 
-        outbuf[42] = local_error;
-        outbuf[43] = local_count;
+        tmp[42] = local_error;
+        tmp[43] = local_count;
+
+    write_outbuf:
+        for (int i = 0; i < 44; i++)
+        {
+            outbuf[i] = tmp[i];
+        }
     }
 }
