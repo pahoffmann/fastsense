@@ -116,7 +116,11 @@ VXX_LD_EXTRA += --profile_kernel data:all:all:all --profile_kernel stall:all:all
 endif
 
 VXXFLAGS = -t $(HW_TARGET) -f $(HW_PLATFORM) -c $(HW_INC_FLAGS) --config $(BUILD_CFG) $(VXX_EXTRA)
-VXXLDFLAGS = -t $(HW_TARGET) -f $(HW_PLATFORM) --config $(LINK_CFG) --linkhook.custom postSysLink,$(POST_LINK_TCL) --link $(VXX_LD_EXTRA)
+VXXLDFLAGS = -t $(HW_TARGET) -f $(HW_PLATFORM) --config $(LINK_CFG) --link $(VXX_LD_EXTRA)
+
+ifeq ($(HW_TARGET), "hw")
+VXXLDFLAGS += --linkhook.custom postSysLink,$(POST_LINK_TCL)
+endif
 
 HW_DEPS_FLAGS = $(HW_INC_FLAGS) -isystem $(XILINX_VIVADO)/include -MM -MP
 
