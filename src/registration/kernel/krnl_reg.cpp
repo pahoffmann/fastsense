@@ -53,8 +53,8 @@ extern "C"
         long local_h[6][6];
         long local_g[6];
 
-#pragma HLS ARRAY_RESHAPE variable=local_h complete dim=0
-#pragma HLS ARRAY_RESHAPE variable=local_g complete
+#pragma HLS array_partition variable=local_h complete dim=0
+#pragma HLS array_partition variable=local_g complete
 
         for (int row = 0; row < 6; row++)
         {
@@ -120,7 +120,7 @@ extern "C"
             }
 
             int gradient[3];
-#pragma HLS ARRAY_RESHAPE variable=gradient complete
+#pragma HLS array_partition variable=gradient complete
 
             gradient[0] = 0;
             gradient[1] = 0;
@@ -147,7 +147,7 @@ extern "C"
             long cross_p_z = static_cast<long>(point[0][0]) * gradient[1] - static_cast<long>(point[1][0]) * gradient[0];
 
             long jacobi[6];
-#pragma HLS ARRAY_RESHAPE variable=jacobi complete
+#pragma HLS array_partition variable=jacobi complete
 
             jacobi[0] = cross_p_x;
             jacobi[1] = cross_p_y;
@@ -191,12 +191,10 @@ extern "C"
         for (int row = 0; row < 6; row++)
         {
 #pragma HLS unroll
-
         out_col_loop:
             for (int col = 0; col < 6; col++)
             {
 #pragma HLS unroll
-
                 tmp[row + col * 6] = local_h[row][col]; //from 0 to 35: local_h
             }
 
