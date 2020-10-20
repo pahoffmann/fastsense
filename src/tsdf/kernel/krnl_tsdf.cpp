@@ -219,9 +219,9 @@ extern "C"
                     current_distance = (current_cell - map_pos).to_mm().norm2();
                     // FIXME: current_distance is (dist)^2, but delta_z needs dist. sqrt is too slow here
                     // TODO: the current fix is to approximate the distance as Moore distance
-                    int delta_z = (dz_per_distance * hls_sqrt_approx(current_distance)) / MATRIX_RESOLUTION / MAP_RESOLUTION;
-                    interpolate_z = current_cell.z - delta_z;
-                    interpolate_z_end = current_cell.z + delta_z;
+                    int delta_z = (dz_per_distance * hls_sqrt_approx(current_distance)) / MATRIX_RESOLUTION;
+                    interpolate_z = (current_cell.z * MAP_RESOLUTION - delta_z) / MAP_RESOLUTION;
+                    interpolate_z_end = (current_cell.z * MAP_RESOLUTION + delta_z) / MAP_RESOLUTION;
                 }
                 else
                 {
@@ -371,6 +371,7 @@ extern "C"
 
         int total_size = sizeX * sizeY * sizeZ;
         int sync_step = total_size / SPLIT_FACTOR + 1;
+        
         sync_looper(mapData0,
                     mapData1,
                     sync_step,
