@@ -21,7 +21,10 @@ CloudCallback::CloudCallback(Registration& registration, const std::shared_ptr<P
      pose{pose},
      tsdf_buffer{tsdf_buffer},
      first_iteration{true},
-     q{q}{}
+     q{q},
+     tsdf_krnl(q)
+     {
+     }
 
 void CloudCallback::start(){
     if(not running){
@@ -88,23 +91,25 @@ void CloudCallback::callback(){
         // Vector3i position_integer;
         // position_integer << (int)std::floor(pose(0, 3)), (int)std::floor(pose(1, 3)), (int)std::floor(pose(2, 3));
 
-        // int tau = (int)ConfigManager::config().slam.max_distance();
+        int tau = (int)ConfigManager::config().slam.max_distance();
         // fastsense::tsdf::update_tsdf(scan_point_buffer, position_integer, local_map, tau, ConfigManager::config().slam.max_weight());
 
-        // msg::TSDFBridgeMessage tsdf_msg;
-        // tsdf_msg.tau_ = tau;
-        // tsdf_msg.size_[0] = local_map.get_size().x();
-        // tsdf_msg.size_[1] = local_map.get_size().y();
-        // tsdf_msg.size_[2] = local_map.get_size().z();
-        // tsdf_msg.pos_[0] = local_map.get_pos().x();
-        // tsdf_msg.pos_[1] = local_map.get_pos().y();
-        // tsdf_msg.pos_[2] = local_map.get_pos().z();
-        // tsdf_msg.offset_[0] = local_map.get_offset().x();
-        // tsdf_msg.offset_[1] = local_map.get_offset().y();
-        // tsdf_msg.offset_[2] = local_map.get_offset().z();
-        // tsdf_msg.map_resolution_ = ConfigManager::config().slam.map_resolution();
-        // tsdf_msg.tsdf_data_.reserve(local_map.getBuffer().size());
-        // std::copy(local_map.getBuffer().cbegin(), local_map.getBuffer().cend(), std::back_inserter(tsdf_msg.tsdf_data_));
-        // tsdf_buffer->push_nb(tsdf_msg, true);
+        tsdf_krnl.run(local_map, scan_point_buffer, tau, ConfigManager::config().slam.max_weight());
+
+        msg::TSDFBridgeMessage tsdf_msg;
+        tsdf_msg.tau_ = tau;
+        tsdf_msg.size_[0] = local_map.get_size().x();
+        tsdf_msg.size_[1] = local_map.get_size().y();
+        tsdf_msg.size_[2] = local_map.get_size().z();
+        tsdf_msg.pos_[0] = local_map.get_pos().x();
+        tsdf_msg.pos_[1] = local_map.get_pos().y();
+        tsdf_msg.pos_[2] = local_map.get_pos().z();
+        tsdf_msg.offset_[0] = local_map.get_offset().x();
+        tsdf_msg.offset_[1] = local_map.get_offset().y();
+        tsdf_msg.offset_[2] = local_map.get_offset().z();
+        tsdf_msg.map_resolution_ = ConfigManager::config().slam.map_resolution();
+        tsdf_msg.tsdf_data_.reserve(local_map.getBuffer().size());
+        std::copy(local_map.getBuffer().cbegin(), local_map.getBuffer().cend(), std::back_inserter(tsdf_msg.tsdf_data_));
+        tsdf_buffer->push_nb(tsdf_msg, true);
     }
 }

@@ -119,7 +119,7 @@ endif
 VXXFLAGS = -t $(HW_TARGET) -f $(HW_PLATFORM) -c $(HW_INC_FLAGS) --config $(BUILD_CFG) $(VXX_EXTRA)
 VXXLDFLAGS = -t $(HW_TARGET) -f $(HW_PLATFORM) --config $(LINK_CFG) --link $(VXX_LD_EXTRA)
 
-ifeq ($(HW_TARGET), "hw")
+ifeq ($(HW_TARGET), hw)
 VXXLDFLAGS += --linkhook.custom postSysLink,$(POST_LINK_TCL)
 endif
 
