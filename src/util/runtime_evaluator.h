@@ -2,12 +2,14 @@
 
 /**
  * @author Marc Eisoldt (meisoldt)
+ * @author Steffen Hinderink
  */
 
 #include <iostream>
 #include <map>
 #include <tuple>
 #include <chrono>
+#include <memory>
 
 #define TIME_MEASUREMENT
 
@@ -36,12 +38,19 @@ struct EvaluationFormular
 }; 
 
 /**
- * @brief Encapsulates the runtime measurement for different tasks. Only one task can be measured at the same sime
+ * @brief Encapsulates the runtime measurement for different tasks. Only one task can be measured at the same sime.
+ * It is implemented as a singleton.
  */
 class RuntimeEvaluator
 {
 
 public:
+
+    /**
+     * Returns the singleton instance. Creates a new one the first time.
+     * @return Singleton instance
+     */
+    static RuntimeEvaluator& get_instance();
 
     /**
      * @brief Starts a new measuremt for a task. Only one measurement can be started at a time.
@@ -69,6 +78,10 @@ public:
 
 private:
 
+    /// Singleton instance
+    inline static std::unique_ptr<RuntimeEvaluator> instance_ = nullptr;
+    /// Private constructor to ensure singleton property
+    RuntimeEvaluator();
     /// Stores the Different measurement variables for every considered task with the name of the task as key 
     std::map<std::string, EvaluationFormular> measure_table_;
     /// Temporary variable for storing the start time of the current measurement
@@ -76,7 +89,7 @@ private:
     /// Temporary variable for storing the name of the task which is considered in the current measurement
     std::string curr_task_name_;
     /// Was a measurement already started?
-    bool started_ = false;
+    bool started_;
 };
 
 /**

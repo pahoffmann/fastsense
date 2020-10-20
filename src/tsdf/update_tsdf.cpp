@@ -40,9 +40,9 @@ void update_tsdf(const ScanPoints_t& scan_points,
                  int max_weight)
 {
     #ifdef TIME_MEASUREMENT
-    std::cout << "HALLIHALLÖCHEN" << std::endl;
-    util::RuntimeEvaluator re;
-    re.start("TEST");
+    auto re = util::RuntimeEvaluator::get_instance();
+    std::cout << "start" << std::endl;
+    re.start("update_tsdf");
     #endif
 
     //constexpr int RINGS = 16; // TODO: take from Scanner
@@ -152,9 +152,9 @@ void update_tsdf(const ScanPoints_t& scan_points,
     }
 
     #ifdef TIME_MEASUREMENT
-    std::cout << "BIS BALDRIAN" << std::endl;    
     re.stop();
-    #endif   
+    std::cout << "stop" << std::endl;
+    #endif
 }
 
 } // namespace fastsense::tsdf

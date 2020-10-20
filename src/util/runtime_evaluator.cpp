@@ -1,3 +1,8 @@
+/**
+ * @author Marc Eisoldt
+ * @author Steffen Hinderink
+ */
+
 #include "util/runtime_evaluator.h"
 
 #include <sstream>
@@ -6,6 +11,17 @@ namespace fastsense::util
 {
 
 using namespace std::chrono;
+
+RuntimeEvaluator& RuntimeEvaluator::get_instance()
+{
+    if (instance_ == nullptr)
+    {
+        instance_ = std::unique_ptr<RuntimeEvaluator>(new RuntimeEvaluator());
+    }
+    return *instance_;
+}
+
+RuntimeEvaluator::RuntimeEvaluator() : started_(false) {}
 
 void RuntimeEvaluator::start(const std::string& task_name)
 {
@@ -30,7 +46,7 @@ void RuntimeEvaluator::stop()
     auto entry = measure_table_.find(curr_task_name_);
     if (entry == measure_table_.end())
     {
-        measure_table_[curr_task_name_] =  EvaluationFormular(time);
+        measure_table_[curr_task_name_] = EvaluationFormular(time);
     }
     else
     {
