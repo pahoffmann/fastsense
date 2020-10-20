@@ -16,7 +16,7 @@ RuntimeEvaluator& RuntimeEvaluator::get_instance()
 {
     if (instance_ == nullptr)
     {
-        instance_ = std::unique_ptr<RuntimeEvaluator>(new RuntimeEvaluator());
+        instance_.reset(new RuntimeEvaluator());
     }
     return *instance_;
 }

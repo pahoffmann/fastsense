@@ -47,6 +47,12 @@ class RuntimeEvaluator
 public:
 
     /**
+     * @brief Don't allow copies of the instance to ensure singleton property
+     */
+    RuntimeEvaluator& operator=(RuntimeEvaluator&) = delete;
+    RuntimeEvaluator(RuntimeEvaluator&) = delete;
+
+    /**
      * Returns the singleton instance. Creates a new one the first time.
      * @return Singleton instance
      */
