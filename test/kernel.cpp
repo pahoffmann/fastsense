@@ -49,33 +49,6 @@ constexpr int SIZE_X = 20 * SCALE / MAP_RESOLUTION;
 constexpr int SIZE_Y = 20 * SCALE / MAP_RESOLUTION;
 constexpr int SIZE_Z = 5 * SCALE / MAP_RESOLUTION; 
 
-constexpr int ACCURACY = 5;
-
-/**
- * @brief Compares two matrices (transform and registered transform) and checks wether they match considering a certain amount of drift
- * 
- * @param a 
- * @param b 
- * @param trans_offset 
- * @param rot_offset 
- */
-static void compare_mats(const Eigen::Matrix4f& a, const Eigen::Matrix4f& b, float trans_offset, float rot_offset)
-{
-    //std::cout << a << std::endl << std::endl;
-    //std::cout << b << std::endl;
-
-    //TODO:: Force marc to do this.
-    for (size_t i = 0; i < 3; i++)
-    {
-        for (size_t j = 0; j < 3; j++)
-        {
-            CHECK(std::abs(a(i, j) - b(i, j)) < rot_offset); //x translation smaller than offset
-        }
-        
-        CHECK(std::abs(a(i, 3) - b(i, 3)) < trans_offset);
-    }
-}
-
 static void check_computed_transform(const ScanPoints_t& points_posttransform, ScanPoints_t& points_pretransform)
 {
     int minimum = std::numeric_limits<int>::infinity();
@@ -137,18 +110,6 @@ std::shared_ptr<fastsense::buffer::InputBuffer<PointHW>> scan_points_to_input_bu
         (*buffer_ptr)[i] = tmp;
     }
     return buffer_ptr;
-}
-
-static ScanPoints_t input_buffer_to_scan_points(fastsense::buffer::InputBuffer<PointHW>& cloud, const fastsense::CommandQueuePtr q)
-{
-    ScanPoints_t points;
-    for(size_t i = 0; i < cloud.size(); i++)
-    {
-        auto point = cloud[i];
-        Vector3i tmp(point.x, point.y, point.z);
-        points.push_back(tmp);
-    }
-    return points;
 }
 
 static const std::string error_message =
