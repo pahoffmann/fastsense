@@ -87,7 +87,7 @@ void CloudCallback::callback()
     {
 #ifdef TIME_MEASUREMENT
         auto& eval = RuntimeEvaluator::get_instance();
-        eval.start("init")
+        eval.start("init");
 #endif
 
         fastsense::msg::PointCloudStamped point_cloud;
@@ -97,7 +97,7 @@ void CloudCallback::callback()
         preprocess_scan(point_cloud, scan_point_buffer);
 
 #ifdef TIME_MEASUREMENT
-        eval.stop()
+        eval.stop();
 #endif
 
         if (first_iteration)
@@ -107,14 +107,14 @@ void CloudCallback::callback()
         else
         {
 #ifdef TIME_MEASUREMENT
-            eval.start("reg")
+            eval.start("reg");
 #endif
 
             Matrix4f transform = registration.register_cloud(local_map, scan_point_buffer, q);
 
 #ifdef TIME_MEASUREMENT
-            eval.stop()
-            eval.start("shift")
+            eval.stop();
+            eval.start("shift");
 #endif
 
             pose = transform * pose;
@@ -125,22 +125,22 @@ void CloudCallback::callback()
             local_map.shift(x, y, z);
 
 #ifdef TIME_MEASUREMENT
-            eval.stop()
+            eval.stop();
 #endif
         }
 
         int tau = (int)ConfigManager::config().slam.max_distance();
 
 #ifdef TIME_MEASUREMENT
-        eval.start("tsdf")
+        eval.start("tsdf");
 #endif
 
         tsdf_krnl.run(local_map, scan_point_buffer, tau, ConfigManager::config().slam.max_weight());
         tsdf_krnl.waitComplete();
 
 #ifdef TIME_MEASUREMENT
-        eval.stop()
-        eval.start("vis")
+        eval.stop();
+        eval.start("vis");
 #endif
 
         msg::TSDFBridgeMessage tsdf_msg;
@@ -160,7 +160,7 @@ void CloudCallback::callback()
         tsdf_buffer->push_nb(tsdf_msg, true);
 
 #ifdef TIME_MEASUREMENT
-        eval.stop()
+        eval.stop();
         std::cout << eval << std::endl;
 #endif
     }
