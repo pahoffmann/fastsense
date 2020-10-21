@@ -143,7 +143,6 @@ void update_tsdf(const ScanPoints_t& scan_points,
         entry.first = (entry.first * entry.second + value * weight) / (entry.second + weight);
         entry.second = std::min(max_weight, entry.second + weight);
     }
-    
 }
 
 } // namespace fastsense::tsdf
