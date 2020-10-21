@@ -2,6 +2,7 @@
  * @author Patrick Hoffmann
  * @author Marc Eisoldt
  * @author Pascal Buschermöhle
+ * @author Malte Hillmann
  */
 
 
@@ -233,6 +234,20 @@ TEST_CASE("Registration", "[registration][slow]")
         CHECK(cloud[0].x() == result[0].x());
         CHECK(cloud[0].y() == result[0].y());
         CHECK(cloud[0].z() == result[0].z());
+    }
+
+    SECTION("Test Registration No Transform")
+    {
+        std::cout << "    Section 'Test Registration No Transform'" << std::endl;
+
+        //copy from scanpoints to  inputbuffer
+        auto buffer_ptr = scan_points_to_input_buffer(points_pretransformed_trans, q);
+        auto& buffer = *buffer_ptr;
+        auto result_matrix = reg.register_cloud(local_map, buffer, q);
+
+        reg.transform_point_cloud(points_pretransformed_trans, result_matrix);
+        check_computed_transform(points_pretransformed_trans, scan_points);
+
     }
 
     SECTION("Test Registration Translation")
