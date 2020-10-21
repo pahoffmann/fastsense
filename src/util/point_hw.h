@@ -29,7 +29,16 @@ int y;
         *this = rhs;
     }
 
-    PointHW operator-(const PointHW& rhs)
+    PointHW operator+(const PointHW& rhs) const
+    {
+        PointHW p;
+        p.x = x + rhs.x;
+        p.y = y + rhs.y;
+        p.z = z + rhs.z;
+        return p;
+    }
+
+    PointHW operator-(const PointHW& rhs) const
     {
         PointHW p;
         p.x = x - rhs.x;
@@ -38,12 +47,21 @@ int y;
         return p;
     }
 
-    PointHW operator*(int rhs)
+    PointHW operator*(int rhs) const
     {
         PointHW p;
         p.x = x * rhs;
         p.y = y * rhs;
         p.z = z * rhs;
+        return p;
+    }
+
+    PointHW operator/(int rhs) const
+    {
+        PointHW p;
+        p.x = x / rhs;
+        p.y = y / rhs;
+        p.z = z / rhs;
         return p;
     }
 
@@ -68,17 +86,17 @@ int y;
         return x == p.x && y == p.y && z == p.z;
     }
 
-    int norm2()
+    int norm2() const
     {
         return x * x + y * y + z * z;
     }
 
-    int norm()
+    int norm() const
     {
         return hls_sqrt_approx(norm2());
     }
 
-    PointHW abs()
+    PointHW abs() const
     {
         PointHW p;
         p.x = hls_abs(x);
@@ -87,7 +105,7 @@ int y;
         return p;
     }
 
-    PointHW sign()
+    PointHW sign() const
     {
         PointHW p;
         p.x = x < 0 ? -1 : 1;
@@ -96,7 +114,7 @@ int y;
         return p;
     }
 
-    PointHW to_map()
+    PointHW to_map() const
     {
         PointHW p;
         p.x = x / MAP_RESOLUTION;
@@ -105,7 +123,7 @@ int y;
         return p;
     }
 
-    PointHW to_mm()
+    PointHW to_mm() const
     {
         PointHW p;
         p.x = (x * MAP_RESOLUTION) + MAP_RESOLUTION / 2;
