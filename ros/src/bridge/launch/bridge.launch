@@ -3,8 +3,7 @@
 <launch>
   #### Bridge ###########################################################
 
-  <node pkg="bridge" type="bridge" name="tsdf_bridge" output="screen"/>
-  <node pkg="bridge" type="bridge" name="imu_bridge" output="screen"/>
+  <node pkg="bridge" type="bridge" name="bridge" output="screen"/>
 
   #### IMU Orientation Filter ###############################################
 
