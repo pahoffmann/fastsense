@@ -6,6 +6,7 @@
 #include "util/runtime_evaluator.h"
 
 #include <sstream>
+#include <iomanip>
 
 namespace fastsense::util
 {
@@ -21,60 +22,125 @@ RuntimeEvaluator& RuntimeEvaluator::get_instance()
     return *instance_;
 }
 
-RuntimeEvaluator::RuntimeEvaluator() : started_(false) {}
-
-void RuntimeEvaluator::start(const std::string& task_name)
+RuntimeEvaluator::RuntimeEvaluator() : forms_()
 {
-    if (started_)
-    {
-        throw -1;
-    }
-    curr_task_name_ = task_name;
-    started_ = true;
+    // "unpause" for the first time
     start_ = high_resolution_clock::now();
 }
 
-void RuntimeEvaluator::stop()
+void RuntimeEvaluator::start(const std::string& task_name)
 {
+    // pause
     auto stop = high_resolution_clock::now();
-    if (!started_)
+    auto duration = duration_cast<microseconds>(stop - start_);
+
+    // add new interval to all active measurements
+    for (uint i = 0; i < forms_.size(); i++)
+    {
+        if (forms_[i].active)
+        {
+            forms_[i].curr += duration.count();
+        }
+    }
+
+    // get or create task that is started
+    int index = -1;
+    for (uint i = 0; i < forms_.size(); i++)
+    {
+        if (forms_[i].name == task_name)
+        {
+            if (forms_[i].active)
+            {
+                throw -1;
+            }
+            index = i;
+        }
+    }
+    if (index == -1)
+    {
+        index = forms_.size();
+        forms_.push_back(EvaluationFormular(task_name));
+    }
+
+    // start
+    forms_[index].active = true;
+    forms_[index].curr = 0;
+
+    // unpause
+    start_ = high_resolution_clock::now();
+}
+
+void RuntimeEvaluator::stop(const std::string& task_name)
+{
+    // pause
+    auto stop = high_resolution_clock::now();
+    auto duration = duration_cast<microseconds>(stop - start_);
+
+    // add new interval to all active measurements
+    for (uint i = 0; i < forms_.size(); i++)
+    {
+        if (forms_[i].active)
+        {
+            forms_[i].curr += duration.count();
+        }
+    }
+
+    // get task that is started
+    int index = -1;
+    for (uint i = 0; i < forms_.size(); i++)
+    {
+        if (forms_[i].name == task_name)
+        {
+            if (!forms_[i].active)
+            {
+                throw -1;
+            }
+            index = i;
+        }
+    }
+    if (index == -1)
     {
         throw -1;
     }
-    auto duration = duration_cast<milliseconds>(stop - start_);
-    auto time = duration.count();
-    auto entry = measure_table_.find(curr_task_name_);
-    if (entry == measure_table_.end())
-    {
-        measure_table_[curr_task_name_] = EvaluationFormular(time);
-    }
-    else
-    {
-        auto& formular = entry->second;
-        formular.curr_time = time;
-        formular.time_sum += time;
-        ++formular.measure_count;
-    }
-    started_ = false;
+
+    // stop
+    forms_[index].active = false;
+    forms_[index].sum += forms_[index].curr;
+    forms_[index].count++;
+
+    // unpause
+    start_ = high_resolution_clock::now();
 }
 
 std::string RuntimeEvaluator::to_string() const
 {
     std::stringstream ss;
-    ss << "Time measurement (ms) (<name>: <current> | <average>)\n"; 
-    auto total_curr_time = 0llu;
-    auto total_avg_time = 0llu;
-    for (const auto& entry : measure_table_)
+    //ss << "Time measurement (ms) (<name>: <current> | <average>)\n";
+    ss << std::setw(16) << "taskname" << " | "
+       << std::setw(8) << "sum" << " | "
+       << std::setw(8) << "count" << " | "
+       << std::setw(8) << "avg nix" << " | "
+       << std::setw(8) << "min act" << " | "
+       << std::setw(8) << "max curr" << "\n"
+       << "-----------------+----------+----------+----------+----------+----------\n";
+
+    //auto total_avg_time = 0llu;
+    for (const auto& ef : forms_)
     {
-        const auto& formular = entry.second;
-        auto avg_time = formular.time_sum / formular.measure_count;
+        ss << std::setw(16) << ef.name << " | "
+           << std::setw(8) << ef.sum << " | "
+           << std::setw(8) << ef.count << " | "
+           << std::setw(8) << 0 << " | "
+           << std::setw(8) << ef.active << " | "
+           << std::setw(8) << ef.curr << "\n";
 
-        ss << '\t' << entry.first << ": " << formular.curr_time << " | " << avg_time << "\n"; 
+        //ss << std::setw(10) << entry.first << ":" << std::setw(10) << avg_time << "\n";
+        //ss << '\t' << entry.first << ": " << avg_time << "\n"; 
 
-        total_curr_time += formular.curr_time;
-        total_avg_time += avg_time;
+        //total_curr_time += formular.curr_time;
+        //total_avg_time += avg_time;
     }
-    ss << '\t' << "total: " << total_curr_time << " | " << total_avg_time; 
+    //ss << '\t' << "total: " << total_avg_time; 
     return ss.str();
 }
 

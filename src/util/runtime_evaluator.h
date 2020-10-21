@@ -6,8 +6,7 @@
  */
 
 #include <iostream>
-#include <map>
-#include <tuple>
+#include <vector>
 #include <chrono>
 #include <memory>
 
@@ -21,21 +20,17 @@ namespace fastsense::util
  */
 struct EvaluationFormular
 {
-    EvaluationFormular() : curr_time(0), 
-                           time_sum(0), 
-                           measure_count(0) {}
+    EvaluationFormular(const std::string& name) : name(name), active(true), curr(0), sum(0), count(0) {}
+    std::string name;
+    bool active;
+    unsigned long long curr;
 
-    EvaluationFormular(unsigned long long first_time) : curr_time(first_time),
-                                                        time_sum(first_time),
-                                                        measure_count(1) {}
 
-    /// Current measured runtime for the task 
-    unsigned long long curr_time;
     /// Current sum of all measured runtimes for the task
-    unsigned long long time_sum;
+    unsigned long long sum;
     /// Number of measurements for this task
-    unsigned long long measure_count;
-}; 
+    unsigned int count;
+};
 
 /**
  * @brief Encapsulates the runtime measurement for different tasks. Only one task can be measured at the same sime.
@@ -61,7 +56,6 @@ public:
     /**
      * @brief Starts a new measuremt for a task. Only one measurement can be started at a time.
      *        So it is important to call the stop function before calling this function again
-     * 
      * @param task_name Name of the task, which will be shown in the printed overview 
      *                  and is considered as identifier to find the right measurement variables
      * @throws int -1 if a measurement was already started
@@ -71,9 +65,11 @@ public:
     /**
      * @brief Stops the current measurement and updates the variables for the considered task.
      *        This function can only be called once after the start function was called
+     * @param task_name Name of the task, which will be shown in the printed overview 
+     *                  and is considered as identifier to find the right measurement variables
      * @throws int -1 if no measurement was started yet
      */
-    void stop();
+    void stop(const std::string& task_name);
 
     /**
      * @brief Creates a string from the current measurements for every considered task
@@ -89,13 +85,13 @@ private:
     /// Private constructor to ensure singleton property
     RuntimeEvaluator();
     /// Stores the Different measurement variables for every considered task with the name of the task as key 
-    std::map<std::string, EvaluationFormular> measure_table_;
+    std::vector<EvaluationFormular> forms_;
     /// Temporary variable for storing the start time of the current measurement
     std::chrono::_V2::system_clock::time_point start_;
     /// Temporary variable for storing the name of the task which is considered in the current measurement
-    std::string curr_task_name_;
+    //std::string curr_task_name_;
     /// Was a measurement already started?
-    bool started_;
+    //bool started_;
 };
 
 /**
