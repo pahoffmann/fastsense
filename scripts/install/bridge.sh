@@ -27,7 +27,7 @@ mkdir build && cd build
 cmake -DCPPZMQ_BUILD_TESTS=OFF .. && sudo make -j4 install
 cd ../..
 
-sudo apt install libhdf5-dev
+sudo apt install libhdf5-dev ros-melodic-imu-filter-madgwick 
 
 rm -rf *mq-*
 
