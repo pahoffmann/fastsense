@@ -8,6 +8,16 @@
 #include <sstream> // for output
 #include <iomanip> // for formatting
 
+#define RESET   "\033[0m"
+#define BLACK   "\033[30m"
+#define RED     "\033[31m"
+#define GREEN   "\033[32m"
+#define YELLOW  "\033[33m"
+#define BLUE    "\033[34m"
+#define MAGENTA "\033[35m"
+#define CYAN    "\033[36m"
+#define WHITE   "\033[37m"
+
 namespace fastsense::util
 {
 
@@ -122,36 +132,33 @@ std::string RuntimeEvaluator::to_string()
 {
     pause();
 
-
-    // TODO: schön machen
-
     std::stringstream ss;
-    //ss << "Time measurement (ms) (<name>: <current> | <average>)\n";
-    ss << std::setw(16) << "taskname" << " | "
-       << std::setw(8) << "sum" << " | "
-       << std::setw(8) << "count" << " | "
-       << std::setw(8) << "avg" << " | "
-       << std::setw(8) << "min" << " | "
-       << std::setw(8) << "max" << "\n"
-       << "-----------------+----------+----------+----------+----------+----------\n";
-
-    //auto total_avg_time = 0llu;
+    ss << " " << std::setw(16) << "task" << " | "
+       << std::setw(10) << "count" << " | "
+       << std::setw(10) << "last [ms]" << " | "
+       << std::setw(10) << "sum [ms]" << " | "
+       << std::setw(10) << "min [ms]" << " | "
+       << std::setw(10) << "max [ms]" << " | "
+       << std::setw(10) << "avg [ms]" << "\n-" << std::setfill('-')
+       << std::setw(16) << "" << "-+-"
+       << std::setw(10) << "" << "-+-"
+       << std::setw(10) << "" << "-+-"
+       << std::setw(10) << "" << "-+-"
+       << std::setw(10) << "" << "-+-"
+       << std::setw(10) << "" << "-+-"
+       << std::setw(10) << "" << "-\n" << std::setfill(' ');
     for (const auto& ef : forms_)
     {
-        ss << std::setw(16) << ef.name << " | "
-           << std::setw(8) << ef.sum << " | "
-           << std::setw(8) << ef.count << " | "
-           << std::setw(8) << 21 << " | "
-           << std::setw(8) << ef.min << " | "
-           << std::setw(8) << ef.max << "\n";
-
-        //ss << std::setw(10) << entry.first << ":" << std::setw(10) << avg_time << "\n";
-        //ss << '\t' << entry.first << ": " << avg_time << "\n"; 
-
-        //total_curr_time += formular.curr_time;
-        //total_avg_time += avg_time;
+        unsigned long long avg = ef.sum / ef.count;
+        // the name is displayed red if the measurement of the task is still active
+        ss << " " << (ef.active ? RED : "") << std::setw(16) << ef.name << RESET << " | "
+           << std::setw(10) << ef.count << " | "
+           << std::setw(10) << ef.last << " | "
+           << std::setw(10) << ef.sum << " | "
+           << std::setw(10) << (ef.min == std::numeric_limits<unsigned long long>::max() ? "infinity" : std::to_string(ef.min)) << " | "
+           << std::setw(10) << ef.max << " | "
+           << std::setw(10) << avg << "\n";
     }
-    //ss << '\t' << "total: " << total_avg_time;
 
     resume();
     return ss.str();
