@@ -9,6 +9,7 @@
 #include <chrono> // for time
 #include <memory> // for singleton pointer
 #include <exception> // for custom exception
+#include <limits> // for maximum value
 
 /**
  * Define this token to enable time measurements in the whole project.
@@ -31,7 +32,9 @@ struct EvaluationFormular
      * Constructor for the evaluation formular. All measurement variables are initialized.
      * @param name Name of the task
      */
-    EvaluationFormular(const std::string& name) : name(name), active(false), accumulate(0), count(0), last(0), sum(0), min(0), max(0) {}
+    EvaluationFormular(const std::string& name) :
+        name(name), active(false), accumulate(0),
+        count(0), last(0), sum(0), min(std::numeric_limits<unsigned long long>::max()), max(0) {}
     /// Name of the task that is used as an identifier for the measurement variables
     std::string name;
     /// Flag that indicates whether the task is currently being measured (i.e. it is between start and stop)
@@ -129,16 +132,16 @@ private:
     inline static std::unique_ptr<RuntimeEvaluator> instance_ = nullptr;
 
     /**
-     * Pauses the time measurements. The time that has past since the last unpause is accumulated for every currently measured task.
+     * Pauses the time measurements. The time that has past since the last resume is accumulated for every currently measured task.
      * This method is called at the beginning of every public method.
      */
     void pause();
 
     /**
-     * Unpauses the time measurement by simply storing the current time so that it can be used at the next pause.
+     * Resumes the time measurements by simply storing the current time so that it can be used at the next pause.
      * This method is called at the end of every public method.
      */
-    void unpause();
+    void resume();
     
     /// Vector of the different measurement variables for every measured task 
     std::vector<EvaluationFormular> forms_;
