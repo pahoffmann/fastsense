@@ -6,6 +6,7 @@
  */
 
 #include <util/hls_functions.h>
+#include <iostream>
 
 namespace fastsense
 {
@@ -17,8 +18,8 @@ template<typename T>
 T overflow(T val, T max)
 {
 #pragma HLS INLINE
-    return (val >= max) ? val - max : val;
-    //return val % max;
+    //return (val >= max) ? val - max : val;
+    return val % max;
 }
 
 /**
@@ -60,6 +61,7 @@ struct LocalMapHW
         {
             return data[getIndex(x, y, z)];
         }
+
         return T();
     }
 

@@ -40,10 +40,41 @@ static void check_tsdf(const fastsense::buffer::InputOutputBuffer<std::pair<int 
 {
     REQUIRE(tsdf_hw.size() == tsdf_sw.size());
 
+    size_t err_count = 0;
+    
+    // size_t lower_count = 0;
+    // size_t higher_count = 0;
+
     for(size_t i = 0; i < tsdf_hw.size(); ++i)
     {
-        REQUIRE(tsdf_hw[i].first == tsdf_sw[i].first);
+        //REQUIRE(tsdf_hw[i].first == tsdf_sw[i].first);
+    
+        if(tsdf_hw[i].first != tsdf_sw[i].first)
+        {
+            ++err_count;
+        }
+
+        // if(abs(tsdf_hw[i].second) < abs(tsdf_sw[i].second))
+        // {
+        //     ++lower_count;
+        // }
+
+        // if(abs(tsdf_hw[i].second) > abs(tsdf_sw[i].second))
+        // {
+        //     ++higher_count;
+        // }
+
+        // if(tsdf_hw[i].first != tsdf_sw[i].first)
+        // {
+        //     std::cout << tsdf_hw[i].first << " " << tsdf_hw[i].second << "  :  " << tsdf_sw[i].first << " " << tsdf_sw[i].second << std::endl;
+        // }
     }
+
+    // std::cout << "lower: " << lower_count << std::endl;
+    // std::cout << "higher: " << higher_count << std::endl;
+
+
+    REQUIRE(err_count == 0);
 }
 
 TEST_CASE("Kernel_TSDF", "[kernel][slow]")
@@ -95,6 +126,12 @@ TEST_CASE("Kernel_TSDF", "[kernel][slow]")
 
     fastsense::buffer::InputOutputBuffer<std::pair<int, int>> new_entries(q, local_map_sw.get_size().x() * local_map_sw.get_size().y() * local_map_sw.get_size().z());       
 
+    for(int i = 0; i < local_map.get_size().x() * local_map.get_size().y() * local_map.get_size().z(); ++i)
+    {
+        new_entries[i].first = 0;
+        new_entries[i].second = 0;
+    }
+
     fastsense::tsdf::krnl_tsdf_sw(kernel_points_sw.data(), 
                                   kernel_points_sw.data(),
                                   num_points,
@@ -113,7 +150,8 @@ TEST_CASE("Kernel_TSDF", "[kernel][slow]")
                                   new_entries,
                                   TAU,
                                   MAX_WEIGHT);
-                                  
+
+
     check_tsdf(local_map.getBuffer(), local_map_sw.getBuffer());
 }
 
