@@ -36,7 +36,7 @@ struct EvaluationFormular
     std::string name;
     /// Flag that indicates whether the task is currently being measured (i.e. it is between start and stop)
     bool active;
-    /// Accumulated runtime for the task. The runtime of the start and stop methods of the evaluator are not included, so that the evaluator is transparent.
+    /// Accumulated runtime for the task. The runtime of the methods of the evaluator are not included, so that the evaluator is transparent.
     unsigned long long accumulate;
 
     /// Number of measurements
@@ -70,7 +70,7 @@ struct RuntimeEvaluationException : public std::exception
  * Encapsulates the runtime measurement for different tasks.
  * Different tasks can be measured at the same time and nested. They are distinguished by names.
  * The evaluation is transparent in the runtime measurement, i.e. the runtime of the evaluator itself is not measured.
- * This is achieved by measuring the time in between every call of the functions start and stop and
+ * This is achieved by measuring the time only in between every call of the functions and
  * updating the measurements of those tasks, whose measurements are currently active, accordingly.
  * The evaluator is implemented as a singleton.
  */
@@ -112,6 +112,12 @@ public:
      */
     void stop(const std::string& task_name);
 
+    /**
+     * Returns a string that contains a table with the measurements for every measured task.
+     * @return String that contains a table with all measurements
+     */
+    std::string to_string();
+
 private:
 
     /**
@@ -121,29 +127,32 @@ private:
 
     /// Singleton instance
     inline static std::unique_ptr<RuntimeEvaluator> instance_ = nullptr;
+
+    /**
+     * Pauses the time measurements. The time that has past since the last unpause is accumulated for every currently measured task.
+     * This method is called at the beginning of every public method.
+     */
+    void pause();
+
+    /**
+     * Unpauses the time measurement by simply storing the current time so that it can be used at the next pause.
+     * This method is called at the end of every public method.
+     */
+    void unpause();
     
     /// Vector of the different measurement variables for every measured task 
     std::vector<EvaluationFormular> forms_;
 
     /// Temporary variable for storing the start time of the current measurement
     std::chrono::_V2::system_clock::time_point start_;
-
-    /**
-     * Returns a string that contains a table with the measurements for every measured task.
-     * @return String that contains a table with all measurements
-     */
-    std::string to_string() const;
-
-    /// Friend declaration of the << operator method
-    friend std::ostream& operator<<(std::ostream& os, const RuntimeEvaluator& evaluator);
 };
 
 /**
  * Puts a by a given evaluator (using its to_string method) into a given output stream.
  * @param os Output stream in which the evaluator is put
- * @param evaluator Runtime Evaluator that is put into the stream
+ * @param evaluator Runtime evaluator that is put into the stream
  * @return Output stream with the evaluator
  */
-std::ostream& operator<<(std::ostream& os, const RuntimeEvaluator& evaluator);
+std::ostream& operator<<(std::ostream& os, RuntimeEvaluator& evaluator);
 
 } // namespace fastsense::util

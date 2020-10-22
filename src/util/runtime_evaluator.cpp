@@ -28,9 +28,8 @@ RuntimeEvaluator::RuntimeEvaluator() : forms_()
     start_ = high_resolution_clock::now();
 }
 
-void RuntimeEvaluator::start(const std::string& task_name)
+void RuntimeEvaluator::pause()
 {
-    // pause
     auto stop = high_resolution_clock::now();
     auto duration = duration_cast<microseconds>(stop - start_);
 
@@ -42,6 +41,16 @@ void RuntimeEvaluator::start(const std::string& task_name)
             forms_[i].accumulate += duration.count();
         }
     }
+}
+
+void RuntimeEvaluator::unpause()
+{
+    start_ = high_resolution_clock::now();
+}
+
+void RuntimeEvaluator::start(const std::string& task_name)
+{
+    pause();
 
     // get or create task that is started
     int index = -1;
@@ -66,26 +75,14 @@ void RuntimeEvaluator::start(const std::string& task_name)
     forms_[index].active = true;
     forms_[index].accumulate = 0;
 
-    // unpause
-    start_ = high_resolution_clock::now();
+    unpause();
 }
 
 void RuntimeEvaluator::stop(const std::string& task_name)
 {
-    // pause
-    auto stop = high_resolution_clock::now();
-    auto duration = duration_cast<microseconds>(stop - start_);
+    pause();
 
-    // add new interval to all active measurements
-    for (uint i = 0; i < forms_.size(); i++)
-    {
-        if (forms_[i].active)
-        {
-            forms_[i].accumulate += duration.count();
-        }
-    }
-
-    // get task that is started
+    // get task that is stopped
     int index = -1;
     for (uint i = 0; i < forms_.size(); i++)
     {
@@ -108,12 +105,14 @@ void RuntimeEvaluator::stop(const std::string& task_name)
     forms_[index].sum += forms_[index].accumulate;
     forms_[index].count++;
 
-    // unpause
-    start_ = high_resolution_clock::now();
+    unpause();
 }
 
-std::string RuntimeEvaluator::to_string() const
+std::string RuntimeEvaluator::to_string()
 {
+    pause();
+
+
     // TODO: schön machen und min / max
 
     std::stringstream ss;
@@ -142,11 +141,13 @@ std::string RuntimeEvaluator::to_string() const
         //total_curr_time += formular.curr_time;
         //total_avg_time += avg_time;
     }
-    //ss << '\t' << "total: " << total_avg_time; 
+    //ss << '\t' << "total: " << total_avg_time;
+
+    unpause();
     return ss.str();
 }
 
-std::ostream& operator<<(std::ostream& os, const RuntimeEvaluator& evaluator)
+std::ostream& operator<<(std::ostream& os, RuntimeEvaluator& evaluator)
 {
     os << evaluator.to_string();
     return os;
