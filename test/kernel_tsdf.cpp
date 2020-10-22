@@ -28,16 +28,7 @@ using fastsense::util::PCDFile;
 
 namespace fastsense::tsdf
 {
-
-//static const int DATA_SIZE = 4096;
-
 constexpr unsigned int SCALE = 1000;
-
-constexpr float MAX_OFFSET = 100; // TODO: this is too much
-
-// Test Rotation
-constexpr float RY = 5 * (M_PI / 180); //radiants
-
 constexpr float TAU = 1 * SCALE;
 constexpr float MAX_WEIGHT = 10 * WEIGHT_RESOLUTION;
 
@@ -55,14 +46,9 @@ static void check_tsdf(const fastsense::buffer::InputOutputBuffer<std::pair<int 
     }
 }
 
-static const std::string error_message =
-    "Error: Result mismatch:\n"
-    "i = %d CPU result = %d Device result = %d\n";
-
 TEST_CASE("Kernel_TSDF", "[kernel][slow]")
 {
     std::cout << "Testing 'Kernel_TSDF'" << std::endl;
-
 
     fastsense::CommandQueuePtr q = fastsense::hw::FPGAManager::create_command_queue();
 
@@ -74,10 +60,7 @@ TEST_CASE("Kernel_TSDF", "[kernel][slow]")
 
     auto count = 0u;
 
-    ScanPoints_t scan_points(num_points);
-
     fastsense::buffer::InputBuffer<PointHW> kernel_points(q, num_points);
-    //PointHW kernel_points_sw[num_points];
 
     std::vector<PointHW> kernel_points_sw(num_points);
 
@@ -85,13 +68,9 @@ TEST_CASE("Kernel_TSDF", "[kernel][slow]")
     {
         for(const auto& point : ring)
         {
-            scan_points[count].x() = point.x() * SCALE;
-            scan_points[count].y() = point.y() * SCALE;
-            scan_points[count].z() = point.z() * SCALE;
-
-            kernel_points[count].x = scan_points[count].x();
-            kernel_points[count].y = scan_points[count].y();
-            kernel_points[count].z = scan_points[count].z();
+            kernel_points[count].x = point.x() * SCALE;;
+            kernel_points[count].y = point.y() * SCALE;;
+            kernel_points[count].z = point.z() * SCALE;;
 
             kernel_points_sw[count].x = kernel_points[count].x;
             kernel_points_sw[count].y = kernel_points[count].y;
