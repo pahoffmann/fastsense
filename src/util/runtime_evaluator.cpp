@@ -118,6 +118,11 @@ void RuntimeEvaluator::stop(const std::string& task_name)
     resume();
 }
 
+const std::vector<EvaluationFormular> RuntimeEvaluator::get_forms()
+{
+    return forms_;
+}
+
 std::string RuntimeEvaluator::to_string()
 {
     pause();

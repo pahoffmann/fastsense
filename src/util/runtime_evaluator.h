@@ -116,6 +116,12 @@ public:
     void stop(const std::string& task_name);
 
     /**
+     * Getter for the vector of the different measurement variables for every measured task
+     * @return Vector of the measurement variables
+     */
+    const std::vector<EvaluationFormular> get_forms();
+
+    /**
      * Returns a string that contains a table with the measurements for every measured task.
      * @return String that contains a table with all measurements
      */
@@ -143,7 +149,7 @@ private:
      */
     void resume();
     
-    /// Vector of the different measurement variables for every measured task 
+    /// Vector of the different measurement variables for every measured task
     std::vector<EvaluationFormular> forms_;
 
     /// Temporary variable for storing the start time of the current measurement
