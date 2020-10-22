@@ -18,6 +18,10 @@ constexpr int SPLIT_FACTOR = 2;
 namespace fastsense::tsdf
 {
 
+size_t overwrite_count = 0;
+
+
+
 void read_points(PointHW* scanPoints,
                      int numPoints,
                      int tau,
@@ -143,6 +147,11 @@ void read_points(PointHW* scanPoints,
                 
                 if (entry.second == 0 || hls_abs(tsdf_value) < hls_abs(entry.first))
                 {
+                    if(entry.second != 0)
+                    {
+                        ++overwrite_count;
+                    }
+
                     new_entry.first = tsdf_value;
                     new_entry.second = weight;
                 }
@@ -251,6 +260,7 @@ void read_points(PointHW* scanPoints,
                     point_fifo, distance_fifo, distance_tau_fifo);
     }
 
+
     void sync_loop(
         buffer::InputOutputBuffer<std::pair<int, int>>& mapData,
         int start,
@@ -264,6 +274,11 @@ void read_points(PointHW* scanPoints,
             std::pair<int, int> new_entry = new_entries[index];
 
             int new_weight = map_entry.second + new_entry.second;
+
+            if(!new_weight)
+            {
+                continue;
+            }
 
             map_entry.first = (map_entry.first * map_entry.second + new_entry.first * new_entry.second) / new_weight;
 
@@ -354,6 +369,8 @@ void read_points(PointHW* scanPoints,
                     new_entries0,
                     new_entries1,
                     max_weight);
+
+        //std::cout << overwrite_count << std::endl;
     }
 
 } // namespace fastsense::tsdf

@@ -280,16 +280,19 @@ extern "C"
 
             int new_weight = map_entry.second + new_entry.second;
 
-            map_entry.first = (map_entry.first * map_entry.second + new_entry.first * new_entry.second) / new_weight;
-
-            if (new_weight > max_weight)
+            if(new_weight)
             {
-                new_weight = max_weight;
+                map_entry.first = (map_entry.first * map_entry.second + new_entry.first * new_entry.second) / new_weight;
+
+                if (new_weight > max_weight)
+                {
+                    new_weight = max_weight;
+                }
+
+                map_entry.second = new_weight;
+
+                mapData[index] = map_entry;
             }
-
-            map_entry.second = new_weight;
-
-            mapData[index] = map_entry;
         }
     }
 
