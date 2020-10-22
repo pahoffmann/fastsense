@@ -8,16 +8,6 @@
 #include <sstream> // for output
 #include <iomanip> // for formatting
 
-#define RESET   "\033[0m"
-#define BLACK   "\033[30m"
-#define RED     "\033[31m"
-#define GREEN   "\033[32m"
-#define YELLOW  "\033[33m"
-#define BLUE    "\033[34m"
-#define MAGENTA "\033[35m"
-#define CYAN    "\033[36m"
-#define WHITE   "\033[37m"
-
 namespace fastsense::util
 {
 
@@ -151,7 +141,7 @@ std::string RuntimeEvaluator::to_string()
     {
         unsigned long long avg = ef.sum / ef.count;
         // the name is displayed red if the measurement of the task is still active
-        ss << " " << (ef.active ? RED : "") << std::setw(16) << ef.name << RESET << " | "
+        ss << " " << (ef.active ? "\033[31m" /* red */ : "") << std::setw(16) << ef.name << "\033[0m" /* reset */ << " | "
            << std::setw(10) << ef.count << " | "
            << std::setw(10) << ef.last << " | "
            << std::setw(10) << ef.sum << " | "
