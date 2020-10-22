@@ -4,8 +4,9 @@
 
 #include "catch2_config.h"
 #include "util/runtime_evaluator.h"
-#include <chrono>
-#include <thread>
+
+#include <thread> // for sleeping
+#include <iostream> // for output
 
 using namespace fastsense::util;
 
@@ -13,12 +14,8 @@ TEST_CASE("Time", "[Time]")
 {
     std::cout << "Testing 'Time'" << std::endl;
 
-    int sum = 0;
-    
     for (int i = 1; i <= 100; i++)
     {
-        sum += i;
-
         #ifdef TIME_MEASUREMENT
         auto& re = RuntimeEvaluator::get_instance();
         re.start("test1");
@@ -26,7 +23,9 @@ TEST_CASE("Time", "[Time]")
 
         std::this_thread::sleep_for(std::chrono::milliseconds(21));
 
-       
+        #ifdef TIME_MEASUREMENT
+        re.stop("test1");
+        #endif
 
         #ifdef TIME_MEASUREMENT
         re.start("test2");
@@ -36,10 +35,6 @@ TEST_CASE("Time", "[Time]")
 
         #ifdef TIME_MEASUREMENT
         re.stop("test2");
-        #endif
-
-         #ifdef TIME_MEASUREMENT
-        re.stop("test1");
         #endif
     }
 

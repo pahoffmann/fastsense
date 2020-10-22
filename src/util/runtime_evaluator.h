@@ -1,51 +1,83 @@
 #pragma once
 
 /**
- * @author Marc Eisoldt (meisoldt)
+ * @author Marc Eisoldt
  * @author Steffen Hinderink
  */
 
-#include <iostream>
-#include <vector>
-#include <chrono>
-#include <memory>
+#include <vector> // for the vector of measurement variables
+#include <chrono> // for time
+#include <memory> // for singleton pointer
+#include <exception> // for custom exception
 
+/**
+ * Define this token to enable time measurements in the whole project.
+ * Every measurement must be enclosed in
+ * #ifdef TIME_MEASUREMENT
+ * ...
+ * #endif
+ */
 #define TIME_MEASUREMENT
 
 namespace fastsense::util
 {
 
 /**
- * @brief Helper Struct for managing the different measurement variables for every considered task
+ * Helper struct for managing the different measurement variables for every measured task.
  */
 struct EvaluationFormular
 {
-    EvaluationFormular(const std::string& name) : name(name), active(true), curr(0), sum(0), count(0) {}
+    /**
+     * Constructor for the evaluation formular. All measurement variables are initialized.
+     * @param name Name of the task
+     */
+    EvaluationFormular(const std::string& name) : name(name), active(false), accumulate(0), count(0), last(0), sum(0), min(0), max(0) {}
+    /// Name of the task that is used as an identifier for the measurement variables
     std::string name;
+    /// Flag that indicates whether the task is currently being measured (i.e. it is between start and stop)
     bool active;
-    unsigned long long curr;
+    /// Accumulated runtime for the task. The runtime of the start and stop methods of the evaluator are not included, so that the evaluator is transparent.
+    unsigned long long accumulate;
 
-
-    /// Current sum of all measured runtimes for the task
-    unsigned long long sum;
-    /// Number of measurements for this task
+    /// Number of measurements
     unsigned int count;
+    /// Last measured runtime
+    unsigned long long last;
+    /// Sum of all measured runtimes
+    unsigned long long sum;
+    /// Minimum of all measured runtimes
+    unsigned long long min;
+    /// Maximum of all measured runtimes
+    unsigned long long max;
 };
 
 /**
- * @brief Encapsulates the runtime measurement for different tasks. Only one task can be measured at the same sime.
- * It is implemented as a singleton.
+ * Custom exception that is thrown when the protocol of calling start and stop is not followed.
+ */
+struct RuntimeEvaluationException : public std::exception
+{
+    /**
+     * Returns the message, that gives information over what caused the exception to occur.
+     * @return Exception message
+     */
+	const char* what() const throw()
+    {
+    	return "Runtime evaluation exception:\nStart was called for an already started measurement or stop was called before calling start!";
+    }
+};
+
+/**
+ * Encapsulates the runtime measurement for different tasks.
+ * Different tasks can be measured at the same time and nested. They are distinguished by names.
+ * The evaluation is transparent in the runtime measurement, i.e. the runtime of the evaluator itself is not measured.
+ * This is achieved by measuring the time in between every call of the functions start and stop and
+ * updating the measurements of those tasks, whose measurements are currently active, accordingly.
+ * The evaluator is implemented as a singleton.
  */
 class RuntimeEvaluator
 {
 
 public:
-
-    /**
-     * @brief Don't allow copies of the instance to ensure singleton property
-     */
-    RuntimeEvaluator& operator=(RuntimeEvaluator&) = delete;
-    RuntimeEvaluator(RuntimeEvaluator&) = delete;
 
     /**
      * Returns the singleton instance. Creates a new one the first time.
@@ -54,48 +86,63 @@ public:
     static RuntimeEvaluator& get_instance();
 
     /**
-     * @brief Starts a new measuremt for a task. Only one measurement can be started at a time.
-     *        So it is important to call the stop function before calling this function again
+     * Don't allow copies of the instance by assignment operator to ensure singleton property.
+     */
+    RuntimeEvaluator& operator=(RuntimeEvaluator&) = delete;
+
+    /**
+     * Don't allow copies of the instance by copy constructor to ensure singleton property.
+     */
+    RuntimeEvaluator(RuntimeEvaluator&) = delete;
+
+    /**
+     * Starts a new measurent for a task.
      * @param task_name Name of the task, which will be shown in the printed overview 
-     *                  and is considered as identifier to find the right measurement variables
-     * @throws int -1 if a measurement was already started
+     *                  and is used as an identifier to find the right measurement variables
+     * @throws RuntimeEvaluationException if a measurement for that task was already started
      */
     void start(const std::string& task_name);
     
     /**
-     * @brief Stops the current measurement and updates the variables for the considered task.
-     *        This function can only be called once after the start function was called
+     * Stops the measurement and updates the variables for a task.
+     * This function has to be called after the start function was called for that task.
      * @param task_name Name of the task, which will be shown in the printed overview 
-     *                  and is considered as identifier to find the right measurement variables
-     * @throws int -1 if no measurement was started yet
+     *                  and is used as an identifier to find the right measurement variables
+     * @throws RuntimeEvaluationException if the measurement for that task has not been started yet
      */
     void stop(const std::string& task_name);
 
-    /**
-     * @brief Creates a string from the current measurements for every considered task
-     * 
-     * @return std::string String that represents a measurement overview 
-     */
-    std::string to_string() const;
-
 private:
+
+    /**
+     * Private constructor to ensure singleton property.
+     */
+    RuntimeEvaluator();
 
     /// Singleton instance
     inline static std::unique_ptr<RuntimeEvaluator> instance_ = nullptr;
-    /// Private constructor to ensure singleton property
-    RuntimeEvaluator();
-    /// Stores the Different measurement variables for every considered task with the name of the task as key 
+    
+    /// Vector of the different measurement variables for every measured task 
     std::vector<EvaluationFormular> forms_;
+
     /// Temporary variable for storing the start time of the current measurement
     std::chrono::_V2::system_clock::time_point start_;
-    /// Temporary variable for storing the name of the task which is considered in the current measurement
-    //std::string curr_task_name_;
-    /// Was a measurement already started?
-    //bool started_;
+
+    /**
+     * Returns a string that contains a table with the measurements for every measured task.
+     * @return String that contains a table with all measurements
+     */
+    std::string to_string() const;
+
+    /// Friend declaration of the << operator method
+    friend std::ostream& operator<<(std::ostream& os, const RuntimeEvaluator& evaluator);
 };
 
 /**
- * @brief Puts the current measured variables of every task considerd by a given evaluator into a given stream  
+ * Puts a by a given evaluator (using its to_string method) into a given output stream.
+ * @param os Output stream in which the evaluator is put
+ * @param evaluator Runtime Evaluator that is put into the stream
+ * @return Output stream with the evaluator
  */
 std::ostream& operator<<(std::ostream& os, const RuntimeEvaluator& evaluator);
 

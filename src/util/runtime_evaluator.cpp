@@ -5,8 +5,8 @@
 
 #include "util/runtime_evaluator.h"
 
-#include <sstream>
-#include <iomanip>
+#include <sstream> // for output
+#include <iomanip> // for formatting
 
 namespace fastsense::util
 {
@@ -39,7 +39,7 @@ void RuntimeEvaluator::start(const std::string& task_name)
     {
         if (forms_[i].active)
         {
-            forms_[i].curr += duration.count();
+            forms_[i].accumulate += duration.count();
         }
     }
 
@@ -51,7 +51,7 @@ void RuntimeEvaluator::start(const std::string& task_name)
         {
             if (forms_[i].active)
             {
-                throw -1;
+                throw RuntimeEvaluationException();
             }
             index = i;
         }
@@ -64,7 +64,7 @@ void RuntimeEvaluator::start(const std::string& task_name)
 
     // start
     forms_[index].active = true;
-    forms_[index].curr = 0;
+    forms_[index].accumulate = 0;
 
     // unpause
     start_ = high_resolution_clock::now();
@@ -81,7 +81,7 @@ void RuntimeEvaluator::stop(const std::string& task_name)
     {
         if (forms_[i].active)
         {
-            forms_[i].curr += duration.count();
+            forms_[i].accumulate += duration.count();
         }
     }
 
@@ -93,19 +93,19 @@ void RuntimeEvaluator::stop(const std::string& task_name)
         {
             if (!forms_[i].active)
             {
-                throw -1;
+                throw RuntimeEvaluationException();
             }
             index = i;
         }
     }
     if (index == -1)
     {
-        throw -1;
+        throw RuntimeEvaluationException();
     }
 
     // stop
     forms_[index].active = false;
-    forms_[index].sum += forms_[index].curr;
+    forms_[index].sum += forms_[index].accumulate;
     forms_[index].count++;
 
     // unpause
@@ -114,6 +114,8 @@ void RuntimeEvaluator::stop(const std::string& task_name)
 
 std::string RuntimeEvaluator::to_string() const
 {
+    // TODO: schön machen und min / max
+
     std::stringstream ss;
     //ss << "Time measurement (ms) (<name>: <current> | <average>)\n";
     ss << std::setw(16) << "taskname" << " | "
@@ -132,7 +134,7 @@ std::string RuntimeEvaluator::to_string() const
            << std::setw(8) << ef.count << " | "
            << std::setw(8) << 0 << " | "
            << std::setw(8) << ef.active << " | "
-           << std::setw(8) << ef.curr << "\n";
+           << std::setw(8) << ef.accumulate << "\n";
 
         //ss << std::setw(10) << entry.first << ":" << std::setw(10) << avg_time << "\n";
         //ss << '\t' << entry.first << ": " << avg_time << "\n"; 
