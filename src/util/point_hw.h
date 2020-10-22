@@ -12,9 +12,9 @@
 
 struct PointHW
 {
-    int x;
-int y;
-    int z;
+    int x = 0;
+    int y = 0;
+    int z = 0;
     int dummy; //128 bit padding
 
     PointHW()
