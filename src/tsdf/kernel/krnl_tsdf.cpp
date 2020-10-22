@@ -147,7 +147,7 @@ extern "C"
 #pragma HLS dependence variable=new_entries inter false
                 IntTuple entry = map.get(new_entries, current_cell.x, current_cell.y, interpolate_z);
                 IntTuple new_entry;
-                
+
                 if (entry.second == 0 || hls_abs(tsdf_value) < hls_abs(entry.first))
                 {
                     new_entry.first = tsdf_value;
@@ -280,16 +280,19 @@ extern "C"
 
             int new_weight = map_entry.second + new_entry.second;
 
-            map_entry.first = (map_entry.first * map_entry.second + new_entry.first * new_entry.second) / new_weight;
-
-            if (new_weight > max_weight)
+            if (new_weight)
             {
-                new_weight = max_weight;
+                map_entry.first = (map_entry.first * map_entry.second + new_entry.first * new_entry.second) / new_weight;
+
+                if (new_weight > max_weight)
+                {
+                    new_weight = max_weight;
+                }
+
+                map_entry.second = new_weight;
+
+                mapData[index] = map_entry;
             }
-
-            map_entry.second = new_weight;
-
-            mapData[index] = map_entry;
         }
     }
 
@@ -348,12 +351,12 @@ extern "C"
                    int tau,
                    int max_weight)
     {
-#pragma HLS INTERFACE m_axi port=scanPoints0  offset=slave bundle=scan0mem  latency=22
-#pragma HLS INTERFACE m_axi port=scanPoints1  offset=slave bundle=scan1mem  latency=22
-#pragma HLS INTERFACE m_axi port=mapData0     offset=slave bundle=map0mem   latency=22
-#pragma HLS INTERFACE m_axi port=mapData1     offset=slave bundle=map1mem   latency=22
-#pragma HLS INTERFACE m_axi port=new_entries0 offset=slave bundle=entry0mem latency=22
-#pragma HLS INTERFACE m_axi port=new_entries1 offset=slave bundle=entry1mem latency=22
+#pragma HLS INTERFACE m_axi port=scanPoints0  offset=slave bundle=scan0mem  latency=22 depth=5760
+#pragma HLS INTERFACE m_axi port=scanPoints1  offset=slave bundle=scan1mem  latency=22 depth=5760
+#pragma HLS INTERFACE m_axi port=mapData0     offset=slave bundle=map0mem   latency=22 depth=17640
+#pragma HLS INTERFACE m_axi port=mapData1     offset=slave bundle=map1mem   latency=22 depth=17640
+#pragma HLS INTERFACE m_axi port=new_entries0 offset=slave bundle=entry0mem latency=22 depth=17640
+#pragma HLS INTERFACE m_axi port=new_entries1 offset=slave bundle=entry1mem latency=22 depth=17640
 
         int step = numPoints / SPLIT_FACTOR + 1;
         int last_step = numPoints - (SPLIT_FACTOR - 1) * step;
@@ -371,7 +374,7 @@ extern "C"
 
         int total_size = sizeX * sizeY * sizeZ;
         int sync_step = total_size / SPLIT_FACTOR + 1;
-        
+
         sync_looper(mapData0,
                     mapData1,
                     sync_step,
