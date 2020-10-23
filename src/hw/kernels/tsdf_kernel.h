@@ -27,7 +27,9 @@ namespace fastsense::kernels
 class TSDFKernel : public BaseKernel
 {
     std::unique_ptr<buffer::InputOutputBuffer<IntTuple>> new_entries;
+
 public:
+
     TSDFKernel(const CommandQueuePtr& queue)
         : BaseKernel{queue, "krnl_tsdf"}
     {
@@ -39,6 +41,12 @@ public:
     void run(map::LocalMap& map, const buffer::InputBuffer<PointHW>& scan_points, int tau, int max_weight)
     {
         new_entries = std::make_unique<buffer::InputOutputBuffer<IntTuple>>(cmd_q_, map.get_size().x() * map.get_size().y() * map.get_size().z());
+
+        for(int i = 0; i < map.get_size().x() * map.get_size().y() * map.get_size().z(); ++i)
+        {
+            (*new_entries)[i].first = 0;
+            (*new_entries)[i].second = 0;
+        }
 
         constexpr int SPLIT_FACTOR = 2;
 
@@ -52,6 +60,7 @@ public:
         {
             setArg(map.getBuffer().getBuffer());
         }
+
         setArg(map.get_size().x());
         setArg(map.get_size().y());
         setArg(map.get_size().z());

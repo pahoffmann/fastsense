@@ -157,7 +157,7 @@ public:
      * It can be used with hardware kernels.
      * @return data buffer
      */
-    const buffer::InputOutputBuffer<std::pair<int, int>>& getBuffer() const;
+    buffer::InputOutputBuffer<std::pair<int, int>>& getBuffer();
 
     LocalMapHW get_hardware_representation() const;
 

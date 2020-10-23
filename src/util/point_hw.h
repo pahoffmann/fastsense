@@ -4,6 +4,7 @@
  * @file point_hw.h
  * @author Marcel Flottmann
  * @author Malte Hillmann
+ * @author Marc Eisoldt
  */
 
 #include "hls_functions.h"
@@ -12,12 +13,12 @@
 
 struct PointHW
 {
-    int x = 0;
-    int y = 0;
-    int z = 0;
+    int x;
+    int y;
+    int z;
     int dummy; //128 bit padding
 
-    PointHW()
+    PointHW() : x(0), y(0), z(0)
     {}
 
     PointHW(int x, int y, int z)

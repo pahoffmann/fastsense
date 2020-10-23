@@ -188,6 +188,20 @@ TEST_CASE("Kernel", "[kernel][slow]")
 
     //fastsense::tsdf::update_tsdf(scan_points, Vector3i::Zero(), local_map, TAU, MAX_WEIGHT);
 
+    SECTION("Test Registration No Transform")
+    {
+        std::cout << "    Section 'Test Registration No Transform'" << std::endl;
+
+        //copy from scanpoints to  inputbuffer
+        auto buffer_ptr = scan_points_to_input_buffer(points_pretransformed_trans, q);
+        auto& buffer = *buffer_ptr;
+        auto result_matrix = reg.register_cloud(local_map, buffer, q);
+
+        reg.transform_point_cloud(points_pretransformed_trans, result_matrix);
+        check_computed_transform(points_pretransformed_trans, scan_points);
+
+    }
+
     SECTION("Test Registration Translation")
     {
         std::cout << "    Section 'Test Registration Translation'" << std::endl;
