@@ -1,0 +1,181 @@
+\documentclass{beamer}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage{amsmath}
+\usepackage{tikz}
+\usepackage{xcolor} % Farben
+\usepackage{fancyvrb} % Code
+\usepackage[absolute,overlay]{textpos} % Bilder irgendwohin
+\usepackage{bm} % Fett in Mathemodus
+\usepackage{siunitx} % Einheiten
+\usepackage{multicol} % Equations nebeneinander
+\usepackage{algorithm2e} % Algorithmen
+\usepackage{array} % Tabellenspalten zentriert
+\usepackage{hyperref} % Links
+
+\usecolortheme{seahorse}
+\definecolor{hl}{rgb}{0.4, 0.4, 0.4}
+\setbeamercolor{normal text}{fg=black}
+\setbeamercolor{structure}{fg=black}
+\setbeamercolor{footline}{fg=black}
+\setbeamercolor{frametitle}{fg=white,bg=hl}
+\setbeamertemplate{itemize items}[circle]
+\beamertemplatenavigationsymbolsempty
+\addtobeamertemplate{navigation symbols}{}{
+    \usebeamerfont{footline}
+    \usebeamercolor[fg]{footline}
+    {\footnotesize \insertframenumber\\\vspace{0.15cm}}
+}
+\setbeamertemplate{title page}{
+    \begin{center}
+    Projektgruppe FastSense\\\vspace{1cm}
+    \begin{LARGE}
+    Meilenstein 2\\\vspace{0.5cm}   
+    TSDF SLAM mit FPGA
+    \end{LARGE}\\\vspace{1cm}
+    17. Juni 2020
+    \end{center}
+}
+
+\begin{document}
+
+{\setbeamertemplate{navigation symbols}{}
+\begin{frame}
+\titlepage
+\end{frame}}
+
+\begin{frame}
+\frametitle{Inhalt}
+\tableofcontents
+\end{frame}
+
+\section{Recap}
+\begin{frame}{}
+\begin{center}
+\begin{tikzpicture}
+\draw[line width=0.5mm, hl] (0, 0) rectangle (8, 2);
+\node at (4, 1) {\begin{LARGE}\secname\end{LARGE}};
+\end{tikzpicture}
+\end{center}
+\end{frame}
+
+\subsection{Prototyping}
+\begin{frame}{\subsecname}
+
+\end{frame}
+
+\subsection{Ziele für MS2}
+\begin{frame}{\subsecname}
+
+\end{frame}
+
+\section{Hauptspeise}
+\begin{frame}{}
+\begin{center}
+\begin{tikzpicture}
+\draw[line width=0.5mm, hl] (0, 0) rectangle (8, 2);
+\node at (4, 1) {\begin{LARGE}\secname\end{LARGE}};
+\end{tikzpicture}
+\end{center}
+\end{frame}
+
+\subsection{Algorithmus}
+\begin{frame}{\subsecname}
+
+\end{frame}
+
+\subsection{Hardware Implementierung}
+\begin{frame}{\subsecname}
+
+\end{frame}
+
+\subsection{FastSense Prototyp}
+\begin{frame}{\subsecname}
+\begin{center}
+\begin{tikzpicture}
+\draw (0, 0) rectangle (6, 3);
+\draw (1, 3) -- (2, 5) -- (4, 5) -- (5, 3);
+\draw (2.5, 0) -- (2.5, 0.5) -- (3.5, 0.5) -- (3.5, 0);
+\node at (3, 0.25) {IMU};
+\draw (2, 0.75) rectangle +(2, 1);
+\node at (3, 1.25) {Trenz};
+\draw (2, 3) -- (2, 3.5) -- (4, 3.5) -- (4, 3);
+\node at (3, 3.25) {Router};
+\draw (2.5, 5) -- (2.5, 6) -- (3.5, 6) -- (3.5, 5);
+\node [above] at (3, 6) {Velodyne};
+\end{tikzpicture}
+\end{center}
+\end{frame}
+
+\begin{frame}{\subsecname}
+\begin{center}
+\begin{tikzpicture}[scale=0.5]
+\draw (0, 0) rectangle (6, 3);
+\draw (1, 3) -- (2, 5) -- (4, 5) -- (5, 3);
+\draw (2.5, 0) -- (2.5, 0.5) -- (3.5, 0.5) -- (3.5, 0);
+\node [below] at (3, 0) {IMU};
+\draw (2, 0.75) rectangle +(2, 1);
+\node at (3, 1.25) {Trenz};
+\draw (2, 3) -- (2, 3.5) -- (4, 3.5) -- (4, 3);
+\node [above] at (3, 3.5) {Router};
+\draw (2.5, 5) -- (2.5, 6) -- (3.5, 6) -- (3.5, 5);
+\node [above] at (3, 6) {Velodyne};
+\draw (0, 0) -- (0, -6) -- (6, -6) -- (6, 0);
+\draw (0, -4) -- (6, -4);
+\draw (2, -4) -- (2, -3.5) -- (4, -3.5) -- (4, -4);
+\node [above] at (3, -3.5) {NUC};
+\draw (2.5, -6) -- (2.5, -5.5) -- (3.5, -5.5) -- (3.5, -6);
+\node [above] at (3, -5.5) {IMU};
+\draw [fill=white] (1.25, -6) circle (1);
+\draw [fill=white] (4.75, -6) circle (1);
+\end{tikzpicture}
+\end{center}
+\end{frame}
+
+\subsection{Kommunikation}
+\begin{frame}{\subsecname}
+
+\end{frame}
+
+\section{Evaluation}
+\begin{frame}{}
+\begin{center}
+\begin{tikzpicture}
+\draw[line width=0.5mm, hl] (0, 0) rectangle (8, 2);
+\node at (4, 1) {\begin{LARGE}\secname\end{LARGE}};
+\end{tikzpicture}
+\end{center}
+\end{frame}
+
+\subsection{Strom}
+\begin{frame}{\subsecname}
+
+\end{frame}
+
+\subsection{Zeit}
+\begin{frame}{\subsecname}
+
+\end{frame}
+
+\section{Fazit}
+\begin{frame}{}
+\begin{center}
+\begin{tikzpicture}
+\draw[line width=0.5mm, hl] (0, 0) rectangle (8, 2);
+\node at (4, 1) {\begin{LARGE}\secname\end{LARGE}};
+\end{tikzpicture}
+\end{center}
+\end{frame}
+
+\subsection{Bisherige Verbesserungen}
+\begin{frame}{\subsecname}
+
+\end{frame}
+
+\subsection{Verbesserungspotenzial}
+\begin{frame}{\subsecname}
+
+\end{frame}
+
+\end{document}
