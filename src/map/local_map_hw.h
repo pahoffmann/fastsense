@@ -17,8 +17,8 @@ template<typename T>
 T overflow(T val, T max)
 {
 #pragma HLS INLINE
-    return (val >= max) ? val - max : val;
-    //return val % max;
+    //return (val >= max) ? val - max : val;
+    return val % max;
 }
 
 /**
@@ -49,7 +49,8 @@ struct LocalMapHW
         int x_offset = overflow(x - posX + offsetX + sizeX, sizeX) * sizeY * sizeZ;
         int y_offset = overflow(y - posY + offsetY + sizeY, sizeY) * sizeZ;
         int z_offset = overflow(z - posZ + offsetZ + sizeZ, sizeZ);
-        return x_offset  + y_offset + z_offset;
+        int index = x_offset  + y_offset + z_offset;
+        return index;
     }
 
     template<typename T>

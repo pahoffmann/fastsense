@@ -9,6 +9,8 @@
 #include <util/point_hw.h>
 
 #include <iostream>
+#include <fstream>
+#include <chrono>
 
 #include <hls_stream.h>
 
@@ -402,65 +404,96 @@ extern "C"
                    int max_weight);
 }
 
+constexpr int SIZE_XY = 41;
+constexpr int SIZE_Z = 11;
+
 int main()
 {
     PointHW* points = new PointHW[360];
     for (int i = 0; i < 360; i++)
     {
-        float r = 1000;
+        float r = 750;
         points[i].x = r * sin(i * M_PI / 180.);
         points[i].y = r * cos(i * M_PI / 180.);
         points[i].z = 0;
     }
 
-    IntTuple* mapData = new IntTuple[21 * 21 * 5];
-    IntTuple* newEntries = new IntTuple[21 * 21 * 5];
+    IntTuple* mapData0 = new IntTuple[SIZE_XY * SIZE_XY * SIZE_Z];
+    IntTuple* newEntries0 = new IntTuple[SIZE_XY * SIZE_XY * SIZE_Z];
+    IntTuple* mapData1 = new IntTuple[SIZE_XY * SIZE_XY * SIZE_Z];
+    IntTuple* newEntries1 = new IntTuple[SIZE_XY * SIZE_XY * SIZE_Z];
 
-    IntTuple* mapData_test = new IntTuple[21 * 21 * 5];
-    IntTuple* newEntries_test = new IntTuple[21 * 21 * 5];
+    IntTuple* mapData_test0 = new IntTuple[SIZE_XY * SIZE_XY * SIZE_Z];
+    IntTuple* newEntries_test0 = new IntTuple[SIZE_XY * SIZE_XY * SIZE_Z];
+    IntTuple* mapData_test1 = new IntTuple[SIZE_XY * SIZE_XY * SIZE_Z];
+    IntTuple* newEntries_test1 = new IntTuple[SIZE_XY * SIZE_XY * SIZE_Z];
 
-    for (int i = 0; i < 21 * 21 * 5; i++)
+    for (int i = 0; i < SIZE_XY * SIZE_XY * SIZE_Z; i++)
     {
-        mapData[i] = std::make_pair(300 / 64, 0);
-        newEntries[i] = std::make_pair(300 / 64, 0);
-        mapData_test[i] = std::make_pair(300 / 64, 0);
-        newEntries_test[i] = std::make_pair(300 / 64, 0);
+        mapData0[i] = std::make_pair(300 / 64, 0);
+        newEntries0[i] = std::make_pair(300 / 64, 0);
+        mapData_test0[i] = std::make_pair(300 / 64, 0);
+        newEntries_test0[i] = std::make_pair(300 / 64, 0);
+        mapData1[i] = std::make_pair(300 / 64, 0);
+        newEntries1[i] = std::make_pair(300 / 64, 0);
+        mapData_test1[i] = std::make_pair(300 / 64, 0);
+        newEntries_test1[i] = std::make_pair(300 / 64, 0);
     }
 
-    std::cout << "Blub\n";
-    krnl_tsdf(points, points, 360, mapData, mapData, 21, 21, 5, 0, 0, 0, 10, 10, 10, newEntries, newEntries, 300, 10);
-    test_krnl_tsdf(points, points, 360, mapData_test, mapData_test, 21, 21, 5, 0, 0, 0, 10, 10, 10, newEntries_test, newEntries_test, 300, 10);
+    krnl_tsdf(points, points, 360, mapData0, mapData1, SIZE_XY, SIZE_XY, SIZE_Z, 0, 0, 0, SIZE_XY/2, SIZE_XY/2, SIZE_Z/2, newEntries0, newEntries1, 300, 64);
+    test_krnl_tsdf(points, points, 360, mapData_test0, mapData_test1, SIZE_XY, SIZE_XY, SIZE_Z, 0, 0, 0, SIZE_XY/2, SIZE_XY/2, SIZE_Z/2, newEntries_test0, newEntries_test1, 300, 64);
 
     int fail_map_cnt = 0;
     int fail_entries_cnt = 0;
     int fail_range_cnt = 0;
     int fail_range_test_cnt = 0;
-    for (int i = 0; i < 21 * 21 * 5; i++)
+    for (int i = 0; i < SIZE_XY * SIZE_XY * SIZE_Z; i++)
     {
-        if (mapData[i] != mapData_test[i])
+        if (mapData0[i] != mapData_test0[i])
         {
-            std::cout << "Wrong map data " << mapData[i].first << "/" << mapData[i].second << " != " << mapData_test[i].first << "/" << mapData_test[i].second << " at " << i << "\n";
+            std::cout << "Wrong map data0 " << mapData0[i].first << "/" << mapData0[i].second << " != " << mapData_test0[i].first << "/" << mapData_test0[i].second << " at " << i << "\n";
             fail_map_cnt++;
         }
-        if (mapData[i].first > 300 || mapData[i].first < -300)
+        if (mapData0[i].first > 300 || mapData0[i].first < -300)
         {
-            std::cout << "Incorrect range data " << mapData[i].first << " at " << i << "\n";
+            std::cout << "Incorrect range data0 " << mapData0[i].first << " at " << i << "\n";
             fail_range_cnt++;
         }
-        if (mapData_test[i].first > 300 || mapData_test[i].first < -300)
+        if (mapData_test0[i].first > 300 || mapData_test0[i].first < -300)
         {
-            std::cout << "Incorrect range test data " << mapData[i].first << " at " << i << "\n";
+            std::cout << "Incorrect range test data0 " << mapData0[i].first << " at " << i << "\n";
             fail_range_test_cnt++;
         }
-        if (newEntries[i] != newEntries_test[i])
+        if (newEntries0[i] != newEntries_test0[i])
         {
-            std::cout << "Wrong entry data " << " at " << i << "\n";
+            std::cout << "Wrong entry data0 " << newEntries0[i].first << "/" << newEntries0[i].second << " != " << newEntries_test0[i].first << "/" << newEntries_test0[i].second << " at " << i << "\n";
+            fail_entries_cnt++;
+        }
+
+        if (mapData1[i] != mapData_test1[i])
+        {
+            std::cout << "Wrong map data1 " << mapData1[i].first << "/" << mapData1[i].second << " != " << mapData_test1[i].first << "/" << mapData_test1[i].second << " at " << i << "\n";
+            fail_map_cnt++;
+        }
+        if (mapData1[i].first > 300 || mapData1[i].first < -300)
+        {
+            std::cout << "Incorrect range data1 " << mapData1[i].first << " at " << i << "\n";
+            fail_range_cnt++;
+        }
+        if (mapData_test1[i].first > 300 || mapData_test1[i].first < -300)
+        {
+            std::cout << "Incorrect range test data1 " << mapData1[i].first << " at " << i << "\n";
+            fail_range_test_cnt++;
+        }
+        if (newEntries1[i] != newEntries_test1[i])
+        {
+            std::cout << "Wrong entry data1 " << newEntries1[i].first << "/" << newEntries1[i].second << " != " << newEntries_test1[i].first << "/" << newEntries_test1[i].second << " at " << i << "\n";
             fail_entries_cnt++;
         }
     }
 
     std::cout << "Map: " << fail_map_cnt << " Entries: " << fail_entries_cnt << " Range: " << fail_range_cnt << " Range test: " << fail_range_test_cnt << "\n";
-    return 0;
+    return fail_map_cnt || fail_entries_cnt || fail_range_cnt || fail_range_test_cnt;
 }
 
 

@@ -5,11 +5,12 @@
  * @author Malte Hillmann
  */
 
-#ifdef __SYNTHESIS__
+#include <hls_math.h>
+/*#ifdef __SYNTHESIS__
 #include <hls_math.h>
 #else
 #include <cmath>
-#endif
+#endif*/
 
 inline int hls_abs(int x)
 {
@@ -18,12 +19,13 @@ inline int hls_abs(int x)
 
 inline int hls_sqrt_approx(int x)
 {
-#ifdef __SYNTHESIS__
+    return hls::sqrt(x);
+/*#ifdef __SYNTHESIS__
     return hls::sqrt(x);
 #else
     // return std::sqrt(x);
     return std::round(std::sqrt(x));
-#endif
+#endif*/
     // // meh, doesn't work
     // if (x <= 0)
     // {
