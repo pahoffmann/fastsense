@@ -144,7 +144,7 @@ extern "C"
 
             if (weight != 0 && map.in_bounds(current_cell.x, current_cell.y, interpolate_z))
             {
-#pragma HLS dependence variable=new_entries inter false
+#pragma HLS dependence variable=new_entries inter true
                 IntTuple entry = map.get(new_entries, current_cell.x, current_cell.y, interpolate_z);
                 IntTuple new_entry;
 
