@@ -137,10 +137,10 @@ void CloudCallback::callback()
         eval.start("tsdf");
 #endif
 
-        //tsdf_krnl.run(local_map, scan_point_buffer, tau, ConfigManager::config().slam.max_weight());
-        //tsdf_krnl.waitComplete();
+        tsdf_krnl.run(local_map, scan_point_buffer, tau, ConfigManager::config().slam.max_weight());
+        tsdf_krnl.waitComplete();
 
-        fastsense::tsdf::update_tsdf_hw(scan_point_buffer, local_map, tau, ConfigManager::config().slam.max_weight());
+        //fastsense::tsdf::update_tsdf_hw(scan_point_buffer, local_map, tau, ConfigManager::config().slam.max_weight());
 
 #ifdef TIME_MEASUREMENT
         eval.stop();

@@ -13,12 +13,12 @@
     },
 
     "registration": {
-        "max_iterations": 50,
+        "max_iterations": 100,
         "it_weight_gradient": 0.01
     },
 
     "slam": {
-        "max_distance": 800,
+        "max_distance": 200,
         "map_resolution": 64,
         "map_size_x": 151,
         "map_size_y": 151,

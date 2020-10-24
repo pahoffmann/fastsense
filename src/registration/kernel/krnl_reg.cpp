@@ -1,6 +1,6 @@
 /**
  * @author Patrick Hoffmann
- * @author Marc Eisdoldt
+ * @author Marc Eisoldt
  */
 
 #include <map/local_map_hw.h>
@@ -136,7 +136,7 @@ extern "C"
                 const auto last = map.get(mapData1, index[0], index[1], index[2]);
                 index[axis] += 2;
                 const auto next = map.get(mapData2, index[0], index[1], index[2]);
-                if (last.second != 0 && next.second != 0 && (next.first > 0.0) == (last.first > 0.0))
+                if (last.second != 0 && next.second != 0 && (next.first > 0) == (last.first > 0))
                 {
                     gradient[axis] = (next.first - last.first) / 2;
                 }

@@ -12,7 +12,7 @@
 #include <map/local_map.h>
 #include <eigen3/Eigen/Dense>
 #include <util/config/config_manager.h>
-#include <tsdf/update_tsdf_hw.h>
+//#include <tsdf/update_tsdf_hw.h>
 #include <hw/kernels/tsdf_kernel.h>
 #include <msg/tsdf_bridge_msg.h>
 #include <util/point_hw.h>
