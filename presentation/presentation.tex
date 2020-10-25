@@ -150,7 +150,27 @@
 
 \subsection{Strom}
 \begin{frame}{\subsecname}
-
+\begin{center}
+\begin{tikzpicture}[scale=0.5]
+\draw (0, 0) circle (0.25);
+\draw (0, 4) circle (0.25);
+\draw (10, 0) circle (0.25);
+\draw (10, 4) circle (0.25);
+\draw (0.25, 0) -- (9.75, 0);
+\draw (0.25, 4) -- (9.75, 4);
+\draw (3, 4) -- (3, 6) -- (7, 6) -- (7, 4);
+\draw (8, 0) -- (8, 4);
+\draw [fill=black] (3, 4) circle (0.1);
+\draw [fill=black] (7, 4) circle (0.1);
+\draw [fill=black] (8, 0) circle (0.1);
+\draw [fill=black] (8, 4) circle (0.1);
+\draw [fill=white] (5, 6) circle (1) node{V};
+\draw [fill=white] (8, 2) circle (1) node{V};
+\draw [fill=white] (4, 3.75) rectangle (6, 4.25);
+\node at (-1, 2) {$\leftarrow$ power source};
+\node at (11, 2) {board $\rightarrow$};
+\end{tikzpicture}
+\end{center}
 \end{frame}
 
 \subsection{Zeit}
