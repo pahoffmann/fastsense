@@ -114,8 +114,6 @@
 \begin{tikzpicture}
 \draw (0, 0) rectangle (6, 3);
 \draw (1, 3) -- (2, 5) -- (4, 5) -- (5, 3);
-\draw (2.5, 0) -- (2.5, 0.5) -- (3.5, 0.5) -- (3.5, 0);
-\node at (3, 0.25) {IMU};
 \draw (2, 0.75) rectangle +(2, 1);
 \node at (3, 1.25) {Trenz};
 \draw (2, 3) -- (2, 3.5) -- (4, 3.5) -- (4, 3);
@@ -131,7 +129,7 @@
 \begin{tikzpicture}[scale=0.5]
 \draw (0, 0) rectangle (6, 3);
 \draw (1, 3) -- (2, 5) -- (4, 5) -- (5, 3);
-\draw (2.5, 0) -- (2.5, 0.5) -- (3.5, 0.5) -- (3.5, 0);
+\draw (2, 0.75) rectangle +(2, 1);
 \node at (3, 1.25) {Trenz};
 \draw (2, 3) -- (2, 3.5) -- (4, 3.5) -- (4, 3);
 \node [above] at (3, 3.5) {Router};
@@ -191,16 +189,49 @@
 
 \subsection{Zeit}
 \begin{frame}{\subsecname}
+\centering
 \begin{tabular}{ |p{3cm}||p{2cm}|p{2cm}|p{2cm}|  }
  \hline
- \multicolumn{4}{|c|}{Zeitmessung} \\
+ \multicolumn{4}{|c|}{Zeitmessung (ms)} \\
  \hline
- Abschnitt & Durchschnitt & Min & Max\\
+ Abschnitt      & Durchschnitt & Min & Max\\
  \hline
- Registrierung  & 800ms & ??? &  ??? \\
- TSDF           &  ???  & ???  & ???\\
- Global Map     & ??? & ??? &  ???\\
- Local Map      & ??? & ??? & ???\\
+ Preprocessing  &          ??? & ??? & ??? \\
+ Registrierung  &          ??? & ??? & ??? \\
+ TSDF Update    &          ??? & ??? & ??? \\
+ Map Shift      &          ??? & ??? & ??? \\
+ \hline
+\end{tabular}
+\end{frame}
+
+\begin{frame}
+\centering
+\begin{tabular}{ |l||l|l|  }
+ \hline
+ \multicolumn{3}{|c|}{Vergleich Vitis - Realität} \\
+ \hline
+ Abschnitt      & Vitis & Gemessen\\
+ \hline
+ Registrierung  & 0.9ms * 100 = 90ms & ??? \\
+ TSDF Update    & 477ms & ??? \\
+ \hline
+\end{tabular}
+\end{frame}
+
+\begin{frame}{\subsecname}
+\centering
+\begin{tabular}{ |p{3cm}||p{2cm}|p{2cm}|p{2cm}|  }
+ \hline
+ \multicolumn{4}{|c|}{Vergleich (Durchschnitt, ms)} \\
+ \hline
+ Programm       & FastSense & Prototyp & Prototyp \\
+ \hline
+ System         &     Board &    Board &      NUC \\
+ \hline
+ Preprocessing  &       ??? &      ??? &      ??? \\
+ Registrierung  &       ??? &      ??? &      ??? \\
+ TSDF Update    &       ??? &      ??? &      ??? \\
+ Map Shift      &       ??? &      ??? &      ??? \\
  \hline
 \end{tabular}
 \end{frame}
