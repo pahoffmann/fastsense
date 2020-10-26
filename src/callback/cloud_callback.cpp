@@ -71,12 +71,11 @@ void CloudCallback::reduction_filter(fastsense::msg::PointCloudStamped& cloud, u
     std::unordered_map<uint64_t, AveragePoint> point_map;
 
     point_map.reserve(cloud_points.size());
-    //iterate through points
     for(uint32_t i = 0; i < cloud_points.size(); i++){
         if(cloud_points[i].x == 0 && cloud_points[i].y == 0 && cloud_points[i].z == 0){
             continue;
         }
-
+        
         uint64_t key = 0;
         int16_t* key_ptr = (int16_t*)&key;
         *key_ptr = (int16_t)std::floor((cloud_points[i].x)/size_x);
