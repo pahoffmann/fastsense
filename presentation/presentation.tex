@@ -173,7 +173,18 @@
 
 \subsection{Zeit}
 \begin{frame}{\subsecname}
-
+\begin{tabular}{ |p{3cm}||p{2cm}|p{2cm}|p{2cm}|  }
+ \hline
+ \multicolumn{4}{|c|}{Zeitmessung} \\
+ \hline
+ Abschnitt & Durchschnitt & Min & Max\\
+ \hline
+ Registrierung  & 800ms & ??? &  ??? \\
+ TSDF           &  ???  & ???  & ???\\
+ Global Map     & ??? & ??? &  ???\\
+ Local Map      & ??? & ??? & ???\\
+ \hline
+\end{tabular}
 \end{frame}
 
 \section{Fazit}
@@ -188,12 +199,38 @@
 
 \subsection{Bisherige Verbesserungen}
 \begin{frame}{\subsecname}
-
+\begin{itemize}
+\item{Registrierung}
+\begin{itemize}
+\item{Auslagerung von Point to TSDF auf Hardware}
+\item{Auslagerung von Pointcloud Transformation auf Hardware}
+\end{itemize}
+\item{TSDF}
+\end{itemize}
 \end{frame}
 
 \subsection{Verbesserungspotenzial}
 \begin{frame}{\subsecname}
 
+\end{frame}
+
+\section{Ausblick / MS3}
+\begin{frame}{\secname}
+\begin{itemize}
+\item{Aufbau einer SLAM-Box mittels CAD}
+\begin{itemize}
+\item{Nutzung als Sensor}
+\item{Einfache Portierung zwischen Drohne, Roboter, Rucksack etc.}
+\item{Festes Interface, einfache Bedienung, Kapselung}
+\end{itemize}
+\item{Verbesserung und Optimierung des Algorithmus}
+\item{Mesh-Generierung auf Basis der TSDF Werte}
+\item{...}
+\begin{itemize}
+    \item{TODO: Mehr Ideen für MS3?}
+\end{itemize}
+
+\end{itemize}
 \end{frame}
 
 \end{document}
