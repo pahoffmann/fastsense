@@ -50,7 +50,7 @@
 \tableofcontents
 \end{frame}
 
-\section{Recap}
+\section{Ziele für MS2}
 \begin{frame}{}
 \begin{center}
 \begin{tikzpicture}
@@ -60,14 +60,14 @@
 \end{center}
 \end{frame}
 
-\subsection{Prototyping}
-\begin{frame}{\subsecname}
-
-\end{frame}
-
-\subsection{Ziele für MS2}
-\begin{frame}{\subsecname}
-
+\begin{frame}{\secname}
+\begin{itemize}
+    \item Implementation von inkrementellem SLAM mit TSDF in "autarker" Box
+    \item Komplett vorimplementiert in Software
+    \item Implementation von Bottleneck-Komponenten in Hardware
+    \item Speicherung von Pose-Graph und TSDF-Karte zur Rekonstruktion des kompletten explorierten Bereichs
+    \item Evaluation durch Zeit- und Strommessung
+\end{itemize}
 \end{frame}
 
 \section{Hauptspeise}
@@ -83,6 +83,22 @@
 \subsection{Algorithmus}
 \begin{frame}{\subsecname}
 
+\end{frame}
+
+\subsection{Recap: Prototyping Demo}
+\begin{frame}{\subsecname}
+\begin{itemize}
+    \item Registrierung mithilfe von IMU
+    \item Gute Parameterkombination herausgefunden
+    \item Geplante Funktionalität war vorhanden und in rviz darstellbar
+    \item Erkannte Probleme / Bottlenecks:
+    \begin{itemize}
+        \item Laufzeit stark abhängig von der Auflösung der Karte
+        \item Probleme mit Orientierung (kurz nach Demo gefixt)
+        \item Insgesamt noch recht langsam ($\sim$0.5s/Scan auf Glumanda, 2-5s/Scan in Testwelt)
+        \item Bottlenecks Registrierung und TSDF-Update (dachten wir)
+    \end{itemize}
+\end{itemize}
 \end{frame}
 
 \subsection{Hardware Implementierung}
