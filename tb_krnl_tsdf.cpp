@@ -9,6 +9,8 @@
 #include <util/point_hw.h>
 
 #include <iostream>
+#include <fstream>
+#include <chrono>
 
 #include <hls_stream.h>
 
@@ -22,7 +24,7 @@ using IntTuple = std::pair<int, int>;
 
 extern "C"
 {
-    void read_points(PointHW* scanPoints,
+    void test_read_points(PointHW* scanPoints,
                      int numPoints,
                      int tau,
                      hls::stream<PointHW>& point_fifo,
@@ -42,7 +44,7 @@ extern "C"
         }
     }
 
-    void update_tsdf(int numPoints,
+    void test_update_tsdf(int numPoints,
                      int sizeX,   int sizeY,   int sizeZ,
                      int posX,    int posY,    int posZ,
                      int offsetX, int offsetY, int offsetZ,
@@ -144,7 +146,7 @@ extern "C"
 
             if (weight != 0 && map.in_bounds(current_cell.x, current_cell.y, interpolate_z))
             {
-#pragma HLS dependence variable=new_entries inter true
+#pragma HLS dependence variable=new_entries inter false
                 IntTuple entry = map.get(new_entries, current_cell.x, current_cell.y, interpolate_z);
                 IntTuple new_entry;
 
@@ -236,7 +238,7 @@ extern "C"
         }
     }
 
-    void tsdf_dataflow(PointHW* scanPoints,
+    void test_tsdf_dataflow(PointHW* scanPoints,
                        int numPoints,
                        int sizeX,   int sizeY,   int sizeZ,
                        int posX,    int posY,    int posZ,
@@ -252,8 +254,8 @@ extern "C"
 #pragma HLS stream variable=distance_fifo depth=16
 #pragma HLS stream variable=distance_tau_fifo depth=16
 
-        read_points(scanPoints, numPoints, tau, point_fifo, distance_fifo, distance_tau_fifo);
-        update_tsdf(numPoints,
+        test_read_points(scanPoints, numPoints, tau, point_fifo, distance_fifo, distance_tau_fifo);
+        test_update_tsdf(numPoints,
                     sizeX,   sizeY,   sizeZ,
                     posX,    posY,    posZ,
                     offsetX, offsetY, offsetZ,
@@ -261,7 +263,7 @@ extern "C"
                     point_fifo, distance_fifo, distance_tau_fifo);
     }
 
-    void sync_loop(
+    void test_sync_loop(
         IntTuple* mapData,
         int start,
         int end,
@@ -296,7 +298,7 @@ extern "C"
         }
     }
 
-    void tsdf_dataflower(
+    void test_tsdf_dataflower(
         PointHW* scanPoints0,
         PointHW* scanPoints1,
         int step,
@@ -311,20 +313,20 @@ extern "C"
     {
 #pragma HLS dataflow
 
-        tsdf_dataflow(scanPoints0 + 0 * step, step,
+        test_tsdf_dataflow(scanPoints0 + 0 * step, step,
                       sizeX,   sizeY,   sizeZ,
                       posX,    posY,    posZ,
                       offsetX, offsetY, offsetZ,
                       new_entries0, tau);
 
-        tsdf_dataflow(scanPoints1 + 1 * step, last_step,
+        test_tsdf_dataflow(scanPoints1 + 1 * step, last_step,
                       sizeX,   sizeY,   sizeZ,
                       posX,    posY,    posZ,
                       offsetX, offsetY, offsetZ,
                       new_entries1, tau);
     }
 
-    void sync_looper(
+    void test_sync_looper(
         IntTuple* mapData0,
         IntTuple* mapData1,
         int step,
@@ -334,11 +336,11 @@ extern "C"
         int max_weight)
     {
 #pragma HLS dataflow
-        sync_loop(mapData0, step * 0, step * (0 + 1), new_entries0, max_weight);
-        sync_loop(mapData1, step * 1, numPoints, new_entries1, max_weight);
+        test_sync_loop(mapData0, step * 0, step * (0 + 1), new_entries0, max_weight);
+        test_sync_loop(mapData1, step * 1, numPoints, new_entries1, max_weight);
     }
 
-    void krnl_tsdf(PointHW* scanPoints0,
+    void test_krnl_tsdf(PointHW* scanPoints0,
                    PointHW* scanPoints1,
                    int numPoints,
                    IntTuple* mapData0,
@@ -351,16 +353,16 @@ extern "C"
                    int tau,
                    int max_weight)
     {
-#pragma HLS INTERFACE m_axi port=scanPoints0  offset=slave bundle=scan0mem  latency=22 depth=360
-#pragma HLS INTERFACE m_axi port=scanPoints1  offset=slave bundle=scan1mem  latency=22 depth=360
-#pragma HLS INTERFACE m_axi port=mapData0     offset=slave bundle=map0mem   latency=22 depth=18491
-#pragma HLS INTERFACE m_axi port=mapData1     offset=slave bundle=map1mem   latency=22 depth=18491
-#pragma HLS INTERFACE m_axi port=new_entries0 offset=slave bundle=entry0mem latency=22 depth=18491
-#pragma HLS INTERFACE m_axi port=new_entries1 offset=slave bundle=entry1mem latency=22 depth=18491
+#pragma HLS INTERFACE m_axi port=scanPoints0  offset=slave bundle=scan0mem  latency=22 depth=5760
+#pragma HLS INTERFACE m_axi port=scanPoints1  offset=slave bundle=scan1mem  latency=22 depth=5760
+#pragma HLS INTERFACE m_axi port=mapData0     offset=slave bundle=map0mem   latency=22 depth=17640
+#pragma HLS INTERFACE m_axi port=mapData1     offset=slave bundle=map1mem   latency=22 depth=17640
+#pragma HLS INTERFACE m_axi port=new_entries0 offset=slave bundle=entry0mem latency=22 depth=17640
+#pragma HLS INTERFACE m_axi port=new_entries1 offset=slave bundle=entry1mem latency=22 depth=17640
 
         int step = numPoints / SPLIT_FACTOR + 1;
         int last_step = numPoints - (SPLIT_FACTOR - 1) * step;
-        tsdf_dataflower(scanPoints0,
+        test_tsdf_dataflower(scanPoints0,
                         scanPoints1,
                         step,
                         last_step,
@@ -375,7 +377,7 @@ extern "C"
         int total_size = sizeX * sizeY * sizeZ;
         int sync_step = total_size / SPLIT_FACTOR + 1;
 
-        sync_looper(mapData0,
+        test_sync_looper(mapData0,
                     mapData1,
                     sync_step,
                     total_size,
@@ -384,3 +386,120 @@ extern "C"
                     max_weight);
     }
 }
+
+
+extern "C"
+{
+    void krnl_tsdf(PointHW* scanPoints0,
+                   PointHW* scanPoints1,
+                   int numPoints,
+                   IntTuple* mapData0,
+                   IntTuple* mapData1,
+                   int sizeX,   int sizeY,   int sizeZ,
+                   int posX,    int posY,    int posZ,
+                   int offsetX, int offsetY, int offsetZ,
+                   IntTuple* new_entries0,
+                   IntTuple* new_entries1,
+                   int tau,
+                   int max_weight);
+}
+
+constexpr int SIZE_XY = 41;
+constexpr int SIZE_Z = 11;
+
+int main()
+{
+    PointHW* points = new PointHW[360];
+    for (int i = 0; i < 360; i++)
+    {
+        float r = 750;
+        points[i].x = r * sin(i * M_PI / 180.);
+        points[i].y = r * cos(i * M_PI / 180.);
+        points[i].z = 0;
+    }
+
+    IntTuple* mapData0 = new IntTuple[SIZE_XY * SIZE_XY * SIZE_Z];
+    IntTuple* newEntries0 = new IntTuple[SIZE_XY * SIZE_XY * SIZE_Z];
+    IntTuple* mapData1 = new IntTuple[SIZE_XY * SIZE_XY * SIZE_Z];
+    IntTuple* newEntries1 = new IntTuple[SIZE_XY * SIZE_XY * SIZE_Z];
+
+    IntTuple* mapData_test0 = new IntTuple[SIZE_XY * SIZE_XY * SIZE_Z];
+    IntTuple* newEntries_test0 = new IntTuple[SIZE_XY * SIZE_XY * SIZE_Z];
+    IntTuple* mapData_test1 = new IntTuple[SIZE_XY * SIZE_XY * SIZE_Z];
+    IntTuple* newEntries_test1 = new IntTuple[SIZE_XY * SIZE_XY * SIZE_Z];
+
+    for (int i = 0; i < SIZE_XY * SIZE_XY * SIZE_Z; i++)
+    {
+        mapData0[i] = std::make_pair(300 / 64, 0);
+        newEntries0[i] = std::make_pair(300 / 64, 0);
+        mapData_test0[i] = std::make_pair(300 / 64, 0);
+        newEntries_test0[i] = std::make_pair(300 / 64, 0);
+        mapData1[i] = std::make_pair(300 / 64, 0);
+        newEntries1[i] = std::make_pair(300 / 64, 0);
+        mapData_test1[i] = std::make_pair(300 / 64, 0);
+        newEntries_test1[i] = std::make_pair(300 / 64, 0);
+    }
+
+    krnl_tsdf(points, points, 360, mapData0, mapData1, SIZE_XY, SIZE_XY, SIZE_Z, 0, 0, 0, SIZE_XY/2, SIZE_XY/2, SIZE_Z/2, newEntries0, newEntries1, 300, 64);
+    test_krnl_tsdf(points, points, 360, mapData_test0, mapData_test1, SIZE_XY, SIZE_XY, SIZE_Z, 0, 0, 0, SIZE_XY/2, SIZE_XY/2, SIZE_Z/2, newEntries_test0, newEntries_test1, 300, 64);
+
+    int fail_map_cnt = 0;
+    int fail_entries_cnt = 0;
+    int fail_range_cnt = 0;
+    int fail_range_test_cnt = 0;
+    for (int i = 0; i < SIZE_XY * SIZE_XY * SIZE_Z; i++)
+    {
+        if (mapData0[i] != mapData_test0[i])
+        {
+            std::cout << "Wrong map data0 " << mapData0[i].first << "/" << mapData0[i].second << " != " << mapData_test0[i].first << "/" << mapData_test0[i].second << " at " << i << "\n";
+            fail_map_cnt++;
+        }
+        if (mapData0[i].first > 300 || mapData0[i].first < -300)
+        {
+            std::cout << "Incorrect range data0 " << mapData0[i].first << " at " << i << "\n";
+            fail_range_cnt++;
+        }
+        if (mapData_test0[i].first > 300 || mapData_test0[i].first < -300)
+        {
+            std::cout << "Incorrect range test data0 " << mapData0[i].first << " at " << i << "\n";
+            fail_range_test_cnt++;
+        }
+        if (newEntries0[i] != newEntries_test0[i])
+        {
+            std::cout << "Wrong entry data0 " << newEntries0[i].first << "/" << newEntries0[i].second << " != " << newEntries_test0[i].first << "/" << newEntries_test0[i].second << " at " << i << "\n";
+            fail_entries_cnt++;
+        }
+
+        if (mapData1[i] != mapData_test1[i])
+        {
+            std::cout << "Wrong map data1 " << mapData1[i].first << "/" << mapData1[i].second << " != " << mapData_test1[i].first << "/" << mapData_test1[i].second << " at " << i << "\n";
+            fail_map_cnt++;
+        }
+        if (mapData1[i].first > 300 || mapData1[i].first < -300)
+        {
+            std::cout << "Incorrect range data1 " << mapData1[i].first << " at " << i << "\n";
+            fail_range_cnt++;
+        }
+        if (mapData_test1[i].first > 300 || mapData_test1[i].first < -300)
+        {
+            std::cout << "Incorrect range test data1 " << mapData1[i].first << " at " << i << "\n";
+            fail_range_test_cnt++;
+        }
+        if (newEntries1[i] != newEntries_test1[i])
+        {
+            std::cout << "Wrong entry data1 " << newEntries1[i].first << "/" << newEntries1[i].second << " != " << newEntries_test1[i].first << "/" << newEntries_test1[i].second << " at " << i << "\n";
+            fail_entries_cnt++;
+        }
+    }
+
+    std::cout << "Map: " << fail_map_cnt << " Entries: " << fail_entries_cnt << " Range: " << fail_range_cnt << " Range test: " << fail_range_test_cnt << "\n";
+    return fail_map_cnt || fail_entries_cnt || fail_range_cnt || fail_range_test_cnt;
+}
+
+
+
+
+
+
+
+

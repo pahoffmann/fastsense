@@ -14,10 +14,9 @@
 #include <comm/queue_bridge.h>
 #include <msg/tsdf_bridge_msg.h>
 #include <msg/msgs_stamped.h>
-
 #include <data/sensor_sync.h>
-
 #include <util/config/config_manager.h>
+#include <tsdf/krnl_tsdf_sw.h>
 
 #include <iostream>
 
@@ -48,6 +47,8 @@ TEST_CASE("TSDF_Kernel_Vis", "[tsdf_kernel_vis]")
         auto queue = fastsense::hw::FPGAManager::create_command_queue();
         fastsense::buffer::InputBuffer<PointHW> kernel_points(queue, num_points);
 
+        std::vector<PointHW> kernel_points_sw(num_points);
+
         for(const auto& ring : float_points)
         {
             for(const auto& point : ring)
@@ -59,7 +60,10 @@ TEST_CASE("TSDF_Kernel_Vis", "[tsdf_kernel_vis]")
                 kernel_points[count].x = scan_points[count].x();
                 kernel_points[count].y = scan_points[count].y();
                 kernel_points[count].z = scan_points[count].z(); 
-                
+
+                kernel_points_sw[count].x = kernel_points[count].x;
+                kernel_points_sw[count].y = kernel_points[count].y;
+                kernel_points_sw[count].z = kernel_points[count].z;
 
                 ++count;
             }
@@ -86,11 +90,40 @@ TEST_CASE("TSDF_Kernel_Vis", "[tsdf_kernel_vis]")
         std::shared_ptr<fastsense::map::GlobalMap> global_map_ptr(new fastsense::map::GlobalMap("test_global_map2", 0.0, 0.0));
         fastsense::map::LocalMap local_map(SIZE_X, SIZE_Y, SIZE_Z, global_map_ptr, q2);
 
-        auto q3 = fastsense::hw::FPGAManager::create_command_queue();
-        fastsense::kernels::TSDFKernel krnl(q3);
+        // auto q3 = fastsense::hw::FPGAManager::create_command_queue();
+        // fastsense::kernels::TSDFKernel krnl(q3);
 
-        krnl.run(local_map, kernel_points, TAU, MAX_WEIGHT);
-        krnl.waitComplete();
+        // krnl.run(local_map, kernel_points, TAU, MAX_WEIGHT);
+        // krnl.waitComplete();
+
+        fastsense::buffer::InputOutputBuffer<std::pair<int, int>> new_entries(q, local_map.get_size().x() * local_map.get_size().y() * local_map.get_size().z());       
+
+        for(int i = 0; i < local_map.get_size().x() * local_map.get_size().y() * local_map.get_size().z(); ++i)
+        {
+            new_entries[i].first = 0;
+            new_entries[i].second = 0;
+        }
+
+        fastsense::tsdf::krnl_tsdf_sw(kernel_points_sw.data(), 
+                                    kernel_points_sw.data(),
+                                    num_points,
+                                    local_map.getBuffer(),
+                                    local_map.getBuffer(),
+                                    local_map.get_size().x(), 
+                                    local_map.get_size().y(), 
+                                    local_map.get_size().z(),
+                                    0, 
+                                    0, 
+                                    0,
+                                    local_map.get_offset().x(), 
+                                    local_map.get_offset().y(), 
+                                    local_map.get_offset().z(),
+                                    new_entries,
+                                    new_entries,
+                                    TAU,
+                                    MAX_WEIGHT);
+
+
 
         fastsense::msg::TSDFBridgeMessage tsdf_msg;
 

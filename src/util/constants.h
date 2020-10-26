@@ -17,4 +17,5 @@ constexpr int MATRIX_SHIFT = 15; 						// bitshift for a faster way to apply MAT
 constexpr int MATRIX_RESOLUTION = 1 << MATRIX_SHIFT; 	// Resolution of calculations (Matrices, division, ...)
 
 constexpr int RINGS = 16; // TODO: take from Scanner
-const int dz_per_distance = std::tan(30.0 / ((double)RINGS - 1.0) / 180.0 * M_PI) / 2.0 * MATRIX_RESOLUTION;
+//const int dz_per_distance = std::tan(30.0 / ((double)RINGS - 1.0) / 180.0 * M_PI) / 2.0 * MATRIX_RESOLUTION;
+constexpr int dz_per_distance = 572;

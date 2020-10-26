@@ -5,6 +5,7 @@
  * @author Malte Hillmann
  */
 
+//#include <hls_math.h>
 #ifdef __SYNTHESIS__
 #include <hls_math.h>
 #else
