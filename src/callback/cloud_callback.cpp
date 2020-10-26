@@ -66,7 +66,7 @@ size_t CloudCallback::determineBufferSize(const fastsense::msg::PointCloudStampe
     });
 }
 
-void reduction_filter(fastsense::msg::PointCloudStamped& cloud, uint8_t size_x, uint8_t size_y, uint8_t size_z){
+void CloudCallback::reduction_filter(fastsense::msg::PointCloudStamped& cloud, uint8_t size_x, uint8_t size_y, uint8_t size_z){
     std::vector<fastsense::msg::Point>& cloud_points = cloud.first->points_;
     std::unordered_map<uint64_t, AveragePoint> point_map;
 
