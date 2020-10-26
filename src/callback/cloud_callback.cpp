@@ -90,7 +90,7 @@ void reduction_filter(fastsense::msg::PointCloudStamped& cloud, uint8_t size_x, 
         avg_point.z += cloud_points[i].z;
     }
 
-    cloud.first->points_.resize(point_map.size());
+    cloud_points.resize(point_map.size());
     int counter = 0;
     for(auto& avg_point : point_map){
         cloud_points[counter].x = avg_point.second.x / avg_point.second.count;
@@ -105,7 +105,7 @@ void CloudCallback::callback(){
         fastsense::msg::PointCloudStamped point_cloud;
         cloud_buffer->pop(&point_cloud);
 
-
+        reduction_filter(point_cloud, 64, 64, 64);
         InputBuffer<PointHW> scan_point_buffer{q, determineBufferSize(point_cloud)};
         preprocess_scan(point_cloud, scan_point_buffer);
 

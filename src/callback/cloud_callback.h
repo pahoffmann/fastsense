@@ -38,6 +38,8 @@ namespace fastsense::callback
 
             void preprocess_scan(const fastsense::msg::PointCloudStamped& cloud, InputBuffer<PointHW>& scan_points);
 
+            void reduction_filter(fastsense::msg::PointCloudStamped& cloud, uint8_t size_x, uint8_t size_y, uint8_t size_z);
+
             size_t determineBufferSize(const fastsense::msg::PointCloudStamped& cloud);
 
             void stop() override;
