@@ -76,9 +76,11 @@ extern "C"
     transform_loop:
         for (int row = 0; row < 4; row++)
         {
+#pragma HLS unroll
             for (int col = 0; col < 4; col++)
             {
-                transform_matrix[row][col] = transform[row * 4 + col]; //TODO: check indexing
+#pragma HLS unroll
+                transform_matrix[row][col] = transform[row * 4 + col];
             }
         }
 
@@ -89,7 +91,6 @@ extern "C"
 
             PointHW point_tmp = pointData[i];
 
-            //TODO: check if copy is needed
             int point[4][1], point_mul[4][1];
             point_mul[0][0] = point_tmp.x;
             point_mul[1][0] = point_tmp.y;
@@ -109,7 +110,6 @@ extern "C"
             buf.x = point[0][0] / MAP_RESOLUTION;
             buf.y = point[1][0] / MAP_RESOLUTION;
             buf.z = point[2][0] / MAP_RESOLUTION;
-            buf.dummy = 1;
 
             //get value of local map
             const auto& current = map.get(mapData0, buf.x, buf.y, buf.z);
@@ -132,6 +132,7 @@ extern "C"
 #pragma HLS unroll
 
                 int index[3] = {buf.x, buf.y, buf.z};
+
                 index[axis] -= 1;
                 const auto last = map.get(mapData1, index[0], index[1], index[2]);
                 index[axis] += 2;
@@ -157,7 +158,6 @@ extern "C"
             jacobi[5] = gradient[2];
 
             //add multiplication result to local_h
-            //TODO: pragmas
 
         local_h_loop:
             for (int row = 0; row < 6; row++)
@@ -172,7 +172,6 @@ extern "C"
                 }
             }
 
-            //TODO: ADD PRAGMATA
         local_g_loop:
             for (int count = 0; count < 6; count++)
             {
@@ -207,6 +206,7 @@ extern "C"
     write_outbuf:
         for (int i = 0; i < 44; i++)
         {
+#pragma HLS unroll
             outbuf[i] = tmp[i];
         }
     }
