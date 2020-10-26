@@ -60,15 +60,28 @@
 \end{center}
 \end{frame}
 
-\subsection{Prototyping}
-\begin{frame}{\subsecname}
-
-\end{frame}
-
 \subsection{Ziele für MS2}
-\begin{frame}{\subsecname}
-
+\begin{frame}{\subsecname - Funktionale Anforderungen}
+\begin{itemize}
+\item{Lokale TSDF-Map ausgeben}
+\item{Aktuelle 6D-Pose ausgeben}
+\item{Map auf Basis der IMU und Velodyne-Daten}
+\item{Trjektorie und TDSF-Map für jede Pose speichern}
+\item{Parameter zur Laufzeit anpassbar}
+\end{itemize}
 \end{frame}
+\begin{frame}{\subsecname - Nicht-Funktionale Anforderungen}
+\begin{itemize}
+\item{HW-Plattform: Trenz-Board, SW-Plattform: Vitis}
+\item{FPGA-Beschleunigung d. Algorithmen}
+\item{Sensoren direkt am Board}
+\item{Unit-Tests}
+\item{Testbench (Integration, Strommessung, Zeitmessung, Visualisierung)}
+\item{Logging}
+\end{itemize}
+\end{frame}
+
+
 
 \section{Hauptspeise}
 \begin{frame}{}
@@ -81,6 +94,11 @@
 \end{frame}
 
 \subsection{Algorithmus}
+\begin{frame}{\subsecname}
+
+\end{frame}
+
+\subsection{Prototyping}
 \begin{frame}{\subsecname}
 
 \end{frame}
@@ -211,7 +229,12 @@
 
 \subsection{Verbesserungspotenzial}
 \begin{frame}{\subsecname}
-
+\begin{itemize}
+\item{Registrierug}
+\begin{itemize}
+\item{Drift entfernen (aktuell noch leichter Drift (1cm/s) in alle 3 Richtungen)}
+\end{itemize}
+\end{itemize}
 \end{frame}
 
 \section{Ausblick / MS3}
@@ -225,7 +248,8 @@
 \end{itemize}
 \item{Verbesserung und Optimierung des Algorithmus}
 \item{Mesh-Generierung auf Basis der TSDF Werte}
-\item{...}
+\item{Loop Closing}
+\item{????}
 \begin{itemize}
     \item{TODO: Mehr Ideen für MS3?}
 \end{itemize}
