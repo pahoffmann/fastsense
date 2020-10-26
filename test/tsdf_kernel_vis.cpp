@@ -137,7 +137,6 @@ TEST_CASE("TSDF_Kernel_Vis", "[tsdf_kernel_vis]")
         tsdf_msg.offset_[0] = SIZE_X / 2;
         tsdf_msg.offset_[1] = SIZE_Y / 2;
         tsdf_msg.offset_[2] = SIZE_Z / 2;
-        tsdf_msg.map_resolution_ = MAP_RESOLUTION;
         tsdf_msg.tsdf_data_.reserve(SIZE_X * SIZE_Y * SIZE_Z);
         std::copy(local_map.getBuffer().cbegin(), local_map.getBuffer().cend(), std::back_inserter(tsdf_msg.tsdf_data_));
 

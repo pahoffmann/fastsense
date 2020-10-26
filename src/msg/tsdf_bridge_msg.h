@@ -17,7 +17,6 @@ namespace fastsense::msg
 struct TSDFBridgeMessage : public ZMQConverter
 {
     float tau_;
-    float map_resolution_;
     std::array<int, 3> size_;
     std::array<int, 3> pos_;
     std::array<int, 3> offset_;
@@ -26,7 +25,6 @@ struct TSDFBridgeMessage : public ZMQConverter
     void from_zmq_msg(zmq::multipart_t& msg)
     {
         tau_ = msg.poptyp<float>();
-        map_resolution_ = msg.poptyp<float>();
         size_ = msg.poptyp<std::array<int, 3>>();
         pos_ = msg.poptyp<std::array<int, 3>>();
         offset_ = msg.poptyp<std::array<int, 3>>();
@@ -42,7 +40,6 @@ struct TSDFBridgeMessage : public ZMQConverter
     {
         zmq::multipart_t multi;
         multi.addtyp(tau_);
-        multi.addtyp(map_resolution_);
         multi.add(zmq::message_t(size_.begin(), size_.end()));
         multi.add(zmq::message_t(pos_.begin(), pos_.end()));
         multi.add(zmq::message_t(offset_.begin(), offset_.end()));
