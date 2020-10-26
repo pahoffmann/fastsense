@@ -110,7 +110,7 @@ void CloudCallback::callback()
             eval.start("reg");
 #endif
 
-            Matrix4f transform = registration.register_cloud(local_map, scan_point_buffer, q);
+            Matrix4f transform = registration.register_cloud(local_map, scan_point_buffer);
 
             std::cout << transform << std::endl;
 
@@ -120,9 +120,9 @@ void CloudCallback::callback()
 #endif
 
             pose = transform * pose;
-            int x = (int)std::floor(pose(0, 3));
-            int y = (int)std::floor(pose(1, 3));
-            int z = (int)std::floor(pose(2, 3));
+            int x = (int)std::floor(pose(0, 3) / MAP_RESOLUTION);
+            int y = (int)std::floor(pose(1, 3) / MAP_RESOLUTION);
+            int z = (int)std::floor(pose(2, 3) / MAP_RESOLUTION);
 
             local_map.shift(x, y, z);
 
