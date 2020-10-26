@@ -18,6 +18,8 @@ test_image/
 
 scripts/*libphidget*
 
+presentation/presentation*
+
 ### CLion ###
 *.idea
 */build/*
