@@ -16,6 +16,7 @@
 #include <hw/kernels/tsdf_kernel.h>
 #include <msg/tsdf_bridge_msg.h>
 #include <util/point_hw.h>
+#include <msg/transform.h>
 
 namespace fastsense::callback
 {
@@ -28,11 +29,12 @@ namespace fastsense::callback
     using fastsense::util::config::ConfigManager;
     using TSDFBuffer = util::ConcurrentRingBuffer<msg::TSDFBridgeMessage>;
     using fastsense::buffer::InputBuffer;
+    using TransformBuffer = fastsense::util::ConcurrentRingBuffer<fastsense::msg::Transform>;
 
     class CloudCallback : public fastsense::util::ProcessThread
     {
         public:
-            CloudCallback(Registration& registration, const std::shared_ptr<PointCloudBuffer>& cloud_buffer, LocalMap& local_map, const std::shared_ptr<GlobalMap>& global_map, Matrix4f& pose, const std::shared_ptr<TSDFBuffer>& tsdf_buffer, fastsense::CommandQueuePtr& q);
+            CloudCallback(Registration& registration, const std::shared_ptr<PointCloudBuffer>& cloud_buffer, LocalMap& local_map, const std::shared_ptr<GlobalMap>& global_map, Matrix4f& pose, const std::shared_ptr<TSDFBuffer>& tsdf_buffer, const std::shared_ptr<TransformBuffer>& transform_buffer, fastsense::CommandQueuePtr& q);
 
             void start() override;
 
@@ -51,6 +53,7 @@ namespace fastsense::callback
             std::shared_ptr<GlobalMap> global_map;
             Matrix4f& pose;
             std::shared_ptr<TSDFBuffer> tsdf_buffer;
+            std::shared_ptr<TransformBuffer> transform_buffer;
             bool first_iteration;
             fastsense::CommandQueuePtr& q;
             fastsense::kernels::TSDFKernel tsdf_krnl;

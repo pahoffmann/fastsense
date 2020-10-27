@@ -7,16 +7,17 @@
 
 #include "cloud_callback.h"
 #include <util/runtime_evaluator.h>
+#include <msg/transform.h>
 #include <algorithm>
+#include <eigen3/Eigen/Geometry>
 
 using namespace fastsense::callback;
 using namespace fastsense::util;
-//using fastsense::buffer::InputOutputBuffer;
 using fastsense::buffer::InputBuffer;
 using fastsense::msg::Point;
 
 CloudCallback::CloudCallback(Registration& registration, const std::shared_ptr<PointCloudBuffer>& cloud_buffer, LocalMap& local_map, const std::shared_ptr<GlobalMap>& global_map, Matrix4f& pose,
-                             const std::shared_ptr<TSDFBuffer>& tsdf_buffer, fastsense::CommandQueuePtr& q)
+                             const std::shared_ptr<TSDFBuffer>& tsdf_buffer, const std::shared_ptr<TransformBuffer>& transform_buffer, fastsense::CommandQueuePtr& q)
     : ProcessThread(),
       registration{registration},
       cloud_buffer{cloud_buffer},
@@ -24,6 +25,7 @@ CloudCallback::CloudCallback(Registration& registration, const std::shared_ptr<P
       global_map{global_map},
       pose{pose},
       tsdf_buffer{tsdf_buffer},
+      transform_buffer{transform_buffer},
       first_iteration{true},
       q{q},
       tsdf_krnl(q)
@@ -97,7 +99,7 @@ void CloudCallback::callback()
         preprocess_scan(point_cloud, scan_point_buffer);
 
 #ifdef TIME_MEASUREMENT
-        eval.stop();
+        eval.stop("init");
 #endif
 
         if (first_iteration)
@@ -115,7 +117,7 @@ void CloudCallback::callback()
             std::cout << transform << std::endl;
 
 #ifdef TIME_MEASUREMENT
-            eval.stop();
+            eval.stop("reg");
             eval.start("shift");
 #endif
 
@@ -127,7 +129,7 @@ void CloudCallback::callback()
             local_map.shift(x, y, z);
 
 #ifdef TIME_MEASUREMENT
-            eval.stop();
+            eval.stop("shift");
 #endif
         }
 
@@ -143,9 +145,21 @@ void CloudCallback::callback()
         //fastsense::tsdf::update_tsdf_hw(scan_point_buffer, local_map, tau, ConfigManager::config().slam.max_weight());
 
 #ifdef TIME_MEASUREMENT
-        eval.stop();
+        eval.stop("tsdf");
         eval.start("vis");
 #endif
+
+        Eigen::Quaternionf quat(pose.block<3, 3>(0,0));
+        
+        msg::Transform transform;
+        transform.translation.x() = pose(0, 3);
+        transform.translation.y() = pose(1, 3);
+        transform.translation.z() = pose(2, 3);
+        transform.rotation.x() = quat.x();
+        transform.rotation.y() = quat.y();
+        transform.rotation.z() = quat.z();
+        transform.rotation.w = quat.w();
+        transform_buffer->push(transform);
 
         msg::TSDFBridgeMessage tsdf_msg;
         tsdf_msg.tau_ = tau;
@@ -164,7 +178,7 @@ void CloudCallback::callback()
         tsdf_buffer->push_nb(tsdf_msg, true);
 
 #ifdef TIME_MEASUREMENT
-        eval.stop();
+        eval.stop("vis");
         std::cout << eval << std::endl;
 #endif
     }

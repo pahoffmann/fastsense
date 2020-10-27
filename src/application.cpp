@@ -82,12 +82,14 @@ int Application::run()
     LocalMap local_map{ConfigManager::config().slam.map_size_x(), ConfigManager::config().slam.map_size_y(), ConfigManager::config().slam.map_size_z(), global_map_ptr, command_queue};
     Matrix4f pose = Matrix4f::Identity();
     auto tsdf_buffer = std::make_shared<util::ConcurrentRingBuffer<msg::TSDFBridgeMessage>>(2);
+    auto transform_buffer = std::make_shared<util::ConcurrentRingBuffer<msg::Transform>>(16);
 
-    CloudCallback cloud_callback{registration, pointcloud_bridge_buffer, local_map, global_map_ptr, pose, tsdf_buffer, command_queue};
+    CloudCallback cloud_callback{registration, pointcloud_bridge_buffer, local_map, global_map_ptr, pose, tsdf_buffer, transform_buffer, command_queue};
 
     ImuCallback imu_callback{registration, imu_bridge_buffer};
 
     comm::QueueBridge<msg::TSDFBridgeMessage, true> tsdf_bridge{tsdf_buffer, nullptr, 6666};
+    comm::QueueBridge<msg::Transform, true> transform_bridge{transform_buffer, nullptr, 8888};
     
     Logger::info("Application starting...");
 
@@ -98,6 +100,7 @@ int Application::run()
     Runner run_cloud_callback{cloud_callback};
     Runner run_imu_callback{imu_callback};
     Runner run_tsdf_bridge(tsdf_bridge);
+    Runner run_transform_bridge(transform_bridge);
 
     Logger::info("Application started!");
 

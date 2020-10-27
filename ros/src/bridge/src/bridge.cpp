@@ -9,6 +9,7 @@
 #include <bridge/tsdf_bridge.h>
 #include <bridge/imu_bridge.h>
 #include <bridge/velodyne_bridge.h>
+#include <bridge/transform_bridge.h>
 
 namespace fs = fastsense;
 using namespace std::chrono_literals;
@@ -29,6 +30,7 @@ int main(int argc, char** argv)
     fs::bridge::TSDFBridge tsdf_bridge{n, board_addr};
     fs::bridge::ImuBridge imu_bridge{n, board_addr};
     fs::bridge::VelodyneBridge velodyne_bridge{n, board_addr};
+    fs::bridge::TransformBridge transform_bridge{n, board_addr};
     
     tsdf_bridge.start();
     imu_bridge.start();
