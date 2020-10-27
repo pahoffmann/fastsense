@@ -451,7 +451,7 @@ TODO: Ergebnisse
 \centering
 \begin{tabular}{ |p{3cm}||p{2cm}|p{2cm}|p{2cm}|  }
  \hline
- \multicolumn{4}{|c|}{Zeitmessung (ms)} \\
+ \multicolumn{4}{|c|}{Zeitmessung [ms]} \\
  \hline
  Abschnitt      & Durchschnitt & Min & Max\\
  \hline
@@ -467,30 +467,33 @@ TODO: Ergebnisse
 \centering
 \begin{tabular}{ |l||l|l|  }
  \hline
- \multicolumn{3}{|c|}{Vergleich Vitis -- Realität} \\
+ \multicolumn{3}{|c|}{Vergleich Vitis -- Realität [ms]} \\
  \hline
  Abschnitt      & Vitis & Gemessen\\
  \hline
- Registrierung  & 0.9ms $\cdot$ 100 = 90ms & ??? \\
- TSDF Update    & 477ms & ??? \\
+ Registrierung  & 0.905 & 3.667 \\
+ TSDF Update    & 124.483 & 552.924 \\
  \hline
 \end{tabular}
+\begin{itemize}
+\item{Bei der Registrierung wird die meiste Zeit auf Speicher gewartet (95\%)}
+\end{itemize}
 \end{frame}
 
 \begin{frame}{\subsecname}
 \centering
 \begin{tabular}{ |p{3cm}||p{2cm}|p{2cm}|p{2cm}|  }
  \hline
- \multicolumn{4}{|c|}{Vergleich (Durchschnitt, ms)} \\
+ \multicolumn{4}{|c|}{Vergleich verschiedener Plattformen [ms]} \\
  \hline
  Programm       & FastSense & Prototyp & Prototyp \\
  \hline
- System         &     Board &    Board &      NUC \\
+ System         &     Board &    NUC   & Stand-PC \\
  \hline
- Preprocessing  &       ??? &      ??? &      ??? \\
- Registrierung  &       ??? &      ??? &      ??? \\
- TSDF Update    &       ??? &      ??? &      ??? \\
- Map Shift      &       ??? &      ??? &      ??? \\
+ Preprocessing  &       ??? &      ??? &      1   \\
+ Registrierung  &       ??? &      ??? &      62  \\
+ TSDF Update    &       ??? &      ??? &      6   \\
+ Map Shift      &       ??? &      ??? &      108 \\
 \hline
 \end{tabular}
 \end{frame}
