@@ -125,7 +125,7 @@ TEST_CASE("Kernel", "[kernel][slow]")
 
 
     //test registration
-    fastsense::registration::Registration reg(MAX_ITERATIONS);
+    fastsense::registration::Registration reg(q, MAX_ITERATIONS);
 
     std::vector<std::vector<Vector3f>> float_points;
     unsigned int num_points;
@@ -195,7 +195,7 @@ TEST_CASE("Kernel", "[kernel][slow]")
         //copy from scanpoints to  inputbuffer
         auto buffer_ptr = scan_points_to_input_buffer(points_pretransformed_trans, q);
         auto& buffer = *buffer_ptr;
-        auto result_matrix = reg.register_cloud(local_map, buffer, q);
+        auto result_matrix = reg.register_cloud(local_map, buffer);
 
         reg.transform_point_cloud(points_pretransformed_trans, result_matrix);
         check_computed_transform(points_pretransformed_trans, scan_points);
@@ -211,7 +211,7 @@ TEST_CASE("Kernel", "[kernel][slow]")
         //copy from scanpoints to  inputbuffer
         auto buffer_ptr = scan_points_to_input_buffer(points_pretransformed_trans, q);
         auto& buffer = *buffer_ptr;
-        auto result_matrix = reg.register_cloud(local_map, buffer, q);
+        auto result_matrix = reg.register_cloud(local_map, buffer);
 
         reg.transform_point_cloud(points_pretransformed_trans, result_matrix);
         check_computed_transform(points_pretransformed_trans, scan_points);
@@ -224,7 +224,7 @@ TEST_CASE("Kernel", "[kernel][slow]")
         reg.transform_point_cloud(points_pretransformed_rot, rotation_mat);
         auto buffer_ptr = scan_points_to_input_buffer(points_pretransformed_rot, q);
         auto& buffer = *buffer_ptr;
-        auto result_matrix = reg.register_cloud(local_map, buffer, q);
+        auto result_matrix = reg.register_cloud(local_map, buffer);
 
         reg.transform_point_cloud(points_pretransformed_rot, result_matrix);
         check_computed_transform(points_pretransformed_rot, scan_points_2);
