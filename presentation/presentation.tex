@@ -4,6 +4,7 @@
 \usepackage{lmodern}
 \usepackage{amsmath}
 \usepackage{tikz}
+\usetikzlibrary{snakes}
 \usepackage{xcolor} % Farben
 \usepackage{fancyvrb} % Code
 \usepackage[absolute,overlay]{textpos} % Bilder irgendwohin
@@ -42,6 +43,7 @@
 \begin{document}
 
 {\setbeamertemplate{navigation symbols}{}
+%\usebackgroundtemplate{\includegraphics[width=\paperwidth]{images/tsdf_map.png}}
 \begin{frame}
 \titlepage
 \end{frame}}
@@ -112,18 +114,6 @@
 \end{center}
 \end{frame}
 
-\subsection{Algorithmus}
-\begin{frame}{\subsecname}
-TODO: gute visuelle Darstellung, möglichst kein unnötiger Text
-\begin{center}
-\begin{tikzpicture}
-\draw (0, 0) rectangle +(2, 2);
-\draw [->] (2, 1) -- (4, 1);
-\draw (4, 0) rectangle +(2, 2);
-\end{tikzpicture}
-\end{center}
-\end{frame}
-
 \subsection{Recap: Prototyping Demo}
 \begin{frame}{\subsecname}
 \begin{itemize}
@@ -138,6 +128,174 @@ TODO: gute visuelle Darstellung, möglichst kein unnötiger Text
         \item Bottlenecks Registrierung und TSDF-Update (dachten wir)
     \end{itemize}
 \end{itemize}
+\end{frame}
+
+\subsection{Algorithmus}
+\begin{frame}{\subsecname}
+\begin{center}
+\begin{tikzpicture}
+\draw (0, 4) rectangle +(4, 1);
+\node at (2, 4.5) {Registrierung};
+\draw [->] (2, 4) -- (2, 3);
+\draw (0, 2) rectangle +(4, 1);
+\node at (2, 2.5) {Map Shift};
+\draw [->] (2, 2) -- (2, 1);
+\draw (0, 0) rectangle +(4, 1);
+\node at (2, 0.5) {TSDF Update};
+\draw (0, 0.5) -- (-3, 0.5) -- (-3, 1);
+\draw [->, dashed] (-3, 1) -- (-3, 2);
+\draw (-5.1, 2) rectangle +(4.2, 1);
+\node at (-3, 2.5) {Empfange nächsten Scan};
+\draw [dashed] (-3, 3) -- (-3, 4);
+\draw [->] (-3, 4) -- (-3, 4.5) -- (0, 4.5);
+\draw (-3, -1) ellipse (1cm and 0.5cm) node{Start};
+\draw [->] (-2, -1) -- (2, -1) -- (2, 0);
+\end{tikzpicture}
+\end{center}
+\end{frame}
+
+\begin{frame}{\subsecname}
+\begin{center}
+\begin{tikzpicture}
+\draw [fill=light] (0, 4) rectangle +(3, 1);
+\node at (1.5, 4.5) {Registrierung};
+\draw [->] (1.5, 4) -- (1.5, 3);
+\draw (0, 2) rectangle +(3, 1);
+\node at (1.5, 2.5) {Map Shift};
+\draw [->] (1.5, 2) -- (1.5, 1);
+\draw (0, 0) rectangle +(3, 1);
+\node at (1.5, 0.5) {TSDF Update};
+\draw (3, 5) -- (4, 6.5);
+\draw (3, 4) -- (4, -1.5);
+\node [right] at (4, 2.5) {\begin{minipage}{6.5cm}
+\begin{algorithm}[H]
+\SetKwRepeat{Do}{do}{while}
+$T$ = Initial Transform\;
+\vspace{0.2cm}
+Transform point cloud with $T$\;
+\vspace{0.2cm}
+\Do{under max iterations and $E$ not converged}{
+    \vspace{0.2cm}
+    $E$ = Minimization of the sum of signed distances squared\;
+    \vspace{0.2cm}
+    Transform point cloud with $T(E)$\;
+    \vspace{0.2cm}
+}
+\vspace{0.2cm}
+\Return $T$\;
+\end{algorithm}
+\end{minipage}};
+\end{tikzpicture}
+\end{center}
+\end{frame}
+
+\begin{frame}{\subsecname}
+\begin{center}
+\begin{tikzpicture}
+\draw (0, 4) rectangle +(3, 1);
+\node at (1.5, 4.5) {Registrierung};
+\draw [->] (1.5, 4) -- (1.5, 3);
+\draw [fill=light] (0, 2) rectangle +(3, 1);
+\node at (1.5, 2.5) {Map Shift};
+\draw [->] (1.5, 2) -- (1.5, 1);
+\draw (0, 0) rectangle +(3, 1);
+\node at (1.5, 0.5) {TSDF Update};
+\draw (3, 3) -- (4, 6.5);
+\draw (3, 2) -- (4, -1.5);
+\node [right] at (4, 2.5) {\begin{minipage}{6.5cm}
+\begin{itemize}
+\item{LocalMap (aka RingBuffer)}
+\begin{itemize}
+\item{Geteilt zwischen SW und HW}
+\end{itemize}
+\end{itemize}
+\definecolor{cyan}{rgb}{0, 1, 1}
+\begin{tabular}{ccc}
+\begin{tikzpicture}[scale=0.125]
+\node at (-1.1, 8) {\includegraphics[width=2cm]{images/mario.png}};
+\draw (0, 0) grid (16, 16);
+\draw[ultra thick, cyan] (9, 9) rectangle +(5, 5);
+\end{tikzpicture}
+\hspace{-0.5cm}
+&
+\begin{tikzpicture}[scale=0.125]
+\node at (-1.1, 8) {\includegraphics[width=2cm]{images/mario.png}};
+\draw (0, 0) grid (16, 16);
+\draw[thick, cyan, dashed] (9, 9) rectangle +(5, 5);
+\draw[ultra thick, cyan] (9, 6) rectangle +(5, 5);
+\end{tikzpicture}
+\hspace{-0.5cm}
+&
+\begin{tikzpicture}[scale=0.125]
+\node at (-1.1, 8) {\includegraphics[width=2cm]{images/mario.png}};
+\draw (0, 0) grid (16, 16);
+\draw[thick, cyan, dashed] (9, 9) rectangle +(5, 5);
+\draw[thick, cyan, dashed] (9, 6) rectangle +(5, 5);
+\draw[ultra thick, cyan] (6, 6) rectangle +(5, 5);
+\end{tikzpicture}
+\hspace{-0.5cm}
+\\
+\begin{tikzpicture}[scale=0.125]
+\node at (-1.1, 2.5) {\includegraphics[width=0.625cm]{images/a.png}};
+\draw (0, 0) grid (5, 5);
+\end{tikzpicture}
+\hspace{-0.5cm}
+&
+\begin{tikzpicture}[scale=0.125]
+\node at (-1.1, 2.5) {\includegraphics[width=0.625cm]{images/c.png}};
+\draw (0, 0) grid (5, 5);
+\draw[ultra thick, cyan] (0, 2) -- (5, 2);
+\draw[ultra thick, cyan] (2, 0) -- (2, 5);
+\end{tikzpicture}
+\hspace{-0.5cm}
+&
+\begin{tikzpicture}[scale=0.125]
+\node at (-1.1, 2.5) {\includegraphics[width=0.625cm]{images/b.png}};
+\draw (0, 0) grid (5, 5);
+\draw[ultra thick, cyan] (0, 2) -- (5, 2);
+\end{tikzpicture}
+\hspace{-0.5cm}
+\\
+\end{tabular}
+\begin{itemize}
+\item{Werte außerhalb in GlobalMap}
+\begin{itemize}
+\item{Chunk-basiert}
+\end{itemize}
+\item{Speicherung in HDF5}
+\end{itemize}
+\end{minipage}};
+\end{tikzpicture}
+\end{center}
+\end{frame}
+
+\begin{frame}{\subsecname}
+\begin{center}
+\begin{tikzpicture}
+\draw (0, 4) rectangle +(3, 1);
+\node at (1.5, 4.5) {Registrierung};
+\draw [->] (1.5, 4) -- (1.5, 3);
+\draw (0, 2) rectangle +(3, 1);
+\node at (1.5, 2.5) {Map Shift};
+\draw [->] (1.5, 2) -- (1.5, 1);
+\draw [fill=light] (0, 0) rectangle +(3, 1);
+\node at (1.5, 0.5) {TSDF Update};
+\draw (3, 1) -- (4, 6.5);
+\draw (3, 0) -- (4, -1.5);
+\node [right] at (4, 2.5) {\begin{minipage}{6.5cm}
+\begin{itemize}
+\item[1.]{TSDF Generierung\\
+\mbox{\includegraphics[height=2.8cm]{images/tsdf_calc.png}\hspace{0.1cm}\includegraphics[height=2.8cm]{images/tsdf_map.png}}}
+\item[2.]{Update mit gewichtetem Mittelwert
+\begin{align*}
+M_V &= \frac{M_V \cdot M_W + v \cdot w}{M_W + w} \\
+M_W &= \min(M_W + w, W_{\text{max}})
+\end{align*}}
+
+\end{itemize}
+\end{minipage}};
+\end{tikzpicture}
+\end{center}
 \end{frame}
 
 \subsection{Hardware Implementierung}
@@ -157,6 +315,8 @@ TODO: infos zu reg und tsdf, wie visuell darstellen?
 \node at (3, 3.25) {Router};
 \draw [fill=light] (2.5, 5) rectangle +(1, 1);
 \node [above] at (3, 6) {Velodyne};
+\draw [fill=light] (3.5, 5) rectangle +(0.5, 0.5);
+\node [right] at (4, 5.25) {IMU};
 \end{tikzpicture}
 \end{center}
 \end{frame}
@@ -174,13 +334,21 @@ TODO: infos zu reg und tsdf, wie visuell darstellen?
 \draw [fill=light] (2.5, 5) rectangle +(1, 1);
 \node [above] at (3, 6) {Velodyne};
 \draw (0, 0) -- (0, -6) -- (6, -6) -- (6, 0);
+\draw [fill=light] (3.5, 5) rectangle +(0.5, 0.5);
+\node [right] at (4, 5.25) {IMU};
 \draw (0, -4) -- (6, -4);
 \draw [fill=light] (2, -4) rectangle +(2, 0.5);
 \node [above] at (3, -3.5) {NUC};
-\draw [fill=light] (2.5, -6) rectangle +(1, 0.5);
-\node [above] at (3, -5.5) {IMU};
+%\draw [fill=light] (2.5, -6) rectangle +(1, 0.5);
+%\node [above] at (3, -5.5) {IMU};
 \draw [fill=white] (1.25, -6) circle (1);
 \draw [fill=white] (4.75, -6) circle (1);
+\draw [decorate, decoration={snake, segment length=0.5mm, amplitude=0.5mm}] (-0.5, 4) -- (0, 3);
+\draw [fill=white] (-0.5, 4) circle (0.5);
+\draw [fill=black] (-0.5, 4) circle (0.25);
+\draw [decorate, decoration={snake, segment length=0.5mm, amplitude=0.5mm}] (-0.25, 4.25) -- (0, 3);
+\draw [fill=white] (-0.25, 4.25) circle (0.5);
+\draw [fill=black] (-0.25, 4.25) circle (0.25);
 \end{tikzpicture} &
 \includegraphics[height=8cm]{images/robot.jpg}
 \end{tabular}
@@ -321,7 +489,7 @@ TODO: Ergebnisse
 \begin{frame}{\subsecname}
 \begin{textblock*}{12.7cm}(0cm,1cm)
 \begin{center}
-\includegraphics[height=6.9cm]{images/roadmap.png}
+\includegraphics[width=12cm]{images/roadmap.png}
 \end{center}
 \end{textblock*}
 \end{frame}
@@ -329,7 +497,7 @@ TODO: Ergebnisse
 \begin{frame}{\subsecname}
 \begin{textblock*}{12.7cm}(0cm,1cm)
 \begin{center}
-\includegraphics[height=7.3cm]{images/roadmap_new.png}
+\includegraphics[width=12cm]{images/roadmap_new.png}
 \end{center}
 \end{textblock*}
 \end{frame}
