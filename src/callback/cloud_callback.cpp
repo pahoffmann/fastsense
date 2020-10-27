@@ -10,6 +10,8 @@
 #include <msg/transform.h>
 #include <algorithm>
 #include <eigen3/Eigen/Geometry>
+#include <tsdf/update_tsdf_hw.h>
+#include <tsdf/krnl_tsdf_sw.h>
 
 using namespace fastsense::callback;
 using namespace fastsense::util;
@@ -76,6 +78,9 @@ void CloudCallback::callback()
 
         fastsense::msg::PointCloudStamped point_cloud;
         cloud_buffer->pop(&point_cloud);
+        fastsense::msg::PointCloudStamped point_cloud2;
+        point_cloud2.first = std::make_shared<msg::PointCloud>(*point_cloud.first);
+        point_cloud2.second = point_cloud.second;
 
         preprocessor.median_filter(point_cloud, 5);
         preprocessor.reduction_filter(point_cloud);
@@ -126,7 +131,41 @@ void CloudCallback::callback()
         tsdf_krnl.run(local_map, scan_point_buffer, tau, ConfigManager::config().slam.max_weight());
         tsdf_krnl.waitComplete();
 
-        //fastsense::tsdf::update_tsdf_hw(scan_point_buffer, local_map, tau, ConfigManager::config().slam.max_weight());
+        // fastsense::tsdf::update_tsdf_hw(scan_point_buffer, local_map, tau, ConfigManager::config().slam.max_weight());
+
+        // fastsense::buffer::InputOutputBuffer<std::pair<int, int>> new_entries(q, local_map.get_size().x() * local_map.get_size().y() * local_map.get_size().z());       
+
+        // for(int i = 0; i < local_map.get_size().x() * local_map.get_size().y() * local_map.get_size().z(); ++i)
+        // {
+        //     new_entries[i].first = 0;
+        //     new_entries[i].second = 0;
+        // }
+
+        // std::vector<PointHW> kernel_points_sw(scan_point_buffer.size());
+
+        // for(size_t i = 0; i < scan_point_buffer.size(); ++i)
+        // {
+        //     kernel_points_sw[i] = scan_point_buffer[i];
+        // }
+
+        // fastsense::tsdf::krnl_tsdf_sw(kernel_points_sw.data(), 
+        //                             kernel_points_sw.data(),
+        //                             scan_point_buffer.size(),
+        //                             local_map.getBuffer(),
+        //                             local_map.getBuffer(),
+        //                             local_map.get_size().x(), 
+        //                             local_map.get_size().y(), 
+        //                             local_map.get_size().z(),
+        //                             0, 
+        //                             0, 
+        //                             0,
+        //                             local_map.get_offset().x(), 
+        //                             local_map.get_offset().y(), 
+        //                             local_map.get_offset().z(),
+        //                             new_entries,
+        //                             new_entries,
+        //                             tau,
+        //                             ConfigManager::config().slam.max_weight());
 
 #ifdef TIME_MEASUREMENT
         eval.stop("tsdf");
