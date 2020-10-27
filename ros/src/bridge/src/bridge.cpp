@@ -35,6 +35,7 @@ int main(int argc, char** argv)
     tsdf_bridge.start();
     imu_bridge.start();
     velodyne_bridge.start();
+    transform_bridge.start();
 
     while(ros::ok())
     {
@@ -44,6 +45,7 @@ int main(int argc, char** argv)
     tsdf_bridge.stop();
     imu_bridge.stop();
     velodyne_bridge.stop();
+    transform_bridge.stop();
 
     return 0;
 }

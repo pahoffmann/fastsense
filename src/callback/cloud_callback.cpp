@@ -89,6 +89,7 @@ void CloudCallback::callback()
     {
 #ifdef TIME_MEASUREMENT
         auto& eval = RuntimeEvaluator::get_instance();
+        eval.start("total");
         eval.start("init");
 #endif
 
@@ -179,6 +180,7 @@ void CloudCallback::callback()
 
 #ifdef TIME_MEASUREMENT
         eval.stop("vis");
+        eval.stop("total");
         std::cout << eval << std::endl;
 #endif
     }

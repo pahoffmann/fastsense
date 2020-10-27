@@ -11,6 +11,8 @@
 #include <tf2_ros/transform_broadcaster.h>
 #include "bridge_base.h"
 
+#include <mutex>
+
 namespace fastsense::bridge
 {
 
@@ -62,7 +64,11 @@ private:
      */
     void run() override;
 
+    void broadcast();
+
     tf2_ros::TransformBroadcaster broadcaster;
+    std::thread broadcaster_thread;
+    std::mutex mtx;
 
     /// Local vector of lidar points that are published
     geometry_msgs::TransformStamped transform_data;

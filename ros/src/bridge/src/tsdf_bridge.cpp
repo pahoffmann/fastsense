@@ -162,7 +162,7 @@ void TSDFBridge::publish()
     visualization_msgs::Marker marker;
     marker.header = std_msgs::Header{};
     marker.header.stamp = ros::Time();
-    marker.header.frame_id = "base_link";
+    marker.header.frame_id = "map";
     marker.type = visualization_msgs::Marker::POINTS;
     marker.action = visualization_msgs::Marker::ADD;
     marker.ns = "window";

@@ -130,11 +130,11 @@ std::string RuntimeEvaluator::to_string()
     std::stringstream ss;
     ss << " " << std::setw(16) << "task" << " | "
        << std::setw(10) << "count" << " | "
-       << std::setw(10) << "last [ms]" << " | "
-       << std::setw(10) << "sum [ms]" << " | "
-       << std::setw(10) << "min [ms]" << " | "
-       << std::setw(10) << "max [ms]" << " | "
-       << std::setw(10) << "avg [ms]" << "\n-" << std::setfill('-')
+       << std::setw(10) << "last [µs]" << " | "
+       << std::setw(10) << "sum [µs]" << " | "
+       << std::setw(10) << "min [µs]" << " | "
+       << std::setw(10) << "max [µs]" << " | "
+       << std::setw(10) << "avg [µs]" << "\n-" << std::setfill('-')
        << std::setw(16) << "" << "-+-"
        << std::setw(10) << "" << "-+-"
        << std::setw(10) << "" << "-+-"
