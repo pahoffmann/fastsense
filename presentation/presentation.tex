@@ -402,9 +402,20 @@ TSDF Update
 
 \subsection{Kommunikation}
 \begin{frame}{\subsecname}
-TODO: Kommunikation von Julian
+\begin{itemize}
+\item Kommunikatioin via 'Bridge': \\Schnittstelle zwischen Sensordaten/ berechneten Daten auf Trenz Board und einem Host Computer mit ROS
+\item Datenaustausch uber TCP, basierend auf ZeroMQ
+\begin{itemize}
+\item LAN: Nahe real time TODO evaluieren 
+\item WLAN: TODO test mit ballermann WLAN empfaenger und ordentlichem Router
+\end{itemize}
+\item Ermoeglicht
+\begin{itemize}
+\item Visualisierung und Ueberpruefung von IMU Rohdaten, TSDF Werte, PointCloud mit ROS Tools 
+\item Aufnahme aller (oder mancher) Daten zur spaeteren Verarbeitung und Evaluation fuer einen mobilen Roboter
+\end{itemize}
+\end{itemize}
 \end{frame}
-
 
 
 \section{Evaluation}
