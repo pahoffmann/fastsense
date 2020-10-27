@@ -254,4 +254,4 @@ open_docs: gen_docs
 -include $(SW_DEPS)
 -include $(TEST_DEPS)
 -include $(HW_DEPS)
-#-include $(HW_TEST_DEPS)
+-include $(HW_TEST_DEPS)
