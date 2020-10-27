@@ -16,6 +16,22 @@ using namespace fastsense::util;
 using fastsense::buffer::InputBuffer;
 using fastsense::msg::Point;
 
+struct AveragePoint
+{
+    int16_t x;
+    int16_t y;
+    int16_t z;
+    uint16_t count;
+
+    AveragePoint()
+    {
+        x = 0;
+        y = 0;
+        z = 0;
+        count = 0;
+    }
+};
+
 CloudCallback::CloudCallback(Registration& registration, const std::shared_ptr<PointCloudBuffer>& cloud_buffer, LocalMap& local_map, const std::shared_ptr<GlobalMap>& global_map, Matrix4f& pose,
                              const std::shared_ptr<TSDFBuffer>& tsdf_buffer, const std::shared_ptr<TransformBuffer>& transform_buffer, fastsense::CommandQueuePtr& q)
     : ProcessThread(),
@@ -30,7 +46,7 @@ CloudCallback::CloudCallback(Registration& registration, const std::shared_ptr<P
       q{q},
       tsdf_krnl(q, local_map.get_size())
 {
-
+    
 }
 
 void CloudCallback::start()
@@ -47,41 +63,6 @@ void CloudCallback::stop()
     running = false;
 }
 
-void CloudCallback::preprocess_scan(const fastsense::msg::PointCloudStamped& cloud, InputBuffer<PointHW>& scan_points)
-{
-    const std::vector<fastsense::msg::Point>& cloud_points = cloud.first->points_;
-
-    Eigen::Vector4f v;
-
-    int scan_points_index = 0;
-    for (unsigned int i = 0; i < cloud_points.size(); i++)
-    {
-        if (cloud_points[i].x == 0 && cloud_points[i].y == 0 && cloud_points[i].z == 0)
-        {
-            continue;
-        }
-        v << cloud_points[i].x, cloud_points[i].y, cloud_points[i].z, 1.0f;
-
-        Vector3f pointf = (pose * v).block<3, 1>(0, 0);
-        PointHW point{static_cast<int>(std::floor(pointf.x())),
-                      static_cast<int>(std::floor(pointf.y())),
-                      static_cast<int>(std::floor(pointf.z()))};
-
-        scan_points[scan_points_index] = point;
-        scan_points_index++;
-
-    }
-}
-
-size_t CloudCallback::determineBufferSize(const fastsense::msg::PointCloudStamped& cloud)
-{
-    const std::vector<fastsense::msg::Point>& cloud_points = cloud.first->points_;
-
-    return std::count_if(cloud_points.begin(), cloud_points.end(), [](const fastsense::msg::Point & p)
-    {
-        return p.x != 0 || p.y != 0 || p.z != 0;
-    });
-}
 
 void CloudCallback::callback()
 {
@@ -96,8 +77,10 @@ void CloudCallback::callback()
         fastsense::msg::PointCloudStamped point_cloud;
         cloud_buffer->pop(&point_cloud);
 
-        InputBuffer<PointHW> scan_point_buffer{q, determineBufferSize(point_cloud)};
-        preprocess_scan(point_cloud, scan_point_buffer);
+        preprocessor.median_filter(point_cloud, 5);
+        preprocessor.reduction_filter(point_cloud);
+        InputBuffer<PointHW> scan_point_buffer{q, point_cloud.first->points_.size()};
+        preprocessor.preprocess_scan(point_cloud, scan_point_buffer, pose);
 
 #ifdef TIME_MEASUREMENT
         eval.stop("init");
@@ -173,7 +156,6 @@ void CloudCallback::callback()
         tsdf_msg.offset_[0] = local_map.get_offset().x();
         tsdf_msg.offset_[1] = local_map.get_offset().y();
         tsdf_msg.offset_[2] = local_map.get_offset().z();
-        tsdf_msg.map_resolution_ = ConfigManager::config().slam.map_resolution();
         tsdf_msg.tsdf_data_.reserve(local_map.getBuffer().size());
         std::copy(local_map.getBuffer().cbegin(), local_map.getBuffer().cend(), std::back_inserter(tsdf_msg.tsdf_data_));
         tsdf_buffer->push_nb(tsdf_msg, true);

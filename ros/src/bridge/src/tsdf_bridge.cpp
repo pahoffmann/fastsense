@@ -8,6 +8,7 @@
 #include <iterator>
 #include <ros/ros.h>
 #include <bridge/tsdf_bridge.h>
+#include <util/constants.h>
 
 using namespace fastsense::bridge;
 
@@ -105,9 +106,9 @@ void TSDFBridge::convert()
                     }
 
                     geometry_msgs::Point point;
-                    point.x = x * msg().map_resolution_ * 0.001;
-                    point.y = y * msg().map_resolution_ * 0.001;
-                    point.z = z * msg().map_resolution_ * 0.001;
+                    point.x = x * MAP_RESOLUTION * 0.001;
+                    point.y = y * MAP_RESOLUTION * 0.001;
+                    point.z = z * MAP_RESOLUTION * 0.001;
 
                     // color.a = std::min(val.second, 1.0f);
                     if (val.first >= 0)
@@ -167,7 +168,7 @@ void TSDFBridge::publish()
     marker.action = visualization_msgs::Marker::ADD;
     marker.ns = "window";
     marker.id = 0;
-    marker.scale.x = marker.scale.y = msg().map_resolution_ * 0.6 * 0.001;
+    marker.scale.x = marker.scale.y = MAP_RESOLUTION * 0.6 * 0.001;
     marker.points = points_;
     marker.colors = colors_;
     pub().publish(marker);

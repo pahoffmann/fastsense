@@ -16,7 +16,6 @@ namespace fastsense::comm
 struct TSDFBridgeMessage
 {
     float tau_;
-    float map_resolution_;
     std::array<int, 3> size_;
     std::array<int, 3> pos_;
     std::array<int, 3> offset_;

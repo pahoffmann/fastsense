@@ -77,7 +77,6 @@ TEST_CASE("TSDFBridgeMessage Sender Receiver Test", "[communication]")
     std::cout << "Testing 'TSDFBridgeMessage Sender Receiver Test'" << std::endl;
     TSDFBridgeMessage tsdf_msg;
     tsdf_msg.tau_ = 2;
-    tsdf_msg.map_resolution_ = 1;
     tsdf_msg.size_ = {10, 10, 10};
     tsdf_msg.pos_ = {0, 0, 0};
     tsdf_msg.offset_ = {0, 0, 0};
@@ -120,7 +119,6 @@ TEST_CASE("TSDFBridgeMessage Sender Receiver Test", "[communication]")
     receive_thread.join();
     send_thread.join();
     REQUIRE(tsdf_msg.tau_ == tsdf_received.tau_);
-    REQUIRE(tsdf_msg.map_resolution_ == tsdf_received.map_resolution_);
     REQUIRE(tsdf_msg.size_ == tsdf_received.size_);
     REQUIRE(tsdf_msg.pos_ == tsdf_received.pos_);
     REQUIRE(tsdf_msg.offset_ == tsdf_received.offset_);
