@@ -46,6 +46,7 @@ SW_SRCS = src/application.cpp \
 	$(wildcard src/tsdf/*.cpp) \
 	$(wildcard src/callback/*.cpp) \
 	$(wildcard src/registration/*.cpp) \
+	$(wildcard src/preprocessing/*.cpp) \
 	$(wildcard src/util/*.cpp) \
 	$(wildcard src/util/pcd/*.cpp) \
 	$(wildcard src/eval/*.cpp) \

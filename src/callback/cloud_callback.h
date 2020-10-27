@@ -16,6 +16,7 @@
 #include <hw/kernels/tsdf_kernel.h>
 #include <msg/tsdf_bridge_msg.h>
 #include <util/point_hw.h>
+#include <preprocessing/preprocessing.h>
 
 namespace fastsense::callback
 {
@@ -39,10 +40,6 @@ public:
 
     void callback();
 
-    void preprocess_scan(const fastsense::msg::PointCloudStamped& cloud, InputBuffer<PointHW>& scan_points);
-
-    void reduction_filter(fastsense::msg::PointCloudStamped& cloud);
-
     size_t determineBufferSize(const fastsense::msg::PointCloudStamped& cloud);
 
     void stop() override;
@@ -57,5 +54,6 @@ private:
     bool first_iteration;
     fastsense::CommandQueuePtr& q;
     fastsense::kernels::TSDFKernel tsdf_krnl;
+    fastsense::preprocessing::Preprocessing preprocessor;
 };
 }

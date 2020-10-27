@@ -43,7 +43,7 @@ CloudCallback::CloudCallback(Registration& registration, const std::shared_ptr<P
       q{q},
       tsdf_krnl(q)
 {
-
+    
 }
 
 void CloudCallback::start()
@@ -60,65 +60,6 @@ void CloudCallback::stop()
     running = false;
 }
 
-void CloudCallback::preprocess_scan(const fastsense::msg::PointCloudStamped& cloud, InputBuffer<PointHW>& scan_points)
-{
-    const std::vector<fastsense::msg::Point>& cloud_points = cloud.first->points_;
-
-    Eigen::Vector4f v;
-
-    int scan_points_index = 0;
-    for (unsigned int i = 0; i < cloud_points.size(); i++)
-    {
-        v << cloud_points[i].x, cloud_points[i].y, cloud_points[i].z, 1.0f;
-
-        Vector3f pointf = (pose * v).block<3, 1>(0, 0);
-        PointHW point{static_cast<int>(std::floor(pointf.x())),
-                      static_cast<int>(std::floor(pointf.y())),
-                      static_cast<int>(std::floor(pointf.z()))};
-
-        scan_points[scan_points_index] = point;
-        scan_points_index++;
-
-    }
-}
-
-void CloudCallback::reduction_filter(fastsense::msg::PointCloudStamped& cloud)
-{
-    std::vector<fastsense::msg::Point>& cloud_points = cloud.first->points_;
-    std::unordered_map<uint64_t, AveragePoint> point_map;
-
-    point_map.reserve(cloud_points.size());
-    for (uint32_t i = 0; i < cloud_points.size(); i++)
-    {
-        if (cloud_points[i].x == 0 && cloud_points[i].y == 0 && cloud_points[i].z == 0)
-        {
-            continue;
-        }
-
-        uint64_t key = 0;
-        int16_t* key_ptr = (int16_t*)&key;
-        key_ptr[0] = (int16_t)std::floor((cloud_points[i].x) / MAP_RESOLUTION);
-        key_ptr[1] = (int16_t)std::floor((cloud_points[i].y) / MAP_RESOLUTION);
-        key_ptr[2] = (int16_t)std::floor((cloud_points[i].z) / MAP_RESOLUTION);
-
-        AveragePoint& avg_point = point_map[key];
-        avg_point.count++;
-        avg_point.x += cloud_points[i].x;
-        avg_point.y += cloud_points[i].y;
-        avg_point.z += cloud_points[i].z;
-    }
-
-    cloud_points.resize(point_map.size());
-    int counter = 0;
-    for (auto& avg_point : point_map)
-    {
-        cloud_points[counter].x = avg_point.second.x / avg_point.second.count;
-        cloud_points[counter].y = avg_point.second.y / avg_point.second.count;
-        cloud_points[counter].z = avg_point.second.z / avg_point.second.count;
-        counter++;
-    }
-}
-
 
 void CloudCallback::callback()
 {
@@ -132,9 +73,10 @@ void CloudCallback::callback()
         fastsense::msg::PointCloudStamped point_cloud;
         cloud_buffer->pop(&point_cloud);
 
-        reduction_filter(point_cloud);
+        preprocessor.median_filter(point_cloud, 5);
+        preprocessor.reduction_filter(point_cloud);
         InputBuffer<PointHW> scan_point_buffer{q, point_cloud.first->points_.size()};
-        preprocess_scan(point_cloud, scan_point_buffer);
+        preprocessor.preprocess_scan(point_cloud, scan_point_buffer, pose);
 
 #ifdef TIME_MEASUREMENT
         eval.stop("init");
