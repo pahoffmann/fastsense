@@ -15,6 +15,11 @@
 \usepackage{array} % Tabellenspalten zentriert
 \usepackage{hyperref} % Links
 \usepackage{ngerman}[babel]
+\usepackage[style=numeric]{biblatex}
+\addbibresource{bib.bib}
+
+\setbeamertemplate{bibliography item}{\insertbiblabel}
+\setbeamercolor{bibliography entry note}{fg=black}
 
 \usecolortheme{seahorse}
 \definecolor{dark}{rgb}{0, 0.1, 0.3}
@@ -305,7 +310,8 @@ Transform point cloud with $T$\;
 \node [right] at (4, 2.5) {\begin{minipage}{6.5cm}
 \begin{itemize}
 \item[1.]{TSDF Generierung\\
-\mbox{\includegraphics[height=2.8cm]{images/tsdf_calc.png}\hspace{0.1cm}\includegraphics[height=2.8cm]{images/tsdf_map.png}}}
+\mbox{\includegraphics[height=2.8cm]{images/tsdf_calc.png}\hspace{0.1cm}\includegraphics[height=2.8cm]{images/tsdf_map.png}}\\
+\begin{footnotesize}\hspace{1.75cm}\cite{sdf_tracker}\end{footnotesize}}
 \item[2.]{Update mit gewichtetem Mittelwert
 \begin{align*}
 M_V &= \frac{M_V \cdot M_W + v \cdot w}{M_W + w} \\
@@ -555,7 +561,11 @@ TODO: Ergebnisse
 \item{Loop Closing}
 \item{???}
 \end{itemize}
-TODO: Mehr Ideen für MS3?
+TODO: Mehr Ideen für MS3
+\end{frame}
+
+\begin{frame}{Quellen}
+\printbibliography{}
 \end{frame}
 
 \end{document}
