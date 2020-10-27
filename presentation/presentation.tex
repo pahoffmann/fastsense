@@ -14,6 +14,7 @@
 \usepackage{algorithm2e} % Algorithmen
 \usepackage{array} % Tabellenspalten zentriert
 \usepackage{hyperref} % Links
+\usepackage{ngerman}[babel]
 
 \usecolortheme{seahorse}
 \definecolor{dark}{rgb}{0, 0.1, 0.3}
@@ -68,11 +69,11 @@
 \subsection{Ziele für MS2}
 \begin{frame}{\subsecname}
 \begin{itemize}
-    \item Implementation von inkrementellem SLAM mit TSDF in "autarker" Box
-    \item Vorimplementation in Software
-    \item Implementation von Bottleneck-Komponenten in Hardware
-    \item Speicherung von Pose-Graph und TSDF-Karte zur Rekonstruktion des kompletten explorierten Bereichs
-    \item Evaluation durch Zeit- und Strommessung
+\item Implementation von inkrementellem TSDF SLAM in \glqq{}autarker\grqq{} Box
+\item Vorimplementation in Software
+\item Implementation einzelner Komponenten in Hardware
+\item Speicherung von Pose-Graph und TSDF-Karte zur Rekonstruktion des kompletten explorierten Bereichs
+\item Evaluation durch Zeit- und Strommessung
 \end{itemize}
 \end{frame}
 
@@ -85,13 +86,25 @@
 \item{Trajektorie und TDSF-Map für jede Pose speichern}
 \item{Parameter zur Laufzeit anpassbar}
 \end{itemize}
+\begin{center}
+\begin{tikzpicture}
+\draw [fill=light] (-1, -1) rectangle +(2, 2);
+\draw [->] (-3, 0.5) node [left] {Laserscan} -- (-1, 0.5);
+\draw [->] (-3, -0.5) node [left] {IMU} -- (-1, -0.5);
+\draw [->] (1, 0.5) -- (3, 0.5) node [right] {Lokale Map};
+\draw [->] (1, -0.5) -- (3, -0.5) node [right] {Aktuelle Pose};
+\draw [->] (-0.5, -1) -- (-0.5, -2) node [below left] {Globale Map};
+\draw [->] (0.5, -1) -- (0.5, -2) node [below right] {Posen};
+\end{tikzpicture}
+\end{center}
 \end{frame}
 
 \subsection{Nicht-Funktionale Anforderungen}
 \begin{frame}{\subsecname}
 \begin{itemize}
-\item{HW-Plattform: Trenz-Board, SW-Plattform: Vitis}
-\item{FPGA-Beschleunigung der Algorithmen}
+\item{HW-Plattform: Trenz-Board}
+\item{Entwicklungsplattform: Vitis}
+\item{Beschleunigung der Algorithmen durch FPGA}
 \item{Sensoren direkt am Board}
 \item{Unit-Tests}
 \item{Testbench}
@@ -104,7 +117,7 @@
 
 
 
-\section{Hauptspeise}
+\section{Implementierung}
 \begin{frame}{}
 \begin{center}
 \begin{tikzpicture}
@@ -117,16 +130,15 @@
 \subsection{Recap: Prototyping Demo}
 \begin{frame}{\subsecname}
 \begin{itemize}
-    \item Registrierung mithilfe von IMU
-    \item Gute Parameterkombination herausgefunden
-    \item Geplante Funktionalität war vorhanden und in RViz darstellbar
-    \item Erkannte Probleme / Bottlenecks:
-    \begin{itemize}
-        \item Laufzeit stark abhängig von der Auflösung der Karte
-        \item Probleme mit Orientierung (kurz nach Demo gefixt)
-        \item Insgesamt noch recht langsam ($\sim$0.5s/Scan auf Glumanda, 2-5s/Scan in Testwelt)
-        \item Bottlenecks Registrierung und TSDF-Update (dachten wir)
-    \end{itemize}
+\item Gute Parameterkombination herausgefunden
+\item Geplante Funktionalität war vorhanden und in RViz darstellbar
+\item Erkannte Probleme / Bottlenecks:
+\begin{itemize}
+\item Laufzeit stark abhängig von der Auflösung der Karte
+\item Probleme mit Orientierung (kurz nach Demo gefixt)
+\item Insgesamt noch recht langsam ($\sim$0.5s/Scan auf Glumanda, 2-5s/Scan in Testwelt)
+\item Registrierung und TSDF-Update als parallelisierbare Bottlenecks
+\end{itemize}
 \end{itemize}
 \end{frame}
 
@@ -144,7 +156,7 @@
 \node at (2, 0.5) {TSDF Update};
 \draw (0, 0.5) -- (-3, 0.5) -- (-3, 1);
 \draw [->, dashed] (-3, 1) -- (-3, 2);
-\draw (-5.1, 2) rectangle +(4.2, 1);
+\draw (-5.5, 2) rectangle +(5, 1);
 \node at (-3, 2.5) {Empfange nächsten Scan};
 \draw [dashed] (-3, 3) -- (-3, 4);
 \draw [->] (-3, 4) -- (-3, 4.5) -- (0, 4.5);
@@ -300,7 +312,26 @@ M_W &= \min(M_W + w, W_{\text{max}})
 
 \subsection{Hardware Implementierung}
 \begin{frame}{\subsecname}
-TODO: infos zu reg und tsdf, wie visuell darstellen?
+\begin{center}
+\begin{LARGE}
+Registrierung
+\end{LARGE}
+\end{center}
+\begin{itemize}
+\item{Parallelisierbare Schritte der Schleife in HW\\(Berechnungen für alle Punkte)}
+\item{Matrixinvertierung in der Schleife bleibt in SW}
+\end{itemize}
+\vspace{1cm}
+\begin{center}
+\begin{LARGE}
+TSDF Update
+\end{LARGE}
+\end{center}
+\begin{itemize}
+\item{Vollständig in HW}
+\item{Bresenham Algorithmus für die Iteration über Punkte entlang eines Strahls}
+\item{Synchronisation angepasst}
+\end{itemize}
 \end{frame}
 
 \subsection{FastSense Prototyp}
