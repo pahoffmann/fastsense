@@ -65,3 +65,5 @@ scripts/*libphidget*
 *build*
 test/ros_tests_ws/devel
 test/ros_tests_ws/build
+ros/*.bag
+ros/bag/*

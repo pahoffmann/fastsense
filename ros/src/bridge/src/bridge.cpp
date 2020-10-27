@@ -17,7 +17,7 @@ using namespace std::chrono_literals;
 int main(int argc, char** argv)
 {
     ros::init(argc, argv, "bridge");
-    ros::NodeHandle n;
+    ros::NodeHandle n("~");
 
     std::string board_addr;
     if(!ros::param::get("~board_addr", board_addr))

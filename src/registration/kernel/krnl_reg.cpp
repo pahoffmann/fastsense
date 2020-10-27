@@ -1,6 +1,6 @@
 /**
  * @author Patrick Hoffmann
- * @author Marc Eisdoldt
+ * @author Marc Eisoldt
  */
 
 #include <map/local_map_hw.h>
@@ -73,23 +73,24 @@ extern "C"
 
         int transform_matrix[4][4];
 
-    transform_loop:
+        // Pipeline to save ressources
+transform_loop:
         for (int row = 0; row < 4; row++)
         {
             for (int col = 0; col < 4; col++)
             {
-                transform_matrix[row][col] = transform[row * 4 + col]; //TODO: check indexing
+#pragma HLS pipeline II=1
+                transform_matrix[row][col] = transform[row * 4 + col];
             }
         }
 
-    point_loop:
+point_loop:
         for (int i = 0; i < numPoints; i++)
         {
 #pragma HLS loop_tripcount min=0 max=30000
 
             PointHW point_tmp = pointData[i];
 
-            //TODO: check if copy is needed
             int point[4][1], point_mul[4][1];
             point_mul[0][0] = point_tmp.x;
             point_mul[1][0] = point_tmp.y;
@@ -109,7 +110,6 @@ extern "C"
             buf.x = point[0][0] / MAP_RESOLUTION;
             buf.y = point[1][0] / MAP_RESOLUTION;
             buf.z = point[2][0] / MAP_RESOLUTION;
-            buf.dummy = 1;
 
             //get value of local map
             const auto& current = map.get(mapData0, buf.x, buf.y, buf.z);
@@ -126,17 +126,18 @@ extern "C"
             gradient[1] = 0;
             gradient[2] = 0;
 
-        gradient_loop:
+gradient_loop:
             for (size_t axis = 0; axis < 3; axis++)
             {
 #pragma HLS unroll
 
                 int index[3] = {buf.x, buf.y, buf.z};
+
                 index[axis] -= 1;
                 const auto last = map.get(mapData1, index[0], index[1], index[2]);
                 index[axis] += 2;
                 const auto next = map.get(mapData2, index[0], index[1], index[2]);
-                if (last.second != 0 && next.second != 0 && (next.first > 0.0) == (last.first > 0.0))
+                if (last.second != 0 && next.second != 0 && (next.first > 0) == (last.first > 0))
                 {
                     gradient[axis] = (next.first - last.first) / 2;
                 }
@@ -157,9 +158,8 @@ extern "C"
             jacobi[5] = gradient[2];
 
             //add multiplication result to local_h
-            //TODO: pragmas
 
-        local_h_loop:
+local_h_loop:
             for (int row = 0; row < 6; row++)
             {
 #pragma HLS unroll
@@ -172,8 +172,7 @@ extern "C"
                 }
             }
 
-            //TODO: ADD PRAGMATA
-        local_g_loop:
+local_g_loop:
             for (int count = 0; count < 6; count++)
             {
 #pragma HLS unroll
@@ -187,11 +186,11 @@ extern "C"
         //fill output buffer.
         long tmp[44];
 #pragma HLS array_partition variable=tmp complete
-    out_row_loop:
+out_row_loop:
         for (int row = 0; row < 6; row++)
         {
 #pragma HLS unroll
-        out_col_loop:
+out_col_loop:
             for (int col = 0; col < 6; col++)
             {
 #pragma HLS unroll
@@ -204,9 +203,11 @@ extern "C"
         tmp[42] = local_error;
         tmp[43] = local_count;
 
-    write_outbuf:
+        // Pipeline to save ressources
+write_outbuf:
         for (int i = 0; i < 44; i++)
         {
+#pragma HLS pipeline II=1
             outbuf[i] = tmp[i];
         }
     }

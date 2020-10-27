@@ -16,7 +16,7 @@ using namespace fastsense::bridge;
 // TODO params
 
 ImuBridge::ImuBridge(ros::NodeHandle& n, const std::string& board_addr) 
-:   BridgeBase{n, "/imu_bridge/raw", board_addr}, 
+:   BridgeBase{n, "imu_bridge/raw", board_addr}, 
     ProcessThread{},
     imu_ros_{},
     mag_ros_{},
@@ -104,7 +104,7 @@ void ImuBridge::initCovariance()
 void ImuBridge::convert()
 {   
     auto time_now = ros::Time::now();
-    imu_ros_.header.frame_id = "imu";
+    imu_ros_.header.frame_id = "base_link";
     imu_ros_.header.stamp = time_now;
     imu_ros_.orientation.x = 0;
     imu_ros_.orientation.y = 0;
@@ -127,7 +127,7 @@ void ImuBridge::convert()
                 angular_velocity_covariance_.end(),
                 imu_ros_.angular_velocity_covariance.begin());
 
-    mag_ros_.header.frame_id = "imu";
+    mag_ros_.header.frame_id = "base_link";
     mag_ros_.header.stamp = time_now;
     mag_ros_.magnetic_field.x = msg().mag.x();
     mag_ros_.magnetic_field.y = msg().mag.y();

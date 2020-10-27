@@ -1,28 +1,28 @@
 /**
- * @author Marc Eisoldt
+ * @file update_tsdf_hw.cpp
  * @author Malte Hillmann
- * @author Marcel Flottmann
+ * @author Marc Eisoldt
  */
 
-#include <map/local_map_hw.h>
-#include <util/constants.h>
-#include <util/point_hw.h>
+#include "krnl_tsdf_sw.h"
 
 #include <iostream>
 
 #include <hls_stream.h>
-
 
 using namespace fastsense::map;
 
 constexpr int NUM_POINTS = 6000;
 constexpr int SPLIT_FACTOR = 2;
 
-using IntTuple = std::pair<int, int>;
-
-extern "C"
+namespace fastsense::tsdf
 {
-    void read_points(PointHW* scanPoints,
+
+size_t overwrite_count = 0;
+
+
+
+void read_points(PointHW* scanPoints,
                      int numPoints,
                      int tau,
                      hls::stream<PointHW>& point_fifo,
@@ -32,7 +32,6 @@ extern "C"
     points_loop:
         for (int i = 0; i < numPoints; i++)
         {
-#pragma HLS loop_tripcount max=NUM_POINTS
             PointHW p = scanPoints[i];
             int dist = p.norm2();
             int dist_tau = dist + 2 * hls_sqrt_approx(dist) * tau + tau * tau; // (distance + tau)^2
@@ -46,7 +45,7 @@ extern "C"
                      int sizeX,   int sizeY,   int sizeZ,
                      int posX,    int posY,    int posZ,
                      int offsetX, int offsetY, int offsetZ,
-                     IntTuple* new_entries,
+                     buffer::InputOutputBuffer<std::pair<int, int>>& new_entries,
                      int tau,
                      hls::stream<PointHW>& point_fifo,
                      hls::stream<int>& distance_fifo,
@@ -84,8 +83,6 @@ extern "C"
     tsdf_loop:
         while (point_idx < numPoints)
         {
-#pragma HLS loop_tripcount max=NUM_POINTS/SPLIT_FACTOR*128*2
-
             // Load point and init Bresenham
             if (load_new_point)
             {
@@ -144,12 +141,17 @@ extern "C"
 
             if (weight != 0 && map.in_bounds(current_cell.x, current_cell.y, interpolate_z))
             {
-#pragma HLS dependence variable=new_entries inter true
-                IntTuple entry = map.get(new_entries, current_cell.x, current_cell.y, interpolate_z);
-                IntTuple new_entry;
-
+                //std::pair<int, int> entry = map.get(new_entries, current_cell.x, current_cell.y, interpolate_z);
+                std::pair<int, int> entry = new_entries[map.getIndex(current_cell.x, current_cell.y, interpolate_z)];
+                std::pair<int, int> new_entry;
+                
                 if (entry.second == 0 || hls_abs(tsdf_value) < hls_abs(entry.first))
                 {
+                    if(entry.second != 0)
+                    {
+                        ++overwrite_count;
+                    }
+
                     new_entry.first = tsdf_value;
                     new_entry.second = weight;
                 }
@@ -159,7 +161,8 @@ extern "C"
                     new_entry.second = entry.second;
                 }
 
-                map.set(new_entries, current_cell.x, current_cell.y, interpolate_z, new_entry);
+                //map.set(new_entries, current_cell.x, current_cell.y, interpolate_z, new_entry);
+                new_entries[map.getIndex(current_cell.x, current_cell.y, interpolate_z)] = new_entry;
             }
 
             // Update current_cell with Bresenham and interpolation
@@ -220,7 +223,7 @@ extern "C"
                     // FIXME: current_distance is (dist)^2, but delta_z needs dist. sqrt is too slow here
                     // TODO: the current fix is to approximate the distance as Moore distance
                     int delta_z = (dz_per_distance * hls_sqrt_approx(current_distance)) / MATRIX_RESOLUTION;
-                    interpolate_z = (current_cell.z * MAP_RESOLUTION - delta_z) / MAP_RESOLUTION;
+                    interpolate_z =  (current_cell.z * MAP_RESOLUTION - delta_z) / MAP_RESOLUTION;
                     interpolate_z_end = (current_cell.z * MAP_RESOLUTION + delta_z) / MAP_RESOLUTION;
                 }
                 else
@@ -241,17 +244,13 @@ extern "C"
                        int sizeX,   int sizeY,   int sizeZ,
                        int posX,    int posY,    int posZ,
                        int offsetX, int offsetY, int offsetZ,
-                       IntTuple* new_entries,
+                       buffer::InputOutputBuffer<std::pair<int, int>>& new_entries,
                        int tau)
     {
-#pragma HLS dataflow
         hls::stream<PointHW> point_fifo;
         hls::stream<int> distance_fifo;
         hls::stream<int> distance_tau_fifo;
-#pragma HLS stream variable=point_fifo depth=16
-#pragma HLS stream variable=distance_fifo depth=16
-#pragma HLS stream variable=distance_tau_fifo depth=16
-
+        
         read_points(scanPoints, numPoints, tau, point_fifo, distance_fifo, distance_tau_fifo);
         update_tsdf(numPoints,
                     sizeX,   sizeY,   sizeZ,
@@ -261,38 +260,36 @@ extern "C"
                     point_fifo, distance_fifo, distance_tau_fifo);
     }
 
+
     void sync_loop(
-        IntTuple* mapData,
+        buffer::InputOutputBuffer<std::pair<int, int>>& mapData,
         int start,
         int end,
-        IntTuple* new_entries,
+        buffer::InputOutputBuffer<std::pair<int, int>>& new_entries,
         int max_weight)
     {
         for (int index = start; index < end; index++)
         {
-#pragma HLS loop_tripcount min=8000000/SPLIT_FACTOR max=8000000/SPLIT_FACTOR
-#pragma HLS pipeline II=1
-#pragma HLS dependence variable=mapData inter false
-#pragma HLS dependence variable=new_entries inter false
-
-            IntTuple map_entry = mapData[index];
-            IntTuple new_entry = new_entries[index];
+            std::pair<int, int> map_entry = mapData[index];
+            std::pair<int, int> new_entry = new_entries[index];
 
             int new_weight = map_entry.second + new_entry.second;
 
-            if (new_weight)
+            if(!new_weight)
             {
-                map_entry.first = (map_entry.first * map_entry.second + new_entry.first * new_entry.second) / new_weight;
-
-                if (new_weight > max_weight)
-                {
-                    new_weight = max_weight;
-                }
-
-                map_entry.second = new_weight;
-
-                mapData[index] = map_entry;
+                continue;
             }
+
+            map_entry.first = (map_entry.first * map_entry.second + new_entry.first * new_entry.second) / new_weight;
+
+            if (new_weight > max_weight)
+            {
+                new_weight = max_weight;
+            }
+
+            map_entry.second = new_weight;
+
+            mapData[index] = map_entry;
         }
     }
 
@@ -301,16 +298,14 @@ extern "C"
         PointHW* scanPoints1,
         int step,
         int last_step,
-        IntTuple* new_entries0,
-        IntTuple* new_entries1,
+        buffer::InputOutputBuffer<std::pair<int, int>>& new_entries0,
+        buffer::InputOutputBuffer<std::pair<int, int>>& new_entries1,
         int sizeX,   int sizeY,   int sizeZ,
         int posX,    int posY,    int posZ,
         int offsetX, int offsetY, int offsetZ,
         int tau,
         int max_weight)
     {
-#pragma HLS dataflow
-
         tsdf_dataflow(scanPoints0 + 0 * step, step,
                       sizeX,   sizeY,   sizeZ,
                       posX,    posY,    posZ,
@@ -325,39 +320,31 @@ extern "C"
     }
 
     void sync_looper(
-        IntTuple* mapData0,
-        IntTuple* mapData1,
+        buffer::InputOutputBuffer<std::pair<int, int>>& mapData0,
+        buffer::InputOutputBuffer<std::pair<int, int>>& mapData1,
         int step,
         int numPoints,
-        IntTuple* new_entries0,
-        IntTuple* new_entries1,
+        buffer::InputOutputBuffer<std::pair<int, int>>& new_entries0,
+        buffer::InputOutputBuffer<std::pair<int, int>>& new_entries1,
         int max_weight)
-    {
-#pragma HLS dataflow
+    {   
         sync_loop(mapData0, step * 0, step * (0 + 1), new_entries0, max_weight);
         sync_loop(mapData1, step * 1, numPoints, new_entries1, max_weight);
     }
 
-    void krnl_tsdf(PointHW* scanPoints0,
+    void krnl_tsdf_sw(PointHW* scanPoints0,
                    PointHW* scanPoints1,
                    int numPoints,
-                   IntTuple* mapData0,
-                   IntTuple* mapData1,
+                   buffer::InputOutputBuffer<std::pair<int, int>>& mapData0,
+                   buffer::InputOutputBuffer<std::pair<int, int>>& mapData1,
                    int sizeX,   int sizeY,   int sizeZ,
                    int posX,    int posY,    int posZ,
                    int offsetX, int offsetY, int offsetZ,
-                   IntTuple* new_entries0,
-                   IntTuple* new_entries1,
+                   buffer::InputOutputBuffer<std::pair<int, int>>& new_entries0,
+                   buffer::InputOutputBuffer<std::pair<int, int>>& new_entries1,
                    int tau,
                    int max_weight)
     {
-#pragma HLS INTERFACE m_axi port=scanPoints0  offset=slave bundle=scan0mem  latency=22 depth=360
-#pragma HLS INTERFACE m_axi port=scanPoints1  offset=slave bundle=scan1mem  latency=22 depth=360
-#pragma HLS INTERFACE m_axi port=mapData0     offset=slave bundle=map0mem   latency=22 depth=18491
-#pragma HLS INTERFACE m_axi port=mapData1     offset=slave bundle=map1mem   latency=22 depth=18491
-#pragma HLS INTERFACE m_axi port=new_entries0 offset=slave bundle=entry0mem latency=22 depth=18491
-#pragma HLS INTERFACE m_axi port=new_entries1 offset=slave bundle=entry1mem latency=22 depth=18491
-
         int step = numPoints / SPLIT_FACTOR + 1;
         int last_step = numPoints - (SPLIT_FACTOR - 1) * step;
         tsdf_dataflower(scanPoints0,
@@ -374,7 +361,7 @@ extern "C"
 
         int total_size = sizeX * sizeY * sizeZ;
         int sync_step = total_size / SPLIT_FACTOR + 1;
-
+        
         sync_looper(mapData0,
                     mapData1,
                     sync_step,
@@ -382,5 +369,8 @@ extern "C"
                     new_entries0,
                     new_entries1,
                     max_weight);
+
+        //std::cout << overwrite_count << std::endl;
     }
-}
+
+} // namespace fastsense::tsdf

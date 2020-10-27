@@ -73,7 +73,7 @@ Matrix4f Registration::xi_to_transform(Vector6f xi)
     return transform;
 }
 
-Matrix4f Registration::register_cloud(fastsense::map::LocalMap& localmap, fastsense::buffer::InputBuffer<PointHW>& cloud, fastsense::CommandQueuePtr q)
+Matrix4f Registration::register_cloud(fastsense::map::LocalMap& localmap, fastsense::buffer::InputBuffer<PointHW>& cloud)
 {
     mutex_.lock();
     Matrix4f total_transform = imu_accumulator_; //transform used to register the pcl
@@ -124,7 +124,6 @@ Matrix4f Registration::register_cloud(fastsense::map::LocalMap& localmap, fastse
             //BEGIN HW IMPLEMENTATION
 
             //kernel - run
-            fastsense::kernels::RegistrationKernel krnl{q};
 
             //fastsense::buffer::InputBuffer<fastsense::msg::Point> buffer_scan{q, cloud.size()};
 

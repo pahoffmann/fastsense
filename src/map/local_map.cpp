@@ -184,7 +184,7 @@ void LocalMap::shift(int x, int y, int z)
     }
 }
 
-const buffer::InputOutputBuffer<std::pair<int, int>> &LocalMap::getBuffer() const
+buffer::InputOutputBuffer<std::pair<int, int>> &LocalMap::getBuffer()
 {
     return data_;
 }
