@@ -48,7 +48,7 @@ CloudCallback::CloudCallback(Registration& registration, const std::shared_ptr<P
       q{q},
       tsdf_krnl(q, local_map.get_size())
 {
-    
+
 }
 
 void CloudCallback::start()
@@ -133,7 +133,7 @@ void CloudCallback::callback()
 
         // fastsense::tsdf::update_tsdf_hw(scan_point_buffer, local_map, tau, ConfigManager::config().slam.max_weight());
 
-        // fastsense::buffer::InputOutputBuffer<std::pair<int, int>> new_entries(q, local_map.get_size().x() * local_map.get_size().y() * local_map.get_size().z());       
+        // fastsense::buffer::InputOutputBuffer<std::pair<int, int>> new_entries(q, local_map.get_size().x() * local_map.get_size().y() * local_map.get_size().z());
 
         // for(int i = 0; i < local_map.get_size().x() * local_map.get_size().y() * local_map.get_size().z(); ++i)
         // {
@@ -148,19 +148,19 @@ void CloudCallback::callback()
         //     kernel_points_sw[i] = scan_point_buffer[i];
         // }
 
-        // fastsense::tsdf::krnl_tsdf_sw(kernel_points_sw.data(), 
+        // fastsense::tsdf::krnl_tsdf_sw(kernel_points_sw.data(),
         //                             kernel_points_sw.data(),
         //                             scan_point_buffer.size(),
         //                             local_map.getBuffer(),
         //                             local_map.getBuffer(),
-        //                             local_map.get_size().x(), 
-        //                             local_map.get_size().y(), 
+        //                             local_map.get_size().x(),
+        //                             local_map.get_size().y(),
         //                             local_map.get_size().z(),
-        //                             0, 
-        //                             0, 
         //                             0,
-        //                             local_map.get_offset().x(), 
-        //                             local_map.get_offset().y(), 
+        //                             0,
+        //                             0,
+        //                             local_map.get_offset().x(),
+        //                             local_map.get_offset().y(),
         //                             local_map.get_offset().z(),
         //                             new_entries,
         //                             new_entries,
@@ -172,8 +172,10 @@ void CloudCallback::callback()
         eval.start("vis");
 #endif
 
-        Eigen::Quaternionf quat(pose.block<3, 3>(0,0));
-        
+        Eigen::Quaternionf quat(pose.block<3, 3>(0, 0));
+        global_map->save_pose(pose(0, 3), pose(1, 3), pose(2, 3),
+                              quat.x(), quat.y(), quat.z(), quat.w());
+
         msg::Transform transform;
         transform.translation.x() = pose(0, 3);
         transform.translation.y() = pose(1, 3);
