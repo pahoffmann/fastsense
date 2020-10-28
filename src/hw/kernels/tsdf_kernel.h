@@ -8,9 +8,7 @@
 #include <hw/kernels/base_kernel.h>
 #include <hw/buffer/buffer.h>
 #include <map/local_map.h>
-#include <util/types.h>
 #include <util/point_hw.h>
-#include <hw/fpga_manager.h>
 #include <hw/buffer/buffer.h>
 
 #include <iostream>
@@ -30,8 +28,8 @@ class TSDFKernel : public BaseKernel
 
 public:
 
-    TSDFKernel(const CommandQueuePtr& queue, const Vector3i& size)
-        : BaseKernel{queue, "krnl_tsdf"}, new_entries{cmd_q_, size.x() * size.y() * size.z()}
+    TSDFKernel(const CommandQueuePtr& queue, size_t map_size)
+        : BaseKernel{queue, "krnl_tsdf"}, new_entries{cmd_q_, map_size}
     {
 
     }

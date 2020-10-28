@@ -8,7 +8,6 @@
  */
 
 #include "hls_functions.h"
-
 #include <util/constants.h>
 
 struct PointHW

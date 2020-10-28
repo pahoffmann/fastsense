@@ -1,7 +1,6 @@
 /**
- *
+ * @file cloud_callback.cpp
  * @author Pascal Buschermöhle
- *
  */
 
 
@@ -46,7 +45,7 @@ CloudCallback::CloudCallback(Registration& registration, const std::shared_ptr<P
       transform_buffer{transform_buffer},
       first_iteration{true},
       q{q},
-      tsdf_krnl(q, local_map.get_size())
+      tsdf_krnl(q, local_map.getBuffer().size())
 {
     
 }

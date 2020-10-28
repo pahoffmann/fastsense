@@ -3,17 +3,12 @@
  * @author Julian Gaal
  */
 
-#include <hw/fpga_manager.h>
 #include <iostream>
-
-#include "catch2_config.h"
-
 #include "kernels/io_buffer_test_kernel.h"
 #include "kernels/vadd_kernel.h"
+#include "catch2_config.h"
 
 using namespace fastsense;
-
-#define MY_TEST_CASE(x) 
 
 TEST_CASE("Testing HW Buffers", "[TestHWBuffers]")
 {

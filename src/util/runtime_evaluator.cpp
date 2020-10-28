@@ -1,4 +1,5 @@
 /**
+ * @file runtime_evaluator.cpp
  * @author Marc Eisoldt
  * @author Steffen Hinderink
  */
@@ -15,11 +16,8 @@ using namespace std::chrono;
 
 RuntimeEvaluator& RuntimeEvaluator::get_instance()
 {
-    if (instance_ == nullptr)
-    {
-        instance_.reset(new RuntimeEvaluator());
-    }
-    return *instance_;
+    static RuntimeEvaluator instance;
+    return instance;
 }
 
 RuntimeEvaluator::RuntimeEvaluator() : forms_()

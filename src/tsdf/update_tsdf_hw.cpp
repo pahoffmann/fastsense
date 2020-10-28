@@ -6,15 +6,8 @@
 
 #include <unordered_map>
 
-#include "update_tsdf_hw.h"
-#include "ScanOrderNeighbors.h"
-#include "PriorityNeighbors.h"
-#include "AverageNormal.h"
-#include "ProjectionNormal.h"
-#include "RANSACNormal.h"
-#include "IterativeNormal.h"
-#include "weighting.h"
-
+#include <tsdf/update_tsdf_hw.h>
+#include <tsdf/weighting.h>
 #include <util/hls_functions.h>
 
 namespace std

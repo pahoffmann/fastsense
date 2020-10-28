@@ -1,6 +1,7 @@
 #pragma once
 
 /**
+ * @file runtime_evaluator.h
  * @author Marc Eisoldt
  * @author Steffen Hinderink
  */
@@ -89,6 +90,11 @@ public:
     static RuntimeEvaluator& get_instance();
 
     /**
+     * Default Destructor
+     */ 
+    ~RuntimeEvaluator() = default;
+
+    /**
      * Don't allow copies of the instance by assignment operator to ensure singleton property.
      */
     RuntimeEvaluator& operator=(RuntimeEvaluator&) = delete;
@@ -133,9 +139,6 @@ private:
      * Private constructor to ensure singleton property.
      */
     RuntimeEvaluator();
-
-    /// Singleton instance
-    inline static std::unique_ptr<RuntimeEvaluator> instance_ = nullptr;
 
     /**
      * Pauses the time measurements. The time that has past since the last resume is accumulated for every currently measured task.

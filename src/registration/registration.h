@@ -12,12 +12,8 @@
 #include <mutex>
 #include <algorithm>
 
-#include <util/time_stamp.h>
-#include <map/local_map.h>
 #include <msg/msgs_stamped.h>
 #include <hw/kernels/reg_kernel.h>
-#include <hw/buffer/buffer.h>
-#include <util/point_hw.h>
 
 namespace fastsense::registration
 {

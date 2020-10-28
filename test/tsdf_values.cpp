@@ -2,7 +2,6 @@
  * @author Marc Eisoldt
  */
 #include "catch2_config.h"
-#include <tsdf/ProjectionNormal.h>
 #include <tsdf/update_tsdf.h>
 #include <hw/buffer/buffer.h>
 #include <util/pcd/pcd_file.h>

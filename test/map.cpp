@@ -3,10 +3,7 @@
  * @author Juri Vana
  */
 
-#include <map/local_map.h>
-#include <hw/fpga_manager.h>
 #include "catch2_config.h"
-
 #include "kernels/local_map_test_kernel.h"
 
 using namespace fastsense::map;
