@@ -504,6 +504,9 @@ M_W &= \min(M_W + w, W_{\text{max}})
 \subsection{Strom}
 \begin{frame}{\subsecname}
 \begin{center}
+
+\includegraphics[width=7cm]{images/strom_rl-produktiv.png}
+
 \begin{tikzpicture}[scale=0.5]
 \draw (0, 0) circle (0.25);
 \draw (0, 4) circle (0.25);
@@ -523,6 +526,7 @@ M_W &= \min(M_W + w, W_{\text{max}})
 \node at (-1, 2) {$\leftarrow$ Stromquelle};
 \node at (11, 2) {Board $\rightarrow$};
 \end{tikzpicture}
+
 \end{center}
 \end{frame}
 
@@ -613,6 +617,17 @@ TODO: Ergebnisse
 \begin{itemize}
 \item{Drift entfernen (aktuell noch leichter Drift (1cm/s) in alle 3 Richtungen)}
 \item{Komplett in Hardware (Overhead ist fast dreimal so hoch wie der eigentliche Aufruf)}
+\item{Registrierung hat Probleme mit Brensham-Approximation der TSDF-Werte}
+\begin{itemize}
+\item{Stabilisierung durch trilineare Interpolation}
+\end{itemize}
+\end{itemize}
+\item{TSDF}
+\begin{itemize}
+\item{Alternative zum Bresenham Algorithmus}
+\begin{itemize}
+\item{Voraussetzung: Effiziente Umsetzbarkeit in Hardware}
+\end{itemize}
 \end{itemize}
 \end{itemize}
 \end{frame}
@@ -646,9 +661,8 @@ TODO: Ergebnisse
 \item{Verbesserung und Optimierung des Algorithmus}
 \item{Mesh-Generierung auf Basis der TSDF Werte}
 \item{Loop Closing}
-\item{???}
+\item{Integrierung von GPS}
 \end{itemize}
-TODO: Mehr Ideen für MS3
 \end{frame}
 
 \begin{frame}{Quellen}
