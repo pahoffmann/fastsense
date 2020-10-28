@@ -6,7 +6,6 @@
  */
 
 #include <map/local_map_hw.h>
-#include <util/constants.h>
 #include <util/point_hw.h>
 #include <hw/kernels/tsdf_kernel.h>
 

@@ -97,7 +97,7 @@ void CloudCallback::callback()
         preprocess_scan(point_cloud, scan_point_buffer);
 
 #ifdef TIME_MEASUREMENT
-        eval.stop();
+        eval.stop("init");
 #endif
 
         if (first_iteration)
@@ -115,7 +115,7 @@ void CloudCallback::callback()
             std::cout << transform << std::endl;
 
 #ifdef TIME_MEASUREMENT
-            eval.stop();
+            eval.stop("reg");
             eval.start("shift");
 #endif
 
@@ -127,7 +127,7 @@ void CloudCallback::callback()
             local_map.shift(x, y, z);
 
 #ifdef TIME_MEASUREMENT
-            eval.stop();
+            eval.stop("shift");
 #endif
         }
 
@@ -143,7 +143,7 @@ void CloudCallback::callback()
         //fastsense::tsdf::update_tsdf_hw(scan_point_buffer, local_map, tau, ConfigManager::config().slam.max_weight());
 
 #ifdef TIME_MEASUREMENT
-        eval.stop();
+        eval.stop("tsdf");
         eval.start("vis");
 #endif
 
@@ -164,7 +164,7 @@ void CloudCallback::callback()
         tsdf_buffer->push_nb(tsdf_msg, true);
 
 #ifdef TIME_MEASUREMENT
-        eval.stop();
+        eval.stop("vis");
         std::cout << eval << std::endl;
 #endif
     }

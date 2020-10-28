@@ -8,9 +8,7 @@
 #include <hw/kernels/base_kernel.h>
 #include <hw/buffer/buffer.h>
 #include <map/local_map.h>
-#include <util/types.h>
 #include <util/point_hw.h>
-#include <hw/fpga_manager.h>
 #include <hw/buffer/buffer.h>
 
 #include <iostream>

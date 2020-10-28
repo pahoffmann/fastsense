@@ -3,22 +3,16 @@
  * @author Malte Hillmann
  * @author Marcel Flottmann
  */
-
-#include <map/local_map.h>
-#include <hw/fpga_manager.h>
-#include <hw/kernels/tsdf_kernel.h>
-#include <tsdf/update_tsdf.h>
-#include <util/pcd/pcd_file.h>
 #include "catch2_config.h"
 
+#include <tsdf/update_tsdf.h>
+#include <util/pcd/pcd_file.h>
 #include <comm/queue_bridge.h>
 #include <msg/tsdf_bridge_msg.h>
 #include <msg/msgs_stamped.h>
 #include <data/sensor_sync.h>
 #include <util/config/config_manager.h>
 #include <tsdf/krnl_tsdf_sw.h>
-
-#include <iostream>
 
 TEST_CASE("TSDF_Kernel_Vis", "[tsdf_kernel_vis]")
 {

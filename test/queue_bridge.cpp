@@ -8,7 +8,6 @@
 #include <comm/receiver.h>
 #include <comm/queue_bridge.h>
 #include <iostream>
-#include <thread>
 
 using namespace fastsense::comm;
 using namespace fastsense::msg;

@@ -1,5 +1,12 @@
 /**
+ * @file catch2_config.h
  * @author Marcel Flottmann
+ * @author Julian Gaal
+ *
+ * This file
+ * * enables CATCH_CONFIG_FAST_COMPILE 
+ * * offers REQUIRE_EACH, a helper function that does a Catch2 REQUIRE on each 
+ * element of a container
  */
 
 #define CATCH_CONFIG_FAST_COMPILE

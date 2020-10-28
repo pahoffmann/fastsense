@@ -4,23 +4,12 @@
 
 
 #include <stdlib.h>
-#include <fstream>
-#include <iostream>
-
-#include <hw/buffer/buffer.h>
 #include <hw/kernels/vadd_kernel.h>
-#include <hw/opencl.h>
-#include <hw/fpga_manager.h>
 #include <registration/registration.h>
-#include <map/local_map.h>
 #include <util/pcd/pcd_file.h>
 #include <hw/kernels/tsdf_kernel.h>
-#include <util/point_hw.h>
 
 #include "catch2_config.h"
-
-#include <eigen3/Eigen/Dense>
-
 
 using fastsense::util::PCDFile;
 
