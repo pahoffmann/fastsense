@@ -170,7 +170,7 @@ TEST_CASE("Kernel", "[kernel][slow]")
     //calc tsdf values for the points from the pcd and store them in the local map
 
     auto q3 = fastsense::hw::FPGAManager::create_command_queue();
-    fastsense::kernels::TSDFKernel krnl(q3);
+    fastsense::kernels::TSDFKernel krnl(q3, local_map.get_size());
 
     krnl.run(local_map, kernel_points, TAU, MAX_WEIGHT);
     krnl.waitComplete();
