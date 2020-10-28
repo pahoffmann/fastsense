@@ -89,7 +89,7 @@
 \item Implementation von inkrementellem TSDF SLAM in \glqq{}autarker\grqq{} Box
 \item Vorimplementation in Software
 \item Implementation einzelner Komponenten in Hardware
-\item Speicherung von Pose-Graph und TSDF-Karte zur Rekonstruktion des kompletten explorierten Bereichs
+\item Speicherung von Pose-Graph und TSDF-Karte
 \item Evaluation durch Zeit- und Strommessung
 \end{itemize}
 \end{frame}
@@ -150,7 +150,7 @@
 \begin{itemize}
 \item Gute Parameterkombination herausgefunden
 \item Geplante Funktionalität war vorhanden und in RViz darstellbar
-\item Erkannte Probleme / Bottlenecks
+\item Probleme / Bottlenecks erkannt
 %\begin{itemize}
 %\item Laufzeit stark abhängig von der Auflösung der Karte
 %\item Probleme mit Orientierung (kurz nach Demo gefixt)
@@ -189,8 +189,8 @@
 \draw (-5, 3.25) rectangle +(4, 1);
 \node at (-3, 3.75) {Preprocessing};
 \draw [->] (-3, 4.25) -- (-3, 4.5) -- (0, 4.5);
-\draw (-3, -1) ellipse (1cm and 0.5cm) node{Start};
-\draw [->] (-2, -1) -- (2, -1) -- (2, 0);
+\draw (-3, -1) ellipse (2cm and 0.5cm) node{Start mit erstem Scan};
+\draw [->] (-1, -1) -- (2, -1) -- (2, 0);
 
 \fill [fpga] (1, -2) rectangle +(0.5, 0.5);
 \node [right] at (1.5, -1.75) {= ausgelagert auf FPGA};
@@ -223,8 +223,8 @@ Transform point cloud with $T$\;
     \vspace{0.2cm}
     $E$ = Minimization of the sum of signed distances squared\;
     \vspace{0.2cm}
-    Transform point cloud with $T(E)$\;
-    \vspace{0.2cm}
+    \mbox{Transform point cloud with $T(E)$\;}
+    \vspace{0.1cm}
 }
 \vspace{0.2cm}
 \Return $T$\;
@@ -233,9 +233,9 @@ Transform point cloud with $T$\;
 \end{tikzpicture}
 \end{center}
 
-\begin{textblock*}{1cm}(5.5cm,4.2cm)
+\begin{textblock*}{1cm}(5.5cm,4.3cm)
 \begin{tikzpicture}
-\draw [ultra thick, fpga] (0, 0) rectangle (6, 2.3);
+\draw [ultra thick, fpga] (0, 0) rectangle (6, 2);
 \end{tikzpicture}
 \end{textblock*}
 \end{frame}
@@ -294,17 +294,17 @@ Transform point cloud with $T$\;
 \hspace{-0.5cm}
 &
 \begin{tikzpicture}[scale=0.125]
-\node at (-1.1, 2.5) {\includegraphics[width=0.625cm]{images/c.png}};
+\node at (-1.1, 2.5) {\includegraphics[width=0.625cm]{images/b.png}};
 \draw (0, 0) grid (5, 5);
 \draw[ultra thick, cyan] (0, 2) -- (5, 2);
-\draw[ultra thick, cyan] (2, 0) -- (2, 5);
 \end{tikzpicture}
 \hspace{-0.5cm}
 &
 \begin{tikzpicture}[scale=0.125]
-\node at (-1.1, 2.5) {\includegraphics[width=0.625cm]{images/b.png}};
+\node at (-1.1, 2.5) {\includegraphics[width=0.625cm]{images/c.png}};
 \draw (0, 0) grid (5, 5);
 \draw[ultra thick, cyan] (0, 2) -- (5, 2);
+\draw[ultra thick, cyan] (2, 0) -- (2, 5);
 \end{tikzpicture}
 \hspace{-0.5cm}
 \\
@@ -375,7 +375,7 @@ M_W &= \min(M_W + w, W_{\text{max}})
 %\end{itemize}
 %\end{frame}
 
-\subsection{FastSense Prototyp}
+\subsection{Aufbau Demo}
 \begin{frame}{\subsecname}
 \begin{center}
 \begin{tikzpicture}
@@ -615,9 +615,9 @@ TODO: Ergebnisse
 \begin{itemize}
 \item{Registrierung}
 \begin{itemize}
-\item{Drift entfernen (aktuell noch leichter Drift (1cm/s) in alle 3 Richtungen)}
+\item{Drift entfernen (aktuell 1cm/s in alle 3 Richtungen)}
 \item{Komplett in Hardware (Overhead ist fast dreimal so hoch wie der eigentliche Aufruf)}
-\item{Registrierung hat Probleme mit Brensham-Approximation der TSDF-Werte}
+\item{Registrierung hat Probleme mit Bresenham-Approximation der TSDF-Werte}
 \begin{itemize}
 \item{Stabilisierung durch trilineare Interpolation}
 \end{itemize}
