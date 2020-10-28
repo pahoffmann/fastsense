@@ -87,7 +87,7 @@ TEST_CASE("Kernel_TSDF", "[kernel][slow]")
             std::shared_ptr<fastsense::map::GlobalMap> gm_ptr = std::make_shared<fastsense::map::GlobalMap>("MapTest.h5", 0, 0);
             fastsense::map::LocalMap localMap{SIZE_X, SIZE_Y, SIZE_Z, gm_ptr, q};
 
-            fastsense::kernels::TSDFKernel krnl(q, localMap.get_size());
+            fastsense::kernels::TSDFKernel krnl(q, localMap.getBuffer().size());
 
 
             Vector3i scanner_pos(0, 0, 0);
@@ -146,7 +146,7 @@ TEST_CASE("Kernel_TSDF", "[kernel][slow]")
             std::shared_ptr<fastsense::map::GlobalMap> gm_ptr = std::make_shared<fastsense::map::GlobalMap>("MapTest.h5", 0, 7 * WEIGHT_RESOLUTION);
             fastsense::map::LocalMap localMap{SIZE_X, SIZE_Y, SIZE_Z, gm_ptr, q};
 
-            fastsense::kernels::TSDFKernel krnl(q, localMap.get_size());
+            fastsense::kernels::TSDFKernel krnl(q, localMap.getBuffer().size());
 
 
             Vector3i scanner_pos(0, 0, 0);
@@ -236,7 +236,7 @@ TEST_CASE("Kernel_TSDF", "[kernel][slow]")
         std::shared_ptr<fastsense::map::GlobalMap> global_map_ptr(new fastsense::map::GlobalMap("test_global_map.h5", 0.0, 0.0));
         fastsense::map::LocalMap local_map(SIZE_X, SIZE_Y, SIZE_Z, global_map_ptr, q);
 
-        fastsense::kernels::TSDFKernel krnl(q, local_map.get_size());
+        fastsense::kernels::TSDFKernel krnl(q, local_map.getBuffer().size());
 
         std::shared_ptr<fastsense::map::GlobalMap> global_map_sw_ptr(new fastsense::map::GlobalMap("test_global_map_sw.h5", 0.0, 0.0));
         fastsense::map::LocalMap local_map_sw(SIZE_X, SIZE_Y, SIZE_Z, global_map_sw_ptr, q);
