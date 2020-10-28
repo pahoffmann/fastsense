@@ -403,7 +403,7 @@ TSDF Update
 \subsection{Kommunikation}
 \begin{frame}{\subsecname}
 \begin{itemize}
-\item Kommunikatioin via 'Bridge': \\Schnittstelle zwischen Sensordaten/ berechneten Daten auf Trenz Board und einem Host Computer mit ROS
+\item Kommunikatioin via 'Bridge': \\Schnittstelle zwischen Sensordaten / berechneten Daten auf Trenz Board und einem Host Computer mit ROS
 \item Datenaustausch uber TCP, basierend auf ZeroMQ
 \begin{itemize}
 \item LAN: Nahe real time TODO evaluieren 
@@ -464,12 +464,12 @@ TODO: Ergebnisse
  \hline
  \multicolumn{4}{|c|}{Zeitmessung [ms]} \\
  \hline
- Abschnitt      & Durchschnitt & Min & Max\\
+ Abschnitt      & Durchschnitt &  Min &  Max \\
  \hline
- Preprocessing  &          ??? & ??? & ??? \\
- Registrierung  &          ??? & ??? & ??? \\
- TSDF Update    &          ??? & ??? & ??? \\
- Map Shift      &          ??? & ??? & ??? \\
+ Preprocessing  &           35 &   24 &   51 \\
+ Registrierung  &          676 &  142 & 2894 \\
+ Map Shift      &          105 &    0 & 1681 \\
+ TSDF Update    &          337 &  319 &  346 \\
  \hline
 \end{tabular}
 \end{frame}
@@ -501,10 +501,10 @@ TODO: Ergebnisse
  \hline
  System         &     Board &    NUC   & Stand-PC \\
  \hline
- Preprocessing  &       ??? &      ??? &      1   \\
- Registrierung  &       ??? &      ??? &      62  \\
- TSDF Update    &       ??? &      ??? &      6   \\
- Map Shift      &       ??? &      ??? &      108 \\
+ Preprocessing  &        35 &      ??? &      1   \\
+ Registrierung  &       676 &      ??? &      62  \\
+ TSDF Update    &       105 &      ??? &      6   \\
+ Map Shift      &       337 &      ??? &      108 \\
 \hline
 \end{tabular}
 \end{frame}
