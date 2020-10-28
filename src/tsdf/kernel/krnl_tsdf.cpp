@@ -151,21 +151,18 @@ extern "C"
                 weight = WEIGHT_RESOLUTION * (tau + tsdf_value) / (tau - weight_epsilon);
             }
 
-            if (weight != 0)
+            if (weight != 0 && map.in_bounds(current_cell.x, current_cell.y, interpolate_z))
             {
                 int index = map.getIndex(current_cell.x, current_cell.y, interpolate_z);
-                if (index >= 0 && index < sizeX * sizeY * sizeZ)
-                {
 #pragma HLS dependence variable=new_entries inter false
-                    IntTuple entry = new_entries[index];
+                IntTuple entry = new_entries[index];
 
-                    if (entry.second == 0 || hls_abs(tsdf_value) < hls_abs(entry.first))
-                    {
-                        IntTuple new_entry;
-                        new_entry.first = tsdf_value;
-                        new_entry.second = weight;
-                        new_entries[index] = new_entry;
-                    }
+                if (entry.second == 0 || hls_abs(tsdf_value) < hls_abs(entry.first))
+                {
+                    IntTuple new_entry;
+                    new_entry.first = tsdf_value;
+                    new_entry.second = weight;
+                    new_entries[index] = new_entry;
                 }
             }
 
@@ -181,19 +178,22 @@ extern "C"
                         if (err_1 <= 0 && err_2 <= 0)
                         {
                             current_cell.x += increment.x;
+                            err_1 += direction2.y;
+                            err_2 += direction2.z;
                         }
-                        if (err_1 > 0)
+                        else
                         {
-                            current_cell.y += increment.y;
-                            err_1 -= direction2.x;
+                            if (err_1 > 0)
+                            {
+                                current_cell.y += increment.y;
+                                err_1 -= direction2.x;
+                            }
+                            if (err_2 > 0)
+                            {
+                                current_cell.z += increment.z;
+                                err_2 -= direction2.x;
+                            }
                         }
-                        if (err_2 > 0)
-                        {
-                            current_cell.z += increment.z;
-                            err_2 -= direction2.x;
-                        }
-                        err_1 += direction2.y;
-                        err_2 += direction2.z;
                     }
                     else if ((abs_direction.y >= abs_direction.x) && (abs_direction.y >= abs_direction.z))
                     {
@@ -201,19 +201,22 @@ extern "C"
                         if (err_1 <= 0 && err_2 <= 0)
                         {
                             current_cell.y += increment.y;
+                            err_1 += direction2.x;
+                            err_2 += direction2.z;
                         }
-                        if (err_1 > 0)
+                        else
                         {
-                            current_cell.x += increment.x;
-                            err_1 -= direction2.y;
+                            if (err_1 > 0)
+                            {
+                                current_cell.x += increment.x;
+                                err_1 -= direction2.y;
+                            }
+                            if (err_2 > 0)
+                            {
+                                current_cell.z += increment.z;
+                                err_2 -= direction2.y;
+                            }
                         }
-                        if (err_2 > 0)
-                        {
-                            current_cell.z += increment.z;
-                            err_2 -= direction2.y;
-                        }
-                        err_1 += direction2.x;
-                        err_2 += direction2.z;
                     }
                     else
                     {
@@ -221,19 +224,22 @@ extern "C"
                         if (err_1 <= 0 && err_2 <= 0)
                         {
                             current_cell.z += increment.z;
+                            err_1 += direction2.y;
+                            err_2 += direction2.x;
                         }
-                        if (err_1 > 0)
+                        else
                         {
-                            current_cell.y += increment.y;
-                            err_1 -= direction2.z;
+                            if (err_1 > 0)
+                            {
+                                current_cell.y += increment.y;
+                                err_1 -= direction2.z;
+                            }
+                            if (err_2 > 0)
+                            {
+                                current_cell.x += increment.x;
+                                err_2 -= direction2.z;
+                            }
                         }
-                        if (err_2 > 0)
-                        {
-                            current_cell.x += increment.x;
-                            err_2 -= direction2.z;
-                        }
-                        err_1 += direction2.y;
-                        err_2 += direction2.x;
                     }
 
                     current_distance = (current_cell - map_pos).to_mm().norm2();
