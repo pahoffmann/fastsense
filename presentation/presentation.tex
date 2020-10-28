@@ -27,6 +27,7 @@
 \usecolortheme{seahorse}
 \definecolor{dark}{rgb}{0, 0.1, 0.3}
 \definecolor{light}{rgb}{0.9, 0.933, 1}
+\definecolor{fpga}{rgb}{0.8, 0.5, 0.9}
 \setbeamercolor{normal text}{fg=black}
 \setbeamercolor{structure}{fg=dark}
 \setbeamercolor{footline}{fg=black}
@@ -141,7 +142,7 @@
 \begin{itemize}
 \item Gute Parameterkombination herausgefunden
 \item Geplante Funktionalität war vorhanden und in RViz darstellbar
-\item Erkannte Probleme / Bottlenecks:
+\item Erkannte Probleme / Bottlenecks
 %\begin{itemize}
 %\item Laufzeit stark abhängig von der Auflösung der Karte
 %\item Probleme mit Orientierung (kurz nach Demo gefixt)
@@ -163,22 +164,28 @@
 \begin{frame}{\subsecname}
 \begin{center}
 \begin{tikzpicture}
+\fill [fpga] (2, 4) rectangle +(2, 1);
 \draw (0, 4) rectangle +(4, 1);
 \node at (2, 4.5) {Registrierung};
 \draw [->] (2, 4) -- (2, 3);
 \draw (0, 2) rectangle +(4, 1);
 \node at (2, 2.5) {Map Shift};
 \draw [->] (2, 2) -- (2, 1);
-\draw (0, 0) rectangle +(4, 1);
+\draw [fill=fpga] (0, 0) rectangle +(4, 1);
 \node at (2, 0.5) {TSDF Update};
 \draw (0, 0.5) -- (-3, 0.5) -- (-3, 1);
 \draw [->, dashed] (-3, 1) -- (-3, 2);
 \draw (-5.5, 2) rectangle +(5, 1);
 \node at (-3, 2.5) {Empfange nächsten Scan};
-\draw [dashed] (-3, 3) -- (-3, 4);
-\draw [->] (-3, 4) -- (-3, 4.5) -- (0, 4.5);
+\draw [->] (-3, 3) -- (-3, 3.25);
+\draw (-5, 3.25) rectangle +(4, 1);
+\node at (-3, 3.75) {Preprocessing};
+\draw [->] (-3, 4.25) -- (-3, 4.5) -- (0, 4.5);
 \draw (-3, -1) ellipse (1cm and 0.5cm) node{Start};
 \draw [->] (-2, -1) -- (2, -1) -- (2, 0);
+
+\fill [fpga] (1, -2) rectangle +(0.5, 0.5);
+\node [right] at (1.5, -1.75) {= ausgelagert auf FPGA};
 \end{tikzpicture}
 \end{center}
 \end{frame}
@@ -186,13 +193,14 @@
 \begin{frame}{\subsecname}
 \begin{center}
 \begin{tikzpicture}
-\draw [fill=light] (0, 4) rectangle +(3, 1);
-\node at (1.5, 4.5) {Registrierung};
+\fill [fpga] (1.5, 4) rectangle +(1.5, 1);
+\draw (0, 4) rectangle +(3, 1);
+\node [fill=light] at (1.5, 4.5) {Registrierung};
 \draw [->] (1.5, 4) -- (1.5, 3);
 \draw (0, 2) rectangle +(3, 1);
 \node at (1.5, 2.5) {Map Shift};
 \draw [->] (1.5, 2) -- (1.5, 1);
-\draw (0, 0) rectangle +(3, 1);
+\draw [fill=fpga] (0, 0) rectangle +(3, 1);
 \node at (1.5, 0.5) {TSDF Update};
 \draw (3, 5) -- (4, 6.5);
 \draw (3, 4) -- (4, -1.5);
@@ -216,18 +224,25 @@ Transform point cloud with $T$\;
 \end{minipage}};
 \end{tikzpicture}
 \end{center}
+
+\begin{textblock*}{1cm}(5.5cm,4.2cm)
+\begin{tikzpicture}
+\draw [ultra thick, fpga] (0, 0) rectangle (6, 2.3);
+\end{tikzpicture}
+\end{textblock*}
 \end{frame}
 
 \begin{frame}{\subsecname}
 \begin{center}
 \begin{tikzpicture}
+\fill [fpga] (1.5, 4) rectangle +(1.5, 1);
 \draw (0, 4) rectangle +(3, 1);
 \node at (1.5, 4.5) {Registrierung};
 \draw [->] (1.5, 4) -- (1.5, 3);
-\draw [fill=light] (0, 2) rectangle +(3, 1);
-\node at (1.5, 2.5) {Map Shift};
+\draw (0, 2) rectangle +(3, 1);
+\node [fill=light] at (1.5, 2.5) {Map Shift};
 \draw [->] (1.5, 2) -- (1.5, 1);
-\draw (0, 0) rectangle +(3, 1);
+\draw [fill=fpga] (0, 0) rectangle +(3, 1);
 \node at (1.5, 0.5) {TSDF Update};
 \draw (3, 3) -- (4, 6.5);
 \draw (3, 2) -- (4, -1.5);
@@ -301,14 +316,15 @@ Transform point cloud with $T$\;
 \begin{frame}{\subsecname}
 \begin{center}
 \begin{tikzpicture}
+\fill [fpga] (1.5, 4) rectangle +(1.5, 1);
 \draw (0, 4) rectangle +(3, 1);
 \node at (1.5, 4.5) {Registrierung};
 \draw [->] (1.5, 4) -- (1.5, 3);
 \draw (0, 2) rectangle +(3, 1);
 \node at (1.5, 2.5) {Map Shift};
 \draw [->] (1.5, 2) -- (1.5, 1);
-\draw [fill=light] (0, 0) rectangle +(3, 1);
-\node at (1.5, 0.5) {TSDF Update};
+\draw [fill=fpga] (0, 0) rectangle +(3, 1);
+\node [fill=light] at (1.5, 0.5) {TSDF Update};
 \draw (3, 1) -- (4, 6.5);
 \draw (3, 0) -- (4, -1.5);
 \node [right] at (4, 2.5) {\begin{minipage}{6.5cm}
@@ -327,29 +343,29 @@ M_W &= \min(M_W + w, W_{\text{max}})
 \end{center}
 \end{frame}
 
-\subsection{Hardware Implementierung}
-\begin{frame}{\subsecname}
-\begin{center}
-\begin{LARGE}
-Registrierung
-\end{LARGE}
-\end{center}
-\begin{itemize}
-\item{Parallelisierbare Schritte der Schleife in HW\\(Berechnungen für alle Punkte)}
-\item{Matrixinvertierung in der Schleife bleibt in SW}
-\end{itemize}
-\vspace{1cm}
-\begin{center}
-\begin{LARGE}
-TSDF Update
-\end{LARGE}
-\end{center}
-\begin{itemize}
-\item{Vollständig in HW}
-\item{Bresenham Algorithmus für die Iteration über Punkte entlang eines Strahls}
-\item{Synchronisation angepasst}
-\end{itemize}
-\end{frame}
+%\subsection{Hardware Implementierung}
+%\begin{frame}{\subsecname}
+%\begin{center}
+%\begin{LARGE}
+%Registrierung
+%\end{LARGE}
+%\end{center}
+%begin{itemize}
+%\item{Parallelisierbare Schritte der Schleife in HW\\(Berechnungen für alle Punkte)}
+%\item{Matrixinvertierung in der Schleife bleibt in SW}
+%\end{itemize}
+%\vspace{1cm}
+%\begin{center}
+%\begin{LARGE}
+%TSDF Update
+%\end{LARGE}
+%\end{center}
+%\begin{itemize}
+%\item{Vollständig in HW}
+%\item{Bresenham Algorithmus für die Iteration über Punkte entlang eines Strahls}
+%\item{Synchronisation angepasst}
+%\end{itemize}
+%\end{frame}
 
 \subsection{FastSense Prototyp}
 \begin{frame}{\subsecname}
