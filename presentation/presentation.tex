@@ -317,7 +317,6 @@ Transform point cloud with $T$\;
 M_V &= \frac{M_V \cdot M_W + v \cdot w}{M_W + w} \\
 M_W &= \min(M_W + w, W_{\text{max}})
 \end{align*}}
-
 \end{itemize}
 \end{minipage}};
 \end{tikzpicture}
@@ -409,12 +408,56 @@ TSDF Update
 \item LAN: Nahe real time TODO evaluieren 
 \item WLAN: TODO test mit ballermann WLAN empfaenger und ordentlichem Router
 \end{itemize}
-\item Ermoeglicht
+\end{itemize}
+%\item Ermoeglicht
+%\begin{itemize}
+%\item Visualisierung und Ueberpruefung von IMU Rohdaten, TSDF Werte, PointCloud mit ROS Tools 
+%\item Aufnahme aller (oder mancher) Daten zur spaeteren Verarbeitung und Evaluation fuer einen mobilen Roboter
+%\end{itemize}
+\begin{center}
+\begin{tikzpicture}[scale=0.3]
+\draw (0, 0) rectangle (6, 3);
+\draw (1, 3) -- (2, 5) -- (4, 5) -- (5, 3);
+\draw [fill=light] (2, 0.75) rectangle +(2, 1);
+%\node at (3, 1.25) {Trenz};
+\draw [fill=light] (2, 3) rectangle +(2, 0.5);
+\node [left] at (1.5, 3.75) {Router};
+\draw [fill=light] (2.5, 5) rectangle +(1, 1);
+%\node [above] at (3, 6) {Velodyne};
+\draw (0, 0) -- (0, -6) -- (6, -6) -- (6, 0);
+\draw [fill=light] (2, 5) rectangle +(0.5, 0.5);
+%\node [right] at (4, 5.25) {IMU};
+\draw (0, -4) -- (6, -4);
+\draw [fill=light] (2, -4) rectangle +(2, 0.5);
+%\node [above] at (3, -3.5) {NUC};
+%\draw [fill=light] (2.5, -6) rectangle +(1, 0.5);
+%\node [above] at (3, -5.5) {IMU};
+\draw [fill=white] (1.25, -6) circle (1);
+\draw [fill=white] (4.75, -6) circle (1);
+\draw [decorate, decoration={snake, segment length=0.5mm, amplitude=0.5mm}] (6.5, 4) -- (6, 3);
+\draw [fill=white] (6.5, 4) circle (0.5);
+\draw [fill=black] (6.5, 4) circle (0.25);
+\draw [decorate, decoration={snake, segment length=0.5mm, amplitude=0.5mm}] (6.25, 4.25) -- (6, 3);
+\draw [fill=white] (6.25, 4.25) circle (0.5);
+\draw [fill=black] (6.25, 4.25) circle (0.25);
+
+\draw (18, 2) rectangle +(6, 4);
+\node at (21, 4) {\includegraphics[height=1.05cm]{images/rviz.png}};
+\draw (18.25, 2.25) rectangle +(5.5, 3.5);
+\draw [fill=light] (16, 1.25) rectangle +(1.5, 4);
+\draw (20.75, 2) -- (20.75, 1.5) -- (20, 1.5) -- (20, 1.25) -- (22, 1.25) -- (22, 1.5) -- (21.25, 1.5) -- (21.25, 2);
+\draw (18.5, 0) -- (23.5, 0) -- (23, 0.5) -- (19, 0.5) -- cycle;
+
+\draw [<->] (8, 3.25) -- (14, 3.25);
+
+\node [below] at (20, 0) {\begin{minipage}{6cm}
 \begin{itemize}
-\item Visualisierung und Ueberpruefung von IMU Rohdaten, TSDF Werte, PointCloud mit ROS Tools 
-\item Aufnahme aller (oder mancher) Daten zur spaeteren Verarbeitung und Evaluation fuer einen mobilen Roboter
+\item{Visualisierung und Überprüfung mit ROS Tools}
+\item{Aufnahme zur Verarbeitung und Evaluation}
 \end{itemize}
-\end{itemize}
+\end{minipage}};
+\end{tikzpicture}
+\end{center}
 \end{frame}
 
 
@@ -501,10 +544,10 @@ TODO: Ergebnisse
  \hline
  System         &     Board &    NUC   & Stand-PC \\
  \hline
- Preprocessing  &        35 &      ??? &      1   \\
- Registrierung  &       676 &      ??? &      62  \\
- TSDF Update    &       105 &      ??? &      6   \\
- Map Shift      &       337 &      ??? &      108 \\
+ Preprocessing  &        35 &      ??? &      ??? \\
+ Registrierung  &       676 &      ??? &      ??? \\
+ Map Shift      &       105 &      ??? &      ??? \\
+ TSDF Update    &       337 &      ??? &      ??? \\
 \hline
 \end{tabular}
 \end{frame}
