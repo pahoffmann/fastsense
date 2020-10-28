@@ -243,6 +243,8 @@ format:
 	@echo "Formatting"
 	@astyle -q -n --project=.astylerc --recursive "src/*.c??" "src/*.h" "test/*.c??" "test/*.h"
 
+docs: gen_docs open_docs
+
 gen_docs:
 	@echo "Generating doxygen docs"
 	@doxygen Doxygen.config
