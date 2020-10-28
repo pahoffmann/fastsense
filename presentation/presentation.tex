@@ -64,7 +64,7 @@
 \tableofcontents
 \begin{textblock*}{1cm}(0cm,2cm)
 \begin{tikzpicture}
-\draw [white] (0, 2.64) rectangle +(1, 1);
+\draw [white] (0, 2.35) rectangle +(1, 1);
 \draw [light, ultra thick] (1, 0) -- (7, 0);
 \node [right, dark] at (7, 0) {Live Demonstration};
 \end{tikzpicture}
@@ -83,16 +83,16 @@
 \end{center}
 \end{frame}
 
-\subsection{Ziele für MS2}
-\begin{frame}{\subsecname}
-\begin{itemize}
-\item Implementation von inkrementellem TSDF SLAM in \glqq{}autarker\grqq{} Box
-\item Vorimplementation in Software
-\item Implementation einzelner Komponenten in Hardware
-\item Speicherung von Pose-Graph und TSDF-Karte
-\item Evaluation durch Zeit- und Strommessung
-\end{itemize}
-\end{frame}
+%\subsection{Ziele für MS2}
+%\begin{frame}{\subsecname}
+%\begin{itemize}
+%\item Implementation von inkrementellem TSDF SLAM in \glqq{}autarker\grqq{} Box
+%\item Vorimplementation in Software
+%\item Implementation einzelner Komponenten in Hardware
+%\item Speicherung von Pose-Graph und TSDF-Karte
+%\item Evaluation durch Zeit- und Strommessung
+%\end{itemize}
+%\end{frame}
 
 \subsection{Funktionale Anforderungen}
 \begin{frame}{\subsecname}
@@ -100,7 +100,7 @@
 \item{Lokale TSDF-Map ausgeben}
 \item{Aktuelle 6D-Pose ausgeben}
 \item{Map auf Basis der IMU und Velodyne-Daten}
-\item{Trajektorie und TDSF-Map für jede Pose speichern}
+\item{Trajektorie und TSDF-Map für jede Pose speichern}
 \item{Parameter zur Laufzeit anpassbar}
 \end{itemize}
 \begin{center}
@@ -478,11 +478,12 @@ M_W &= \min(M_W + w, W_{\text{max}})
 
 \draw [<->] (8, 3.25) -- (14, 3.25);
 
-\node [below] at (11, 3) {\begin{minipage}{2cm}
+\node [below] at (11, 3) {\begin{minipage}{3cm}
 \begin{itemize}
 \item{IMU}
-\item{PCL}
-\item{Map}
+\item{PointCloud}
+\item{TSDF Map}
+\item{Transform}
 \end{itemize}
 \end{minipage}};
 \end{tikzpicture}
@@ -531,7 +532,29 @@ M_W &= \min(M_W + w, W_{\text{max}})
 \end{frame}
 
 \begin{frame}{\subsecname}
-TODO: Ergebnisse
+\begin{center}
+\begin{tikzpicture}
+\node at (0, 0) {\includegraphics[width=10cm]{images/oscilloscope.jpg}};
+\draw [light] (-3.1, -2) -- (-3.1, 2);
+\draw [light] (-3, -2) -- (-3, 2);
+\draw [light] (0.8, -2) -- (0.8, 2);
+\draw [light] (1.45, -2) -- (1.45, 2);
+\draw [light] (2.48, -2) -- (2.48, 2);
+\draw [light] (2.8, -2) -- (2.8, 2);
+\node [light, below] at (-3.05, -2) {Preprocessing};
+\node [light, below] at (-1.1, -1) {Registrierung};
+\node [light, below] at (1.1, -2) {Map Shift};
+\node [light, above] at (2, 2) {TSDF Update};
+\node [light, below] at (3.5, -2) {Visualisierung};
+\end{tikzpicture}
+\begin{tabular}{|p{2cm}||p{2cm}|p{2cm}|p{2cm}|}
+\hline
+ & Durchschnitt & Min & Max \\\hline
+U [mV] & 60.2 & 57.3 & 66.7 \\
+I [A] & 0.86 & 0.82 & 0.95 \\
+P [W] & 10.32 & 9.84 & 11.4 \\\hline
+\end{tabular}
+\end{center}
 \end{frame}
 
 \subsection{Zeit}
@@ -568,23 +591,23 @@ TODO: Ergebnisse
 \end{itemize}
 \end{frame}
 
-\begin{frame}{\subsecname}
-\centering
-\begin{tabular}{ |p{3cm}||p{2cm}|p{2cm}|p{2cm}|  }
- \hline
- \multicolumn{4}{|c|}{Vergleich verschiedener Plattformen [ms]} \\
- \hline
- Programm       & FastSense & Prototyp & Prototyp \\
- \hline
- System         &     Board &    NUC   & Stand-PC \\
- \hline
- Preprocessing  &        35 &      ??? &      ??? \\
- Registrierung  &       676 &      ??? &      ??? \\
- Map Shift      &       105 &      ??? &      ??? \\
- TSDF Update    &       337 &      ??? &      ??? \\
-\hline
-\end{tabular}
-\end{frame}
+%\begin{frame}{\subsecname}
+%\centering
+%\begin{tabular}{ |p{3cm}||p{2cm}|p{2cm}|p{2cm}|  }
+% \hline
+% \multicolumn{4}{|c|}{Vergleich verschiedener Plattformen [ms]} \\
+% \hline
+% Programm       & FastSense & Prototyp & Prototyp \\
+% \hline
+% System         &     Board &    NUC   & Stand-PC \\
+% \hline
+% Preprocessing  &        35 &      ??? &      ??? \\
+% Registrierung  &       676 &      ??? &      ??? \\
+% Map Shift      &       105 &      ??? &      ??? \\
+% TSDF Update    &       337 &      ??? &      ??? \\
+%\hline
+%\end{tabular}
+%\end{frame}
 
 
 
