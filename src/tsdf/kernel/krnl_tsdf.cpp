@@ -366,6 +366,28 @@ extern "C"
         sync_loop(mapData1, step * 1, numPoints, new_entries1, max_weight);
     }
 
+    /**
+     * @brief Hardware implementation of the TSDF generation and update algorithm using bresenham
+     * 
+     * @param scanPoints0 First point reference from which the TSDF data should be calculated
+     * @param scanPoints1 Second point reference from which the TSDF data should be calculated
+     * @param numPoints Number of points which should be 
+     * @param mapData0 First map reference which should be used for the update 
+     * @param mapData1 Second map reference which should be used for the update
+     * @param sizeX Number of map cells in x direction
+     * @param sizeY Number of map cells in y direction
+     * @param sizeZ Number of map cells in z direction
+     * @param posX X coordinate of the scanner
+     * @param posY Y coordinate of the scanner
+     * @param posZ Z coordinate of the scanner
+     * @param offsetX X offset of the local map
+     * @param offsetY Y offset of the local map
+     * @param offsetZ Z offset of the local map
+     * @param new_entries0 First reference to the temporal buffer for the calculated TSDF values 
+     * @param new_entries1 Second reference to the temporal buffer for the calculated TSDF values
+     * @param tau Truncation distance for the TSDF values (in map resolution)
+     * @param max_weight Maximum for the weight of the map entries
+     */
     void krnl_tsdf(PointHW* scanPoints0,
                    PointHW* scanPoints1,
                    int numPoints,

@@ -1,8 +1,10 @@
 /**
- * @file tsdf_kernel_vis.cpp
  * @author Marc Eisoldt
  * @author Malte Hillmann
  * @author Marcel Flottmann
+ * 
+ * Visualize the results of the hardware implementation of the TSDF generation and update 
+ * based on a real point cloud via the TSDF bridge
  */
 #include "catch2_config.h"
 
@@ -117,8 +119,6 @@ TEST_CASE("TSDF_Kernel_Vis", "[tsdf_kernel_vis]")
                                     new_entries,
                                     TAU,
                                     MAX_WEIGHT);
-
-
 
         fastsense::msg::TSDFBridgeMessage tsdf_msg;
 

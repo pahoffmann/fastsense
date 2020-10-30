@@ -1,5 +1,7 @@
 /**
  * @author Marc Eisoldt
+ * 
+ * Test the software version of the TSDF generation and map update
  */
 #include "catch2_config.h"
 #include <tsdf/update_tsdf.h>

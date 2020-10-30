@@ -1,6 +1,8 @@
 /**
- * @file kernel_tsdf.cpp
  * @author Marc Eisoldt
+ * 
+ * Test the hardware implementation of the TSDF generatio and map update 
+ * with simple scenarios and a real point cloud
  */
 
 
