@@ -2,6 +2,9 @@
  * @author Marc Eisoldt
  * @author Malte Hillmann
  * @author Marcel Flottmann
+ * 
+ * Visualize the results of the hardware implementation of the TSDF generation and update 
+ * based on a real point cloud via the TSDF bridge
  */
 #include "catch2_config.h"
 
@@ -43,9 +46,9 @@ TEST_CASE("TSDF_Kernel_Vis", "[tsdf_kernel_vis]")
 
         std::vector<PointHW> kernel_points_sw(num_points);
 
-        for(const auto& ring : float_points)
+        for (const auto& ring : float_points)
         {
-            for(const auto& point : ring)
+            for (const auto& point : ring)
             {
                 scan_points[count].x() = point.x() * SCALE;
                 scan_points[count].y() = point.y() * SCALE;
@@ -92,7 +95,7 @@ TEST_CASE("TSDF_Kernel_Vis", "[tsdf_kernel_vis]")
 
         fastsense::buffer::InputOutputBuffer<std::pair<int, int>> new_entries(q, local_map.get_size().x() * local_map.get_size().y() * local_map.get_size().z());       
 
-        for(int i = 0; i < local_map.get_size().x() * local_map.get_size().y() * local_map.get_size().z(); ++i)
+        for (int i = 0; i < local_map.get_size().x() * local_map.get_size().y() * local_map.get_size().z(); ++i)
         {
             new_entries[i].first = 0;
             new_entries[i].second = 0;
@@ -117,8 +120,6 @@ TEST_CASE("TSDF_Kernel_Vis", "[tsdf_kernel_vis]")
                                     TAU,
                                     MAX_WEIGHT);
 
-
-
         fastsense::msg::TSDFBridgeMessage tsdf_msg;
 
         tsdf_msg.tau_ = TAU;
@@ -131,7 +132,6 @@ TEST_CASE("TSDF_Kernel_Vis", "[tsdf_kernel_vis]")
         tsdf_msg.offset_[0] = SIZE_X / 2;
         tsdf_msg.offset_[1] = SIZE_Y / 2;
         tsdf_msg.offset_[2] = SIZE_Z / 2;
-        tsdf_msg.map_resolution_ = MAP_RESOLUTION;
         tsdf_msg.tsdf_data_.reserve(SIZE_X * SIZE_Y * SIZE_Z);
         std::copy(local_map.getBuffer().cbegin(), local_map.getBuffer().cend(), std::back_inserter(tsdf_msg.tsdf_data_));
 

@@ -12,9 +12,15 @@ namespace fastsense::msg
 
 struct Quaternion : public util::XYZBuffer<double>
 {
-    Quaternion() = delete;
+    Quaternion() = default;
 
-    Quaternion(double x, double y, double z, double w);
+    Quaternion(double val) : XYZBuffer(val), w(val)
+    {
+    }
+
+    Quaternion(double x, double y, double z, double w) : XYZBuffer(x, y, z), w(w)
+    {
+    }
 
     ~Quaternion() = default;
 

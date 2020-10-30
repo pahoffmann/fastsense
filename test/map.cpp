@@ -87,8 +87,8 @@ TEST_CASE("Map", "[Map]")
     d.read(chunk);
 
     // test pose
-    gm_ptr->save_pose(8, 13, 21, 34, 55, 89);
-    gm_ptr->save_pose(144, 233, 377, 610, 987, 1597);
+    gm_ptr->save_pose(8, 13, 21, 34, 55, 89, 1);
+    gm_ptr->save_pose(144, 233, 377, 610, 987, 1597, 1);
     g = f.getGroup("/poses");
     d = g.getDataSet("1");
 

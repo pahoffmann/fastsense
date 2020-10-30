@@ -1,5 +1,8 @@
 /**
  * @author Marc Eisoldt
+ * 
+ * Tests the combination of the TSDF Kernel with the registartion kernel 
+ * with a real point cloud and a simulated translation and rotation
  */
 
 
@@ -38,6 +41,12 @@ constexpr int SIZE_X = 20 * SCALE / MAP_RESOLUTION;
 constexpr int SIZE_Y = 20 * SCALE / MAP_RESOLUTION;
 constexpr int SIZE_Z = 5 * SCALE / MAP_RESOLUTION; 
 
+/**
+ * @brief Compares two sets of points one-on-one and does some statistics
+ * 
+ * @param points_posttransform Transformed point cloud
+ * @param points_pretransform Original point cloud
+ */
 static void check_computed_transform(const ScanPoints_t& points_posttransform, ScanPoints_t& points_pretransform)
 {
     int minimum = std::numeric_limits<int>::infinity();
@@ -71,9 +80,6 @@ static void check_computed_transform(const ScanPoints_t& points_posttransform, S
         average_z += std::abs(sub.z());
 
         dists[i] = norm;
-
-        //std::cout << norm << std::endl;
-        //REQUIRE(norm < MAX_OFFSET);
     }
 
     std::sort(dists.begin(), dists.end());
@@ -170,13 +176,13 @@ TEST_CASE("Kernel", "[kernel][slow]")
     //calc tsdf values for the points from the pcd and store them in the local map
 
     auto q3 = fastsense::hw::FPGAManager::create_command_queue();
-    fastsense::kernels::TSDFKernel krnl(q3);
+    fastsense::kernels::TSDFKernel krnl(q3, local_map.getBuffer().size());
 
     krnl.run(local_map, kernel_points, TAU, MAX_WEIGHT);
     krnl.waitComplete();
 
     //fastsense::tsdf::update_tsdf(scan_points, Vector3i::Zero(), local_map, TAU, MAX_WEIGHT);
-
+    
     SECTION("Test Registration No Transform")
     {
         std::cout << "    Section 'Test Registration No Transform'" << std::endl;

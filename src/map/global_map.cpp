@@ -142,13 +142,11 @@ void GlobalMap::set_value(const Vector3i& pos, const std::pair<int, int>& value)
     chunk[index + 1] = value.second;
 }
 
-void GlobalMap::save_pose(float x, float y, float z, float roll, float pitch, float yaw)
+void GlobalMap::save_pose(float t_x, float t_y, float t_z, float quat_x, float quat_y, float quat_z, float quat_w)
 {
     HighFive::Group g = file_.getGroup("/poses");
-    std::vector<float> pose {x, y, z, roll, pitch, yaw};
-    std::stringstream ss;
-    ss << num_poses_;
-    g.createDataSet(ss.str(), pose);
+    std::vector<float> pose {t_x, t_y, t_z, quat_x, quat_y, quat_z, quat_w};
+    g.createDataSet(std::to_string(num_poses_), pose);
     num_poses_++;
 }
 

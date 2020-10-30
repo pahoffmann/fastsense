@@ -8,6 +8,8 @@ find_package(catkin REQUIRED COMPONENTS
   sensor_msgs
   std_msgs
   visualization_msgs
+  tf2
+  tf2_ros
 )
 
 find_package(ZeroMQ 4.3.2 REQUIRED)
@@ -33,6 +35,7 @@ add_executable(bridge
   src/tsdf_bridge.cpp
   src/velodyne_bridge.cpp
   src/bridge.cpp
+  src/transform_bridge.cpp
 )
 
 target_compile_options(bridge PRIVATE ${OpenMP_FLAGS})
