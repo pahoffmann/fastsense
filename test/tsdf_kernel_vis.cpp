@@ -44,9 +44,9 @@ TEST_CASE("TSDF_Kernel_Vis", "[tsdf_kernel_vis]")
 
         std::vector<PointHW> kernel_points_sw(num_points);
 
-        for(const auto& ring : float_points)
+        for (const auto& ring : float_points)
         {
-            for(const auto& point : ring)
+            for (const auto& point : ring)
             {
                 scan_points[count].x() = point.x() * SCALE;
                 scan_points[count].y() = point.y() * SCALE;
@@ -93,7 +93,7 @@ TEST_CASE("TSDF_Kernel_Vis", "[tsdf_kernel_vis]")
 
         fastsense::buffer::InputOutputBuffer<std::pair<int, int>> new_entries(q, local_map.get_size().x() * local_map.get_size().y() * local_map.get_size().z());       
 
-        for(int i = 0; i < local_map.get_size().x() * local_map.get_size().y() * local_map.get_size().z(); ++i)
+        for (int i = 0; i < local_map.get_size().x() * local_map.get_size().y() * local_map.get_size().z(); ++i)
         {
             new_entries[i].first = 0;
             new_entries[i].second = 0;

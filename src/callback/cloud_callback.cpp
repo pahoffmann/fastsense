@@ -1,6 +1,7 @@
 /**
  * @file cloud_callback.cpp
  * @author Pascal Buschermöhle
+ * @author Marc Eisoldt
  */
 
 

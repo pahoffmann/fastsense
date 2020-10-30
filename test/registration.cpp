@@ -62,12 +62,12 @@ static void check_computed_transform(const ScanPoints_t& points_posttransform, S
         Eigen::Vector3i sub = points_pretransform[i] - points_posttransform[i];
         auto norm = sub.norm();
 
-        if(norm < minimum)
+        if (norm < minimum)
         {
             minimum = norm;
         }
 
-        if(norm > maximum)
+        if (norm > maximum)
         {
             maximum = norm;
         }
@@ -99,7 +99,7 @@ static void check_computed_transform(const ScanPoints_t& points_posttransform, S
 static std::shared_ptr<fastsense::buffer::InputBuffer<PointHW>> scan_points_to_input_buffer(ScanPoints_t& cloud, const fastsense::CommandQueuePtr q)
 {
     auto buffer_ptr = std::make_shared<fastsense::buffer::InputBuffer<PointHW>>(q, cloud.size());
-    for(size_t i = 0; i < cloud.size(); i++)
+    for (size_t i = 0; i < cloud.size(); i++)
     {
         auto point = cloud[i];
         PointHW tmp(point.x(), point.y(), point.z());
@@ -133,9 +133,9 @@ TEST_CASE("Registration", "[registration][slow]")
 
     ScanPoints_t scan_points(num_points);
 
-    for(const auto& ring : float_points)
+    for (const auto& ring : float_points)
     {
-        for(const auto& point : ring)
+        for (const auto& point : ring)
         {
             scan_points[count].x() = point.x() * SCALE;
             scan_points[count].y() = point.y() * SCALE;

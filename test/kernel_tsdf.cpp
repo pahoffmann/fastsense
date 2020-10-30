@@ -24,38 +24,14 @@ static void check_tsdf(const fastsense::buffer::InputOutputBuffer<std::pair<int 
     REQUIRE(tsdf_hw.size() == tsdf_sw.size());
 
     size_t err_count = 0;
-    
-    // size_t lower_count = 0;
-    // size_t higher_count = 0;
 
-    for(size_t i = 0; i < tsdf_hw.size(); ++i)
+    for (size_t i = 0; i < tsdf_hw.size(); ++i)
     {
-        //REQUIRE(tsdf_hw[i].first == tsdf_sw[i].first);
-    
-        if(tsdf_hw[i].first != tsdf_sw[i].first)
+        if (tsdf_hw[i].first != tsdf_sw[i].first)
         {
             ++err_count;
         }
-
-        // if(abs(tsdf_hw[i].second) < abs(tsdf_sw[i].second))
-        // {
-        //     ++lower_count;
-        // }
-
-        // if(abs(tsdf_hw[i].second) > abs(tsdf_sw[i].second))
-        // {
-        //     ++higher_count;
-        // }
-
-        // if(tsdf_hw[i].first != tsdf_sw[i].first)
-        // {
-        //     std::cout << tsdf_hw[i].first << " " << tsdf_hw[i].second << "  :  " << tsdf_sw[i].first << " " << tsdf_sw[i].second << std::endl;
-        // }
     }
-
-    // std::cout << "lower: " << lower_count << std::endl;
-    // std::cout << "higher: " << higher_count << std::endl;
-
 
     REQUIRE(err_count == 0);
 }
@@ -91,11 +67,6 @@ TEST_CASE("Kernel_TSDF", "[kernel][slow]")
 
 
             Vector3i scanner_pos(0, 0, 0);
-
-            // ScanPoints_t points(1);
-            // points[0] = Vector3i(6, 0, 0) * SCALE + Vector3i::Constant(MAP_RESOLUTION / 2);
-
-            // fastsense::tsdf::update_tsdf(points, scanner_pos, localMap, TAU, 100);
 
             fastsense::buffer::InputBuffer<PointHW> kernel_points(q, 1);
 
@@ -151,11 +122,6 @@ TEST_CASE("Kernel_TSDF", "[kernel][slow]")
 
             Vector3i scanner_pos(0, 0, 0);
             
-            // ScanPoints_t points(1);
-            // points[0] = Vector3i(6, 0, 0) * SCALE + Vector3i::Constant(MAP_RESOLUTION / 2);
-
-            // update_tsdf(points, scanner_pos, localMap, TAU, 100 * WEIGHT_RESOLUTION);
-
             fastsense::buffer::InputBuffer<PointHW> kernel_points(q, 1);
 
             kernel_points[0].x = 6 * SCALE + MAP_RESOLUTION / 2;
@@ -183,8 +149,6 @@ TEST_CASE("Kernel_TSDF", "[kernel][slow]")
 
             SECTION("TSDF Max Weight")
             {
-                //update_tsdf(points, scanner_pos, localMap, TAU, WEIGHT_RESOLUTION);
-                
                 krnl.run(localMap, kernel_points, TAU, WEIGHT_RESOLUTION);
                 krnl.waitComplete();
 
@@ -217,9 +181,9 @@ TEST_CASE("Kernel_TSDF", "[kernel][slow]")
 
         std::vector<PointHW> kernel_points_sw(num_points);
 
-        for(const auto& ring : float_points)
+        for (const auto& ring : float_points)
         {
-            for(const auto& point : ring)
+            for (const auto& point : ring)
             {
                 kernel_points[count].x = point.x() * SCALE;;
                 kernel_points[count].y = point.y() * SCALE;;
@@ -248,7 +212,7 @@ TEST_CASE("Kernel_TSDF", "[kernel][slow]")
 
         fastsense::buffer::InputOutputBuffer<std::pair<int, int>> new_entries(q, local_map_sw.get_size().x() * local_map_sw.get_size().y() * local_map_sw.get_size().z());       
 
-        for(int i = 0; i < local_map.get_size().x() * local_map.get_size().y() * local_map.get_size().z(); ++i)
+        for (int i = 0; i < local_map.get_size().x() * local_map.get_size().y() * local_map.get_size().z(); ++i)
         {
             new_entries[i].first = 0;
             new_entries[i].second = 0;

@@ -74,7 +74,6 @@ TEST_CASE("TSDF_Values", "[tsdf_values]")
     SECTION("TSDF Update")
     {
         std::cout << "    Section 'TSDF Update'" << std::endl;
-        // TODO
 
         std::shared_ptr<GlobalMap> gm_ptr = std::make_shared<GlobalMap>("MapTest.h5", 0, 7 * WEIGHT_RESOLUTION);
         auto commandQueue = FPGAManager::create_command_queue();
