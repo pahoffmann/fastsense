@@ -46,27 +46,34 @@ void RuntimeEvaluator::resume()
     start_ = high_resolution_clock::now();
 }
 
+int RuntimeEvaluator::find_formular(const std::string& task_name)
+{
+    for (uint i = 0; i < forms_.size(); i++)
+    {
+        if (forms_[i].name == task_name)
+        {
+            return i;
+        }
+    }
+
+    return -1;
+}
+
 void RuntimeEvaluator::start(const std::string& task_name)
 {
     pause();
 
     // get or create task that is started
-    int index = -1;
-    for (uint i = 0; i < forms_.size(); i++)
-    {
-        if (forms_[i].name == task_name)
-        {
-            if (forms_[i].active)
-            {
-                throw RuntimeEvaluationException();
-            }
-            index = i;
-        }
-    }
+    int index = find_formular(task_name);
+
     if (index == -1)
     {
         index = forms_.size();
         forms_.push_back(EvaluationFormular(task_name));
+    }
+    else if (forms_[index].active)
+    {
+        throw RuntimeEvaluationException();
     }
 
     // start
@@ -81,19 +88,9 @@ void RuntimeEvaluator::stop(const std::string& task_name)
     pause();
 
     // get task that is stopped
-    int index = -1;
-    for (uint i = 0; i < forms_.size(); i++)
-    {
-        if (forms_[i].name == task_name)
-        {
-            if (!forms_[i].active)
-            {
-                throw RuntimeEvaluationException();
-            }
-            index = i;
-        }
-    }
-    if (index == -1)
+    auto index = find_formular(task_name);
+
+    if (index == -1 || !forms_[index].active)
     {
         throw RuntimeEvaluationException();
     }

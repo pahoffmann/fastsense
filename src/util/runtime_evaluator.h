@@ -1,7 +1,6 @@
 #pragma once
 
 /**
- * @file runtime_evaluator.h
  * @author Marc Eisoldt
  * @author Steffen Hinderink
  */
@@ -151,6 +150,15 @@ private:
      * This method is called at the end of every public method.
      */
     void resume();
+
+    /**
+     * Try to find the formular with the given task name
+     * 
+     * @param task_name Task name of the wanted formular
+     * @return int if found, the index of the formular
+     *             else -1
+     */
+    int find_formular(const std::string& task_name);
     
     /// Vector of the different measurement variables for every measured task
     std::vector<EvaluationFormular> forms_;
