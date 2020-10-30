@@ -9,10 +9,10 @@
 #include <sstream> // for output
 #include <iomanip> // for formatting
 
+using namespace std::chrono;
+
 namespace fastsense::util
 {
-
-using namespace std::chrono;
 
 RuntimeEvaluator& RuntimeEvaluator::get_instance()
 {
@@ -29,7 +29,7 @@ RuntimeEvaluator::RuntimeEvaluator() : forms_()
 void RuntimeEvaluator::pause()
 {
     auto stop = high_resolution_clock::now();
-    auto duration = duration_cast<microseconds>(stop - start_);
+    auto duration = duration_cast<measurement_unit>(stop - start_);
 
     // add new interval to all active measurements
     for (uint i = 0; i < forms_.size(); i++)

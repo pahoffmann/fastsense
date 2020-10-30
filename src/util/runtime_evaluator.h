@@ -20,6 +20,8 @@
  */
 #define TIME_MEASUREMENT
 
+using measurement_unit = std::chrono::microseconds;
+
 namespace fastsense::util
 {
 
