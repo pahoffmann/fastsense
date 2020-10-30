@@ -29,7 +29,6 @@ void read_points(PointHW* scanPoints,
                      hls::stream<int>& distance_fifo,
                      hls::stream<int>& distance_tau_fifo)
     {
-    points_loop:
         for (int i = 0; i < numPoints; i++)
         {
             PointHW p = scanPoints[i];
@@ -80,7 +79,7 @@ void read_points(PointHW* scanPoints,
         int point_idx = 0;
 
         bool load_new_point = true;
-    tsdf_loop:
+
         while (point_idx < numPoints)
         {
             // Load point and init Bresenham
@@ -303,8 +302,7 @@ void read_points(PointHW* scanPoints,
         int sizeX,   int sizeY,   int sizeZ,
         int posX,    int posY,    int posZ,
         int offsetX, int offsetY, int offsetZ,
-        int tau,
-        int max_weight)
+        int tau)
     {
         tsdf_dataflow(scanPoints0 + 0 * step, step,
                       sizeX,   sizeY,   sizeZ,
@@ -356,7 +354,7 @@ void read_points(PointHW* scanPoints,
                         sizeX,   sizeY,   sizeZ,
                         posX,    posY,    posZ,
                         offsetX, offsetY, offsetZ,
-                        tau, max_weight);
+                        tau);
 
 
         int total_size = sizeX * sizeY * sizeZ;
