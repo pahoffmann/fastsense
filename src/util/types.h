@@ -17,6 +17,9 @@ using Eigen::Matrix4i;
 using Eigen::Matrix4f;
 using ScanPoints_t = std::vector<Vector3i>;
 
+using ScanPointType = int16_t;
+using ScanPoint = Eigen::Matrix<ScanPointType, 3, 1>;
+
 #include "constants.h"
 
 static const Vector3i INVALID_POINT(0, 0, 0);

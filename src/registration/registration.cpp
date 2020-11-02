@@ -125,7 +125,7 @@ Matrix4f Registration::register_cloud(fastsense::map::LocalMap& localmap, fastse
 
             //kernel - run
 
-            //fastsense::buffer::InputBuffer<fastsense::msg::Point> buffer_scan{q, cloud.size()};
+            //fastsense::buffer::InputBuffer<ScanPoint> buffer_scan{q, cloud.size()};
 
             //Output size: local_h matrix (6x6) + local_g matrix (6x1) + local_error (int)  + local_count (int)
             // 36 + 6 + 1 + 1 = 44

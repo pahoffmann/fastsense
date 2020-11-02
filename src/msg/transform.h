@@ -5,8 +5,7 @@
  * @author Marcel Flottmann
  */
 
-#include <msg/quaternion.h>
-#include <util/xyz_buffer.h>
+#include <util/types.h>
 
 namespace fastsense::msg
 {
@@ -16,8 +15,8 @@ struct Transform
     Transform() = default;
     ~Transform() = default;
 
-    Quaternion rotation;
-    util::XYZBuffer<double> translation;
+    Eigen::Quaternionf rotation;
+    Vector3f translation;
 };
 
 } // namespace fastsense::msg

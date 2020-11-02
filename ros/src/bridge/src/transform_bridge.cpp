@@ -52,7 +52,7 @@ void TransformBridge::convert()
     transform_data.transform.rotation.x = msg_.rotation.x();
     transform_data.transform.rotation.y = msg_.rotation.y();
     transform_data.transform.rotation.z = msg_.rotation.z();
-    transform_data.transform.rotation.w = msg_.rotation.w;
+    transform_data.transform.rotation.w = msg_.rotation.w();
     transform_data.transform.translation.x = msg_.translation.x() * 0.001;
     transform_data.transform.translation.y = msg_.translation.y() * 0.001;
     transform_data.transform.translation.z = msg_.translation.z() * 0.001;

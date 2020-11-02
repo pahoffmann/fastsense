@@ -16,23 +16,6 @@
 using namespace fastsense::callback;
 using namespace fastsense::util;
 using fastsense::buffer::InputBuffer;
-using fastsense::msg::Point;
-
-struct AveragePoint
-{
-    int16_t x;
-    int16_t y;
-    int16_t z;
-    uint16_t count;
-
-    AveragePoint()
-    {
-        x = 0;
-        y = 0;
-        z = 0;
-        count = 0;
-    }
-};
 
 CloudCallback::CloudCallback(Registration& registration, const std::shared_ptr<PointCloudBuffer>& cloud_buffer, LocalMap& local_map, const std::shared_ptr<GlobalMap>& global_map, Matrix4f& pose,
                              const std::shared_ptr<TSDFBuffer>& tsdf_buffer, const std::shared_ptr<TransformBuffer>& transform_buffer, fastsense::CommandQueuePtr& q)
@@ -177,26 +160,15 @@ void CloudCallback::callback()
                               quat.x(), quat.y(), quat.z(), quat.w());
 
         msg::Transform transform;
-        transform.translation.x() = pose(0, 3);
-        transform.translation.y() = pose(1, 3);
-        transform.translation.z() = pose(2, 3);
-        transform.rotation.x() = quat.x();
-        transform.rotation.y() = quat.y();
-        transform.rotation.z() = quat.z();
-        transform.rotation.w = quat.w();
+        transform.translation = pose.block<3, 1>(0, 3);
+        transform.rotation = quat;
         transform_buffer->push(transform);
 
         msg::TSDFBridgeMessage tsdf_msg;
         tsdf_msg.tau_ = tau;
-        tsdf_msg.size_[0] = local_map.get_size().x();
-        tsdf_msg.size_[1] = local_map.get_size().y();
-        tsdf_msg.size_[2] = local_map.get_size().z();
-        tsdf_msg.pos_[0] = local_map.get_pos().x();
-        tsdf_msg.pos_[1] = local_map.get_pos().y();
-        tsdf_msg.pos_[2] = local_map.get_pos().z();
-        tsdf_msg.offset_[0] = local_map.get_offset().x();
-        tsdf_msg.offset_[1] = local_map.get_offset().y();
-        tsdf_msg.offset_[2] = local_map.get_offset().z();
+        tsdf_msg.size_ = local_map.get_size();
+        tsdf_msg.pos_ = local_map.get_pos();
+        tsdf_msg.offset_ = local_map.get_offset();
         tsdf_msg.tsdf_data_.reserve(local_map.getBuffer().size());
         std::copy(local_map.getBuffer().cbegin(), local_map.getBuffer().cend(), std::back_inserter(tsdf_msg.tsdf_data_));
         tsdf_buffer->push_nb(tsdf_msg, true);
