@@ -226,7 +226,7 @@ copy_binaries_to_qemu:
 	xsct -eval "set filelist {"build/FastSense.exe" "/mnt/FastSense.exe" "build/FastSense.xclbin" "/mnt/FastSense.xclbin" "app_data/config.json" "/mnt/config.json"}; source copy_to_qemu.tcl"
 
 copy_test_to_qemu:
-	xsct -eval 'set filelist {"build/FastSense_test.exe" "/mnt/FastSense_test.exe" "build/FastSense_test.xclbin" "/mnt/FastSense_test.xclbin" "test_data/config.json" "/mnt/config.json" "pcd_files/sim_cloud.pcd" "pcd_files/robo_lab.pcd" "/mnt/sim_cloud.pcd" "pcd_files/bagfile_cloud.pcd" "/mnt/bagfile_cloud.pcd"}; source copy_to_qemu.tcl'
+	xsct -eval 'set filelist {"build/FastSense_test.exe" "/mnt/FastSense_test.exe" "build/FastSense_test.xclbin" "/mnt/FastSense_test.xclbin" "test_data/config.json" "/mnt/config.json" "pcd_files/sim_cloud.pcd" "/mnt/sim_cloud.pcd" "pcd_files/robo_lab.pcd" "/mnt/robo_lab.pcd" "pcd_files/bagfile_cloud.pcd" "/mnt/bagfile_cloud.pcd"}; source copy_to_qemu.tcl'
 
 start_emulator: package
 	sed -i 's/ $$\*/ "$$@"/g' $(APP_IMAGE_PATH)/launch_sw_emu.sh
