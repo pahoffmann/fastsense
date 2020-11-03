@@ -16,7 +16,6 @@
 #include <poll.h>
 
 #include <driver/lidar/velodyne.h>
-#include <msg/msgs_stamped.h>
 #include <util/time_stamp.h>
 #include <util/logging/logger.h>
 
@@ -105,7 +104,7 @@ constexpr uint8_t LASER_ID_TO_RING[16] =
     0
 };
 
-VelodyneDriver::VelodyneDriver(uint16_t port, const ConcurrentRingBuffer<PointCloudStamped>::ptr& buffer) :
+VelodyneDriver::VelodyneDriver(uint16_t port, const PointCloudStampedBufferPtr& buffer) :
     port_{port},
     sockfd_{},
     packet_{},

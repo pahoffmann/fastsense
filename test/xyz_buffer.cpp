@@ -6,7 +6,7 @@
 
 #include "catch2_config.h"
 #include <util/config/config_manager.h>
-#include <msg/imu_msg.h>
+#include <msg/imu.h>
 
 using namespace fastsense::util;
 

@@ -12,7 +12,7 @@
 #include <mutex>
 #include <algorithm>
 
-#include <msg/msgs_stamped.h>
+#include <msg/imu.h>
 #include <hw/kernels/reg_kernel.h>
 
 namespace fastsense::registration
@@ -82,7 +82,7 @@ public:
      *
      * @param imu
      */
-    void update_imu_data(const fastsense::msg::ImuMsgStamped& imu);
+    void update_imu_data(const fastsense::msg::ImuStamped& imu);
 
     /**
      * @brief Transforms a given pointcloud with the transform

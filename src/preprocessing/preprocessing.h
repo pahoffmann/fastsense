@@ -5,12 +5,11 @@
  * @author Pascal Buschermöhle
  */
 
-#include <msg/msgs_stamped.h>
+#include <util/types.h>
 #include <util/point_hw.h>
+#include <msg/point_cloud.h>
 #include <hw/buffer/buffer.h>
 #include <eigen3/Eigen/Dense>
-#include <util/types.h>
-
 
 namespace fastsense::preprocessing
 {

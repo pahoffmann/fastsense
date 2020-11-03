@@ -8,14 +8,13 @@
  */
 #include "catch2_config.h"
 
+#include <msg/point_cloud.h>
 #include <tsdf/update_tsdf.h>
 #include <util/pcd/pcd_file.h>
 #include <comm/queue_bridge.h>
-#include <msg/tsdf_bridge_msg.h>
-#include <msg/msgs_stamped.h>
-#include <data/sensor_sync.h>
-#include <util/config/config_manager.h>
 #include <tsdf/krnl_tsdf_sw.h>
+#include <msg/tsdf_bridge_msg.h>
+#include <util/config/config_manager.h>
 
 TEST_CASE("TSDF_Kernel_Vis", "[tsdf_kernel_vis]")
 {

@@ -209,7 +209,7 @@ Matrix4f Registration::register_cloud(fastsense::map::LocalMap& localmap, fastse
  * TODO: auslagern in andere Klasse
  * TODO: determine weather the queue of the pcl callback might be a probl.
  */
-void Registration::update_imu_data(const fastsense::msg::ImuMsgStamped& imu)
+void Registration::update_imu_data(const fastsense::msg::ImuStamped& imu)
 {
     if (first_imu_msg_ == true)
     {
