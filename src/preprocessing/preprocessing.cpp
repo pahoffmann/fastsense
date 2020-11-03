@@ -28,7 +28,8 @@ void Preprocessing::reduction_filter(fastsense::msg::PointCloudStamped& cloud)
 {
     auto& cloud_points = cloud.first->points_;
 
-    std::unordered_map<uint64_t, Eigen::Vector4i> point_map;
+    std::unordered_map<uint64_t, std::pair<Vector3i, int>> point_map;
+    std::pair<Vector3i, int> default_value = std::make_pair(Vector3i::Zero(), 0);
 
     point_map.reserve(cloud_points.size());
     for (uint32_t i = 0; i < cloud_points.size(); i++)
@@ -44,16 +45,16 @@ void Preprocessing::reduction_filter(fastsense::msg::PointCloudStamped& cloud)
         key_ptr[1] = cloud_points[i].y() / MAP_RESOLUTION;
         key_ptr[2] = cloud_points[i].z() / MAP_RESOLUTION;
 
-        Eigen::Vector4i& avg_point = point_map.try_emplace(key, Eigen::Vector4i::Zero()).first->second;
-        avg_point.block<3, 1>(0, 0) += cloud_points[i].cast<int>();
-        avg_point.w()++;
+        auto& avg_point = point_map.try_emplace(key, default_value).first->second;
+        avg_point.first += cloud_points[i].cast<int>();
+        avg_point.second++;
     }
 
     cloud_points.resize(point_map.size());
     int counter = 0;
     for (auto& avg_point : point_map)
     {
-        cloud_points[counter] = (avg_point.second.block<3, 1>(0, 0) / avg_point.second.w()).cast<ScanPointType>();
+        cloud_points[counter] = (avg_point.second.first / avg_point.second.second).cast<ScanPointType>();
         counter++;
     }
 }
