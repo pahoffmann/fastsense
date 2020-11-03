@@ -10,16 +10,18 @@ foreach ic $interconnects {
     set num_mi [get_property CONFIG.NUM_MI $ic]
 
     puts "Set CONFIG.STRATEGY of $ic"
-    set config [list CONFIG.STRATEGY {0}]
+    set config [list CONFIG.STRATEGY {1}]
 
     for {set num 0} { $num < $num_si } { incr num } {
         puts [format "Set CONFIG.S%02d_HAS_DATA_FIFO of %s" $num $ic]
-        lappend config [format "CONFIG.S%02d_HAS_DATA_FIFO" $num] {1}
+        lappend config [format "CONFIG.S%02d_HAS_DATA_FIFO" $num] {0}
+        lappend config [format "CONFIG.S%02d_HAS_REGSLICE" $num] {0}
     }
 
     for {set num 0} { $num < $num_mi } { incr num } {
         puts [format "Set CONFIG.M%02d_HAS_DATA_FIFO of %s" $num $ic]
-        lappend config [format "CONFIG.M%02d_HAS_DATA_FIFO" $num] {1}
+        lappend config [format "CONFIG.M%02d_HAS_DATA_FIFO" $num] {0}
+        lappend config [format "CONFIG.M%02d_HAS_REGSLICE" $num] {0}
     }
 
     set_property -dict $config $ic
