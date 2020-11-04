@@ -4,8 +4,10 @@
  * @author Marc Eisoldt
  */
 
-#include "registration.h"
+#include <util/point.h>
+#include <registration/registration.h>
 
+using namespace fastsense;
 using namespace fastsense::registration;
 
 Vector3i transform(const Vector3i& input, const Matrix4i& mat)
@@ -13,7 +15,7 @@ Vector3i transform(const Vector3i& input, const Matrix4i& mat)
     return (mat.block<3, 3>(0, 0) * input + mat.block<3, 1>(0, 3)) / MATRIX_RESOLUTION;
 }
 
-void Registration::transform_point_cloud(ScanPoints_t& in_cloud, const Matrix4f& mat)
+void Registration::transform_point_cloud(fastsense::ScanPoints_t& in_cloud, const Matrix4f& mat)
 {
     #pragma omp parallel for schedule(static)
     for (auto index = 0u; index < in_cloud.size(); ++index)
