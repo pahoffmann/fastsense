@@ -1,7 +1,7 @@
 /**
  * @author Marc Eisoldt
- * 
- * Test the hardware implementation of the TSDF generatio and map update 
+ *
+ * Test the hardware implementation of the TSDF generatio and map update
  * with simple scenarios and a real point cloud
  */
 
@@ -21,7 +21,7 @@ using fastsense::util::PCDFile;
 namespace fastsense::tsdf
 {
 
-static void check_tsdf(const fastsense::buffer::InputOutputBuffer<std::pair<int ,int>>& tsdf_hw, const fastsense::buffer::InputOutputBuffer<std::pair<int, int>>& tsdf_sw)
+static void check_tsdf(const fastsense::buffer::InputOutputBuffer<std::pair<int, int>>& tsdf_hw, const fastsense::buffer::InputOutputBuffer<std::pair<int, int>>& tsdf_sw)
 {
     REQUIRE(tsdf_hw.size() == tsdf_sw.size());
 
@@ -123,7 +123,7 @@ TEST_CASE("Kernel_TSDF", "[kernel][slow]")
 
 
             Vector3i scanner_pos(0, 0, 0);
-            
+
             fastsense::buffer::InputBuffer<PointHW> kernel_points(q, 1);
 
             kernel_points[0].x = 6 * SCALE + MAP_RESOLUTION / 2;
@@ -156,7 +156,7 @@ TEST_CASE("Kernel_TSDF", "[kernel][slow]")
 
                 CHECK(localMap.value(6, 0, 0).second == WEIGHT_RESOLUTION);
             }
-            }
+        }
     }
 
     SECTION("Simulation_Cloud")
@@ -169,7 +169,7 @@ TEST_CASE("Kernel_TSDF", "[kernel][slow]")
 
         constexpr int SIZE_X = 20 * SCALE / MAP_RESOLUTION;
         constexpr int SIZE_Y = 20 * SCALE / MAP_RESOLUTION;
-        constexpr int SIZE_Z = 5 * SCALE / MAP_RESOLUTION; 
+        constexpr int SIZE_Z = 5 * SCALE / MAP_RESOLUTION;
 
         std::vector<std::vector<Vector3f>> float_points;
         unsigned int num_points;
@@ -194,7 +194,7 @@ TEST_CASE("Kernel_TSDF", "[kernel][slow]")
                 kernel_points_sw[count].x = kernel_points[count].x;
                 kernel_points_sw[count].y = kernel_points[count].y;
                 kernel_points_sw[count].z = kernel_points[count].z;
-                
+
                 ++count;
             }
         }
@@ -212,7 +212,7 @@ TEST_CASE("Kernel_TSDF", "[kernel][slow]")
         krnl.run(local_map, kernel_points, TAU, MAX_WEIGHT);
         krnl.waitComplete();
 
-        fastsense::buffer::InputOutputBuffer<std::pair<int, int>> new_entries(q, local_map_sw.get_size().x() * local_map_sw.get_size().y() * local_map_sw.get_size().z());       
+        fastsense::buffer::InputOutputBuffer<std::pair<int, int>> new_entries(q, local_map_sw.get_size().x() * local_map_sw.get_size().y() * local_map_sw.get_size().z());
 
         for (int i = 0; i < local_map.get_size().x() * local_map.get_size().y() * local_map.get_size().z(); ++i)
         {
@@ -220,24 +220,24 @@ TEST_CASE("Kernel_TSDF", "[kernel][slow]")
             new_entries[i].second = 0;
         }
 
-        fastsense::tsdf::krnl_tsdf_sw(kernel_points_sw.data(), 
-                                    kernel_points_sw.data(),
-                                    num_points,
-                                    local_map_sw.getBuffer(),
-                                    local_map_sw.getBuffer(),
-                                    local_map_sw.get_size().x(), 
-                                    local_map_sw.get_size().y(), 
-                                    local_map_sw.get_size().z(),
-                                    0, 
-                                    0, 
-                                    0,
-                                    local_map_sw.get_offset().x(), 
-                                    local_map_sw.get_offset().y(), 
-                                    local_map_sw.get_offset().z(),
-                                    new_entries,
-                                    new_entries,
-                                    TAU,
-                                    MAX_WEIGHT);
+        fastsense::tsdf::krnl_tsdf_sw(kernel_points_sw.data(),
+                                      kernel_points_sw.data(),
+                                      num_points,
+                                      local_map_sw.getBuffer(),
+                                      local_map_sw.getBuffer(),
+                                      local_map_sw.get_size().x(),
+                                      local_map_sw.get_size().y(),
+                                      local_map_sw.get_size().z(),
+                                      0,
+                                      0,
+                                      0,
+                                      local_map_sw.get_offset().x(),
+                                      local_map_sw.get_offset().y(),
+                                      local_map_sw.get_offset().z(),
+                                      new_entries,
+                                      new_entries,
+                                      TAU,
+                                      MAX_WEIGHT);
 
 
         check_tsdf(local_map.getBuffer(), local_map_sw.getBuffer());

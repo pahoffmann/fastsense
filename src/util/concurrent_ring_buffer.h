@@ -111,7 +111,7 @@ private:
 
     /// Condition variable to wait on, if the ring buffer is empty
     std::condition_variable cvEmpty;
-    
+
     /// Condition variable to wait on, if the ring bufer is full
     std::condition_variable cvFull;
 };

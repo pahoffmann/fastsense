@@ -15,7 +15,7 @@ TEST_CASE("Map", "[Map]")
     std::cout << "Testing 'Map'" << std::endl;
     std::shared_ptr<GlobalMap> gm_ptr = std::make_shared<GlobalMap>("MapTest.h5", 4, 6);
     auto commandQueue = FPGAManager::create_command_queue();
-    LocalMap localMap{5, 5, 5, gm_ptr, commandQueue};    
+    LocalMap localMap{5, 5, 5, gm_ptr, commandQueue};
 
     // write some tsdf values and weights into one corner of the ring buffer,
     // that will be written to the file as one chunk
@@ -31,7 +31,7 @@ TEST_CASE("Map", "[Map]")
     localMap.value(-1, 1, 0) = p3;
     localMap.value(-2, 0, 0) = p4;
     localMap.value(-1, 0, 0) = p5;
-    
+
     auto& pos = localMap.get_pos();
     auto& size = localMap.get_size();
 
@@ -82,7 +82,7 @@ TEST_CASE("Map", "[Map]")
     // check file for the numbers
     HighFive::File f("MapTest.h5", HighFive::File::OpenOrCreate);
     HighFive::Group g = f.getGroup("/map");
-    HighFive::DataSet d = g.getDataSet("-1_0_0"); 
+    HighFive::DataSet d = g.getDataSet("-1_0_0");
     std::vector<int> chunk;
     d.read(chunk);
 

@@ -75,13 +75,13 @@ void Imu::zero()
 }
 
 int Imu::spatial_data_handler(CPhidgetSpatialHandle /* handle */, void* userptr,
-                            CPhidgetSpatial_SpatialEventDataHandle* data,
-                            int count)
+                              CPhidgetSpatial_SpatialEventDataHandle* data,
+                              int count)
 {
     for (int i = 0; i < count; ++i)
     {
         ((Imu*)userptr)->data_handler(data[i]->acceleration, data[i]->angularRate,
-                                     data[i]->magneticField);
+                                      data[i]->magneticField);
     }
     return 0;
 }
@@ -155,7 +155,7 @@ void Imu::init_device()
     {
         using namespace fastsense::util::params;
         Imu::set_compass_correction_parameters(cc_mag_field_, cc_offset0_, cc_offset1_, cc_offset2_, cc_gain0_, cc_gain1_,
-                                            cc_gain2_, cc_T0_, cc_T1_, cc_T2_, cc_T3_, cc_T4_, cc_T5_);
+                                               cc_gain2_, cc_T0_, cc_T1_, cc_T2_, cc_T3_, cc_T4_, cc_T5_);
     }
 }
 

@@ -25,9 +25,9 @@ namespace fastsense::tsdf
 {
 
 void update_tsdf_hw(const fastsense::buffer::InputBuffer<PointHW>& scan_points,
-                 fastsense::map::LocalMap& buffer,
-                 int tau,
-                 int max_weight)
+                    fastsense::map::LocalMap& buffer,
+                    int tau,
+                    int max_weight)
 {
     int weight_epsilon = tau / 10;
 
@@ -47,9 +47,9 @@ void update_tsdf_hw(const fastsense::buffer::InputBuffer<PointHW>& scan_points,
         for (int len = MAP_RESOLUTION; len <= distance + tau; len += MAP_RESOLUTION / 2)
         {
             auto proj = scanner_pos + direction_vector * len / distance;
-            
+
             auto index = proj / MAP_RESOLUTION;
- 
+
             if (index.x == prev.x && index.y == prev.y)
             {
                 continue;
@@ -79,7 +79,7 @@ void update_tsdf_hw(const fastsense::buffer::InputBuffer<PointHW>& scan_points,
             {
                 continue;
             }
-            
+
             auto object = std::make_pair(value, weight);
 
             int delta_z = dz_per_distance * len / MATRIX_RESOLUTION;

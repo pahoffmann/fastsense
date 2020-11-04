@@ -47,7 +47,7 @@ void update_tsdf(const ScanPoints_t& scan_points,
         for (int len = MAP_RESOLUTION; len <= distance + tau; len += MAP_RESOLUTION / 2)
         {
             Vector3i proj = scanner_pos + direction_vector * len / distance;
-            
+
             Vector3i index = proj / MAP_RESOLUTION;
 
             if (index.x() == prev.x() && index.y() == prev.y())
@@ -79,7 +79,7 @@ void update_tsdf(const ScanPoints_t& scan_points,
             {
                 continue;
             }
-            
+
             auto object = std::make_pair(value, weight);
 
             int delta_z = dz_per_distance * len / MATRIX_RESOLUTION;
@@ -104,7 +104,7 @@ void update_tsdf(const ScanPoints_t& scan_points,
     }
 
     // wait for all threads to fill their local_values
-    
+
     for (auto& map_entry : values)
     {
         auto& index = map_entry.first;

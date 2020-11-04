@@ -12,9 +12,9 @@
 using namespace fastsense::util;
 
 TEST_CASE("ConcRingBuffer", "[ConcRingBuffer]")
-{   
+{
     std::cout << "Test Concurrent Ringbuffer\n";
-    
+
     constexpr size_t buffer_size = 5;
 
     ConcurrentRingBuffer<size_t> crb(buffer_size);
@@ -22,7 +22,7 @@ TEST_CASE("ConcRingBuffer", "[ConcRingBuffer]")
     std::cout << "    Section 'Test push, length'" << std::endl;
     REQUIRE(crb.getLength() == 0);
 
-    for(size_t i = 0; i < buffer_size; ++i)
+    for (size_t i = 0; i < buffer_size; ++i)
     {
         crb.push(i);
     }
@@ -70,7 +70,7 @@ TEST_CASE("ConcRingBuffer", "[ConcRingBuffer]")
 
         size_t val;
         size_t length;
-        
+
         REQUIRE(crb.getLength() == buffer_size);
 
         // test waiting to push

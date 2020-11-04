@@ -65,9 +65,9 @@ struct RuntimeEvaluationException : public std::exception
      * Returns the message, that gives information over what caused the exception to occur.
      * @return Exception message
      */
-	const char* what() const throw()
+    const char* what() const throw()
     {
-    	return "Runtime evaluation exception:\nStart was called for an already started measurement or stop was called before calling start!";
+        return "Runtime evaluation exception:\nStart was called for an already started measurement or stop was called before calling start!";
     }
 };
 
@@ -92,7 +92,7 @@ public:
 
     /**
      * Default Destructor
-     */ 
+     */
     ~RuntimeEvaluator() = default;
 
     /**
@@ -107,16 +107,16 @@ public:
 
     /**
      * Starts a new measurent for a task.
-     * @param task_name Name of the task, which will be shown in the printed overview 
+     * @param task_name Name of the task, which will be shown in the printed overview
      *                  and is used as an identifier to find the right measurement variables
      * @throws RuntimeEvaluationException if a measurement for that task was already started
      */
     void start(const std::string& task_name);
-    
+
     /**
      * Stops the measurement and updates the variables for a task.
      * This function has to be called after the start function was called for that task.
-     * @param task_name Name of the task, which will be shown in the printed overview 
+     * @param task_name Name of the task, which will be shown in the printed overview
      *                  and is used as an identifier to find the right measurement variables
      * @throws RuntimeEvaluationException if the measurement for that task has not been started yet
      */
@@ -155,13 +155,13 @@ private:
 
     /**
      * Try to find the formular with the given task name
-     * 
+     *
      * @param task_name Task name of the wanted formular
      * @return int if found, the index of the formular
      *             else -1
      */
     int find_formular(const std::string& task_name);
-    
+
     /// Vector of the different measurement variables for every measured task
     std::vector<EvaluationFormular> forms_;
 

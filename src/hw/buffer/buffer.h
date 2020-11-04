@@ -228,7 +228,7 @@ public:
 
     T& operator[](size_type index)
     {
-        if(index >= num_elements_)
+        if (index >= num_elements_)
         {
             throw std::out_of_range(std::string("Can't access buffer at index: ") + std::to_string(index));
         }
@@ -237,7 +237,7 @@ public:
 
     const T& operator[](size_type index) const
     {
-        if(index >= num_elements_)
+        if (index >= num_elements_)
         {
             throw std::out_of_range(std::string("Can't access buffer at index: ") + std::to_string(index));
         }

@@ -1,5 +1,5 @@
 /**
- * 
+ *
  * @author Marcel Flottmann
  */
 

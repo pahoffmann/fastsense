@@ -5,7 +5,7 @@
  * @author Pascal Buschermöhle
  */
 
-#include <util/process_thread.h> 
+#include <util/process_thread.h>
 #include <registration/registration.h>
 #include <util/concurrent_ring_buffer.h>
 #include <msg/imu.h>
@@ -13,22 +13,23 @@
 namespace fastsense::callback
 {
 
-    using Registration = fastsense::registration::Registration;
-    using ImuBuffer = fastsense::util::ConcurrentRingBuffer<fastsense::msg::ImuStamped>;
+using Registration = fastsense::registration::Registration;
+using ImuBuffer = fastsense::util::ConcurrentRingBuffer<fastsense::msg::ImuStamped>;
 
-    class ImuCallback : public fastsense::util::ProcessThread{
-        public:
-            ImuCallback(Registration& registration, std::shared_ptr<ImuBuffer>& imu_buffer);
+class ImuCallback : public fastsense::util::ProcessThread
+{
+public:
+    ImuCallback(Registration& registration, std::shared_ptr<ImuBuffer>& imu_buffer);
 
-            void start() override;
+    void start() override;
 
-            void callback();
+    void callback();
 
-            void stop() override;
+    void stop() override;
 
-        private:
-            Registration& registration;
-            std::shared_ptr<ImuBuffer>& imu_buffer;
+private:
+    Registration& registration;
+    std::shared_ptr<ImuBuffer>& imu_buffer;
 
-    };
+};
 }

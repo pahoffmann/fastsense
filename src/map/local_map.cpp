@@ -14,7 +14,7 @@
 namespace fastsense::map
 {
 
-LocalMap::LocalMap(unsigned int sX, unsigned int sY, unsigned int sZ, const std::shared_ptr<GlobalMap> &map, const CommandQueuePtr &queue)
+LocalMap::LocalMap(unsigned int sX, unsigned int sY, unsigned int sZ, const std::shared_ptr<GlobalMap>& map, const CommandQueuePtr& queue)
     : size_{static_cast<int>(sX % 2 == 1 ? sX : sX + 1),
             static_cast<int>(sY % 2 == 1 ? sY : sY + 1),
             static_cast<int>(sZ % 2 == 1 ? sZ : sZ + 1)},
@@ -34,17 +34,17 @@ LocalMap::LocalMap(unsigned int sX, unsigned int sY, unsigned int sZ, const std:
     }
 }
 
-std::pair<int, int> &LocalMap::value(int x, int y, int z)
+std::pair<int, int>& LocalMap::value(int x, int y, int z)
 {
     return value(Vector3i(x, y, z));
 }
 
-const std::pair<int, int> &LocalMap::value(int x, int y, int z) const
+const std::pair<int, int>& LocalMap::value(int x, int y, int z) const
 {
     return value(Vector3i(x, y, z));
 }
 
-std::pair<int, int> &LocalMap::value(Vector3i p)
+std::pair<int, int>& LocalMap::value(Vector3i p)
 {
     if (!in_bounds(p))
     {
@@ -52,11 +52,11 @@ std::pair<int, int> &LocalMap::value(Vector3i p)
     }
     p = p - pos_ + offset_ + size_;
     return data_[(p.x() % size_.x()) * size_.y() * size_.z() +
-                 (p.y() % size_.y()) * size_.z() +
-                  p.z() % size_.z()];
+                        (p.y() % size_.y()) * size_.z() +
+                        p.z() % size_.z()];
 }
 
-const std::pair<int, int> &LocalMap::value(Vector3i p) const
+const std::pair<int, int>& LocalMap::value(Vector3i p) const
 {
     if (!in_bounds(p))
     {
@@ -64,21 +64,21 @@ const std::pair<int, int> &LocalMap::value(Vector3i p) const
     }
     p = p - pos_ + offset_ + size_;
     return data_[(p.x() % size_.x()) * size_.y() * size_.z() +
-                 (p.y() % size_.y()) * size_.z() +
-                  p.z() % size_.z()];
+                        (p.y() % size_.y()) * size_.z() +
+                        p.z() % size_.z()];
 }
 
-const Vector3i &LocalMap::get_size() const
+const Vector3i& LocalMap::get_size() const
 {
     return size_;
 }
 
-const Vector3i &LocalMap::get_pos() const
+const Vector3i& LocalMap::get_pos() const
 {
     return pos_;
 }
 
-const Vector3i &LocalMap::get_offset() const
+const Vector3i& LocalMap::get_offset() const
 {
     return offset_;
 }
@@ -108,14 +108,14 @@ void LocalMap::shift(int x, int y, int z)
                 if (diffX > 0)
                 {
                     // step forward
-                    std::pair<int, int> &inout = value(pos_.x() - size_.x() / 2, j, k);
+                    std::pair<int, int>& inout = value(pos_.x() - size_.x() / 2, j, k);
                     map_->set_value(Vector3i(pos_.x() - size_.x() / 2, j, k), inout);
                     inout = map_->get_value(Vector3i(pos_.x() + size_.x() / 2 + 1, j, k));
                 }
                 else
                 {
                     // step backwards
-                    std::pair<int, int> &inout = value(pos_.x() + size_.x() / 2, j, k);
+                    std::pair<int, int>& inout = value(pos_.x() + size_.x() / 2, j, k);
                     map_->set_value(Vector3i(pos_.x() + size_.x() / 2, j, k), inout);
                     inout = map_->get_value(Vector3i(pos_.x() - size_.x() / 2 - 1, j, k));
                 }
@@ -137,14 +137,14 @@ void LocalMap::shift(int x, int y, int z)
                 if (diffY > 0)
                 {
                     // step forward
-                    std::pair<int, int> &inout = value(j, pos_.y() - size_.y() / 2, k);
+                    std::pair<int, int>& inout = value(j, pos_.y() - size_.y() / 2, k);
                     map_->set_value(Vector3i(j, pos_.y() - size_.y() / 2, k), inout);
                     inout = map_->get_value(Vector3i(j, pos_.y() + size_.y() / 2 + 1, k));
                 }
                 else
                 {
                     // step backwards
-                    std::pair<int, int> &inout = value(j, pos_.y() + size_.y() / 2, k);
+                    std::pair<int, int>& inout = value(j, pos_.y() + size_.y() / 2, k);
                     map_->set_value(Vector3i(j, pos_.y() + size_.y() / 2, k), inout);
                     inout = map_->get_value(Vector3i(j, pos_.y() - size_.y() / 2 - 1, k));
                 }
@@ -166,14 +166,14 @@ void LocalMap::shift(int x, int y, int z)
                 if (diffZ > 0)
                 {
                     // step forward
-                    std::pair<int, int> &inout = value(j, k, pos_.z() - size_.z() / 2);
+                    std::pair<int, int>& inout = value(j, k, pos_.z() - size_.z() / 2);
                     map_->set_value(Vector3i(j, k, pos_.z() - size_.z() / 2), inout);
                     inout = map_->get_value(Vector3i(j, k, pos_.z() + size_.z() / 2 + 1));
                 }
                 else
                 {
                     // step backwards
-                    std::pair<int, int> &inout = value(j, k, pos_.z() + size_.z() / 2);
+                    std::pair<int, int>& inout = value(j, k, pos_.z() + size_.z() / 2);
                     map_->set_value(Vector3i(j, k, pos_.z() + size_.z() / 2), inout);
                     inout = map_->get_value(Vector3i(j, k, pos_.z() - size_.z() / 2 - 1));
                 }
@@ -184,7 +184,7 @@ void LocalMap::shift(int x, int y, int z)
     }
 }
 
-buffer::InputOutputBuffer<std::pair<int, int>> &LocalMap::getBuffer()
+buffer::InputOutputBuffer<std::pair<int, int>>& LocalMap::getBuffer()
 {
     return data_;
 }
@@ -204,13 +204,13 @@ LocalMapHW LocalMap::get_hardware_representation() const
 
 void LocalMap::write_back()
 {
-    for (int i = pos_.x() - size_.x() / 2; i <= pos_.x() + size_.x() / 2; i++) 
+    for (int i = pos_.x() - size_.x() / 2; i <= pos_.x() + size_.x() / 2; i++)
     {
-        for (int j = pos_.y() - size_.y() / 2; j <= pos_.y() + size_.y() / 2; j++) 
+        for (int j = pos_.y() - size_.y() / 2; j <= pos_.y() + size_.y() / 2; j++)
         {
-            for (int k = pos_.z() - size_.z() / 2; k <= pos_.z() + size_.z() / 2; k++) 
+            for (int k = pos_.z() - size_.z() / 2; k <= pos_.z() + size_.z() / 2; k++)
             {
-                std::pair<int, int> &out = value(i, j, k);
+                std::pair<int, int>& out = value(i, j, k);
                 map_->set_value(Vector3i(i, j, k), out);
             }
         }

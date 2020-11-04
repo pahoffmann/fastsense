@@ -4,7 +4,7 @@
  * @file vadd_kernel.h
  * @author Julian Gaal
  * @author Marcel Flottmann
- * 
+ *
  * Vector addition test kernel
  */
 

@@ -28,7 +28,7 @@ TEST_CASE("Time", "[Time]")
 {
     std::cout << "Testing 'Time'" << std::endl;
 
-    #ifdef TIME_MEASUREMENT
+#ifdef TIME_MEASUREMENT
     auto& re = RuntimeEvaluator::get_instance();
 
     re.start("outer total");
@@ -123,10 +123,10 @@ TEST_CASE("Time", "[Time]")
             CHECK(false); // no other measurements were made
         }
     }
-    #endif
+#endif
 
-    #ifndef TIME_MEASUREMENT
+#ifndef TIME_MEASUREMENT
     std::cout << "Time measurements are disabled (TIME_MEASUREMENT in runtime_evaluator.h is not defined)" << std::endl;
     CHECK(true);
-    #endif
+#endif
 }

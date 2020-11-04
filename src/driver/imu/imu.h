@@ -119,8 +119,8 @@ private:
      * @param count how many sensor readings have been made
      */
     static int spatial_data_handler(CPhidgetSpatialHandle spatial, void* userptr,
-                                  CPhidgetSpatial_SpatialEventDataHandle* data,
-                                  int count);
+                                    CPhidgetSpatial_SpatialEventDataHandle* data,
+                                    int count);
 
     /// calibrate gyro
     void zero();
@@ -156,7 +156,7 @@ private:
      * @param magneticField magnetic field
      */
     void data_handler(const double acceleration[3], const double angularRate[3],
-                     const double magneticField[3]);
+                      const double magneticField[3]);
 
     /// handles attachment of imu
     void attach_handler() override;
@@ -184,11 +184,11 @@ private:
      * @param cc_T5
      */
     void set_compass_correction_parameters(double cc_mag_field, double cc_offset0,
-                                        double cc_offset1, double cc_offset2,
-                                        double cc_gain0, double cc_gain1,
-                                        double cc_gain2, double cc_T0,
-                                        double cc_T1, double cc_T2, double cc_T3,
-                                        double cc_T4, double cc_T5);
+                                           double cc_offset1, double cc_offset2,
+                                           double cc_gain0, double cc_gain1,
+                                           double cc_gain2, double cc_T0,
+                                           double cc_T1, double cc_T2, double cc_T3,
+                                           double cc_T4, double cc_T5);
 };
 
 } // namespace fastsense::driver;
