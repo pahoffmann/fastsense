@@ -113,6 +113,8 @@ void FPGAManager::load_program(const std::string& xclbin_filename)
     program_ = cl::Program{context_, devices_, binaries};
 
     delete[] buf;
+
+    Logger::info("Loaded ", xclbin_filename);
 }
 
 void FPGAManager::release()
