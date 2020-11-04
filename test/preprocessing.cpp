@@ -86,7 +86,7 @@ TEST_CASE("Preprocessing", "[Preprocessing]"){
         result[21] = {10, 10, 40}; //d = 42.426407
         result[23] = {10, 10, 40}; //d = 42.426407
 
-        for(int i = 0; i < result.size(); i++)
+        for(uint32_t i = 0; i < result.size(); i++)
         {
             REQUIRE(cloud_stamped.first->points_[i] == result[i]);
         }

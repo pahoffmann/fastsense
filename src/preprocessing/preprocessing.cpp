@@ -77,19 +77,6 @@ uint8_t Preprocessing::median_from_array(std::vector<ScanPoint*> medians)
     return distances[distances.size()/2].first;
 }
 
-
-template <typename T>
-T shift_array_by_one(std::vector<T> array)
-{
-    T ret = array[0];
-    for (uint8_t i = 0; i < array.size() - 1; i++)
-    {
-        array[i] = array[i + 1];
-    }
-
-    return ret;
-}
-
 void Preprocessing::median_filter(fastsense::msg::PointCloudStamped& cloud, uint8_t window_size)
 {
     if (window_size % 2 == 0)
@@ -101,10 +88,10 @@ void Preprocessing::median_filter(fastsense::msg::PointCloudStamped& cloud, uint
     std::vector<ScanPoint*> window(window_size); 
     
     int half_window_size = window_size/2;
-    for(int i = 0; i < cloud.first->points_.size(); i++)
+    for(uint32_t i = 0; i < cloud.first->points_.size(); i++)
     {   
         int first_element = (i - (half_window_size * cloud.first->rings_));
-        for(int j = 0; j < window_size; j++)
+        for(uint8_t j = 0; j < window_size; j++)
         {
             int index = ((first_element + (j * cloud.first->rings_)) + cloud.first->points_.size()) % cloud.first->points_.size();
             window[j] = (ScanPoint*)&cloud.first->points_[index];
