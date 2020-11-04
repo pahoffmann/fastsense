@@ -11,7 +11,7 @@
 #include <cmath>
 #include <string>
 #include <utility>
-#include <util/types.h>
+#include <util/point.h>
 
 // TODO: (maybe) handle existing/missing folder, where hdf5 will write
 

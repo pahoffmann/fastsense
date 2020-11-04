@@ -6,7 +6,7 @@
  */
 
 #include <util/params.h>
-#include <util/types.h>
+#include <util/point.h>
 
 constexpr double DEEGREES_TO_RADIANS = M_PI / 180.0;
 

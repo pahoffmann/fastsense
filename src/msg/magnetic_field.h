@@ -5,7 +5,7 @@
  * @author Julian Gaal
  */
 
-#include <util/types.h>
+#include <util/point.h>
 
 namespace fastsense::msg
 {

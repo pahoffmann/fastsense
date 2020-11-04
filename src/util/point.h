@@ -1,7 +1,7 @@
 #pragma once
 
 /**
- * @file types.h
+ * @file point.h
  * @author Malte Hillmann
  */
 
@@ -9,22 +9,16 @@
 #include <vector>
 #include <iostream>
 
-//#include <msg/point.h>
+namespace fastsense
+{
 
 using Eigen::Vector3i;
 using Eigen::Vector3f;
 using Eigen::Matrix4i;
 using Eigen::Matrix4f;
 using ScanPoints_t = std::vector<Vector3i>;
-
 using ScanPointType = int16_t;
 using ScanPoint = Eigen::Matrix<ScanPointType, 3, 1>;
-
-#include "constants.h"
-
-static const Vector3i INVALID_POINT(0, 0, 0);
-
-
 
 /**
  * @brief calculates floor(a / b), except that a is a Vector of integers and b is a power of 2
@@ -41,3 +35,5 @@ static inline Vector3i floor_shift(const Vector3i& a, int shift)
         a[2] >> shift
     );
 }
+
+} // namespace fastsense

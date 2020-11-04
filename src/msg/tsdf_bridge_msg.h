@@ -10,7 +10,7 @@
 #include <vector>
 #include <algorithm>
 
-#include <util/types.h>
+#include <util/point.h>
 
 namespace fastsense::msg
 {

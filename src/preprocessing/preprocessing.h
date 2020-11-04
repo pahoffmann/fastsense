@@ -8,7 +8,7 @@
 #include <msg/msgs_stamped.h>
 #include <util/point_hw.h>
 #include <hw/buffer/buffer.h>
-#include <util/types.h>
+#include <util/point.h>
 
 
 namespace fastsense::preprocessing

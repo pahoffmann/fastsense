@@ -5,7 +5,7 @@
  * @author Marcel Flottmann
  */
 
-#include <util/types.h>
+#include <util/point.h>
 
 namespace fastsense::msg
 {

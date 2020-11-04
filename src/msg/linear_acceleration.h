@@ -6,7 +6,7 @@
  */
 
 #include <util/params.h>
-#include <util/types.h>
+#include <util/point.h>
 
 namespace fastsense::msg
 {
