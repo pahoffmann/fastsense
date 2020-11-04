@@ -30,22 +30,30 @@ extern "C"
                      hls::stream<int>& distance_fifo,
                      hls::stream<int>& distance_tau_fifo,
                      hls::stream<PointHW>& direction_fifo,
-                     hls::stream<PointHW>& abs_direction_fifo)
+                     hls::stream<PointHW>& abs_direction_fifo,
+                     hls::stream<int>& lower_z_fifo,
+                     hls::stream<int>& upper_z_fifo)
     {
     points_loop:
         for (int i = 0; i < numPoints; i++)
         {
 #pragma HLS loop_tripcount max=NUM_POINTS/SPLIT_FACTOR
             PointHW p = scanPoints[(i * 157) % numPoints];
-            int dist = p.norm2();
-            int dist_tau = dist + 2 * hls_sqrt_approx(dist) * tau + tau * tau; // (distance + tau)^2
+            int dist = p.norm();
             PointHW direction = p.to_map() - map_pos;
             PointHW abs_direction = direction.abs();
+            int delta_z = dz_per_distance * dist / MATRIX_RESOLUTION;
+            int lower_z = (p.z - delta_z) / MAP_RESOLUTION;
+            int upper_z = (p.z + delta_z) / MAP_RESOLUTION;
+            int distance = abs_direction.x >= abs_direction.y ? abs_direction.x : abs_direction.y;
+            int distance_tau = distance + tau / MAP_RESOLUTION;
             point_fifo << p;
-            distance_fifo << dist;
-            distance_tau_fifo << dist_tau;
+            distance_fifo << distance;
+            distance_tau_fifo << distance_tau;
             direction_fifo << direction;
             abs_direction_fifo << abs_direction;
+            lower_z_fifo << lower_z;
+            upper_z_fifo << upper_z;
         }
     }
 
@@ -59,7 +67,9 @@ extern "C"
                      hls::stream<int>& distance_fifo,
                      hls::stream<int>& distance_tau_fifo,
                      hls::stream<PointHW>& direction_fifo,
-                     hls::stream<PointHW>& abs_direction_fifo)
+                     hls::stream<PointHW>& abs_direction_fifo,
+                     hls::stream<int>& lower_z_fifo,
+                     hls::stream<int>& upper_z_fifo)
     {
         fastsense::map::LocalMapHW map{sizeX,   sizeY,   sizeZ,
                                        posX,    posY,    posZ,
@@ -72,17 +82,31 @@ extern "C"
         // squared distances
         int distance;
         int distance_tau;
+        int lower_z;
+        int upper_z;
+
         int current_distance;
 
         PointHW current_point;
         PointHW current_cell;
         PointHW direction;
-        PointHW direction2;
-        PointHW increment;
         PointHW abs_direction;
 
-        int err_1;
-        int err_2;
+        PointHW increment;
+        int inc_lower_z;
+        int inc_upper_z;
+
+        int abs_major;
+        int abs_minor;
+        int abs2_major;
+        int abs2_minor;
+        int abs2_lower_z;
+        int abs2_upper_z;
+
+        bool is_x_major; // else y major
+        int err_minor;
+        int err_lower_z;
+        int err_upper_z;
 
         int interpolate_z;
         int interpolate_z_end;
@@ -103,33 +127,51 @@ extern "C"
                 distance_tau_fifo >> distance_tau;
                 direction_fifo >> direction;
                 abs_direction_fifo >> abs_direction;
+                lower_z_fifo >> lower_z;
+                upper_z_fifo >> upper_z;
 
                 current_distance = 0;
                 current_cell = map_pos;
 
-                increment = direction.sign();
-                direction2 = abs_direction * 2;
-
-                if ((abs_direction.x >= abs_direction.y) && (abs_direction.x >= abs_direction.z))
+                if (abs_direction.x >= abs_direction.y)
                 {
-                    err_1 = direction2.y - abs_direction.x;
-                    err_2 = direction2.z - abs_direction.x;
-                }
-                else if ((abs_direction.y >= abs_direction.x) && (abs_direction.y >= abs_direction.z))
-                {
-                    err_1 = direction2.x - abs_direction.y;
-                    err_2 = direction2.z - abs_direction.y;
+                    is_x_major = true;
+                    abs_major = abs_direction.x;
+                    abs_minor = abs_direction.y;
                 }
                 else
                 {
-                    err_1 = direction2.y - abs_direction.z;
-                    err_2 = direction2.x - abs_direction.z;
+                    is_x_major = false;
+                    abs_major = abs_direction.y;
+                    abs_minor = abs_direction.x;
                 }
 
-                interpolate_z = current_cell.z;
-                interpolate_z_end = interpolate_z;
+                abs2_major = abs_major * 2;
+                abs2_minor = abs_minor * 2;
+                err_minor = abs2_minor - abs_major;
+
+                increment = direction.sign();
+                inc_lower_z = lower_z < 0 ? -1 : 1;
+                inc_upper_z = upper_z < 0 ? -1 : 1;
+
+                abs2_lower_z = hls_abs(lower_z) * 2;
+                abs2_upper_z = hls_abs(upper_z) * 2;
+                err_lower_z = abs2_lower_z - abs_major;
+                err_upper_z = abs2_upper_z - abs_major;
+
+                lower_z = upper_z = current_cell.z;
+                interpolate_z = lower_z;
+                interpolate_z_end = upper_z;
 
                 load_new_point = false;
+            }
+            else if (current_distance >= distance_tau)
+            {
+                // this is in 'else' to convince Vitis that there is at least one iteration per Point and
+                // the condition won't be checked in the same iteration in which distance_tau is read from fifo
+
+                point_idx++;
+                load_new_point = true;
             }
 
             // Calculate and update TSDF value
@@ -169,89 +211,48 @@ extern "C"
             // Update current_cell with Bresenham and interpolation
             if (interpolate_z == interpolate_z_end)
             {
-                if (current_distance < distance_tau)
+                if (err_lower_z > 0)
                 {
-                    int approx_distance;
-                    if ((abs_direction.x >= abs_direction.y) && (abs_direction.x >= abs_direction.z))
+                    lower_z += inc_lower_z;
+                    err_lower_z -= abs2_major;
+                }
+                if (err_upper_z > 0)
+                {
+                    upper_z += inc_upper_z;
+                    err_upper_z -= abs2_major;
+                }
+
+                if (err_minor > 0)
+                {
+                    if (is_x_major)
                     {
-                        approx_distance = hls_abs(current_cell.x);
-                        if (err_1 <= 0 && err_2 <= 0)
-                        {
-                            current_cell.x += increment.x;
-                            err_1 += direction2.y;
-                            err_2 += direction2.z;
-                        }
-                        else
-                        {
-                            if (err_1 > 0)
-                            {
-                                current_cell.y += increment.y;
-                                err_1 -= direction2.x;
-                            }
-                            if (err_2 > 0)
-                            {
-                                current_cell.z += increment.z;
-                                err_2 -= direction2.x;
-                            }
-                        }
-                    }
-                    else if ((abs_direction.y >= abs_direction.x) && (abs_direction.y >= abs_direction.z))
-                    {
-                        approx_distance = hls_abs(current_cell.y);
-                        if (err_1 <= 0 && err_2 <= 0)
-                        {
-                            current_cell.y += increment.y;
-                            err_1 += direction2.x;
-                            err_2 += direction2.z;
-                        }
-                        else
-                        {
-                            if (err_1 > 0)
-                            {
-                                current_cell.x += increment.x;
-                                err_1 -= direction2.y;
-                            }
-                            if (err_2 > 0)
-                            {
-                                current_cell.z += increment.z;
-                                err_2 -= direction2.y;
-                            }
-                        }
+                        current_cell.y += increment.y;
                     }
                     else
                     {
-                        approx_distance = hls_abs(current_cell.z);
-                        if (err_1 <= 0 && err_2 <= 0)
-                        {
-                            current_cell.z += increment.z;
-                            err_1 += direction2.y;
-                            err_2 += direction2.x;
-                        }
-                        else
-                        {
-                            if (err_1 > 0)
-                            {
-                                current_cell.y += increment.y;
-                                err_1 -= direction2.z;
-                            }
-                            if (err_2 > 0)
-                            {
-                                current_cell.x += increment.x;
-                                err_2 -= direction2.z;
-                            }
-                        }
+                        current_cell.x += increment.x;
                     }
-
-                    current_distance = (current_cell - map_pos).to_mm().norm2();
-                    int delta_z = dz_per_distance * approx_distance / MATRIX_RESOLUTION;
-                    interpolate_z = (current_cell.z * MAP_RESOLUTION - delta_z) / MAP_RESOLUTION;
-                    interpolate_z_end = (current_cell.z * MAP_RESOLUTION + delta_z) / MAP_RESOLUTION;
+                    err_minor -= abs2_major;
                 }
                 else
                 {
-                    point_idx++;
-                    load_new_point = true;
+                    if (is_x_major)
+                    {
+                        current_cell.x += increment.x;
+                    }
+                    else
+                    {
+                        current_cell.y += increment.y;
+                    }
+                    current_distance++;
+                    err_minor += abs2_minor;
+                    err_lower_z += abs2_lower_z;
+                    err_upper_z += abs2_upper_z;
                 }
+
+                current_cell.z = (lower_z + upper_z) / 2;
+                interpolate_z = lower_z;
+                interpolate_z_end = upper_z;
             }
             else
             {
@@ -274,19 +275,38 @@ extern "C"
         hls::stream<int> distance_tau_fifo;
         hls::stream<PointHW> direction_fifo;
         hls::stream<PointHW> abs_direction_fifo;
+        hls::stream<int> lower_z_fifo;
+        hls::stream<int> upper_z_fifo;
 #pragma HLS stream variable=point_fifo depth=16
 #pragma HLS stream variable=distance_fifo depth=16
 #pragma HLS stream variable=distance_tau_fifo depth=16
 #pragma HLS stream variable=direction_fifo depth=16
 #pragma HLS stream variable=abs_direction_fifo depth=16
+#pragma HLS stream variable=lower_z_fifo depth=16
+#pragma HLS stream variable=upper_z_fifo depth=16
 
-        read_points(scanPoints, numPoints, tau, PointHW{posX, posY, posZ}, point_fifo, distance_fifo, distance_tau_fifo, direction_fifo, abs_direction_fifo);
+        read_points(scanPoints, numPoints, tau,
+                    PointHW{posX, posY, posZ},
+                    point_fifo,
+                    distance_fifo,
+                    distance_tau_fifo,
+                    direction_fifo,
+                    abs_direction_fifo,
+                    lower_z_fifo,
+                    upper_z_fifo);
+
         update_tsdf(numPoints,
                     sizeX,   sizeY,   sizeZ,
                     posX,    posY,    posZ,
                     offsetX, offsetY, offsetZ,
                     new_entries, tau,
-                    point_fifo, distance_fifo, distance_tau_fifo, direction_fifo, abs_direction_fifo);
+                    point_fifo,
+                    distance_fifo,
+                    distance_tau_fifo,
+                    direction_fifo,
+                    abs_direction_fifo,
+                    lower_z_fifo,
+                    upper_z_fifo);
     }
 
     void sync_loop(
@@ -334,8 +354,7 @@ extern "C"
         int sizeX,   int sizeY,   int sizeZ,
         int posX,    int posY,    int posZ,
         int offsetX, int offsetY, int offsetZ,
-        int tau,
-        int max_weight)
+        int tau)
     {
 #pragma HLS dataflow
 
@@ -368,11 +387,11 @@ extern "C"
 
     /**
      * @brief Hardware implementation of the TSDF generation and update algorithm using bresenham
-     * 
+     *
      * @param scanPoints0 First point reference from which the TSDF data should be calculated
      * @param scanPoints1 Second point reference from which the TSDF data should be calculated
-     * @param numPoints Number of points which should be 
-     * @param mapData0 First map reference which should be used for the update 
+     * @param numPoints Number of points which should be
+     * @param mapData0 First map reference which should be used for the update
      * @param mapData1 Second map reference which should be used for the update
      * @param sizeX Number of map cells in x direction
      * @param sizeY Number of map cells in y direction
@@ -383,7 +402,7 @@ extern "C"
      * @param offsetX X offset of the local map
      * @param offsetY Y offset of the local map
      * @param offsetZ Z offset of the local map
-     * @param new_entries0 First reference to the temporal buffer for the calculated TSDF values 
+     * @param new_entries0 First reference to the temporal buffer for the calculated TSDF values
      * @param new_entries1 Second reference to the temporal buffer for the calculated TSDF values
      * @param tau Truncation distance for the TSDF values (in map resolution)
      * @param max_weight Maximum for the weight of the map entries
@@ -419,7 +438,7 @@ extern "C"
                         sizeX,   sizeY,   sizeZ,
                         posX,    posY,    posZ,
                         offsetX, offsetY, offsetZ,
-                        tau, max_weight);
+                        tau);
 
 
         int total_size = sizeX * sizeY * sizeZ;
