@@ -7,9 +7,10 @@
  */
 
 #include "zmq_converter.h"
-#include <array>
 #include <vector>
 #include <algorithm>
+
+#include <util/point.h>
 
 namespace fastsense::msg
 {
@@ -17,17 +18,17 @@ namespace fastsense::msg
 struct TSDFBridgeMessage : public ZMQConverter
 {
     float tau_;
-    std::array<int, 3> size_;
-    std::array<int, 3> pos_;
-    std::array<int, 3> offset_;
+    Vector3i size_;
+    Vector3i pos_;
+    Vector3i offset_;
     std::vector<std::pair<int, int>> tsdf_data_;
 
     void from_zmq_msg(zmq::multipart_t& msg)
     {
         tau_ = msg.poptyp<float>();
-        size_ = msg.poptyp<std::array<int, 3>>();
-        pos_ = msg.poptyp<std::array<int, 3>>();
-        offset_ = msg.poptyp<std::array<int, 3>>();
+        size_ = msg.poptyp<Vector3i>();
+        pos_ = msg.poptyp<Vector3i>();
+        offset_ = msg.poptyp<Vector3i>();
 
         zmq::message_t tsdf_data_msg = msg.pop();
         size_t n_tsdf_values = tsdf_data_msg.size() / sizeof(std::pair<int, int>);
@@ -40,9 +41,9 @@ struct TSDFBridgeMessage : public ZMQConverter
     {
         zmq::multipart_t multi;
         multi.addtyp(tau_);
-        multi.add(zmq::message_t(size_.begin(), size_.end()));
-        multi.add(zmq::message_t(pos_.begin(), pos_.end()));
-        multi.add(zmq::message_t(offset_.begin(), offset_.end()));
+        multi.addtyp(size_);
+        multi.addtyp(pos_);
+        multi.addtyp(offset_);
         multi.add(zmq::message_t(tsdf_data_.begin(), tsdf_data_.end()));
         return multi;
     }

@@ -27,7 +27,7 @@ void ImuCallback::stop(){
 
 void ImuCallback::callback(){
     while(running){
-        fastsense::msg::ImuMsgStamped imu;
+        fastsense::msg::ImuStamped imu;
         imu_buffer->pop(&imu);
         registration.update_imu_data(imu);
     }

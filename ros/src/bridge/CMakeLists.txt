@@ -29,7 +29,7 @@ add_subdirectory(${FASTSENSE_DIR}/ext/HighFive ${CMAKE_CURRENT_BINARY_DIR}/HighF
 catkin_package()
 
 add_executable(bridge 
-  ${FASTSENSE_DIR}/src/msg/imu_msg.cpp
+  ${FASTSENSE_DIR}/src/msg/imu.cpp
   ${FASTSENSE_DIR}/src/msg/magnetic_field.cpp
   src/imu_bridge.cpp
   src/tsdf_bridge.cpp

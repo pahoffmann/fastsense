@@ -8,8 +8,11 @@
 #include <vector>
 #include <memory>
 
-#include <msg/point.h>
+#include <util/point.h>
 #include <msg/zmq_converter.h>
+
+#include <util/time_stamp.h>
+#include <util/concurrent_ring_buffer.h>
 
 namespace fastsense::msg
 {
@@ -28,7 +31,7 @@ public:
     ~PointCloud() = default;
     using Ptr = std::shared_ptr<PointCloud>;
 
-    std::vector<Point> points_;
+    std::vector<fastsense::ScanPoint> points_;
     uint16_t rings_;
 
     void from_zmq_msg(zmq::multipart_t& msg)
@@ -36,10 +39,10 @@ public:
         rings_ = msg.poptyp<uint16_t>();
 
         zmq::message_t point_msg = msg.pop();
-        size_t n_points = point_msg.size() / sizeof(Point);
+        size_t n_points = point_msg.size() / sizeof(fastsense::ScanPoint);
         points_.clear();
         points_.reserve(n_points);
-        std::copy_n(static_cast<Point*>(point_msg.data()), n_points, std::back_inserter(points_));
+        std::copy_n(static_cast<fastsense::ScanPoint*>(point_msg.data()), n_points, std::back_inserter(points_));
     }
 
     zmq::multipart_t to_zmq_msg() const
@@ -50,5 +53,9 @@ public:
         return multi;
     }
 };
+
+using PointCloudStamped = std::pair<PointCloud::Ptr, util::TimeStamp>;
+using PointCloudStampedBuffer = util::ConcurrentRingBuffer<PointCloudStamped>;
+using PointCloudStampedBufferPtr = std::shared_ptr<PointCloudStampedBuffer>;
 
 } // namespace fastsense::msg;

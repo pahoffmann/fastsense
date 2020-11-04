@@ -7,14 +7,14 @@
 #include <cmath>
 
 #include <util/params.h>
-#include <msg/imu_msg.h>
+#include <msg/imu.h>
 #include <util/time_stamp.h>
 #include "imu.h"
 
 using namespace fastsense::driver;
 using namespace fastsense::util;
 
-using fastsense::data::ImuStampedBufferPtr;
+using fastsense::msg::ImuStampedBufferPtr;
 
 // TODO detach handler? How to handle connected/disconnectedness
 
@@ -113,7 +113,7 @@ void Imu::data_handler(const double* acceleration, const double* angularRate, co
         return;
     }
 
-    msg::ImuMsg msg(acceleration, angularRate, magneticField);
+    msg::Imu msg(acceleration, angularRate, magneticField);
     data_buffer_->push(std::make_pair(msg, fastsense::util::TimeStamp()));
 }
 

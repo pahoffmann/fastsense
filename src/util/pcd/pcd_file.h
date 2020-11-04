@@ -10,7 +10,7 @@
 #include <map>
 #include <memory>
 
-#include <util/types.h>
+#include <util/point.h>
 
 namespace fastsense::util
 {

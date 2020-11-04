@@ -5,15 +5,17 @@
 
 #include <unordered_map>
 
-#include <tsdf/update_tsdf.h>
+#include <util/point.h>
 #include <tsdf/weighting.h>
+#include <util/constants.h>
+#include <tsdf/update_tsdf.h>
 #include <util/hls_functions.h>
 
 namespace std
 {
-template<> struct hash<Vector3i>
+template<> struct hash<fastsense::Vector3i>
 {
-    std::size_t operator()(Vector3i const& p) const noexcept
+    std::size_t operator()(fastsense::Vector3i const& p) const noexcept
     {
         long long v = ((long long)p.x() << 32) ^ ((long long)p.y() << 16) ^ (long long)p.z();
         return std::hash<long long>()(v);
