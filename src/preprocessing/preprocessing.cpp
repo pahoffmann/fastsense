@@ -131,6 +131,5 @@ void Preprocessing::median_filter(fastsense::msg::PointCloudStamped& cloud, uint
         old_value->x = new_value.x;
         old_value->y = new_value.y;
         old_value->z = new_value.z;
-
     }
 }
