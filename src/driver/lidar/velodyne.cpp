@@ -16,7 +16,6 @@
 #include <poll.h>
 
 #include <driver/lidar/velodyne.h>
-#include <msg/msgs_stamped.h>
 #include <util/time_stamp.h>
 #include <util/logging/logger.h>
 
@@ -105,7 +104,7 @@ constexpr uint8_t LASER_ID_TO_RING[16] =
     0
 };
 
-VelodyneDriver::VelodyneDriver(uint16_t port, const ConcurrentRingBuffer<PointCloudStamped>::ptr& buffer) :
+VelodyneDriver::VelodyneDriver(uint16_t port, const PointCloudStampedBufferPtr& buffer) :
     port_{port},
     sockfd_{},
     packet_{},
@@ -273,7 +272,7 @@ void VelodyneDriver::decode_packet()
             for (int p = 0; p < POINTS_IN_BLOCK; p++)
             {
                 // select point
-                Point& new_point = current_scan_->points_[startIdx + LASER_ID_TO_RING[p % 16] + (p < 16 ? 0 : 16)];
+                auto& new_point = current_scan_->points_[startIdx + LASER_ID_TO_RING[p % 16] + (p < 16 ? 0 : 16)];
 
                 // interpolate azimuth (VLP-16 User Manual, Ch. 9.5)
                 float az;
@@ -295,20 +294,20 @@ void VelodyneDriver::decode_packet()
                 az = deg_to_rad(az);
 
                 // calculate XYZ and fill new point
-                if (packet_.blocks[b].points[p].distance > 0 && packet_.blocks[b].points[p].distance <= std::numeric_limits<decltype(Point::x)>::max())
+                if (packet_.blocks[b].points[p].distance > 0 && packet_.blocks[b].points[p].distance <= std::numeric_limits<ScanPointType>::max())
                 {
                     float r = packet_.blocks[b].points[p].distance * 2 - LASER_ID_TO_OFFSET[p % 16]; // 2 mm
                     float cos_vertical = cos(LASER_ID_TO_VERT_ANGLE[p % 16]);
-                    new_point.x = r * cos_vertical * sin(az);
-                    new_point.y = r * cos_vertical * cos(az);
-                    new_point.z = r * sin(LASER_ID_TO_VERT_ANGLE[p % 16]);
+                    new_point.x() = r * cos_vertical * sin(az);
+                    new_point.y() = r * cos_vertical * cos(az);
+                    new_point.z() = r * sin(LASER_ID_TO_VERT_ANGLE[p % 16]);
                 }
                 else
                 {
                     // out of range: set to zero
-                    new_point.x = 0;
-                    new_point.y = 0;
-                    new_point.z = 0;
+                    new_point.x() = 0;
+                    new_point.y() = 0;
+                    new_point.z() = 0;
                 }
             }
         }

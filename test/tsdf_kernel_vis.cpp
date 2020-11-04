@@ -2,23 +2,21 @@
  * @author Marc Eisoldt
  * @author Malte Hillmann
  * @author Marcel Flottmann
+ * 
+ * Visualize the results of the hardware implementation of the TSDF generation and update 
+ * based on a real point cloud via the TSDF bridge
  */
-
-#include <map/local_map.h>
-#include <hw/fpga_manager.h>
-#include <hw/kernels/tsdf_kernel.h>
-#include <tsdf/update_tsdf.h>
-#include <util/pcd/pcd_file.h>
 #include "catch2_config.h"
 
+#include <msg/point_cloud.h>
+#include <tsdf/update_tsdf.h>
+#include <util/pcd/pcd_file.h>
 #include <comm/queue_bridge.h>
-#include <msg/tsdf_bridge_msg.h>
-#include <msg/msgs_stamped.h>
-#include <data/sensor_sync.h>
-#include <util/config/config_manager.h>
 #include <tsdf/krnl_tsdf_sw.h>
+#include <msg/tsdf_bridge_msg.h>
+#include <util/config/config_manager.h>
 
-#include <iostream>
+using namespace fastsense;
 
 TEST_CASE("TSDF_Kernel_Vis", "[tsdf_kernel_vis]")
 {
@@ -49,9 +47,9 @@ TEST_CASE("TSDF_Kernel_Vis", "[tsdf_kernel_vis]")
 
         std::vector<PointHW> kernel_points_sw(num_points);
 
-        for(const auto& ring : float_points)
+        for (const auto& ring : float_points)
         {
-            for(const auto& point : ring)
+            for (const auto& point : ring)
             {
                 scan_points[count].x() = point.x() * SCALE;
                 scan_points[count].y() = point.y() * SCALE;
@@ -98,7 +96,7 @@ TEST_CASE("TSDF_Kernel_Vis", "[tsdf_kernel_vis]")
 
         fastsense::buffer::InputOutputBuffer<std::pair<int, int>> new_entries(q, local_map.get_size().x() * local_map.get_size().y() * local_map.get_size().z());       
 
-        for(int i = 0; i < local_map.get_size().x() * local_map.get_size().y() * local_map.get_size().z(); ++i)
+        for (int i = 0; i < local_map.get_size().x() * local_map.get_size().y() * local_map.get_size().z(); ++i)
         {
             new_entries[i].first = 0;
             new_entries[i].second = 0;
@@ -122,8 +120,6 @@ TEST_CASE("TSDF_Kernel_Vis", "[tsdf_kernel_vis]")
                                     new_entries,
                                     TAU,
                                     MAX_WEIGHT);
-
-
 
         fastsense::msg::TSDFBridgeMessage tsdf_msg;
 

@@ -8,9 +8,7 @@
 #include <hw/kernels/base_kernel.h>
 #include <hw/buffer/buffer.h>
 #include <map/local_map.h>
-#include <util/types.h>
 #include <util/point_hw.h>
-#include <hw/fpga_manager.h>
 #include <hw/buffer/buffer.h>
 
 #include <iostream>
@@ -26,12 +24,12 @@ namespace fastsense::kernels
 
 class TSDFKernel : public BaseKernel
 {
-    std::unique_ptr<buffer::InputOutputBuffer<IntTuple>> new_entries;
+    buffer::InputOutputBuffer<IntTuple> new_entries;
 
 public:
 
-    TSDFKernel(const CommandQueuePtr& queue)
-        : BaseKernel{queue, "krnl_tsdf"}
+    TSDFKernel(const CommandQueuePtr& queue, size_t map_size)
+        : BaseKernel{queue, "krnl_tsdf"}, new_entries{cmd_q_, map_size}
     {
 
     }
@@ -40,12 +38,10 @@ public:
 
     void run(map::LocalMap& map, const buffer::InputBuffer<PointHW>& scan_points, int tau, int max_weight)
     {
-        new_entries = std::make_unique<buffer::InputOutputBuffer<IntTuple>>(cmd_q_, map.get_size().x() * map.get_size().y() * map.get_size().z());
-
-        for(int i = 0; i < map.get_size().x() * map.get_size().y() * map.get_size().z(); ++i)
+        for(int i = 0; i < (int)new_entries.size(); ++i)
         {
-            (*new_entries)[i].first = 0;
-            (*new_entries)[i].second = 0;
+            new_entries[i].first = 0;
+            new_entries[i].second = 0;
         }
 
         constexpr int SPLIT_FACTOR = 2;
@@ -72,13 +68,13 @@ public:
         setArg(map.get_offset().z());
         for (int i = 0; i < SPLIT_FACTOR; i++)
         {
-            setArg(new_entries->getBuffer());
+            setArg(new_entries.getBuffer());
         }
         setArg(tau);
         setArg(max_weight);
 
         // Write buffers
-        cmd_q_->enqueueMigrateMemObjects({map.getBuffer().getBuffer(), scan_points.getBuffer()}, CL_MIGRATE_MEM_OBJECT_DEVICE, nullptr, &pre_events_[0]);
+        cmd_q_->enqueueMigrateMemObjects({map.getBuffer().getBuffer(), scan_points.getBuffer(), new_entries.getBuffer()}, CL_MIGRATE_MEM_OBJECT_DEVICE, nullptr, &pre_events_[0]);
 
         // Launch the Kernel
         cmd_q_->enqueueTask(kernel_, &pre_events_, &execute_events_[0]);

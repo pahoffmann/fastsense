@@ -47,12 +47,12 @@ void VelodyneBridge::run()
 void VelodyneBridge::convert()
 {
     points_.clear();
-    std::transform(msg_.points_.begin(), msg_.points_.end(), std::back_inserter(points_), [](const fastsense::msg::Point& p)
+    std::transform(msg_.points_.begin(), msg_.points_.end(), std::back_inserter(points_), [](const ScanPoint& p)
     {
         geometry_msgs::Point32 out;
-        out.x = p.x * 0.001f;
-        out.y = p.y * 0.001f;
-        out.z = p.z * 0.001f;
+        out.x = p.x() * 0.001f;
+        out.y = p.y() * 0.001f;
+        out.z = p.z() * 0.001f;
         return out;
     });
     ROS_INFO_STREAM("Converted points: " << msg_.points_.size() << "->" << points_.size() << " points\n");

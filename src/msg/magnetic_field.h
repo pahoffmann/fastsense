@@ -5,7 +5,7 @@
  * @author Julian Gaal
  */
 
-#include <util/xyz_buffer.h>
+#include <util/point.h>
 
 namespace fastsense::msg
 {
@@ -13,7 +13,7 @@ namespace fastsense::msg
 /**
  * @brief Represents magnetic field data from imu
  */
-struct MagneticField : public util::XYZBuffer<double>
+struct MagneticField : public Vector3f
 {
     MagneticField() = default;
     explicit MagneticField(const double* magneticField);

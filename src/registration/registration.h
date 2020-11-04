@@ -12,12 +12,8 @@
 #include <mutex>
 #include <algorithm>
 
-#include <util/time_stamp.h>
-#include <map/local_map.h>
-#include <msg/msgs_stamped.h>
+#include <msg/imu.h>
 #include <hw/kernels/reg_kernel.h>
-#include <hw/buffer/buffer.h>
-#include <util/point_hw.h>
 
 namespace fastsense::registration
 {
@@ -42,6 +38,9 @@ private:
     fastsense::util::TimeStamp imu_time_;
     bool first_imu_msg_;
 
+
+    fastsense::kernels::RegistrationKernel krnl;
+
     /**
      * @brief transforms xi vector 6x1 (angular and linear velocity) to transformation matrix 4x4
      *
@@ -55,10 +54,11 @@ public:
      * @brief Construct a new Registration object, used to register a pointcloud with the current ring buffer
      *
      */
-    Registration(unsigned int max_iterations = 50, float it_weight_gradient = 0.0) :
+    Registration(fastsense::CommandQueuePtr q, unsigned int max_iterations = 50, float it_weight_gradient = 0.0) :
         max_iterations_(max_iterations),
         it_weight_gradient_(it_weight_gradient),
-        first_imu_msg_(true)
+        first_imu_msg_(true),
+        krnl{q}
     {
         imu_accumulator_.setIdentity();
     }
@@ -75,14 +75,14 @@ public:
      * @param cloud
      * @return Matrix4f
      */
-    Matrix4f register_cloud(fastsense::map::LocalMap& localmap, fastsense::buffer::InputBuffer<PointHW>& cloud, fastsense::CommandQueuePtr q);
+    Matrix4f register_cloud(fastsense::map::LocalMap& localmap, fastsense::buffer::InputBuffer<PointHW>& cloud);
 
     /**
      * @brief Updates the IMU data used by the registration method
      *
      * @param imu
      */
-    void update_imu_data(const fastsense::msg::ImuMsgStamped& imu);
+    void update_imu_data(const fastsense::msg::ImuStamped& imu);
 
     /**
      * @brief Transforms a given pointcloud with the transform

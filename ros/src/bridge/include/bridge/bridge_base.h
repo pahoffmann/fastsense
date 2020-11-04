@@ -49,6 +49,13 @@ public:
     {
     }
 
+    inline BridgeBase(ros::NodeHandle& n, const std::string& board_addr, size_t msg_buffer_size = 1000)
+    :   receiver_{board_addr, PORT}, 
+        msg_{},
+        pub_{} 
+    {
+    }
+
     /**
      * @brief Destroy the Bridge Base object
      */

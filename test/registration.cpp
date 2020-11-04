@@ -7,22 +7,13 @@
 
 
 #include <stdlib.h>
-#include <fstream>
-#include <iostream>
 
-#include <hw/buffer/buffer.h>
 #include <hw/kernels/vadd_kernel.h>
-#include <hw/opencl.h>
-#include <hw/fpga_manager.h>
 #include <registration/registration.h>
-#include <map/local_map.h>
-#include <util/pcd/pcd_file.h>
 #include <tsdf/update_tsdf.h>
-#include <util/point_hw.h>
+#include <util/pcd/pcd_file.h>
 
 #include "catch2_config.h"
-
-#include <eigen3/Eigen/Dense>
 
 
 using fastsense::util::PCDFile;
@@ -71,12 +62,12 @@ static void check_computed_transform(const ScanPoints_t& points_posttransform, S
         Eigen::Vector3i sub = points_pretransform[i] - points_posttransform[i];
         auto norm = sub.norm();
 
-        if(norm < minimum)
+        if (norm < minimum)
         {
             minimum = norm;
         }
 
-        if(norm > maximum)
+        if (norm > maximum)
         {
             maximum = norm;
         }
@@ -108,7 +99,7 @@ static void check_computed_transform(const ScanPoints_t& points_posttransform, S
 static std::shared_ptr<fastsense::buffer::InputBuffer<PointHW>> scan_points_to_input_buffer(ScanPoints_t& cloud, const fastsense::CommandQueuePtr q)
 {
     auto buffer_ptr = std::make_shared<fastsense::buffer::InputBuffer<PointHW>>(q, cloud.size());
-    for(size_t i = 0; i < cloud.size(); i++)
+    for (size_t i = 0; i < cloud.size(); i++)
     {
         auto point = cloud[i];
         PointHW tmp(point.x(), point.y(), point.z());
@@ -130,7 +121,7 @@ TEST_CASE("Registration", "[registration][slow]")
 
 
     //test registration
-    fastsense::registration::Registration reg(MAX_ITERATIONS);
+    fastsense::registration::Registration reg(q, MAX_ITERATIONS);
 
     std::vector<std::vector<Vector3f>> float_points;
     unsigned int num_points;
@@ -142,9 +133,9 @@ TEST_CASE("Registration", "[registration][slow]")
 
     ScanPoints_t scan_points(num_points);
 
-    for(const auto& ring : float_points)
+    for (const auto& ring : float_points)
     {
-        for(const auto& point : ring)
+        for (const auto& point : ring)
         {
             scan_points[count].x() = point.x() * SCALE;
             scan_points[count].y() = point.y() * SCALE;
@@ -243,7 +234,7 @@ TEST_CASE("Registration", "[registration][slow]")
         //copy from scanpoints to  inputbuffer
         auto buffer_ptr = scan_points_to_input_buffer(points_pretransformed_trans, q);
         auto& buffer = *buffer_ptr;
-        auto result_matrix = reg.register_cloud(local_map, buffer, q);
+        auto result_matrix = reg.register_cloud(local_map, buffer);
 
         reg.transform_point_cloud(points_pretransformed_trans, result_matrix);
         check_computed_transform(points_pretransformed_trans, scan_points);
@@ -259,7 +250,7 @@ TEST_CASE("Registration", "[registration][slow]")
         //copy from scanpoints to  inputbuffer
         auto buffer_ptr = scan_points_to_input_buffer(points_pretransformed_trans, q);
         auto& buffer = *buffer_ptr;
-        auto result_matrix = reg.register_cloud(local_map, buffer, q);
+        auto result_matrix = reg.register_cloud(local_map, buffer);
 
         reg.transform_point_cloud(points_pretransformed_trans, result_matrix);
         check_computed_transform(points_pretransformed_trans, scan_points);
@@ -272,7 +263,7 @@ TEST_CASE("Registration", "[registration][slow]")
         reg.transform_point_cloud(points_pretransformed_rot, rotation_mat);
         auto buffer_ptr = scan_points_to_input_buffer(points_pretransformed_rot, q);
         auto& buffer = *buffer_ptr;
-        auto result_matrix = reg.register_cloud(local_map, buffer, q);
+        auto result_matrix = reg.register_cloud(local_map, buffer);
 
         reg.transform_point_cloud(points_pretransformed_rot, result_matrix);
         check_computed_transform(points_pretransformed_rot, scan_points_2);

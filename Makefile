@@ -40,8 +40,8 @@ ENTRY_POINT_DEPS = $(ENTRY_POINT_OBJS:.o=.d)
 
 # Software sources
 SW_SRCS = src/application.cpp \
+	src/driver/imu/imu.cpp \
 	src/driver/lidar/velodyne.cpp \
-	src/data/sensor_sync.cpp \
 	$(wildcard src/map/*.cpp) \
 	$(wildcard src/tsdf/*.cpp) \
 	$(wildcard src/callback/*.cpp) \
@@ -54,8 +54,8 @@ SW_SRCS = src/application.cpp \
 	$(wildcard src/util/config/*.cpp) \
 	$(wildcard src/hw/*.cpp) \
 	$(wildcard src/util/logging/*.cpp) \
-	$(wildcard src/driver/imu/api/*.cpp) \
-	src/driver/imu/imu.cpp
+	$(wildcard src/driver/imu/api/*.cpp) 
+
 SW_OBJS = $(SW_SRCS:%.cpp=$(BUILD_DIR)/%.o)
 SW_DEPS = $(SW_OBJS:.o=.d)
 
@@ -105,9 +105,9 @@ HW_SRCS = src/registration/kernel/krnl_reg.cpp src/tsdf/kernel/krnl_tsdf.cpp
 HW_OBJS = $(HW_SRCS:%.cpp=$(BUILD_DIR)/%.xo)
 HW_DEPS = $(HW_OBJS:.xo=.d)
 
-#HW_TEST_SRCS = $(wildcard test/kernels/*.cpp)
-#HW_TEST_OBJS = $(HW_TEST_SRCS:%.cpp=$(BUILD_DIR)/%.xo)
-#HW_TEST_DEPS = $(HW_TEST_OBJS:.xo=.d)
+HW_TEST_SRCS = $(wildcard test/kernels/*.cpp)
+HW_TEST_OBJS = $(HW_TEST_SRCS:%.cpp=$(BUILD_DIR)/%.xo)
+HW_TEST_DEPS = $(HW_TEST_OBJS:.xo=.d)
 
 HW_INC_DIRS = src
 HW_INC_FLAGS = $(addprefix -I,$(HW_INC_DIRS))
@@ -226,7 +226,7 @@ copy_binaries_to_qemu:
 	xsct -eval "set filelist {"build/FastSense.exe" "/mnt/FastSense.exe" "build/FastSense.xclbin" "/mnt/FastSense.xclbin" "app_data/config.json" "/mnt/config.json"}; source copy_to_qemu.tcl"
 
 copy_test_to_qemu:
-	xsct -eval 'set filelist {"build/FastSense_test.exe" "/mnt/FastSense_test.exe" "build/FastSense_test.xclbin" "/mnt/FastSense_test.xclbin" "test_data/config.json" "/mnt/config.json" "pcd_files/sim_cloud.pcd" "pcd_files/robo_lab.pcd" "/mnt/sim_cloud.pcd" "pcd_files/bagfile_cloud.pcd" "/mnt/bagfile_cloud.pcd"}; source copy_to_qemu.tcl'
+	xsct -eval 'set filelist {"build/FastSense_test.exe" "/mnt/FastSense_test.exe" "build/FastSense_test.xclbin" "/mnt/FastSense_test.xclbin" "test_data/config.json" "/mnt/config.json" "pcd_files/sim_cloud.pcd" "/mnt/sim_cloud.pcd" "pcd_files/robo_lab.pcd" "/mnt/robo_lab.pcd" "pcd_files/bagfile_cloud.pcd" "/mnt/bagfile_cloud.pcd"}; source copy_to_qemu.tcl'
 
 start_emulator: package
 	sed -i 's/ $$\*/ "$$@"/g' $(APP_IMAGE_PATH)/launch_sw_emu.sh
@@ -244,6 +244,8 @@ format:
 	@echo "Formatting"
 	@astyle -q -n --project=.astylerc --recursive "src/*.c??" "src/*.h" "test/*.c??" "test/*.h"
 
+docs: gen_docs open_docs
+
 gen_docs:
 	@echo "Generating doxygen docs"
 	@doxygen Doxygen.config
@@ -255,4 +257,4 @@ open_docs: gen_docs
 -include $(SW_DEPS)
 -include $(TEST_DEPS)
 -include $(HW_DEPS)
-#-include $(HW_TEST_DEPS)
+-include $(HW_TEST_DEPS)

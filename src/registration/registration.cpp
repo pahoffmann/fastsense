@@ -4,8 +4,10 @@
  * @author Marc Eisoldt
  */
 
-#include "registration.h"
+#include <util/point.h>
+#include <registration/registration.h>
 
+using namespace fastsense;
 using namespace fastsense::registration;
 
 Vector3i transform(const Vector3i& input, const Matrix4i& mat)
@@ -13,7 +15,7 @@ Vector3i transform(const Vector3i& input, const Matrix4i& mat)
     return (mat.block<3, 3>(0, 0) * input + mat.block<3, 1>(0, 3)) / MATRIX_RESOLUTION;
 }
 
-void Registration::transform_point_cloud(ScanPoints_t& in_cloud, const Matrix4f& mat)
+void Registration::transform_point_cloud(fastsense::ScanPoints_t& in_cloud, const Matrix4f& mat)
 {
     #pragma omp parallel for schedule(static)
     for (auto index = 0u; index < in_cloud.size(); ++index)
@@ -73,7 +75,7 @@ Matrix4f Registration::xi_to_transform(Vector6f xi)
     return transform;
 }
 
-Matrix4f Registration::register_cloud(fastsense::map::LocalMap& localmap, fastsense::buffer::InputBuffer<PointHW>& cloud, fastsense::CommandQueuePtr q)
+Matrix4f Registration::register_cloud(fastsense::map::LocalMap& localmap, fastsense::buffer::InputBuffer<PointHW>& cloud)
 {
     mutex_.lock();
     Matrix4f total_transform = imu_accumulator_; //transform used to register the pcl
@@ -124,9 +126,8 @@ Matrix4f Registration::register_cloud(fastsense::map::LocalMap& localmap, fastse
             //BEGIN HW IMPLEMENTATION
 
             //kernel - run
-            fastsense::kernels::RegistrationKernel krnl{q};
 
-            //fastsense::buffer::InputBuffer<fastsense::msg::Point> buffer_scan{q, cloud.size()};
+            //fastsense::buffer::InputBuffer<ScanPoint> buffer_scan{q, cloud.size()};
 
             //Output size: local_h matrix (6x6) + local_g matrix (6x1) + local_error (int)  + local_count (int)
             // 36 + 6 + 1 + 1 = 44
@@ -210,7 +211,7 @@ Matrix4f Registration::register_cloud(fastsense::map::LocalMap& localmap, fastse
  * TODO: auslagern in andere Klasse
  * TODO: determine weather the queue of the pcl callback might be a probl.
  */
-void Registration::update_imu_data(const fastsense::msg::ImuMsgStamped& imu)
+void Registration::update_imu_data(const fastsense::msg::ImuStamped& imu)
 {
     if (first_imu_msg_ == true)
     {

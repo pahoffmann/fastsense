@@ -5,8 +5,6 @@
  * @author Malte Hillmann
  */
 
-#include <math.h>
-
 constexpr int MAP_SHIFT = 6; 							// bitshift for a faster way to apply MAP_RESOLUTION
 constexpr int MAP_RESOLUTION = 1 << MAP_SHIFT; 			// Resolution of the Map in Millimeter per Cell
 
@@ -17,5 +15,6 @@ constexpr int MATRIX_SHIFT = 15; 						// bitshift for a faster way to apply MAT
 constexpr int MATRIX_RESOLUTION = 1 << MATRIX_SHIFT; 	// Resolution of calculations (Matrices, division, ...)
 
 constexpr int RINGS = 16; // TODO: take from Scanner
+//#include <math.h>
 //const int dz_per_distance = std::tan(30.0 / ((double)RINGS - 1.0) / 180.0 * M_PI) / 2.0 * MATRIX_RESOLUTION;
 constexpr int dz_per_distance = 572;

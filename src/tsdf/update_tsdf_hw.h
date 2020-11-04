@@ -1,7 +1,6 @@
 #pragma once
 
 /**
- * @file update_tsdf_hw.h
  * @author Malte Hillmann
  * @author Marc Eisoldt
  */
@@ -14,10 +13,14 @@ namespace fastsense::tsdf
 {
 
 /**
- * @brief Calculate the new TSDF values and fill the 2d grid position array (for every thread one array)
- *
- * @param cloud Points from which the new TSDF value should be determined
- * @param grid_positions Grid positions considered by every thread. THe array is filled by this function
+ * @brief Generate new TSDF data and weights based on the new point data and update the given map
+ *        This allgorithm is equivalent to the normql update_tsdf function.
+ *        The difference is, that this function only uses hardware structs (like PointHW)
+ * 
+ * @param scan_points Points from which the TSDF values should be calculated
+ * @param buffer map which should be updated with the new data
+ * @param tau Truncation distance for the TSDF values (in map resolution)
+ * @param max_weight Maximum weight for every TSDF cell in the map 
  */
 void update_tsdf_hw(const fastsense::buffer::InputBuffer<PointHW>& scan_points,
                  fastsense::map::LocalMap& buffer,

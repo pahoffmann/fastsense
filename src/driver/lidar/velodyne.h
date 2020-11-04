@@ -5,7 +5,7 @@
  * @author Marcel Flottmann
  */
 
-#include <msg/msgs_stamped.h>
+#include <msg/point_cloud.h>
 #include <util/process_thread.h>
 #include <util/concurrent_ring_buffer.h>
 
@@ -70,7 +70,7 @@ public:
      * @param port Port for receiving the sensor data.
      * @param buffer Ring buffer for storing the sensor data and transfer to the next step.
      */
-    VelodyneDriver(uint16_t port, const std::shared_ptr<fastsense::util::ConcurrentRingBuffer<fastsense::msg::PointCloudStamped>>& buffer);
+    VelodyneDriver(uint16_t port, const fastsense::msg::PointCloudStampedBufferPtr& buffer);
 
     /**
      * @brief Destroy the Velodyne Driver object.

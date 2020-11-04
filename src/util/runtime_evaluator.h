@@ -20,6 +20,8 @@
  */
 #define TIME_MEASUREMENT
 
+using measurement_unit = std::chrono::microseconds;
+
 namespace fastsense::util
 {
 
@@ -89,6 +91,11 @@ public:
     static RuntimeEvaluator& get_instance();
 
     /**
+     * Default Destructor
+     */ 
+    ~RuntimeEvaluator() = default;
+
+    /**
      * Don't allow copies of the instance by assignment operator to ensure singleton property.
      */
     RuntimeEvaluator& operator=(RuntimeEvaluator&) = delete;
@@ -134,9 +141,6 @@ private:
      */
     RuntimeEvaluator();
 
-    /// Singleton instance
-    inline static std::unique_ptr<RuntimeEvaluator> instance_ = nullptr;
-
     /**
      * Pauses the time measurements. The time that has past since the last resume is accumulated for every currently measured task.
      * This method is called at the beginning of every public method.
@@ -148,6 +152,15 @@ private:
      * This method is called at the end of every public method.
      */
     void resume();
+
+    /**
+     * Try to find the formular with the given task name
+     * 
+     * @param task_name Task name of the wanted formular
+     * @return int if found, the index of the formular
+     *             else -1
+     */
+    int find_formular(const std::string& task_name);
     
     /// Vector of the different measurement variables for every measured task
     std::vector<EvaluationFormular> forms_;

@@ -6,14 +6,10 @@
 
 
 #include <stdlib.h>
-#include <fstream>
-#include <iostream>
 
 #include "catch2_config.h"
 #include <hw/buffer/buffer.h>
 #include <hw/kernels/vadd_kernel.h>
-#include <hw/opencl.h>
-#include <hw/fpga_manager.h>
 
 namespace fs = fastsense;
 

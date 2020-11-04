@@ -1,4 +1,5 @@
 /**
+ * @file runtime_evaluator.cpp
  * @author Marc Eisoldt
  * @author Steffen Hinderink
  */
@@ -8,18 +9,15 @@
 #include <sstream> // for output
 #include <iomanip> // for formatting
 
+using namespace std::chrono;
+
 namespace fastsense::util
 {
 
-using namespace std::chrono;
-
 RuntimeEvaluator& RuntimeEvaluator::get_instance()
 {
-    if (instance_ == nullptr)
-    {
-        instance_.reset(new RuntimeEvaluator());
-    }
-    return *instance_;
+    static RuntimeEvaluator instance;
+    return instance;
 }
 
 RuntimeEvaluator::RuntimeEvaluator() : forms_()
@@ -31,7 +29,7 @@ RuntimeEvaluator::RuntimeEvaluator() : forms_()
 void RuntimeEvaluator::pause()
 {
     auto stop = high_resolution_clock::now();
-    auto duration = duration_cast<microseconds>(stop - start_);
+    auto duration = duration_cast<measurement_unit>(stop - start_);
 
     // add new interval to all active measurements
     for (uint i = 0; i < forms_.size(); i++)
@@ -48,27 +46,34 @@ void RuntimeEvaluator::resume()
     start_ = high_resolution_clock::now();
 }
 
+int RuntimeEvaluator::find_formular(const std::string& task_name)
+{
+    for (uint i = 0; i < forms_.size(); i++)
+    {
+        if (forms_[i].name == task_name)
+        {
+            return i;
+        }
+    }
+
+    return -1;
+}
+
 void RuntimeEvaluator::start(const std::string& task_name)
 {
     pause();
 
     // get or create task that is started
-    int index = -1;
-    for (uint i = 0; i < forms_.size(); i++)
-    {
-        if (forms_[i].name == task_name)
-        {
-            if (forms_[i].active)
-            {
-                throw RuntimeEvaluationException();
-            }
-            index = i;
-        }
-    }
+    int index = find_formular(task_name);
+
     if (index == -1)
     {
         index = forms_.size();
         forms_.push_back(EvaluationFormular(task_name));
+    }
+    else if (forms_[index].active)
+    {
+        throw RuntimeEvaluationException();
     }
 
     // start
@@ -83,19 +88,9 @@ void RuntimeEvaluator::stop(const std::string& task_name)
     pause();
 
     // get task that is stopped
-    int index = -1;
-    for (uint i = 0; i < forms_.size(); i++)
-    {
-        if (forms_[i].name == task_name)
-        {
-            if (!forms_[i].active)
-            {
-                throw RuntimeEvaluationException();
-            }
-            index = i;
-        }
-    }
-    if (index == -1)
+    auto index = find_formular(task_name);
+
+    if (index == -1 || !forms_[index].active)
     {
         throw RuntimeEvaluationException();
     }
@@ -130,11 +125,11 @@ std::string RuntimeEvaluator::to_string()
     std::stringstream ss;
     ss << " " << std::setw(16) << "task" << " | "
        << std::setw(10) << "count" << " | "
-       << std::setw(10) << "last [ms]" << " | "
-       << std::setw(10) << "sum [ms]" << " | "
-       << std::setw(10) << "min [ms]" << " | "
-       << std::setw(10) << "max [ms]" << " | "
-       << std::setw(10) << "avg [ms]" << "\n-" << std::setfill('-')
+       << std::setw(10) << "last [µs]" << " | "
+       << std::setw(10) << "sum [µs]" << " | "
+       << std::setw(10) << "min [µs]" << " | "
+       << std::setw(10) << "max [µs]" << " | "
+       << std::setw(10) << "avg [µs]" << "\n-" << std::setfill('-')
        << std::setw(16) << "" << "-+-"
        << std::setw(10) << "" << "-+-"
        << std::setw(10) << "" << "-+-"

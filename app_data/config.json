@@ -18,7 +18,7 @@
     },
 
     "slam": {
-        "max_distance": 200,
+        "max_distance": 600,
         "map_size_x": 151,
         "map_size_y": 151,
         "map_size_z": 75,

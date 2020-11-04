@@ -1,22 +1,22 @@
 #pragma once
 
 /**
- * @file krnl_tsdf_sw.h
  * @author Marc Eisoldt
  */
 
 #include <map/local_map_hw.h>
-#include <util/constants.h>
 #include <util/point_hw.h>
 #include <hw/kernels/tsdf_kernel.h>
 
 #include <utility>
 
-//using IntTuple = std::pair<int, int>;
 
 namespace fastsense::tsdf
 {
 
+/**
+ * @brief Software equivalent of the kernel TSDF function 
+ */
 void krnl_tsdf_sw(PointHW* scanPoints0,
                    PointHW* scanPoints1,
                    int numPoints,

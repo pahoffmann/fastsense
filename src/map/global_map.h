@@ -11,7 +11,7 @@
 #include <cmath>
 #include <string>
 #include <utility>
-#include <util/types.h>
+#include <util/point.h>
 
 // TODO: (maybe) handle existing/missing folder, where hdf5 will write
 
@@ -149,14 +149,15 @@ public:
 
     /**
      * Saves a pose in the HDF5 file.
-     * @param x x-coordinate of the position of the pose
-     * @param y y-coordinate of the position of the pose
-     * @param z z-coordinate of the position of the pose
-     * @param roll roll value of the rotation of the pose
-     * @param pitch pitch value of the rotation of the pose
-     * @param yaw yaw value of the rotation of the pose
+     * @param t_x x-coordinate of the position of the pose
+     * @param t_y y-coordinate of the position of the pose
+     * @param t_z z-coordinate of the position of the pose
+     * @param quat_x x-value of the rotation quaternion of the pose
+     * @param quat_y y-value of the rotation quaternion of the pose
+     * @param quat_z z-value of the rotation quaternion of the pose
+     * @param quat_w w-value of the rotation quaternion of the pose
      */
-    void save_pose(float x, float y, float z, float roll, float pitch, float yaw);
+    void save_pose(float t_x, float t_y, float t_z, float quat_x, float quat_y, float quat_z, float quat_w);
 
     /**
      * Writes all active chunks into the HDF5 file.

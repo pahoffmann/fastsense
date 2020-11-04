@@ -1,26 +1,18 @@
 /**
  * @author Marc Eisoldt
+ * 
+ * Tests the combination of the TSDF Kernel with the registartion kernel 
+ * with a real point cloud and a simulated translation and rotation
  */
 
 
 #include <stdlib.h>
-#include <fstream>
-#include <iostream>
-
-#include <hw/buffer/buffer.h>
 #include <hw/kernels/vadd_kernel.h>
-#include <hw/opencl.h>
-#include <hw/fpga_manager.h>
 #include <registration/registration.h>
-#include <map/local_map.h>
 #include <util/pcd/pcd_file.h>
 #include <hw/kernels/tsdf_kernel.h>
-#include <util/point_hw.h>
 
 #include "catch2_config.h"
-
-#include <eigen3/Eigen/Dense>
-
 
 using fastsense::util::PCDFile;
 
@@ -49,6 +41,12 @@ constexpr int SIZE_X = 20 * SCALE / MAP_RESOLUTION;
 constexpr int SIZE_Y = 20 * SCALE / MAP_RESOLUTION;
 constexpr int SIZE_Z = 5 * SCALE / MAP_RESOLUTION; 
 
+/**
+ * @brief Compares two sets of points one-on-one and does some statistics
+ * 
+ * @param points_posttransform Transformed point cloud
+ * @param points_pretransform Original point cloud
+ */
 static void check_computed_transform(const ScanPoints_t& points_posttransform, ScanPoints_t& points_pretransform)
 {
     int minimum = std::numeric_limits<int>::infinity();
@@ -82,9 +80,6 @@ static void check_computed_transform(const ScanPoints_t& points_posttransform, S
         average_z += std::abs(sub.z());
 
         dists[i] = norm;
-
-        //std::cout << norm << std::endl;
-        //REQUIRE(norm < MAX_OFFSET);
     }
 
     std::sort(dists.begin(), dists.end());
@@ -125,7 +120,7 @@ TEST_CASE("Kernel", "[kernel][slow]")
 
 
     //test registration
-    fastsense::registration::Registration reg(MAX_ITERATIONS);
+    fastsense::registration::Registration reg(q, MAX_ITERATIONS);
 
     std::vector<std::vector<Vector3f>> float_points;
     unsigned int num_points;
@@ -181,13 +176,13 @@ TEST_CASE("Kernel", "[kernel][slow]")
     //calc tsdf values for the points from the pcd and store them in the local map
 
     auto q3 = fastsense::hw::FPGAManager::create_command_queue();
-    fastsense::kernels::TSDFKernel krnl(q3);
+    fastsense::kernels::TSDFKernel krnl(q3, local_map.getBuffer().size());
 
     krnl.run(local_map, kernel_points, TAU, MAX_WEIGHT);
     krnl.waitComplete();
 
     //fastsense::tsdf::update_tsdf(scan_points, Vector3i::Zero(), local_map, TAU, MAX_WEIGHT);
-
+    
     SECTION("Test Registration No Transform")
     {
         std::cout << "    Section 'Test Registration No Transform'" << std::endl;
@@ -195,7 +190,7 @@ TEST_CASE("Kernel", "[kernel][slow]")
         //copy from scanpoints to  inputbuffer
         auto buffer_ptr = scan_points_to_input_buffer(points_pretransformed_trans, q);
         auto& buffer = *buffer_ptr;
-        auto result_matrix = reg.register_cloud(local_map, buffer, q);
+        auto result_matrix = reg.register_cloud(local_map, buffer);
 
         reg.transform_point_cloud(points_pretransformed_trans, result_matrix);
         check_computed_transform(points_pretransformed_trans, scan_points);
@@ -211,7 +206,7 @@ TEST_CASE("Kernel", "[kernel][slow]")
         //copy from scanpoints to  inputbuffer
         auto buffer_ptr = scan_points_to_input_buffer(points_pretransformed_trans, q);
         auto& buffer = *buffer_ptr;
-        auto result_matrix = reg.register_cloud(local_map, buffer, q);
+        auto result_matrix = reg.register_cloud(local_map, buffer);
 
         reg.transform_point_cloud(points_pretransformed_trans, result_matrix);
         check_computed_transform(points_pretransformed_trans, scan_points);
@@ -224,7 +219,7 @@ TEST_CASE("Kernel", "[kernel][slow]")
         reg.transform_point_cloud(points_pretransformed_rot, rotation_mat);
         auto buffer_ptr = scan_points_to_input_buffer(points_pretransformed_rot, q);
         auto& buffer = *buffer_ptr;
-        auto result_matrix = reg.register_cloud(local_map, buffer, q);
+        auto result_matrix = reg.register_cloud(local_map, buffer);
 
         reg.transform_point_cloud(points_pretransformed_rot, result_matrix);
         check_computed_transform(points_pretransformed_rot, scan_points_2);

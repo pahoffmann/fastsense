@@ -5,7 +5,13 @@
 #include <sensor_msgs/PointCloud.h>
 #include <geometry_msgs/Point32.h>
 
+#include <data/sensor_sync.h>
+#include <msg/point_cloud.h>
+#include <util/concurrent_ring_buffer.h>
+
 #include <sstream>
+
+using namespace fastsense;
 
 int main(int argc, char** argv)
 {
@@ -13,8 +19,8 @@ int main(int argc, char** argv)
     ros::NodeHandle n;
     ros::Publisher chatter_pub = n.advertise<sensor_msgs::PointCloud>("pointcloud", 1000);
 
-    auto buffer = std::make_shared<ConcurrentRingBuffer<fastsense::msg::PointCloudStamped>>(16);
-    fastsense::driver::VelodyneDriver v("", 2368, buffer);
+    auto buffer = std::make_shared<util::ConcurrentRingBuffer<fastsense::msg::PointCloudStamped>>(16);
+    fastsense::driver::VelodyneDriver v(2368, buffer);
     v.start();
 
     while (ros::ok())
@@ -27,16 +33,16 @@ int main(int argc, char** argv)
         sensor_msgs::PointCloud pc;
         pc.header.frame_id = "world";
 
-        std::transform(scan->points.begin(), scan->points.end(), std::back_inserter(pc.points), [] (fastsense::msg::Point in)
+        std::transform(scan->points_.begin(), scan->points_.end(), std::back_inserter(pc.points), [] (const fastsense::ScanPoint& in)
         {
             geometry_msgs::Point32 out;
-            out.x = in.x * 0.001f;
-            out.y = in.y * 0.001f;
-            out.z = in.z * 0.001f;
+            out.x = in.x() * 0.001f;
+            out.y = in.y() * 0.001f;
+            out.z = in.z() * 0.001f;
             return out;
         });
 
-        ROS_INFO("Scan: %zu Points", scan->points.size());
+        ROS_INFO("Scan: %zu Points", scan->points_.size());
         chatter_pub.publish(pc);
 
         ros::spinOnce();

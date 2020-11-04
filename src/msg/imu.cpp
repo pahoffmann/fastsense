@@ -2,16 +2,16 @@
  * @author Julian Gaal
  */
 
-#include <msg/imu_msg.h>
+#include <msg/imu.h>
 
 using namespace fastsense::msg;
 
-ImuMsg::ImuMsg(const double* acceleration, const double* angular_rate, const double* magField) : acc{acceleration}, ang{angular_rate}, mag{magField}
+Imu::Imu(const double* acceleration, const double* angular_rate, const double* magField) : acc{acceleration}, ang{angular_rate}, mag{magField}
 {}
 
-ImuMsg::ImuMsg() : acc{}, ang{}, mag{} {}
+Imu::Imu() : acc{}, ang{}, mag{} {}
 
-std::ostream& operator<<(std::ostream& os, const ImuMsg& data)
+std::ostream& operator<<(std::ostream& os, const Imu& data)
 {
     os << "-- acc --\n";
     os << data.acc.x() << "\n";
