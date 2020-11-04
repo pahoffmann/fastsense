@@ -62,13 +62,15 @@ void Preprocessing::reduction_filter(fastsense::msg::PointCloudStamped& cloud)
 uint8_t Preprocessing::median_from_array(std::vector<ScanPoint*> medians){
     std::vector<std::pair<int, double>> distances(medians.size());
     
-    for(uint8_t i = 0; i < distances.size(); i++){
+    for (uint8_t i = 0; i < distances.size(); i++)
+    {
         distances[i].first = i;
         distances[i].second = medians[i]->norm();
     }
 
-    std::sort(distances.begin(), distances.end(), [](auto &left, auto &right) {
-    return left.second < right.second;
+    std::sort(distances.begin(), distances.end(), [](auto &left, auto &right) 
+    {
+        return left.second < right.second;
     });
 
 
@@ -77,16 +79,19 @@ uint8_t Preprocessing::median_from_array(std::vector<ScanPoint*> medians){
 
 
 template <typename T>
-T shift_array_by_one(std::vector<T> array){
+T shift_array_by_one(std::vector<T> array)
+{
     T ret = array[0];
-    for(uint8_t i = 0; i < array.size()-1; i++){
+    for (uint8_t i = 0; i < array.size()-1; i++)
+    {
         array[i] = array[i + 1];
     }
 
     return ret;
 }
 
-void Preprocessing::median_filter(fastsense::msg::PointCloudStamped& cloud, uint8_t window_size){
+void Preprocessing::median_filter(fastsense::msg::PointCloudStamped& cloud, uint8_t window_size)
+{
     if(window_size % 2 == 0) return;
 
     int half_window_size = (int)std::ceil(window_size/2.0f);
@@ -95,7 +100,8 @@ void Preprocessing::median_filter(fastsense::msg::PointCloudStamped& cloud, uint
     std::vector<std::vector<ScanPoint>> medians(cloud.first->rings_, std::vector<ScanPoint>(half_window_size, {0, 0, 0}));
 
     uint16_t current_ring;
-    for(uint16_t i = 0; i < cloud.first->points_.size(); i++){
+    for (uint16_t i = 0; i < cloud.first->points_.size(); i++)
+    {
         current_ring = i % cloud.first->rings_;
         window[current_ring][window_size-1] = &cloud.first->points_[i];
         
