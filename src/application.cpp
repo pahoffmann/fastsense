@@ -10,7 +10,7 @@
 #include <iostream>
 
 #include "application.h"
-#include <msg/imu_msg.h>
+#include <msg/imu.h>
 #include <msg/tsdf_bridge_msg.h>
 #include <util/config/config_manager.h>
 #include <util/logging/logger.h>
@@ -64,14 +64,14 @@ Application::Application()
 int Application::run()
 {
     Logger::info("Application setup...");
-    data::ImuStampedBufferPtr imu_buffer = std::make_shared<data::ImuStampedBuffer>(ConfigManager::config().imu.bufferSize());
-    data::ImuStampedBufferPtr imu_bridge_buffer = std::make_shared<data::ImuStampedBuffer>(ConfigManager::config().imu.bufferSize());
+    msg::ImuStampedBufferPtr imu_buffer = std::make_shared<msg::ImuStampedBuffer>(ConfigManager::config().imu.bufferSize());
+    msg::ImuStampedBufferPtr imu_bridge_buffer = std::make_shared<msg::ImuStampedBuffer>(ConfigManager::config().imu.bufferSize());
 
     driver::Imu imu_driver{imu_buffer};
-    comm::QueueBridge<msg::ImuMsgStamped, true> imu_bridge(imu_buffer, imu_bridge_buffer, 5555);
+    comm::QueueBridge<msg::ImuStamped, true> imu_bridge(imu_buffer, imu_bridge_buffer, 5555);
 
-    data::PointCloudStampedBufferPtr pointcloud_buffer = std::make_shared<data::PointCloudStampedBuffer>(ConfigManager::config().lidar.bufferSize());
-    data::PointCloudStampedBufferPtr pointcloud_bridge_buffer = std::make_shared<data::PointCloudStampedBuffer>(ConfigManager::config().lidar.bufferSize());
+    msg::PointCloudStampedBufferPtr pointcloud_buffer = std::make_shared<msg::PointCloudStampedBuffer>(ConfigManager::config().lidar.bufferSize());
+    msg::PointCloudStampedBufferPtr pointcloud_bridge_buffer = std::make_shared<msg::PointCloudStampedBuffer>(ConfigManager::config().lidar.bufferSize());
 
     driver::VelodyneDriver lidar_driver{ConfigManager::config().lidar.port(), pointcloud_buffer};
     comm::QueueBridge<msg::PointCloudStamped, true> lidar_bridge(pointcloud_buffer, pointcloud_bridge_buffer, 7777);

@@ -40,8 +40,8 @@ ENTRY_POINT_DEPS = $(ENTRY_POINT_OBJS:.o=.d)
 
 # Software sources
 SW_SRCS = src/application.cpp \
+	src/driver/imu/imu.cpp \
 	src/driver/lidar/velodyne.cpp \
-	src/data/sensor_sync.cpp \
 	$(wildcard src/map/*.cpp) \
 	$(wildcard src/tsdf/*.cpp) \
 	$(wildcard src/callback/*.cpp) \
@@ -54,8 +54,8 @@ SW_SRCS = src/application.cpp \
 	$(wildcard src/util/config/*.cpp) \
 	$(wildcard src/hw/*.cpp) \
 	$(wildcard src/util/logging/*.cpp) \
-	$(wildcard src/driver/imu/api/*.cpp) \
-	src/driver/imu/imu.cpp
+	$(wildcard src/driver/imu/api/*.cpp) 
+
 SW_OBJS = $(SW_SRCS:%.cpp=$(BUILD_DIR)/%.o)
 SW_DEPS = $(SW_OBJS:.o=.d)
 

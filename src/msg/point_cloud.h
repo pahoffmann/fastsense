@@ -11,6 +11,9 @@
 #include <util/point.h>
 #include <msg/zmq_converter.h>
 
+#include <util/time_stamp.h>
+#include <util/concurrent_ring_buffer.h>
+
 namespace fastsense::msg
 {
 
@@ -50,5 +53,9 @@ public:
         return multi;
     }
 };
+
+using PointCloudStamped = std::pair<PointCloud::Ptr, util::TimeStamp>;
+using PointCloudStampedBuffer = util::ConcurrentRingBuffer<PointCloudStamped>;
+using PointCloudStampedBufferPtr = std::shared_ptr<PointCloudStampedBuffer>;
 
 } // namespace fastsense::msg;

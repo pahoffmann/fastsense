@@ -5,8 +5,8 @@
  * @author Pascal Buschermöhle
  */
 
-#include <msg/msgs_stamped.h>
 #include <util/point_hw.h>
+#include <msg/point_cloud.h>
 #include <hw/buffer/buffer.h>
 #include <util/point.h>
 

@@ -5,17 +5,16 @@
  * @author Pascal Buschermöhle
  */
 
-#include <util/process_thread.h>
-#include <registration/registration.h>
-#include <util/concurrent_ring_buffer.h>
-#include <msg/msgs_stamped.h>
-#include <map/local_map.h>
-#include <eigen3/Eigen/Dense>
-#include <util/config/config_manager.h>
-#include <hw/kernels/tsdf_kernel.h>
-#include <msg/tsdf_bridge_msg.h>
 #include <util/point_hw.h>
 #include <msg/transform.h>
+#include <map/local_map.h>
+#include <eigen3/Eigen/Dense>
+#include <util/process_thread.h>
+#include <msg/tsdf_bridge_msg.h>
+#include <hw/kernels/tsdf_kernel.h>
+#include <registration/registration.h>
+#include <util/config/config_manager.h>
+#include <util/concurrent_ring_buffer.h>
 #include <preprocessing/preprocessing.h>
 
 namespace fastsense::callback

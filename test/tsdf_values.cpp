@@ -7,8 +7,10 @@
 #include <tsdf/update_tsdf.h>
 #include <hw/buffer/buffer.h>
 #include <util/pcd/pcd_file.h>
+#include <util/constants.h>
 #include <iostream>
 
+using namespace fastsense;
 using namespace fastsense::tsdf;
 using namespace fastsense::map;
 using namespace fastsense::hw;

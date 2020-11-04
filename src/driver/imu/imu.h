@@ -5,11 +5,9 @@
  * @author Julian Gaal
  */
 
-#include <data/sensor_sync.h>
+#include <msg/imu.h>
+#include <util/process_thread.h>
 #include "api/phidget.h"
-
-// TODO singleton
-// TODO start function
 
 namespace fastsense::driver
 {
@@ -26,7 +24,7 @@ public:
      * Creates Imu instance
      * @param ringbuffer
      */
-    explicit Imu(const fastsense::data::ImuStampedBufferPtr& ringbuffer);
+    explicit Imu(const fastsense::msg::ImuStampedBufferPtr& ringbuffer);
 
     virtual ~Imu() = default;
 
@@ -68,7 +66,6 @@ public:
      * ACTUALLY deattach device from linux
      *
      */
-    // TODO workaround?
     void stop() override;
 
     /**
@@ -91,7 +88,7 @@ public:
 
 private:
     /// buffer, in which imu readings are saved
-    fastsense::data::ImuStampedBufferPtr data_buffer_;
+    fastsense::msg::ImuStampedBufferPtr data_buffer_;
 
     /// whether or not imu is connected
     bool is_connected_;

@@ -8,13 +8,13 @@
 #include <util/process_thread.h> 
 #include <registration/registration.h>
 #include <util/concurrent_ring_buffer.h>
-#include <msg/msgs_stamped.h>
+#include <msg/imu.h>
 
 namespace fastsense::callback
 {
 
     using Registration = fastsense::registration::Registration;
-    using ImuBuffer = fastsense::util::ConcurrentRingBuffer<fastsense::msg::ImuMsgStamped>;
+    using ImuBuffer = fastsense::util::ConcurrentRingBuffer<fastsense::msg::ImuStamped>;
 
     class ImuCallback : public fastsense::util::ProcessThread{
         public:

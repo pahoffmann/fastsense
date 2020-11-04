@@ -6,6 +6,7 @@
  */
 
 #include <mutex>
+#include <vector>
 #include <condition_variable>
 
 namespace fastsense::util
