@@ -1,6 +1,6 @@
 /**
  * @author Marc Eisoldt
- * 
+ *
  * Test the software version of the TSDF generation and map update
  */
 #include "catch2_config.h"
@@ -84,7 +84,7 @@ TEST_CASE("TSDF_Values", "[tsdf_values]")
         LocalMap localMap{SIZE_X, SIZE_Y, SIZE_Z, gm_ptr, commandQueue};
 
         Vector3i scanner_pos(0, 0, 0);
-        
+
         ScanPoints_t points(1);
         points[0] = Vector3i(6, 0, 0) * SCALE + Vector3i::Constant(MAP_RESOLUTION / 2);
 

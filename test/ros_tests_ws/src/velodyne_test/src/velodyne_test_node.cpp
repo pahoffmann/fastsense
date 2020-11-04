@@ -33,7 +33,7 @@ int main(int argc, char** argv)
         sensor_msgs::PointCloud pc;
         pc.header.frame_id = "world";
 
-        std::transform(scan->points_.begin(), scan->points_.end(), std::back_inserter(pc.points), [] (const fastsense::ScanPoint& in)
+        std::transform(scan->points_.begin(), scan->points_.end(), std::back_inserter(pc.points), [] (const fastsense::ScanPoint & in)
         {
             geometry_msgs::Point32 out;
             out.x = in.x() * 0.001f;

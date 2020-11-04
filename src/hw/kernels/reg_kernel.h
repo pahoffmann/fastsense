@@ -57,18 +57,18 @@ public:
         waitComplete();
 
         local_h << outbuf[0],  outbuf[1], outbuf[2], outbuf[3], outbuf[4], outbuf[5],
-                   outbuf[6], outbuf[7], outbuf[8], outbuf[9], outbuf[10], outbuf[11],
-                   outbuf[12], outbuf[13], outbuf[14], outbuf[15], outbuf[16], outbuf[17],
-                   outbuf[18], outbuf[19], outbuf[20], outbuf[21], outbuf[22], outbuf[23],
-                   outbuf[24], outbuf[25], outbuf[26], outbuf[27], outbuf[28], outbuf[29],
-                   outbuf[30], outbuf[31], outbuf[32], outbuf[33], outbuf[34], outbuf[35];
+                outbuf[6], outbuf[7], outbuf[8], outbuf[9], outbuf[10], outbuf[11],
+                outbuf[12], outbuf[13], outbuf[14], outbuf[15], outbuf[16], outbuf[17],
+                outbuf[18], outbuf[19], outbuf[20], outbuf[21], outbuf[22], outbuf[23],
+                outbuf[24], outbuf[25], outbuf[26], outbuf[27], outbuf[28], outbuf[29],
+                outbuf[30], outbuf[31], outbuf[32], outbuf[33], outbuf[34], outbuf[35];
 
         local_g << outbuf[36],
-                   outbuf[37],
-                   outbuf[38],
-                   outbuf[39],
-                   outbuf[40],
-                   outbuf[41];
+                outbuf[37],
+                outbuf[38],
+                outbuf[39],
+                outbuf[40],
+                outbuf[41];
 
         local_error = outbuf[42];
         local_count = outbuf[43];

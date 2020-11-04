@@ -74,7 +74,7 @@ extern "C"
         int transform_matrix[4][4];
 
         // Pipeline to save ressources
-transform_loop:
+    transform_loop:
         for (int row = 0; row < 4; row++)
         {
             for (int col = 0; col < 4; col++)
@@ -84,7 +84,7 @@ transform_loop:
             }
         }
 
-point_loop:
+    point_loop:
         for (int i = 0; i < numPoints; i++)
         {
 #pragma HLS loop_tripcount min=0 max=30000
@@ -126,7 +126,7 @@ point_loop:
             gradient[1] = 0;
             gradient[2] = 0;
 
-gradient_loop:
+        gradient_loop:
             for (size_t axis = 0; axis < 3; axis++)
             {
 #pragma HLS unroll
@@ -159,7 +159,7 @@ gradient_loop:
 
             //add multiplication result to local_h
 
-local_h_loop:
+        local_h_loop:
             for (int row = 0; row < 6; row++)
             {
 #pragma HLS unroll
@@ -172,7 +172,7 @@ local_h_loop:
                 }
             }
 
-local_g_loop:
+        local_g_loop:
             for (int count = 0; count < 6; count++)
             {
 #pragma HLS unroll
@@ -186,11 +186,11 @@ local_g_loop:
         //fill output buffer.
         long tmp[44];
 #pragma HLS array_partition variable=tmp complete
-out_row_loop:
+    out_row_loop:
         for (int row = 0; row < 6; row++)
         {
 #pragma HLS unroll
-out_col_loop:
+        out_col_loop:
             for (int col = 0; col < 6; col++)
             {
 #pragma HLS unroll
@@ -204,7 +204,7 @@ out_col_loop:
         tmp[43] = local_count;
 
         // Pipeline to save ressources
-write_outbuf:
+    write_outbuf:
         for (int i = 0; i < 44; i++)
         {
 #pragma HLS pipeline II=1

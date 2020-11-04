@@ -104,7 +104,7 @@ private:
     static int attach_handler(CPhidgetHandle handle, void* userptr);
     static int detach_handler(CPhidgetHandle handle, void* userptr);
     static int error_handler(CPhidgetHandle handle, void* userptr, int ErrorCode,
-                            const char* unknown);
+                             const char* unknown);
 };
 
 }  // namespace driver

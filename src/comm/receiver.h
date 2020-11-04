@@ -14,7 +14,7 @@ namespace fastsense::comm
 
 /**
  * @brief Receiver wraps zeromq via cppzmq and supports receiving data of type T
- * 
+ *
  * @tparam T data type that will be received
  */
 template <typename T>
@@ -23,7 +23,7 @@ class Receiver
 public:
     /**
      * @brief Construct a new Receiver object
-     * 
+     *
      * @param addr which address receiver should listen to
      * @param port which port receiver should listen to
      */
@@ -41,12 +41,12 @@ public:
 
     /**
      * @brief Receive a message of static size
-     * 
+     *
      * @tparam TT type used to compile only if T does NOT inherit from msg::ZMQConverter (therefore only static members)
      * @param flags ZMQ receive flags, default 'none' -> blocking
      * @return T data type of receiver
      */
-    template <typename TT = T, std::enable_if_t<!std::is_base_of_v<msg::ZMQConverter, TT>, int> = 0>
+    template < typename TT = T, std::enable_if_t < !std::is_base_of_v<msg::ZMQConverter, TT>, int > = 0 >
     T receive(zmq::recv_flags flags = zmq::recv_flags::none)
     {
         T target;
@@ -56,12 +56,12 @@ public:
 
     /**
      * @brief Receive a message of static size, by reference
-     * 
+     *
      * @tparam TT type used to compile only if T DOES NOT inherit from msg::ZMQConverter (therefore members of dynamic size)
      * @param target where message is copied to
      * @param flags ZMQ receive flags, default 'none' -> blocking
      */
-    template <typename TT = T, std::enable_if_t<!std::is_base_of_v<msg::ZMQConverter, TT>, int> = 0>
+    template < typename TT = T, std::enable_if_t < !std::is_base_of_v<msg::ZMQConverter, TT>, int > = 0 >
     void receive(T& target, zmq::recv_flags flags = zmq::recv_flags::none)
     {
         zmq::message_t msg;
@@ -71,7 +71,7 @@ public:
 
     /**
      * @brief Receive a message with elements of dynamic size
-     * 
+     *
      * @tparam TT type used to compile ONLY IF T inherits from msg::ZMQConverter (therefore members of dynamic size)
      * @return T data type of receiver
      */
@@ -85,7 +85,7 @@ public:
 
     /**
      * @brief Receive a message with elements of dynamic size (by reference)
-     * 
+     *
      * @tparam TT type used to compile ONLY IF T inherits from msg::ZMQConverter (therefore members of dynamic size)
      * @param target where message is copied to
      */

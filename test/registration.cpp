@@ -41,7 +41,7 @@ constexpr int MAX_ITERATIONS = 200;
 
 constexpr int SIZE_X = 20 * SCALE / MAP_RESOLUTION;
 constexpr int SIZE_Y = 20 * SCALE / MAP_RESOLUTION;
-constexpr int SIZE_Z = 5 * SCALE / MAP_RESOLUTION; 
+constexpr int SIZE_Z = 5 * SCALE / MAP_RESOLUTION;
 
 constexpr int ACCURACY = 5;
 
@@ -84,7 +84,7 @@ static void check_computed_transform(const ScanPoints_t& points_posttransform, S
     }
 
     std::sort(dists.begin(), dists.end());
-    
+
     std::cout << "minimum distance: " << minimum << std::endl;
     std::cout << "maximum distance: " << maximum << std::endl;
     std::cout << "average distance: " << average / points_pretransform.size() << std::endl;
@@ -140,7 +140,7 @@ TEST_CASE("Registration", "[registration][slow]")
             scan_points[count].x() = point.x() * SCALE;
             scan_points[count].y() = point.y() * SCALE;
             scan_points[count].z() = point.z() * SCALE;
-            
+
             ++count;
         }
     }
@@ -157,15 +157,15 @@ TEST_CASE("Registration", "[registration][slow]")
 
     Eigen::Matrix4f translation_mat;
     translation_mat << 1, 0, 0, TX,
-                       0, 1, 0, TY,
-                       0, 0, 1, TZ,
-                       0, 0, 0,  1;
+                    0, 1, 0, TY,
+                    0, 0, 1, TZ,
+                    0, 0, 0,  1;
 
     Eigen::Matrix4f rotation_mat;
     rotation_mat <<  cos(RY), -sin(RY),      0, 0,
-                     sin(RY),  cos(RY),      0, 0,
-                     0,             0,       1, 0,
-                     0,             0,       0, 1;
+                 sin(RY),  cos(RY),      0, 0,
+                 0,             0,       1, 0,
+                 0,             0,       0, 1;
 
     //calc tsdf values for the points from the pcd and store them in the local map
 
@@ -184,9 +184,9 @@ TEST_CASE("Registration", "[registration][slow]")
 
         Eigen::Matrix4f translation_mat;
         translation_mat << 1, 0, 0, tx,
-                           0, 1, 0, ty,
-                           0, 0, 1, tz,
-                           0, 0, 0, 1;
+                        0, 1, 0, ty,
+                        0, 0, 1, tz,
+                        0, 0, 0, 1;
 
         cloud[0] = Vector3i{1, 1, 1} * SCALE;
         cloud[1] = Vector3i{0, 0, 0} * SCALE;
@@ -212,9 +212,9 @@ TEST_CASE("Registration", "[registration][slow]")
         float rx = 90 * (M_PI / 180); //radiants
         Eigen::Matrix4f rotation_mat;
         rotation_mat <<  cos(rx), 0, sin(rx), 0,
-                               0, 1,       0, 0,
-                        -sin(rx), 0, cos(rx), 0,
-                               0, 0,       0, 1;
+                     0, 1,       0, 0,
+                     -sin(rx), 0, cos(rx), 0,
+                     0, 0,       0, 1;
 
         cloud[0] = Vector3i{1000, 1000, 1000} * SCALE;
 
@@ -270,4 +270,4 @@ TEST_CASE("Registration", "[registration][slow]")
     }
 }
 
-} //namespace fastsense::registration  
+} //namespace fastsense::registration

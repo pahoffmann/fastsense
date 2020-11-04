@@ -78,7 +78,8 @@ int Application::run()
 
     fastsense::CommandQueuePtr command_queue = fastsense::hw::FPGAManager::create_command_queue();
     Registration registration{command_queue, ConfigManager::config().registration.max_iterations(), ConfigManager::config().registration.it_weight_gradient()};
-    std::shared_ptr<GlobalMap> global_map_ptr = std::make_shared<GlobalMap>("GlobalMap.h5", ConfigManager::config().slam.max_distance() / ConfigManager::config().slam.map_resolution(), ConfigManager::config().slam.initial_map_weight());
+    std::shared_ptr<GlobalMap> global_map_ptr = std::make_shared<GlobalMap>("GlobalMap.h5", ConfigManager::config().slam.max_distance() / ConfigManager::config().slam.map_resolution(),
+            ConfigManager::config().slam.initial_map_weight());
     LocalMap local_map{ConfigManager::config().slam.map_size_x(), ConfigManager::config().slam.map_size_y(), ConfigManager::config().slam.map_size_z(), global_map_ptr, command_queue};
     Matrix4f pose = Matrix4f::Identity();
     auto tsdf_buffer = std::make_shared<util::ConcurrentRingBuffer<msg::TSDFBridgeMessage>>(2);
@@ -90,7 +91,7 @@ int Application::run()
 
     comm::QueueBridge<msg::TSDFBridgeMessage, true> tsdf_bridge{tsdf_buffer, nullptr, 6666};
     comm::QueueBridge<msg::Transform, true> transform_bridge{transform_buffer, nullptr, 8888};
-    
+
     Logger::info("Application starting...");
 
     Runner run_lidar_driver(lidar_driver);

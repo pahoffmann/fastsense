@@ -18,6 +18,8 @@ constexpr int SPLIT_FACTOR = 2;
 namespace fastsense::tsdf
 {
 
+using IntTuple = std::pair<int, int>;
+
 void read_points(PointHW* scanPoints,
                  int numPoints,
                  int tau,
@@ -26,20 +28,29 @@ void read_points(PointHW* scanPoints,
                  hls::stream<int>& distance_fifo,
                  hls::stream<int>& distance_tau_fifo,
                  hls::stream<PointHW>& direction_fifo,
-                 hls::stream<PointHW>& abs_direction_fifo)
+                 hls::stream<PointHW>& abs_direction_fifo,
+                 hls::stream<int>& lower_z_fifo,
+                 hls::stream<int>& upper_z_fifo)
 {
+points_loop:
     for (int i = 0; i < numPoints; i++)
     {
         PointHW p = scanPoints[(i * 157) % numPoints];
-        int dist = p.norm2();
-        int dist_tau = dist + 2 * hls_sqrt_approx(dist) * tau + tau * tau; // (distance + tau)^2
+        int dist = p.norm();
         PointHW direction = p.to_map() - map_pos;
         PointHW abs_direction = direction.abs();
+        int delta_z = dz_per_distance * dist / MATRIX_RESOLUTION;
+        int lower_z = (p.z - delta_z) / MAP_RESOLUTION;
+        int upper_z = (p.z + delta_z) / MAP_RESOLUTION;
+        int distance = abs_direction.x >= abs_direction.y ? abs_direction.x : abs_direction.y;
+        int distance_tau = distance + tau / MAP_RESOLUTION;
         point_fifo << p;
-        distance_fifo << dist;
-        distance_tau_fifo << dist_tau;
+        distance_fifo << distance;
+        distance_tau_fifo << distance_tau;
         direction_fifo << direction;
         abs_direction_fifo << abs_direction;
+        lower_z_fifo << lower_z;
+        upper_z_fifo << upper_z;
     }
 }
 
@@ -53,7 +64,9 @@ void update_tsdf(int numPoints,
                  hls::stream<int>& distance_fifo,
                  hls::stream<int>& distance_tau_fifo,
                  hls::stream<PointHW>& direction_fifo,
-                 hls::stream<PointHW>& abs_direction_fifo)
+                 hls::stream<PointHW>& abs_direction_fifo,
+                 hls::stream<int>& lower_z_fifo,
+                 hls::stream<int>& upper_z_fifo)
 {
     fastsense::map::LocalMapHW map{sizeX,   sizeY,   sizeZ,
                                    posX,    posY,    posZ,
@@ -66,17 +79,31 @@ void update_tsdf(int numPoints,
     // squared distances
     int distance;
     int distance_tau;
+    int lower_z;
+    int upper_z;
+
     int current_distance;
 
     PointHW current_point;
     PointHW current_cell;
     PointHW direction;
-    PointHW direction2;
-    PointHW increment;
     PointHW abs_direction;
 
-    int err_1;
-    int err_2;
+    PointHW increment;
+    int inc_lower_z;
+    int inc_upper_z;
+
+    int abs_major;
+    int abs_minor;
+    int abs2_major;
+    int abs2_minor;
+    int abs2_lower_z;
+    int abs2_upper_z;
+
+    bool is_x_major; // else y major
+    int err_minor;
+    int err_lower_z;
+    int err_upper_z;
 
     int interpolate_z;
     int interpolate_z_end;
@@ -84,7 +111,7 @@ void update_tsdf(int numPoints,
     int point_idx = 0;
 
     bool load_new_point = true;
-
+tsdf_loop:
     while (point_idx < numPoints)
     {
         // Load point and init Bresenham
@@ -95,33 +122,51 @@ void update_tsdf(int numPoints,
             distance_tau_fifo >> distance_tau;
             direction_fifo >> direction;
             abs_direction_fifo >> abs_direction;
+            lower_z_fifo >> lower_z;
+            upper_z_fifo >> upper_z;
 
             current_distance = 0;
             current_cell = map_pos;
 
-            increment = direction.sign();
-            direction2 = abs_direction * 2;
-
-            if ((abs_direction.x >= abs_direction.y) && (abs_direction.x >= abs_direction.z))
+            if (abs_direction.x >= abs_direction.y)
             {
-                err_1 = direction2.y - abs_direction.x;
-                err_2 = direction2.z - abs_direction.x;
-            }
-            else if ((abs_direction.y >= abs_direction.x) && (abs_direction.y >= abs_direction.z))
-            {
-                err_1 = direction2.x - abs_direction.y;
-                err_2 = direction2.z - abs_direction.y;
+                is_x_major = true;
+                abs_major = abs_direction.x;
+                abs_minor = abs_direction.y;
             }
             else
             {
-                err_1 = direction2.y - abs_direction.z;
-                err_2 = direction2.x - abs_direction.z;
+                is_x_major = false;
+                abs_major = abs_direction.y;
+                abs_minor = abs_direction.x;
             }
 
-            interpolate_z = current_cell.z;
-            interpolate_z_end = interpolate_z;
+            abs2_major = abs_major * 2;
+            abs2_minor = abs_minor * 2;
+            err_minor = abs2_minor - abs_major;
+
+            increment = direction.sign();
+            inc_lower_z = lower_z < 0 ? -1 : 1;
+            inc_upper_z = upper_z < 0 ? -1 : 1;
+
+            abs2_lower_z = hls_abs(lower_z) * 2;
+            abs2_upper_z = hls_abs(upper_z) * 2;
+            err_lower_z = abs2_lower_z - abs_major;
+            err_upper_z = abs2_upper_z - abs_major;
+
+            lower_z = upper_z = current_cell.z;
+            interpolate_z = lower_z;
+            interpolate_z_end = upper_z;
 
             load_new_point = false;
+        }
+        else if (current_distance >= distance_tau)
+        {
+            // this is in 'else' to convince Vitis that there is at least one iteration per Point and
+            // the condition won't be checked in the same iteration in which distance_tau is read from fifo
+
+            point_idx++;
+            load_new_point = true;
         }
 
         // Calculate and update TSDF value
@@ -146,11 +191,11 @@ void update_tsdf(int numPoints,
         if (weight != 0 && map.in_bounds(current_cell.x, current_cell.y, interpolate_z))
         {
             int index = map.getIndex(current_cell.x, current_cell.y, interpolate_z);
-            std::pair<int, int> entry = new_entries[index];
+            IntTuple entry = new_entries[index];
 
             if (entry.second == 0 || hls_abs(tsdf_value) < hls_abs(entry.first))
             {
-                std::pair<int, int> new_entry;
+                IntTuple new_entry;
                 new_entry.first = tsdf_value;
                 new_entry.second = weight;
                 new_entries[index] = new_entry;
@@ -160,89 +205,48 @@ void update_tsdf(int numPoints,
         // Update current_cell with Bresenham and interpolation
         if (interpolate_z == interpolate_z_end)
         {
-            if (current_distance < distance_tau)
+            if (err_lower_z > 0)
             {
-                int approx_distance;
-                if ((abs_direction.x >= abs_direction.y) && (abs_direction.x >= abs_direction.z))
+                lower_z += inc_lower_z;
+                err_lower_z -= abs2_major;
+            }
+            if (err_upper_z > 0)
+            {
+                upper_z += inc_upper_z;
+                err_upper_z -= abs2_major;
+            }
+
+            if (err_minor > 0)
+            {
+                if (is_x_major)
                 {
-                    approx_distance = hls_abs(current_cell.x);
-                    if (err_1 <= 0 && err_2 <= 0)
-                    {
-                        current_cell.x += increment.x;
-                        err_1 += direction2.y;
-                        err_2 += direction2.z;
-                    }
-                    else
-                    {
-                        if (err_1 > 0)
-                        {
-                            current_cell.y += increment.y;
-                            err_1 -= direction2.x;
-                        }
-                        if (err_2 > 0)
-                        {
-                            current_cell.z += increment.z;
-                            err_2 -= direction2.x;
-                        }
-                    }
-                }
-                else if ((abs_direction.y >= abs_direction.x) && (abs_direction.y >= abs_direction.z))
-                {
-                    approx_distance = hls_abs(current_cell.y);
-                    if (err_1 <= 0 && err_2 <= 0)
-                    {
-                        current_cell.y += increment.y;
-                        err_1 += direction2.x;
-                        err_2 += direction2.z;
-                    }
-                    else
-                    {
-                        if (err_1 > 0)
-                        {
-                            current_cell.x += increment.x;
-                            err_1 -= direction2.y;
-                        }
-                        if (err_2 > 0)
-                        {
-                            current_cell.z += increment.z;
-                            err_2 -= direction2.y;
-                        }
-                    }
+                    current_cell.y += increment.y;
                 }
                 else
                 {
-                    approx_distance = hls_abs(current_cell.z);
-                    if (err_1 <= 0 && err_2 <= 0)
-                    {
-                        current_cell.z += increment.z;
-                        err_1 += direction2.y;
-                        err_2 += direction2.x;
-                    }
-                    else
-                    {
-                        if (err_1 > 0)
-                        {
-                            current_cell.y += increment.y;
-                            err_1 -= direction2.z;
-                        }
-                        if (err_2 > 0)
-                        {
-                            current_cell.x += increment.x;
-                            err_2 -= direction2.z;
-                        }
-                    }
+                    current_cell.x += increment.x;
                 }
-
-                current_distance = (current_cell - map_pos).to_mm().norm2();
-                int delta_z = dz_per_distance * approx_distance / MATRIX_RESOLUTION;
-                interpolate_z = (current_cell.z * MAP_RESOLUTION - delta_z) / MAP_RESOLUTION;
-                interpolate_z_end = (current_cell.z * MAP_RESOLUTION + delta_z) / MAP_RESOLUTION;
+                err_minor -= abs2_major;
             }
             else
             {
-                point_idx++;
-                load_new_point = true;
+                if (is_x_major)
+                {
+                    current_cell.x += increment.x;
+                }
+                else
+                {
+                    current_cell.y += increment.y;
+                }
+                current_distance++;
+                err_minor += abs2_minor;
+                err_lower_z += abs2_lower_z;
+                err_upper_z += abs2_upper_z;
             }
+
+            current_cell.z = (lower_z + upper_z) / 2;
+            interpolate_z = lower_z;
+            interpolate_z_end = upper_z;
         }
         else
         {
@@ -264,14 +268,31 @@ void tsdf_dataflow(PointHW* scanPoints,
     hls::stream<int> distance_tau_fifo;
     hls::stream<PointHW> direction_fifo;
     hls::stream<PointHW> abs_direction_fifo;
+    hls::stream<int> lower_z_fifo;
+    hls::stream<int> upper_z_fifo;
 
-    read_points(scanPoints, numPoints, tau, PointHW{posX, posY, posZ}, point_fifo, distance_fifo, distance_tau_fifo, direction_fifo, abs_direction_fifo);
+    read_points(scanPoints, numPoints, tau,
+                PointHW{posX, posY, posZ},
+                point_fifo,
+                distance_fifo,
+                distance_tau_fifo,
+                direction_fifo,
+                abs_direction_fifo,
+                lower_z_fifo,
+                upper_z_fifo);
+
     update_tsdf(numPoints,
                 sizeX,   sizeY,   sizeZ,
                 posX,    posY,    posZ,
                 offsetX, offsetY, offsetZ,
                 new_entries, tau,
-                point_fifo, distance_fifo, distance_tau_fifo, direction_fifo, abs_direction_fifo);
+                point_fifo,
+                distance_fifo,
+                distance_tau_fifo,
+                direction_fifo,
+                abs_direction_fifo,
+                lower_z_fifo,
+                upper_z_fifo);
 }
 
 
@@ -284,26 +305,25 @@ void sync_loop(
 {
     for (int index = start; index < end; index++)
     {
-        std::pair<int, int> map_entry = mapData[index];
-        std::pair<int, int> new_entry = new_entries[index];
+
+        IntTuple map_entry = mapData[index];
+        IntTuple new_entry = new_entries[index];
 
         int new_weight = map_entry.second + new_entry.second;
 
-        if (!new_weight)
+        if (new_weight)
         {
-            continue;
+            map_entry.first = (map_entry.first * map_entry.second + new_entry.first * new_entry.second) / new_weight;
+
+            if (new_weight > max_weight)
+            {
+                new_weight = max_weight;
+            }
+
+            map_entry.second = new_weight;
+
+            mapData[index] = map_entry;
         }
-
-        map_entry.first = (map_entry.first * map_entry.second + new_entry.first * new_entry.second) / new_weight;
-
-        if (new_weight > max_weight)
-        {
-            new_weight = max_weight;
-        }
-
-        map_entry.second = new_weight;
-
-        mapData[index] = map_entry;
     }
 }
 

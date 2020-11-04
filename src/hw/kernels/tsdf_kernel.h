@@ -38,7 +38,7 @@ public:
 
     void run(map::LocalMap& map, const buffer::InputBuffer<PointHW>& scan_points, int tau, int max_weight)
     {
-        for(int i = 0; i < (int)new_entries.size(); ++i)
+        for (int i = 0; i < (int)new_entries.size(); ++i)
         {
             new_entries[i].first = 0;
             new_entries[i].second = 0;

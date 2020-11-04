@@ -157,7 +157,7 @@ int Phidget::detach_handler(CPhidgetHandle /* handle */, void* userptr)
 }
 
 int Phidget::error_handler(CPhidgetHandle /* handle */, void* userptr,
-                          int ErrorCode, const char* /* unknown */)
+                           int ErrorCode, const char* /* unknown */)
 {
     ((Phidget*)userptr)->error_handler(ErrorCode);
     return 0;

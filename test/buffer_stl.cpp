@@ -47,14 +47,14 @@ TEST_CASE("Test krnl_vadd.cpp", "")
         std::cout << "    Section 'Test operator*'" << std::endl;
         auto it = buffer_a.begin();
         for (int i = 0 ; i < DATA_SIZE; i++)
-        {   
+        {
             REQUIRE(*it == 10);
             ++it;
         }
 
         it = buffer_a.begin();
         for (int i = 0 ; i < DATA_SIZE; i++)
-        {   
+        {
             *it = 20;
             REQUIRE(*it == 20);
             ++it;
@@ -62,7 +62,7 @@ TEST_CASE("Test krnl_vadd.cpp", "")
 
         it = buffer_a.begin();
         for (int i = 0 ; i < DATA_SIZE; i++)
-        {   
+        {
             *it = 10;
             REQUIRE(*it == 10);
             ++it;
@@ -82,7 +82,7 @@ TEST_CASE("Test krnl_vadd.cpp", "")
         const auto& it = buffer_a.cbegin();
         const auto& comp_it = buffer_a.cbegin();
         for (int i = 0 ; i < DATA_SIZE; i++)
-        {   
+        {
             REQUIRE(it == comp_it);
         }
     }
@@ -90,12 +90,12 @@ TEST_CASE("Test krnl_vadd.cpp", "")
     SECTION("Test range based loops (const)")
     {
         std::cout << "    Section 'Test range based loops (const)'" << std::endl;
-        for (const auto& it: buffer_a)
+        for (const auto& it : buffer_a)
         {
             REQUIRE(it == 10);
         }
 
-        for (const auto& it: buffer_b)
+        for (const auto& it : buffer_b)
         {
             REQUIRE(it == 20);
         }
@@ -104,12 +104,12 @@ TEST_CASE("Test krnl_vadd.cpp", "")
     SECTION("Test range based loops")
     {
         std::cout << "    Section 'Test range based loops'" << std::endl;
-        for (auto& it: buffer_a)
+        for (auto& it : buffer_a)
         {
             REQUIRE(it == 10);
         }
 
-        for (auto& it: buffer_b)
+        for (auto& it : buffer_b)
         {
             REQUIRE(it == 20);
         }
@@ -124,10 +124,10 @@ TEST_CASE("Test krnl_vadd.cpp", "")
             REQUIRE(buffer_b[i] == 20);
         }
 
-        #pragma GCC diagnostic warning "-Warray-bounds"
+#pragma GCC diagnostic warning "-Warray-bounds"
         REQUIRE_THROWS_AS(buffer_a[-1], std::out_of_range);
-        #pragma GCC diagnostic warning "-Warray-bounds"
-        REQUIRE_THROWS_AS(buffer_a[DATA_SIZE+1], std::out_of_range);
+#pragma GCC diagnostic warning "-Warray-bounds"
+        REQUIRE_THROWS_AS(buffer_a[DATA_SIZE + 1], std::out_of_range);
     }
 
     // fs::kernels::VaddKernel krnl_vadd{q};

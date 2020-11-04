@@ -111,7 +111,7 @@ public:
     /// Side length of the cube-shaped chunks (2^CHUNK_SHIFT).
     static constexpr int CHUNK_SIZE = 1 << CHUNK_SHIFT;
 
-    /// Number of voxels in one chunk (CHUNK_SIZE^3). 
+    /// Number of voxels in one chunk (CHUNK_SIZE^3).
     static constexpr int SINGLE_SIZE = 1 << (3 * CHUNK_SHIFT); // = CHUNK_SIZE * CHUNK_SIZE * CHUNK_SIZE
 
     /**

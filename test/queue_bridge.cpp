@@ -44,7 +44,7 @@ TEST_CASE("QueueBridge", "[communication]")
     }};
 
     bridge.start();
-    while(!received)
+    while (!received)
     {
         std::this_thread::yield();
     }
@@ -89,7 +89,7 @@ TEST_CASE("QueueBridge shared_ptr", "[communication]")
     }};
 
     bridge.start();
-    while(!received)
+    while (!received)
     {
         std::this_thread::yield();
     }
