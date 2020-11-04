@@ -5,10 +5,11 @@
 
 #include "catch2_config.h"
 #include <preprocessing/preprocessing.h>
-#include <msg/msgs_stamped.h>
+#include <util/point.h>
+#include <msg/point_cloud.h>
 
 using namespace fastsense::preprocessing;
-using fastsense::msg::Point;
+using fastsense::ScanPoint;
 
 TEST_CASE("Preprocessing", "[Preprocessing]"){
     REQUIRE(1 == 1);
@@ -18,7 +19,7 @@ TEST_CASE("Preprocessing", "[Preprocessing]"){
     fastsense::msg::PointCloudStamped cloud_stamped;
     cloud_stamped.first = cloud;
 
-    std::vector<Point> points(24);
+    std::vector<ScanPoint> points(24);
     //RING 1
     points[0] = {0, 0, 10}; //d = 10
     points[2] = {20, 20, 30}; //d = 41.231056
@@ -49,38 +50,46 @@ TEST_CASE("Preprocessing", "[Preprocessing]"){
     
 
 
-    cloud->rings_ = 2;
-    cloud->points_ = points;
+    //cloud->rings_ = 2;
+    //cloud->points_ = points;
+    cloud_stamped.first->points_ = points;
+    cloud_stamped.first->rings_ = 2;
 
     SECTION("Test median filter"){
+
         preprocessor.median_filter(cloud_stamped, 5);
 
-        std::vector<Point> result(24);
-        result[0] = {0, 0, 10}; //d = 10
+        std::vector<ScanPoint> result(24);
+        result[0] = {20, 20, 30}; //d = 41.231056
         result[2] = {20, 20, 30}; //d = 41.231056
-        result[4] = {20, 20, 30}; //d = 30
+        result[4] = {20, 20, 30}; //d = 41.231056
         result[6] = {20, 20, 30}; //d = 43.588989
-        result[8] = {10, 10, 30}; //d = 51.961524
-        result[10] = {10, 10, 30}; //d = 17.320508
+        result[8] = {10, 10, 30}; //d = 33.166248
+        result[10] = {10, 10, 30}; //d = 33.166248
         result[12] = {10, 10, 30}; //d = 33.166248
-        result[14] = {10, 10, 30}; //d = 30
+        result[14] = {10, 10, 30}; //d = 33.166248
         result[16] = {40, 40, 10}; //d = 57.445626
-        .. result[18] = {40, 40, 30}; //d = 71.414284
+        result[18] = {40, 40, 30}; //d = 64.031242
         result[20] = {40, 40, 30}; //d = 64.031242
-        result[22] = {50, 50, 30}; //d = 76.811457
+        result[22] = {40, 40, 30}; //d = 64.031242
 
-        result[1] = {0, 0, 20}; //d = 20
-        result[3] = {20, 20, 20}; //d = 34.641016
-        result[5] = {20, 20, 40}; //d = 48.989795
-        result[7] = {30, 30, 20}; //d = 46.904158
+        result[1] = {20, 20, 40}; //d = 48.989795
+        result[3] = {30, 30, 20}; //d = 46.904158
+        result[5] = {30, 30, 20}; //d = 46.904158
+        result[7] = {20, 20, 40}; //d = 48.989795
         result[9] = {30, 30, 40}; //d = 58.309519
-        result[11] = {40, 40, 20}; //d = 60
-        result[13] = {40, 40, 40}; //d = 69.282032
-        result[15] = {0, 0, 40}; //d = 40
-        result[17] = {10, 10, 20}; //d = 24.494897
+        result[11] = {30, 30, 40}; //d = 58.309519
+        result[13] = {30, 30, 40}; //d = 58.309519
+        result[15] = {10, 10, 40}; //d = 42.426407
+        result[17] = {10, 10, 40}; //d = 42.426407
         result[19] = {10, 10, 40}; //d = 42.426407
-        result[21] = {50, 50, 40}; //d = 81.240384
-        result[23] = {50, 50, 20}; //d = 73.484692
+        result[21] = {10, 10, 40}; //d = 42.426407
+        result[23] = {10, 10, 40}; //d = 42.426407
+
+        for(int i = 0; i < result.size(); i++)
+        {
+            REQUIRE(cloud_stamped.first->points_[i] == result[i]);
+        }
     }
 
 
