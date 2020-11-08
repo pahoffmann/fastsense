@@ -97,6 +97,113 @@ TEST_CASE("Preprocessing", "[Preprocessing]"){
 
     SECTION("Test reduction filter"){
 
+        //n = 5
+        //x = 35,8
+        //y = 33,4
+        //z = 27,4
+        //(1, 1, 1)
+        points[0] = {10, 10, 10}; 
+        points[1] = {58, 54, 25}; 
+        points[2] = {20, 57, 37}; 
+        points[3] = {38, 4, 2}; 
+        points[4] = {53, 42, 63};
+
+        //n = 2
+        //x = -14
+        //y = 10
+        //z = 20
+        //(0, 1, 1)
+        points[5] = {-22, 10, 10}; 
+        points[6] = {-6, 10, 30}; 
+
+        //n = 1
+        //x = 20
+        //y = 20
+        //z = -37
+        //(1, 1, 0)
+        points[7] = {20, 20, -37}; 
+
+        //n = 3
+        //x = 115
+        //y = 93,6
+        //z = 103,3
+        //(2, 2, 2)
+        points[8] = {116, 127, 86}; 
+        points[9] = {112, 78, 98}; 
+        points[10] = {117, 76, 126};
+
+        //n = 1
+        //x = 50
+        //y = -50
+        //z = 30
+        //(1, 0, 1)
+        points[11] = {50, -50, 30};
+
+        //n = 3
+        //x = -77,3
+        //y = -90,6
+        //z = 103,6
+        //(-1, -1, 2)
+        points[12] = {-65, -67, 69};
+        points[13] = {-73, -92, 127};
+        points[14] = {-94, -113, 115};
+
+        //n = 1
+        //x = 30
+        //y = -128
+        //z = 20
+        //(1, -2, 1)
+        points[15] = {30, -128, 20};
+
+        //n = 2
+        //x = 6,5
+        //y = 18
+        //z = -103
+        //(1, 1, -1)
+        points[16] = {9, 24, -116};
+        points[17] = {4, 12, -90};
+
+        //n = 1
+        //x = 150
+        //y = 150
+        //z = 150
+        //(3, 3, 3)
+        points[18] = {150, 150, 150};
+
+        //n = 5
+        //x = -23,4
+        //y = 33,8
+        //z = -28,2
+        //(0, 1, 0)
+        points[19] = {-16, 1, -44};
+        points[20] = {-3, 51, -20};
+        points[21] = {-35, 39, -35};
+        points[22] = {-3, 22, -15};
+        points[23] = {-60, 56, -27};
+
+        cloud_stamped.first->points_ = points;
+        cloud_stamped.first->rings_ = 2;
+
+        preprocessor.reduction_filter(cloud_stamped);
+
+        std::vector<ScanPoint> result_reduction(10);
+
+        result_reduction[0] = {35, 33, 27}; 
+        result_reduction[1] = {-14, 10, 20}; 
+        result_reduction[2] = {20, 20, -37};
+        result_reduction[3] = {115, 93, 103}; //
+        result_reduction[4] = {50, -50, 30};
+        result_reduction[5] = {-77, -90, 103}; //
+        result_reduction[6] = {30, -128, 20}; //
+        result_reduction[7] = {6, 18, -103}; //
+        result_reduction[8] = {150, 150, 150}; //
+        result_reduction[9] = {-23, 33, -28};
+
+        for(uint32_t i = 0; i < result_reduction.size(); i++)
+        {
+            auto f = std::find(result_reduction.begin(), result_reduction.end(), cloud_stamped.first->points_[i]);
+            REQUIRE(f != result_reduction.end());
+        }
     }
 
 }

@@ -41,9 +41,9 @@ void Preprocessing::reduction_filter(fastsense::msg::PointCloudStamped& cloud)
 
         uint64_t key = 0;
         int16_t* key_ptr = (int16_t*)&key;
-        key_ptr[0] = cloud_points[i].x() / MAP_RESOLUTION;
-        key_ptr[1] = cloud_points[i].y() / MAP_RESOLUTION;
-        key_ptr[2] = cloud_points[i].z() / MAP_RESOLUTION;
+        key_ptr[0] = std::floor(((float)cloud_points[i].x()) / (float)MAP_RESOLUTION);
+        key_ptr[1] = std::floor(((float)cloud_points[i].y()) / (float)MAP_RESOLUTION);
+        key_ptr[2] = std::floor(((float)cloud_points[i].z()) / (float)MAP_RESOLUTION);
 
         auto& avg_point = point_map.try_emplace(key, default_value).first->second;
         avg_point.first += cloud_points[i].cast<int>();
