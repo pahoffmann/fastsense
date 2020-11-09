@@ -4,7 +4,7 @@
     },
 
     "lidar": {
-        "bufferSize": 16,
+        "bufferSize": 2,
         "port": 2368
     },
 
@@ -14,14 +14,14 @@
 
     "registration": {
         "max_iterations": 100,
-        "it_weight_gradient": 0.01
+        "it_weight_gradient": 0.1
     },
 
     "slam": {
         "max_distance": 600,
-        "map_size_x": 151,
-        "map_size_y": 151,
-        "map_size_z": 75,
+        "map_size_x": 201,
+        "map_size_y": 201,
+        "map_size_z": 95,
         "max_weight": 10,
         "initial_map_weight": 0.0
     }
