@@ -19,6 +19,14 @@ constexpr int NUM_POINTS = 6000;
 constexpr int SPLIT_FACTOR = 2;
 
 using IntTuple = std::pair<int, int>;
+struct QuadPoint
+{
+    int data[4];
+    int& operator[](int index)
+    {
+        return data[index];
+    }
+};
 
 extern "C"
 {
@@ -27,33 +35,63 @@ extern "C"
                      int tau,
                      PointHW map_pos,
                      hls::stream<PointHW>& point_fifo,
-                     hls::stream<int>& distance_fifo,
-                     hls::stream<int>& distance_tau_fifo,
-                     hls::stream<PointHW>& direction_fifo,
-                     hls::stream<PointHW>& abs_direction_fifo,
-                     hls::stream<int>& lower_z_fifo,
-                     hls::stream<int>& upper_z_fifo)
+                     hls::stream<IntTuple>& distance_fifo,
+                     hls::stream<QuadPoint>& direction_fifo,
+                     hls::stream<QuadPoint>& abs_direction_fifo,
+                     hls::stream<uint8_t>& major_axis_fifo)
     {
     points_loop:
-        for (int i = 0; i < numPoints; i++)
+        for (int point_idx = 0; point_idx < numPoints; point_idx++)
         {
 #pragma HLS loop_tripcount max=NUM_POINTS/SPLIT_FACTOR
-            PointHW p = scanPoints[(i * 157) % numPoints];
+#pragma HLS pipeline II=1
+            PointHW p = scanPoints[(point_idx * 157) % numPoints];
             int dist = p.norm();
-            PointHW direction = p.to_map() - map_pos;
-            PointHW abs_direction = direction.abs();
             int delta_z = dz_per_distance * dist / MATRIX_RESOLUTION;
             int lower_z = (p.z - delta_z) / MAP_RESOLUTION;
             int upper_z = (p.z + delta_z) / MAP_RESOLUTION;
-            int distance = abs_direction.x >= abs_direction.y ? abs_direction.x : abs_direction.y;
-            int distance_tau = distance + tau / MAP_RESOLUTION;
+
+            PointHW dir = p.to_map() - map_pos;
+            QuadPoint direction, abs_direction;
+#pragma HLS array_partition complete variable=direction.data
+            direction[0] = dir.x;
+            direction[1] = dir.y;
+            direction[2] = lower_z;
+            direction[3] = upper_z;
+            for (uint8_t i = 0; i < 4; i++)
+            {
+#pragma HLS unroll
+                abs_direction[i] = hls_abs(direction[i]);
+            }
+
+            uint8_t major_axis;
+            IntTuple distance;
+            if (abs_direction[0] >= abs_direction[1] && abs_direction[0] >= abs_direction[2] && abs_direction[0] >= abs_direction[3])
+            {
+                major_axis = 0;
+                distance.first = abs_direction[0];
+            }
+            else if (abs_direction[1] >= abs_direction[0] && abs_direction[1] >= abs_direction[2] && abs_direction[1] >= abs_direction[3])
+            {
+                major_axis = 1;
+                distance.first = abs_direction[1];
+            }
+            else if (abs_direction[2] >= abs_direction[0] && abs_direction[2] >= abs_direction[1] && abs_direction[2] >= abs_direction[3])
+            {
+                major_axis = 2;
+                distance.first = abs_direction[2];
+            }
+            else
+            {
+                major_axis = 3;
+                distance.first = abs_direction[3];
+            }
+            distance.second = distance.first + tau / MAP_RESOLUTION;
             point_fifo << p;
             distance_fifo << distance;
-            distance_tau_fifo << distance_tau;
             direction_fifo << direction;
             abs_direction_fifo << abs_direction;
-            lower_z_fifo << lower_z;
-            upper_z_fifo << upper_z;
+            major_axis_fifo << major_axis;
         }
     }
 
@@ -64,49 +102,36 @@ extern "C"
                      IntTuple* new_entries,
                      int tau,
                      hls::stream<PointHW>& point_fifo,
-                     hls::stream<int>& distance_fifo,
-                     hls::stream<int>& distance_tau_fifo,
-                     hls::stream<PointHW>& direction_fifo,
-                     hls::stream<PointHW>& abs_direction_fifo,
-                     hls::stream<int>& lower_z_fifo,
-                     hls::stream<int>& upper_z_fifo)
+                     hls::stream<IntTuple>& distance_fifo,
+                     hls::stream<QuadPoint>& direction_fifo,
+                     hls::stream<QuadPoint>& abs_direction_fifo,
+                     hls::stream<uint8_t>& major_axis_fifo)
     {
         fastsense::map::LocalMapHW map{sizeX,   sizeY,   sizeZ,
                                        posX,    posY,    posZ,
                                        offsetX, offsetY, offsetZ};
         PointHW map_pos{posX, posY, posZ};
-        PointHW map_offset{offsetX, offsetY, offsetZ};
 
         int weight_epsilon = tau / 10;
 
-        // squared distances
-        int distance;
-        int distance_tau;
-        int lower_z;
-        int upper_z;
-
+        IntTuple distance;
         int current_distance;
 
         PointHW current_point;
-        PointHW current_cell;
-        PointHW direction;
-        PointHW abs_direction;
 
-        PointHW increment;
-        int inc_lower_z;
-        int inc_upper_z;
-
-        int abs_major;
-        int abs_minor;
-        int abs2_major;
-        int abs2_minor;
-        int abs2_lower_z;
-        int abs2_upper_z;
-
-        bool is_x_major; // else y major
-        int err_minor;
-        int err_lower_z;
-        int err_upper_z;
+        uint8_t major_axis;
+        QuadPoint increment;
+        QuadPoint error;
+        QuadPoint current_cell;
+        QuadPoint direction;
+        QuadPoint abs_direction;
+        QuadPoint abs_direction_double;
+#pragma HLS array_partition complete variable=increment.data
+#pragma HLS array_partition complete variable=error.data
+#pragma HLS array_partition complete variable=current_cell.data
+#pragma HLS array_partition complete variable=direction.data
+#pragma HLS array_partition complete variable=abs_direction.data
+#pragma HLS array_partition complete variable=abs_direction_double.data
 
         int interpolate_z;
         int interpolate_z_end;
@@ -118,54 +143,49 @@ extern "C"
         while (point_idx < numPoints)
         {
 #pragma HLS loop_tripcount max=NUM_POINTS/SPLIT_FACTOR*128*2
+#pragma HLS pipeline II=1
 
             // Load point and init Bresenham
             if (load_new_point)
             {
+                PointHW dir, abs_dir;
                 point_fifo >> current_point;
                 distance_fifo >> distance;
-                distance_tau_fifo >> distance_tau;
                 direction_fifo >> direction;
                 abs_direction_fifo >> abs_direction;
-                lower_z_fifo >> lower_z;
-                upper_z_fifo >> upper_z;
+                major_axis_fifo >> major_axis;
 
                 current_distance = 0;
-                current_cell = map_pos;
+                current_cell[0] = posX;
+                current_cell[1] = posY;
+                current_cell[2] = current_cell[3] = posZ;
 
-                if (abs_direction.x >= abs_direction.y)
+                for (uint8_t i = 0; i < 4; i++)
                 {
-                    is_x_major = true;
-                    abs_major = abs_direction.x;
-                    abs_minor = abs_direction.y;
+#pragma HLS unroll
+                    abs_direction_double[i] = abs_direction[i] * 2;
                 }
-                else
+                for (uint8_t i = 0; i < 4; i++)
                 {
-                    is_x_major = false;
-                    abs_major = abs_direction.y;
-                    abs_minor = abs_direction.x;
+#pragma HLS unroll
+                    if (i != major_axis)
+                    {
+                        error[i] = abs_direction_double[i] - abs_direction[major_axis];
+                    }
+                    else
+                    {
+                        error[i] = 0;
+                    }
+
+                    increment[i] = direction[i] < 0 ? -1 : 1;
                 }
 
-                abs2_major = abs_major * 2;
-                abs2_minor = abs_minor * 2;
-                err_minor = abs2_minor - abs_major;
-
-                increment = direction.sign();
-                inc_lower_z = lower_z < 0 ? -1 : 1;
-                inc_upper_z = upper_z < 0 ? -1 : 1;
-
-                abs2_lower_z = hls_abs(lower_z) * 2;
-                abs2_upper_z = hls_abs(upper_z) * 2;
-                err_lower_z = abs2_lower_z - abs_major;
-                err_upper_z = abs2_upper_z - abs_major;
-
-                lower_z = upper_z = current_cell.z;
-                interpolate_z = lower_z;
-                interpolate_z_end = upper_z;
+                interpolate_z = current_cell[2];
+                interpolate_z_end = current_cell[3];
 
                 load_new_point = false;
             }
-            else if (current_distance >= distance_tau)
+            else if (current_distance >= distance.second)
             {
                 // this is in 'else' to convince Vitis that there is at least one iteration per Point and
                 // the condition won't be checked in the same iteration in which distance_tau is read from fifo
@@ -175,13 +195,14 @@ extern "C"
             }
 
             // Calculate and update TSDF value
-            int tsdf_value = (current_point - current_cell.to_mm()).norm();
+            PointHW cell(current_cell[0], current_cell[1], (current_cell[2] + current_cell[3]) / 2);
+            int tsdf_value = (current_point - cell.to_mm()).norm();
             if (tsdf_value > tau)
             {
                 tsdf_value = tau;
             }
 
-            if (current_distance > distance)
+            if (current_distance > distance.first)
             {
                 tsdf_value = -tsdf_value;
             }
@@ -193,10 +214,10 @@ extern "C"
                 weight = WEIGHT_RESOLUTION * (tau + tsdf_value) / (tau - weight_epsilon);
             }
 
-            if (weight != 0 && map.in_bounds(current_cell.x, current_cell.y, interpolate_z))
+            if (weight != 0 && map.in_bounds(current_cell[0], current_cell[1], interpolate_z))
             {
-                int index = map.getIndex(current_cell.x, current_cell.y, interpolate_z);
 #pragma HLS dependence variable=new_entries inter false
+                int index = map.getIndex(current_cell[0], current_cell[1], interpolate_z);
                 IntTuple entry = new_entries[index];
 
                 if (entry.second == 0 || hls_abs(tsdf_value) < hls_abs(entry.first))
@@ -211,48 +232,37 @@ extern "C"
             // Update current_cell with Bresenham and interpolation
             if (interpolate_z == interpolate_z_end)
             {
-                if (err_lower_z > 0)
+                if (error[0] <= 0 && error[1] <= 0 && error[2] <= 0 && error[3] <= 0)
                 {
-                    lower_z += inc_lower_z;
-                    err_lower_z -= abs2_major;
-                }
-                if (err_upper_z > 0)
-                {
-                    upper_z += inc_upper_z;
-                    err_upper_z -= abs2_major;
-                }
-
-                if (err_minor > 0)
-                {
-                    if (is_x_major)
+                    current_cell[major_axis] += increment[major_axis];
+                    current_distance++;
+                    for (uint8_t i = 0; i < 4; i++)
                     {
-                        current_cell.y += increment.y;
+#pragma HLS unroll
+                        if (i != major_axis)
+                        {
+                            error[i] += abs_direction_double[i];
+                        }
                     }
-                    else
-                    {
-                        current_cell.x += increment.x;
-                    }
-                    err_minor -= abs2_major;
                 }
                 else
                 {
-                    if (is_x_major)
+                    // TODO: Make this part smarter?:
+                    //       - never change x and y simultaneously
+                    //       - if only lower_z or only upper_z changed, set interpolate_z accordingly
+                    for (uint8_t i = 0; i < 4; i++)
                     {
-                        current_cell.x += increment.x;
+#pragma HLS unroll
+                        if (i != major_axis && error[i] > 0)
+                        {
+                            current_cell[i] += increment[i];
+                            error[i] -= abs_direction_double[major_axis];
+                        }
                     }
-                    else
-                    {
-                        current_cell.y += increment.y;
-                    }
-                    current_distance++;
-                    err_minor += abs2_minor;
-                    err_lower_z += abs2_lower_z;
-                    err_upper_z += abs2_upper_z;
                 }
 
-                current_cell.z = (lower_z + upper_z) / 2;
-                interpolate_z = lower_z;
-                interpolate_z_end = upper_z;
+                interpolate_z = current_cell[2];
+                interpolate_z_end = current_cell[3];
             }
             else
             {
@@ -271,29 +281,25 @@ extern "C"
     {
 #pragma HLS dataflow
         hls::stream<PointHW> point_fifo;
-        hls::stream<int> distance_fifo;
-        hls::stream<int> distance_tau_fifo;
-        hls::stream<PointHW> direction_fifo;
-        hls::stream<PointHW> abs_direction_fifo;
-        hls::stream<int> lower_z_fifo;
-        hls::stream<int> upper_z_fifo;
-#pragma HLS stream variable=point_fifo depth=16
-#pragma HLS stream variable=distance_fifo depth=16
-#pragma HLS stream variable=distance_tau_fifo depth=16
-#pragma HLS stream variable=direction_fifo depth=16
-#pragma HLS stream variable=abs_direction_fifo depth=16
-#pragma HLS stream variable=lower_z_fifo depth=16
-#pragma HLS stream variable=upper_z_fifo depth=16
+        hls::stream<IntTuple> distance_fifo;
+        hls::stream<QuadPoint> direction_fifo;
+        hls::stream<QuadPoint> abs_direction_fifo;
+        hls::stream<uint8_t> major_axis_fifo;
+#pragma HLS stream depth=16 variable=point_fifo
+#pragma HLS stream depth=16 variable=distance_fifo
+#pragma HLS stream depth=16 variable=direction_fifo
+#pragma HLS stream depth=16 variable=abs_direction_fifo
+#pragma HLS stream depth=16 variable=major_axis_fifo
+
+        PointHW map_pos{posX, posY, posZ};
 
         read_points(scanPoints, numPoints, tau,
-                    PointHW{posX, posY, posZ},
+                    map_pos,
                     point_fifo,
                     distance_fifo,
-                    distance_tau_fifo,
                     direction_fifo,
                     abs_direction_fifo,
-                    lower_z_fifo,
-                    upper_z_fifo);
+                    major_axis_fifo);
 
         update_tsdf(numPoints,
                     sizeX,   sizeY,   sizeZ,
@@ -302,11 +308,9 @@ extern "C"
                     new_entries, tau,
                     point_fifo,
                     distance_fifo,
-                    distance_tau_fifo,
                     direction_fifo,
                     abs_direction_fifo,
-                    lower_z_fifo,
-                    upper_z_fifo);
+                    major_axis_fifo);
     }
 
     void sync_loop(

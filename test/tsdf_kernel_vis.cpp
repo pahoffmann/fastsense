@@ -70,36 +70,28 @@ TEST_CASE("TSDF_Kernel_Vis", "[tsdf_kernel_vis]")
         std::cout << "num points: " << count << std::endl;
 
         fastsense::CommandQueuePtr q = fastsense::hw::FPGAManager::create_command_queue();
-        std::shared_ptr<fastsense::map::GlobalMap> global_map_ptr_compare(new fastsense::map::GlobalMap("test_global_map", 0.0, 0.0));
-        fastsense::map::LocalMap local_map_compare(SIZE_X, SIZE_Y, SIZE_Z, global_map_ptr_compare, q);
+        std::shared_ptr<fastsense::map::GlobalMap> global_map_ptr(new fastsense::map::GlobalMap("test_global_map", 0.0, 0.0));
+        fastsense::map::LocalMap local_map(SIZE_X, SIZE_Y, SIZE_Z, global_map_ptr, q);
+        auto& size = local_map.get_size();
+        auto& pos = local_map.get_pos();
+        auto& offset = local_map.get_offset();
 
-        // Initialize temporary testing variables
-
-        //calc tsdf values for the points from the pcd and store them in the local map
-
-        fastsense::tsdf::update_tsdf(scan_points, Vector3i::Zero(), local_map_compare, TAU, MAX_WEIGHT);
+        // fastsense::tsdf::update_tsdf(scan_points, Vector3i::Zero(), local_map, TAU, MAX_WEIGHT);
 
         auto tsdf_buffer = std::make_shared<fastsense::util::ConcurrentRingBuffer<fastsense::msg::TSDFBridgeMessage>>(2);
         fastsense::comm::QueueBridge<fastsense::msg::TSDFBridgeMessage, true> tsdf_bridge{tsdf_buffer, nullptr, 6666};
 
         tsdf_bridge.start();
 
-        fastsense::CommandQueuePtr q2 = fastsense::hw::FPGAManager::create_command_queue();
-        std::shared_ptr<fastsense::map::GlobalMap> global_map_ptr(new fastsense::map::GlobalMap("test_global_map2", 0.0, 0.0));
-        fastsense::map::LocalMap local_map(SIZE_X, SIZE_Y, SIZE_Z, global_map_ptr, q2);
-
-        // auto q3 = fastsense::hw::FPGAManager::create_command_queue();
-        // fastsense::kernels::TSDFKernel krnl(q3);
-
         // krnl.run(local_map, kernel_points, TAU, MAX_WEIGHT);
         // krnl.waitComplete();
 
-        fastsense::buffer::InputOutputBuffer<std::pair<int, int>> new_entries(q, local_map.get_size().x() * local_map.get_size().y() * local_map.get_size().z());
+        fastsense::buffer::InputOutputBuffer<std::pair<int, int>> new_entries(q, local_map.getBuffer().size());
 
-        for (int i = 0; i < local_map.get_size().x() * local_map.get_size().y() * local_map.get_size().z(); ++i)
+        for (auto& entry : new_entries)
         {
-            new_entries[i].first = 0;
-            new_entries[i].second = 0;
+            entry.first = 0;
+            entry.second = 0;
         }
 
         fastsense::tsdf::krnl_tsdf_sw(kernel_points_sw.data(),
@@ -107,15 +99,9 @@ TEST_CASE("TSDF_Kernel_Vis", "[tsdf_kernel_vis]")
                                       num_points,
                                       local_map.getBuffer(),
                                       local_map.getBuffer(),
-                                      local_map.get_size().x(),
-                                      local_map.get_size().y(),
-                                      local_map.get_size().z(),
-                                      0,
-                                      0,
-                                      0,
-                                      local_map.get_offset().x(),
-                                      local_map.get_offset().y(),
-                                      local_map.get_offset().z(),
+                                      size.x(), size.y(), size.z(),
+                                      pos.x(), pos.y(), pos.z(),
+                                      offset.x(), offset.y(), offset.z(),
                                       new_entries,
                                       new_entries,
                                       TAU,
@@ -124,16 +110,10 @@ TEST_CASE("TSDF_Kernel_Vis", "[tsdf_kernel_vis]")
         fastsense::msg::TSDFBridgeMessage tsdf_msg;
 
         tsdf_msg.tau_ = TAU;
-        tsdf_msg.size_[0] = SIZE_X;
-        tsdf_msg.size_[1] = SIZE_Y;
-        tsdf_msg.size_[2] = SIZE_Z;
-        tsdf_msg.pos_[0] = 0;
-        tsdf_msg.pos_[1] = 0;
-        tsdf_msg.pos_[2] = 0;
-        tsdf_msg.offset_[0] = SIZE_X / 2;
-        tsdf_msg.offset_[1] = SIZE_Y / 2;
-        tsdf_msg.offset_[2] = SIZE_Z / 2;
-        tsdf_msg.tsdf_data_.reserve(SIZE_X * SIZE_Y * SIZE_Z);
+        tsdf_msg.size_ = size;
+        tsdf_msg.pos_ = pos;
+        tsdf_msg.offset_ = offset;
+        tsdf_msg.tsdf_data_.reserve(local_map.getBuffer().size());
         std::copy(local_map.getBuffer().cbegin(), local_map.getBuffer().cend(), std::back_inserter(tsdf_msg.tsdf_data_));
 
         tsdf_buffer->push_nb(tsdf_msg, true);
