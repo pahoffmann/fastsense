@@ -1,6 +1,10 @@
 cmake_minimum_required(VERSION 3.0.2)
 project(bridge)
 
+if (DEFINED ENV{XILINX_VITIS})
+  message(FATAL_ERROR "Can't compile in bash session in which Vitis Tools have been sourced!\nCompile from a clean bash environment")
+endif()
+
 add_compile_options(-std=c++17)
 
 find_package(catkin REQUIRED COMPONENTS
