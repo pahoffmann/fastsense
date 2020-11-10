@@ -6,10 +6,10 @@
 
 #include <chrono>
 #include <ros/ros.h>
-#include <bridge/tsdf_bridge.h>
-#include <bridge/imu_bridge.h>
-#include <bridge/velodyne_bridge.h>
-#include <bridge/transform_bridge.h>
+#include <bridge/from_trenz/tsdf_bridge.h>
+#include <bridge/from_trenz/imu_bridge.h>
+#include <bridge/from_trenz/velodyne_bridge.h>
+#include <bridge/from_trenz/transform_bridge.h>
 
 namespace fs = fastsense;
 using namespace std::chrono_literals;

@@ -7,7 +7,7 @@
 #include <omp.h>
 #include <algorithm>
 #include <ros/ros.h>
-#include <bridge/imu_bridge.h>
+#include <bridge/from_trenz/imu_bridge.h>
 
 using namespace fastsense::util;
 using namespace fastsense::bridge;
@@ -16,7 +16,7 @@ using namespace fastsense::bridge;
 // TODO params
 
 ImuBridge::ImuBridge(ros::NodeHandle& n, const std::string& board_addr) 
-:   BridgeBase{n, "imu_bridge/raw", board_addr}, 
+:   BridgeBase{n, "imu_bridge/from_trenz/raw", board_addr}, 
     ProcessThread{},
     imu_ros_{},
     mag_ros_{},
@@ -25,7 +25,7 @@ ImuBridge::ImuBridge(ros::NodeHandle& n, const std::string& board_addr)
     linear_acceleration_covariance_{},
     magnetic_field_covariance_{}
 {
-    mag_pub_ = n.advertise<sensor_msgs::MagneticField>("imu_bridge/mag", 5);
+    mag_pub_ = n.advertise<sensor_msgs::MagneticField>("imu_bridge/from_trenz/mag", 5);
     initCovariance();
 }
 

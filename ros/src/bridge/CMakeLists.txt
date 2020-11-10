@@ -14,7 +14,7 @@ find_package(catkin REQUIRED COMPONENTS
 
 find_package(ZeroMQ 4.3.2 REQUIRED)
 find_package(cppzmq 4.4.1 REQUIRED)
-find_package(HDF5 REQUIRED COMPONENTS CXX C HL)
+find_package(HDF5 1.10.4 REQUIRED COMPONENTS CXX C HL)
 find_package(OpenMP REQUIRED)
 find_package(Eigen3 REQUIRED)
 
@@ -31,11 +31,11 @@ catkin_package()
 add_executable(bridge 
   ${FASTSENSE_DIR}/src/msg/imu.cpp
   ${FASTSENSE_DIR}/src/msg/magnetic_field.cpp
-  src/imu_bridge.cpp
-  src/tsdf_bridge.cpp
-  src/velodyne_bridge.cpp
-  src/bridge.cpp
-  src/transform_bridge.cpp
+  src/from_trenz/imu_bridge.cpp
+  src/from_trenz/tsdf_bridge.cpp
+  src/from_trenz/velodyne_bridge.cpp
+  src/from_trenz/bridge.cpp
+  src/from_trenz/transform_bridge.cpp
 )
 
 target_compile_options(bridge PRIVATE ${OpenMP_FLAGS})
@@ -53,4 +53,22 @@ target_link_libraries(bridge
   ${catkin_LIBRARIES}
   libzmq
   ${OpenMP_LIBS}
+)
+
+add_executable(to_trenz 
+  ${FASTSENSE_DIR}/src/msg/imu.cpp
+  ${FASTSENSE_DIR}/src/msg/magnetic_field.cpp
+  src/to_trenz/bridge.cpp
+)
+
+target_include_directories(to_trenz PRIVATE
+  ${FASTSENSE_DIR}/src
+  include
+  ${catkin_INCLUDE_DIRS}
+  ${Eigen3_INCLUDE_DIRS}
+)
+
+target_link_libraries(to_trenz
+  ${catkin_LIBRARIES}
+  libzmq
 )

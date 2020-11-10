@@ -6,12 +6,12 @@
 
 #include <iterator>
 #include <ros/ros.h>
-#include <bridge/velodyne_bridge.h>
+#include <bridge/from_trenz/velodyne_bridge.h>
 
 using namespace fastsense::bridge;
 
 VelodyneBridge::VelodyneBridge(ros::NodeHandle& n, const std::string& board_addr)
-    :   BridgeBase{n, "velodyne_bridge/points", board_addr},
+    :   BridgeBase{n, "velodyne_bridge/from_trenz/points", board_addr},
         ProcessThread{},
         points_{}
 {

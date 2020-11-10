@@ -6,7 +6,7 @@
 
 #include <iterator>
 #include <ros/ros.h>
-#include <bridge/transform_bridge.h>
+#include <bridge/from_trenz/transform_bridge.h>
 
 using namespace fastsense::bridge;
 

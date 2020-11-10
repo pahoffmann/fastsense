@@ -7,7 +7,7 @@
 #include <omp.h>
 #include <iterator>
 #include <ros/ros.h>
-#include <bridge/tsdf_bridge.h>
+#include <bridge/from_trenz/tsdf_bridge.h>
 #include <util/constants.h>
 
 using namespace fastsense::bridge;
