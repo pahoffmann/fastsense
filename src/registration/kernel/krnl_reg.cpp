@@ -6,6 +6,7 @@
 #include <map/local_map_hw.h>
 #include <util/point_hw.h>
 #include <registration/kernel/reg_hw.h>
+#include <registration/kernel/linear_solver.h>
 #include <iostream>
 
 struct IntTuple
@@ -15,13 +16,14 @@ struct IntTuple
 };
 
 using namespace fastsense::map;
+using namespace fastsense::registration;
 
 extern "C"
 {
 
     void xi_to_transform(float xi[6], float transform[4][4])
     {
-        float theta = hls_sqrt_approx(xi[0] * xi[0] + xi[1] * xi[1] + xi[2] * xi[2]);
+        float theta = hls_sqrt_float(xi[0] * xi[0] + xi[1] * xi[1] + xi[2] * xi[2]);
         float sin_theta, cos_theta;
         hls_sincos(theta, &sin_theta, &cos_theta);
         cos_theta = 1 - cos_theta;
@@ -31,9 +33,9 @@ extern "C"
         xi[2] /= theta;
         float L[3][3] =
         {
-            0, -xi[2], xi[1],
-            xi[2], 0, -xi[0],
-            -xi[1], xi[0], 0
+            {0, -xi[2], xi[1]},
+            {xi[2], 0, -xi[0]},
+            {-xi[1], xi[0], 0}
         };
 
         for (int row = 0; row < 3; row++)
@@ -98,6 +100,7 @@ extern "C"
         for (int i = 0; i < numPoints; i++)
         {
 #pragma HLS loop_tripcount min=0 max=30000
+#pragma HLS pipeline II=1
 
             PointHW point_tmp = pointData[i];
 
@@ -109,7 +112,7 @@ extern "C"
             point_mul[2] = point_tmp.z;
 
             //apply transform for point.
-            fastsense::registration::transform_point(transform_matrix, point_mul, point);
+            transform_point(transform_matrix, point_mul, point);
 
             //revert matrix resolution step => point has real data
             point[0] /= MATRIX_RESOLUTION;
@@ -212,6 +215,9 @@ extern "C"
         float total_transform[4][4]; // accumulated total transform
         float temp_transform[4][4]; // for matrix multiplication
         float previous_errors[4] = {0, 0, 0, 0};
+        float h_float[6][6];
+        float g_float[6];
+        float xi[6];
 #pragma HLS array_partition variable=h complete dim=0
 #pragma HLS array_partition variable=g complete
 #pragma HLS array_partition variable=int_transform complete dim=0
@@ -219,6 +225,9 @@ extern "C"
 #pragma HLS array_partition variable=total_transform complete dim=0
 #pragma HLS array_partition variable=temp_transform complete dim=0
 #pragma HLS array_partition variable=previous_errors complete
+#pragma HLS array_partition variable=h_float complete
+#pragma HLS array_partition variable=g_float complete
+#pragma HLS array_partition variable=xi complete
 
         long error, count;
 
@@ -237,6 +246,7 @@ extern "C"
         for (int i = 0; i < max_iterations; i++)
         {
 #pragma HLS loop_tripcount min=200 max=200
+#pragma HLS pipeline off
 
             // convert total_transform to int_transform
             for (int row = 0; row < 4; row++)
@@ -248,6 +258,10 @@ extern "C"
                     int_transform[row][col] = static_cast<int>(total_transform[row][col] * MATRIX_RESOLUTION);
                 }
             }
+
+#ifndef __SYNTHESIS__
+            std::cout << "\r" << i << " / " << max_iterations << std::flush;
+#endif
 
             registration_step(pointData,
                               numPoints,
@@ -262,16 +276,26 @@ extern "C"
                               count
                              );
 
-            float xi[6];
-            // TODO: calc xi
-            // Matrix6f hf = h.cast<float>();
-            // Vector6f gf = g.cast<float>();
-            // // W Matrix
-            // hf += alpha * count * Matrix6f::Identity();
-            // Vector6f xi = solve(hf, -gf);
+            float alpha_bonus = alpha * count;
+
+            for (int row = 0; row < 6; row++)
+            {
+#pragma HLS unroll
+                for (int col = 0; col < 6; col++)
+                {
+#pragma HLS unroll
+                    h_float[row][col] = static_cast<float>(h[row][col]);
+                }
+                g_float[row] = static_cast<float>(-g[row]);
+
+                h_float[row][row] += alpha_bonus;
+            }
+
+            lu_decomposition<float, 6>(h_float);
+            lu_solve<float, 6>(h_float, g_float, xi);
 
             xi_to_transform(xi, next_transform);
-            fastsense::registration::MatrixMul<float, 4, 4, 4>(next_transform, total_transform, temp_transform);
+            MatrixMul<float, 4, 4, 4>(next_transform, total_transform, temp_transform);
 
             // copy temp_transform to total_transform
             // TODO: multiply in-place to avoid copy?
@@ -287,11 +311,15 @@ extern "C"
 
             alpha += it_weight_gradient;
             float err = (float)error / count;
+            float d1 = err - previous_errors[2];
+            float d2 = err - previous_errors[0];
 
             constexpr float epsilon = 0.0001; // TODO: make parameter?
-            if (fabsf(err - previous_errors[2]) < epsilon && fabsf(err - previous_errors[0]) < epsilon)
+            if (d1 >= -epsilon && d1 <= epsilon && d2 >= -epsilon && d2 <= epsilon)
             {
-                //std::cout << "Stopped after " << i << " / " << max_iterations_ << " Iterations" << std::endl;
+#ifndef __SYNTHESIS__
+                std::cout << std::endl << "Stopped after " << i << " / " << max_iterations << " Iterations" << std::endl;
+#endif
                 break;
             }
             for (int e = 1; e < 4; e++)
@@ -301,6 +329,9 @@ extern "C"
             }
             previous_errors[3] = err;
         }
+#ifndef __SYNTHESIS__
+        std::cout << std::endl;
+#endif
 
         // Pipeline to save ressources
     out_transform_loop:

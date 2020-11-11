@@ -40,22 +40,27 @@ public:
         buffer::InputBuffer<float> in_transform(cmd_q_, 16);
 
         //write last transform to buffer
-        for (int i = 0; i < 16; i++)
+        for (int row = 0; row < 4; row++)
         {
-            in_transform[i] = transform[i];
+            for (int col = 0; col < 4; col++)
+            {
+                in_transform[row * 4 + col] = transform(row, col);
+            }
         }
-
-        // std::cout << "Transform matrix sw kernel:\n" << transform << std::endl;
 
         //run the encapsulated kernel
         run(map, point_data, max_iterations, it_weight_gradient, in_transform, out_transform);
 
         waitComplete();
 
-        for (int i = 0; i < 16; i++)
+        for (int row = 0; row < 4; row++)
         {
-            transform[i] = out_transform[i];
+            for (int col = 0; col < 4; col++)
+            {
+                transform(row, col) = out_transform[row * 4 + col];
+            }
         }
+        // std::cout << "Transform matrix sw kernel:\n" << transform << std::endl;
     }
 
     /**

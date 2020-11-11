@@ -22,8 +22,16 @@ inline int hls_sqrt_approx(int x)
 #ifdef __SYNTHESIS__
     return hls::sqrt(x);
 #else
-    // return std::sqrt(x);
     return std::round(std::sqrt(x));
+#endif
+}
+
+inline float hls_sqrt_float(float x)
+{
+#ifdef __SYNTHESIS__
+    return hls::sqrt(x);
+#else
+    return std::sqrt(x);
 #endif
 }
 
