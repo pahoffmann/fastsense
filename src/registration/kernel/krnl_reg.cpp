@@ -18,6 +18,8 @@ struct IntTuple
 using namespace fastsense::map;
 using namespace fastsense::registration;
 
+constexpr int NUM_POINTS = 6000;
+
 extern "C"
 {
 
@@ -99,7 +101,7 @@ extern "C"
     point_loop:
         for (int i = 0; i < numPoints; i++)
         {
-#pragma HLS loop_tripcount min=0 max=30000
+#pragma HLS loop_tripcount min=NUM_POINTS max=NUM_POINTS
 #pragma HLS pipeline II=1
 
             PointHW point_tmp = pointData[i];
