@@ -41,9 +41,9 @@ void Preprocessing::reduction_filter(fastsense::msg::PointCloudStamped& cloud)
 
         uint64_t key = 0;
         int16_t* key_ptr = (int16_t*)&key;
-        key_ptr[0] = cloud_points[i].x() / MAP_RESOLUTION;
-        key_ptr[1] = cloud_points[i].y() / MAP_RESOLUTION;
-        key_ptr[2] = cloud_points[i].z() / MAP_RESOLUTION;
+        key_ptr[0] = std::floor(((float)cloud_points[i].x()) / (float)MAP_RESOLUTION);
+        key_ptr[1] = std::floor(((float)cloud_points[i].y()) / (float)MAP_RESOLUTION);
+        key_ptr[2] = std::floor(((float)cloud_points[i].z()) / (float)MAP_RESOLUTION);
 
         auto& avg_point = point_map.try_emplace(key, default_value).first->second;
         avg_point.first += cloud_points[i].cast<int>();
@@ -69,26 +69,12 @@ uint8_t Preprocessing::median_from_array(std::vector<ScanPoint*> medians)
         distances[i].second = medians[i]->norm();
     }
 
-    std::sort(distances.begin(), distances.end(), [](auto & left, auto & right)
+    std::nth_element(distances.begin(), distances.begin() + distances.size()/2, distances.end(), [](auto & left, auto & right)
     {
         return left.second < right.second;
     });
 
-
-    return distances[(int)std::floor(medians.size() / 2)].first;
-}
-
-
-template <typename T>
-T shift_array_by_one(std::vector<T> array)
-{
-    T ret = array[0];
-    for (uint8_t i = 0; i < array.size() - 1; i++)
-    {
-        array[i] = array[i + 1];
-    }
-
-    return ret;
+    return distances[distances.size()/2].first;
 }
 
 void Preprocessing::median_filter(fastsense::msg::PointCloudStamped& cloud, uint8_t window_size)
@@ -98,31 +84,21 @@ void Preprocessing::median_filter(fastsense::msg::PointCloudStamped& cloud, uint
         return;
     }
 
-    int half_window_size = (int)std::ceil(window_size / 2.0f);
-
-    std::vector<std::vector<ScanPoint*>> window(cloud.first->rings_, std::vector<ScanPoint*>(window_size, nullptr));
-    std::vector<std::vector<ScanPoint>> medians(cloud.first->rings_, std::vector<ScanPoint>(half_window_size, {0, 0, 0}));
-
-    uint16_t current_ring;
-    for (uint16_t i = 0; i < cloud.first->points_.size(); i++)
-    {
-        current_ring = i % cloud.first->rings_;
-        window[current_ring][window_size - 1] = &cloud.first->points_[i];
-
-        if (window[current_ring][0] != nullptr)
+    std::vector<ScanPoint> result(cloud.first->points_.size());
+    std::vector<ScanPoint*> window(window_size); 
+    
+    int half_window_size = window_size/2;
+    for(uint32_t i = 0; i < cloud.first->points_.size(); i++)
+    {   
+        int first_element = (i - (half_window_size * cloud.first->rings_));
+        for(uint8_t j = 0; j < window_size; j++)
         {
-            ScanPoint* element = window[current_ring][median_from_array(window[current_ring])];
-            medians[current_ring][half_window_size - 1] = {element->x(), element->y(), element->z()};
-        }
+            int index = ((first_element + (j * cloud.first->rings_)) + cloud.first->points_.size()) % cloud.first->points_.size();
+            window[j] = (ScanPoint*)&cloud.first->points_[index];
+        }        
 
-        ScanPoint* old_value = shift_array_by_one(window[current_ring]);
-        ScanPoint new_value = shift_array_by_one(medians[current_ring]);
-
-        if (new_value.x() == 0 && new_value.y() == 0 && new_value.z() == 0)
-        {
-            continue;
-        }
-        *old_value = new_value;
-
+        result[i] = *window[median_from_array(window)];
     }
+
+    cloud.first->points_ = result;
 }
