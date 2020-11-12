@@ -4,7 +4,7 @@
     },
 
     "lidar": {
-        "bufferSize": 2,
+        "bufferSize": 1,
         "port": 2368
     },
 
