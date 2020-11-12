@@ -10,9 +10,12 @@
 
 using namespace fastsense::bridge;
 
-TransformBridge::TransformBridge(ros::NodeHandle& n, const std::string& board_addr)
-    :   BridgeBase{n, board_addr},
+TransformBridge::TransformBridge(const std::string& board_addr)
+    :   BridgeBase{board_addr},
         ProcessThread{},
+        broadcaster{},
+        broadcaster_thread{},
+        mtx{},
         transform_data{}
 {
     transform_data.transform.rotation.w = 1.0;
@@ -20,7 +23,7 @@ TransformBridge::TransformBridge(ros::NodeHandle& n, const std::string& board_ad
 
 void TransformBridge::start()
 {
-    if (running == false)
+    if (!running)
     {
         running = true;
         worker = std::thread(&TransformBridge::run, this);

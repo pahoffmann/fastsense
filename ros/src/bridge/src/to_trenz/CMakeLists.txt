@@ -1,8 +1,14 @@
-add_executable(to_trenz bridge.cpp ${FASTSENSE_DIR}/src/msg/imu.cpp)
+add_executable(to_trenz 
+  ${FASTSENSE_DIR}/src/msg/imu.cpp
+  ${FASTSENSE_DIR}/src/msg/magnetic_field.cpp
+  bridge.cpp
+)
+
+target_compile_options(to_trenz PRIVATE -Wall -Wextra -Wpedantic)
 
 target_include_directories(to_trenz PRIVATE
-  ${CMAKE_CURRENT_SOURCE_DIR}/include
   ${FASTSENSE_DIR}/src
+  ${FASTSENSE_ROS_INCLUDE_PATH}
   ${catkin_INCLUDE_DIRS}
   ${Eigen3_INCLUDE_DIRS}
 )

@@ -35,7 +35,7 @@ public:
     /**
      * @brief Destroy the Imu Bridge object
      */
-    ~ImuBridge() = default;
+    ~ImuBridge() override = default;
 
     /**
      * @brief Starts the imu bridge in its own thread

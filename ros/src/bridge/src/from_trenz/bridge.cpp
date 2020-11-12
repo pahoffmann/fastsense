@@ -14,10 +14,9 @@
 namespace fs = fastsense;
 using namespace std::chrono_literals;
 
-// TODO skalierung
 int main(int argc, char** argv)
 {
-    ros::init(argc, argv, "bridge");
+    ros::init(argc, argv, "from_trenz_bridge");
     ros::NodeHandle n("~");
 
     std::string board_addr;
@@ -25,12 +24,12 @@ int main(int argc, char** argv)
     {
         board_addr = "192.168.1.123"; // default hardware board
     }
-    std::cout << "Board address is \"" << board_addr << "\"\n";
+    std::cout << "Board address is " << board_addr << "\n";
 
     fs::bridge::TSDFBridge tsdf_bridge{n, board_addr};
     fs::bridge::ImuBridge imu_bridge{n, board_addr};
     fs::bridge::VelodyneBridge velodyne_bridge{n, board_addr};
-    fs::bridge::TransformBridge transform_bridge{n, board_addr};
+    fs::bridge::TransformBridge transform_bridge{board_addr};
     
     tsdf_bridge.start();
     imu_bridge.start();

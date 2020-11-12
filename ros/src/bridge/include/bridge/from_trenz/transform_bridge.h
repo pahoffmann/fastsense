@@ -27,15 +27,14 @@ public:
     /**
      * @brief Construct a new Transform Bridge object
      * 
-     * @param n nodehandle
      * @param board_addr ip addr of Trenz board
      */
-    TransformBridge(ros::NodeHandle& n, const std::string& board_addr);
+    TransformBridge(const std::string& board_addr);
 
     /**
      * @brief Destroy the Transform Bridge object
      */
-    ~TransformBridge() = default;
+    ~TransformBridge() override = default;
 
     /**
      * @brief Starts the Transform Bridge in its own thread

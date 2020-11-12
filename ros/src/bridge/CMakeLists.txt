@@ -1,11 +1,13 @@
-cmake_minimum_required(VERSION 3.0.2)
-project(bridge)
-
 if (DEFINED ENV{XILINX_VITIS})
   message(FATAL_ERROR "Can't compile in bash session in which Vitis Tools have been sourced!\nCompile from a clean bash environment")
 endif()
 
-add_compile_options(-std=c++17)
+cmake_minimum_required(VERSION 3.10)
+
+project(bridge CXX)
+set(CMAKE_CXX_STANDARD 17)
+
+include(cmake/helpers.cmake)
 
 find_package(catkin REQUIRED COMPONENTS
   roscpp
@@ -14,65 +16,24 @@ find_package(catkin REQUIRED COMPONENTS
   visualization_msgs
   tf2
   tf2_ros
+  message_filters
 )
 
-find_package(ZeroMQ 4.3.2 REQUIRED)
-find_package(cppzmq 4.4.1 REQUIRED)
-find_package(HDF5 1.10.4 REQUIRED COMPONENTS CXX C HL)
+find_package(ZeroMQ 4.3.2 REQUIRED EXACT)
+find_package(cppzmq 4.4.1 REQUIRED EXACT)
+find_package(HDF5 1.10.0.1 REQUIRED COMPONENTS CXX C HL)
 find_package(OpenMP REQUIRED)
 find_package(Eigen3 REQUIRED)
 
-set(FASTSENSE_DIR ../../../../fastsense)                               
+set_fastsense_root_dir(FASTSENSE_DIR)
+get_absolute(FASTSENSE_ROS_INCLUDE_PATH include)
 set(OpenMP_FLAGS ${OpenMP_CXX_FLAGS})
 set(OpenMP_LIBS gomp)
 set(HIGHFIVE_EXAMPLES FALSE CACHE INTERNAL "")
 set(HIGHFIVE_UNIT_TESTS FALSE CACHE INTERNAL "")
 
-add_subdirectory(${FASTSENSE_DIR}/ext/HighFive ${CMAKE_CURRENT_BINARY_DIR}/HighFive)
-
 catkin_package()
 
-add_executable(bridge 
-  ${FASTSENSE_DIR}/src/msg/imu.cpp
-  ${FASTSENSE_DIR}/src/msg/magnetic_field.cpp
-  src/from_trenz/imu_bridge.cpp
-  src/from_trenz/tsdf_bridge.cpp
-  src/from_trenz/velodyne_bridge.cpp
-  src/from_trenz/bridge.cpp
-  src/from_trenz/transform_bridge.cpp
-)
-
-target_compile_options(bridge PRIVATE ${OpenMP_FLAGS})
-
-target_include_directories(bridge PRIVATE
-  ${FASTSENSE_DIR}/src
-  ${FASTSENSE_DIR}/ext/HighFive/include 
-  include
-  ${catkin_INCLUDE_DIRS}
-  ${HDF5_INCLUDE_DIRS}
-  ${Eigen3_INCLUDE_DIRS}
-)
-
-target_link_libraries(bridge
-  ${catkin_LIBRARIES}
-  libzmq
-  ${OpenMP_LIBS}
-)
-
-add_executable(to_trenz 
-  ${FASTSENSE_DIR}/src/msg/imu.cpp
-  ${FASTSENSE_DIR}/src/msg/magnetic_field.cpp
-  src/to_trenz/bridge.cpp
-)
-
-target_include_directories(to_trenz PRIVATE
-  ${FASTSENSE_DIR}/src
-  include
-  ${catkin_INCLUDE_DIRS}
-  ${Eigen3_INCLUDE_DIRS}
-)
-
-target_link_libraries(to_trenz
-  ${catkin_LIBRARIES}
-  libzmq
-)
+add_subdirectory(${FASTSENSE_DIR}/ext/HighFive ${CMAKE_CURRENT_BINARY_DIR}/HighFive)
+add_subdirectory(src/from_trenz)
+add_subdirectory(src/to_trenz)

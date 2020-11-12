@@ -32,7 +32,7 @@ public:
     /**
      * @brief Destroy the Velodyne Bridge object
      */
-    ~VelodyneBridge() = default;
+    ~VelodyneBridge() override = default;
 
     /**
      * @brief Starts the velodyne bridge in its own thread

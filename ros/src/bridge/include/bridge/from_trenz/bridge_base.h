@@ -32,6 +32,7 @@ class BridgeBase
 private:
     comm::Receiver<T> receiver_;
     ros::Publisher pub_;
+    bool pub_init;
 
 public:
     /**
@@ -43,16 +44,18 @@ public:
      * @param msg_buffer_size ROS msg buffer size
      */
     inline BridgeBase(ros::NodeHandle& n, const std::string& topic, const std::string& board_addr, size_t msg_buffer_size = 1000) 
-    :   receiver_{board_addr, PORT}, 
-        msg_{},
-        pub_{n.advertise<P>(topic, msg_buffer_size)} 
+    :   receiver_{board_addr, PORT},
+        pub_{n.advertise<P>(topic, msg_buffer_size)},
+        pub_init{true},
+        msg_{}
     {
     }
 
-    inline BridgeBase(ros::NodeHandle& n, const std::string& board_addr, size_t msg_buffer_size = 1000)
-    :   receiver_{board_addr, PORT}, 
-        msg_{},
-        pub_{} 
+    inline BridgeBase(const std::string& board_addr)
+    :   receiver_{board_addr, PORT},
+        pub_{},
+        pub_init{false},
+        msg_{}
     {
     }
 
@@ -86,8 +89,12 @@ public:
      * 
      * @return ros::Publisher& reference to publisher
      */
-    inline ros::Publisher& pub()
+    inline const ros::Publisher& pub() const
     {
+        if (!pub_init)
+        {
+            throw std::runtime_error("Publisher not initialized!");
+        }
         return pub_;
     }
 
