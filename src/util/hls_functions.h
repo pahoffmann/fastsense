@@ -9,7 +9,7 @@
 #ifdef __SYNTHESIS__
 #include <hls_math.h>
 #else
-#include <cmath>
+#include <math.h>
 #endif
 
 inline int hls_abs(int x)
@@ -22,31 +22,24 @@ inline int hls_sqrt_approx(int x)
 #ifdef __SYNTHESIS__
     return hls::sqrt(x);
 #else
-    // return std::sqrt(x);
     return std::round(std::sqrt(x));
 #endif
-    // // meh, doesn't work
-    // if (x <= 0)
-    // {
-    //     return 0;
-    // }
-    // int a = 0, b = x;
-    // while (b - a > 1)
-    // {
-    //     int mid = (a + b) / 2;
-    //     int mm = mid * mid;
-    //     if (mm < x)
-    //     {
-    //         a = mid;
-    //     }
-    //     else if (mm == x)
-    //     {
-    //         return mid;
-    //     }
-    //     else
-    //     {
-    //         b = mid;
-    //     }
-    // }
-    // return a;
+}
+
+inline float hls_sqrt_float(float x)
+{
+#ifdef __SYNTHESIS__
+    return hls::sqrt(x);
+#else
+    return std::sqrt(x);
+#endif
+}
+
+inline void hls_sincos(float angle, float* sin_out, float* cos_out)
+{
+#ifdef __SYNTHESIS__
+    return hls::sincos(angle, &sin_out, &cos_out);
+#else
+    sincosf(angle, sin_out, cos_out);
+#endif
 }

@@ -33,45 +33,34 @@ public:
      * @param local_count   local count ref
      * @param transform     transform from last registration iteration (including imu one) - needs to be applied in the kernel
      */
-    void synchronized_run(map::LocalMap& map, buffer::InputBuffer<PointHW>& point_data, Eigen::Matrix<long, 6, 6>& local_h, Eigen::Matrix<long, 6, 1>& local_g, int& local_error, int& local_count,
-                          Eigen::Matrix4f& transform)
+    void synchronized_run(map::LocalMap& map, buffer::InputBuffer<PointHW>& point_data, int max_iterations, float it_weight_gradient, Eigen::Matrix4f& transform)
     {
-        buffer::OutputBuffer<long> outbuf(cmd_q_, 44); //matrix buffer for g matrix TODO: determine if this needs to be in registration.cpp
+        buffer::OutputBuffer<float> out_transform(cmd_q_, 16); //matrix buffer for g matrix TODO: determine if this needs to be in registration.cpp
 
-        buffer::InputBuffer<int> transform_matrix(cmd_q_, 16);
+        buffer::InputBuffer<float> in_transform(cmd_q_, 16);
 
         //write last transform to buffer
-        for (int i = 0; i < 4; i++)
+        for (int row = 0; row < 4; row++)
         {
-            for (int j = 0; j < 4; j++)
+            for (int col = 0; col < 4; col++)
             {
-                transform_matrix[4 * i + j] = static_cast<int>(transform(i, j) * MATRIX_RESOLUTION); //TODO:   CHECK CAST
+                in_transform[row * 4 + col] = transform(row, col);
             }
         }
 
-        // std::cout << "Transform matrix sw kernel:\n" << transform << std::endl;
-
         //run the encapsulated kernel
-        run(map, point_data, transform_matrix, outbuf);
+        run(map, point_data, max_iterations, it_weight_gradient, in_transform, out_transform);
 
         waitComplete();
 
-        local_h << outbuf[0],  outbuf[1], outbuf[2], outbuf[3], outbuf[4], outbuf[5],
-                outbuf[6], outbuf[7], outbuf[8], outbuf[9], outbuf[10], outbuf[11],
-                outbuf[12], outbuf[13], outbuf[14], outbuf[15], outbuf[16], outbuf[17],
-                outbuf[18], outbuf[19], outbuf[20], outbuf[21], outbuf[22], outbuf[23],
-                outbuf[24], outbuf[25], outbuf[26], outbuf[27], outbuf[28], outbuf[29],
-                outbuf[30], outbuf[31], outbuf[32], outbuf[33], outbuf[34], outbuf[35];
-
-        local_g << outbuf[36],
-                outbuf[37],
-                outbuf[38],
-                outbuf[39],
-                outbuf[40],
-                outbuf[41];
-
-        local_error = outbuf[42];
-        local_count = outbuf[43];
+        for (int row = 0; row < 4; row++)
+        {
+            for (int col = 0; col < 4; col++)
+            {
+                transform(row, col) = out_transform[row * 4 + col];
+            }
+        }
+        // std::cout << "Transform matrix sw kernel:\n" << transform << std::endl;
     }
 
     /**
@@ -82,7 +71,8 @@ public:
      * @param outbuf
      * @param queue
      */
-    void run(map::LocalMap& map, buffer::InputBuffer<PointHW>& point_data, buffer::InputBuffer<int>& transform, buffer::OutputBuffer<long>& outbuf)
+    void run(map::LocalMap& map, buffer::InputBuffer<PointHW>& point_data, int max_iterations, float it_weight_gradient,
+             buffer::InputBuffer<float>& in_transform, buffer::OutputBuffer<float>& out_transform)
     {
         resetNArg();
 
@@ -104,17 +94,19 @@ public:
         setArg(m.offsetX);
         setArg(m.offsetY);
         setArg(m.offsetZ);
-        setArg(transform.getBuffer());
-        setArg(outbuf.getBuffer());
+        setArg(max_iterations);
+        setArg(it_weight_gradient);
+        setArg(in_transform.getBuffer());
+        setArg(out_transform.getBuffer());
 
         // Write buffers
-        cmd_q_->enqueueMigrateMemObjects({map.getBuffer().getBuffer(), point_data.getBuffer(), transform.getBuffer()}, CL_MIGRATE_MEM_OBJECT_DEVICE, nullptr, &pre_events_[0]);
+        cmd_q_->enqueueMigrateMemObjects({map.getBuffer().getBuffer(), point_data.getBuffer(), in_transform.getBuffer()}, CL_MIGRATE_MEM_OBJECT_DEVICE, nullptr, &pre_events_[0]);
 
         // Launch the Kernel
         cmd_q_->enqueueTask(kernel_, &pre_events_, &execute_events_[0]);
 
         // Read buffers
-        cmd_q_->enqueueMigrateMemObjects({outbuf.getBuffer()}, CL_MIGRATE_MEM_OBJECT_HOST, &execute_events_, &post_events_[0]);
+        cmd_q_->enqueueMigrateMemObjects({out_transform.getBuffer()}, CL_MIGRATE_MEM_OBJECT_HOST, &execute_events_, &post_events_[0]);
     }
 };
 
