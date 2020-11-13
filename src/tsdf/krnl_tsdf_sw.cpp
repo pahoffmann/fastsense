@@ -211,7 +211,7 @@ void update_tsdf(int numPoints,
         }
 
         // Update current_cell with Bresenham and interpolation
-        if (interpolate_z == interpolate_z_end)
+        if (interpolate_z >= interpolate_z_end)
         {
             if (error[0] <= 0 && error[1] <= 0 && error[2] <= 0 && error[3] <= 0)
             {
