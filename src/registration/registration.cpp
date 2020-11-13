@@ -213,7 +213,7 @@ Matrix4f Registration::register_cloud(fastsense::map::LocalMap& localmap, fastse
  */
 void Registration::update_imu_data(const fastsense::msg::ImuStamped& imu)
 {
-    if (first_imu_msg_ == true)
+    if (first_imu_msg_)
     {
         imu_time_ = imu.second;
         first_imu_msg_ = false;
