@@ -1,6 +1,7 @@
 add_executable(to_trenz 
   ${FASTSENSE_DIR}/src/msg/imu.cpp
   ${FASTSENSE_DIR}/src/msg/magnetic_field.cpp
+  ${FASTSENSE_DIR}/src/registration/imu_accumulator.cpp
   bridge.cpp
 )
 

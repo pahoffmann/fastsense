@@ -6,10 +6,10 @@
 #include <stdexcept>
 #include <cmath>
 
+#include "imu.h"
+#include <util/time.h>
 #include <util/params.h>
 #include <msg/imu.h>
-#include <util/time_stamp.h>
-#include "imu.h"
 
 using namespace fastsense::driver;
 using namespace fastsense::util;
@@ -114,7 +114,7 @@ void Imu::data_handler(const double* acceleration, const double* angularRate, co
     }
 
     msg::Imu msg(acceleration, angularRate, magneticField);
-    data_buffer_->push(std::make_pair(msg, fastsense::util::TimeStamp()));
+    data_buffer_->push(std::make_pair(msg, util::HighResTime::now()));
 }
 
 void Imu::attach_handler()

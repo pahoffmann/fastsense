@@ -12,6 +12,7 @@
 #include <mutex>
 #include <algorithm>
 
+#include "imu_accumulator.h"
 #include <msg/imu.h>
 #include <hw/kernels/reg_kernel.h>
 
@@ -30,13 +31,11 @@ class Registration
     using Vector6f = Eigen::Matrix<float, 6, 1>;
 
 private:
-    int max_iterations_;
+    size_t max_iterations_;
     float it_weight_gradient_;
 
     std::mutex mutex_;
-    Matrix4f imu_accumulator_; //used to store the transform since the last registration (right now calculated using the angular velocities by the IMU)
-    fastsense::util::TimeStamp imu_time_;
-    bool first_imu_msg_;
+    ImuAccumulator imu_accumulator_;
 
 
     fastsense::kernels::RegistrationKernel krnl;
@@ -54,19 +53,12 @@ public:
      * @brief Construct a new Registration object, used to register a pointcloud with the current ring buffer
      *
      */
-    Registration(fastsense::CommandQueuePtr q, unsigned int max_iterations = 50, float it_weight_gradient = 0.0) :
-        max_iterations_(max_iterations),
-        it_weight_gradient_(it_weight_gradient),
-        first_imu_msg_(true),
-        krnl{q}
-    {
-        imu_accumulator_.setIdentity();
-    }
+    Registration(const fastsense::CommandQueuePtr& q, size_t max_iterations = 50, float it_weight_gradient = 0.0);
 
     /**
      * Destructor of the registration.
      */
-    virtual ~Registration() = default;
+    ~Registration() = default;
 
     /**
      * @brief Registers the given pointcloud with the local ring buffer. Transforms the cloud

@@ -6,7 +6,7 @@
  */
 
 #include <vector> // for the vector of measurement variables
-#include <chrono> // for time
+#include <util/time.h> // for time
 #include <memory> // for singleton pointer
 #include <exception> // for custom exception
 #include <limits> // for maximum value

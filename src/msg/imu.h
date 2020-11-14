@@ -8,11 +8,11 @@
 #include <iostream>
 #include <memory>
 
+#include <util/time.h>
 #include <msg/linear_acceleration.h>
 #include <msg/angular_velocity.h>
 #include <msg/magnetic_field.h>
 
-#include <util/time_stamp.h>
 #include <util/concurrent_ring_buffer.h>
 
 namespace fastsense::msg
@@ -32,7 +32,7 @@ struct Imu
     using ptr = std::shared_ptr<Imu>;
 };
 
-using ImuStamped = std::pair<Imu, util::TimeStamp>;
+using ImuStamped = std::pair<Imu, util::HighResTimePoint>;
 using ImuStampedBuffer = util::ConcurrentRingBuffer<ImuStamped>;
 using ImuStampedBufferPtr = std::shared_ptr<ImuStampedBuffer>;
 

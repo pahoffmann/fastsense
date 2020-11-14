@@ -5,6 +5,7 @@
  * @author Marcel Flottmann
  */
 
+#include <util/time.h>
 #include <msg/point_cloud.h>
 #include <util/process_thread.h>
 #include <util/concurrent_ring_buffer.h>
