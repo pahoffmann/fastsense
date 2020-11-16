@@ -174,4 +174,7 @@ void TSDFBridge::publish()
     pub().publish(marker);
 
     ROS_INFO_STREAM("Published " << points_.size() << " tsdf values\n");
+
+    points_.clear();
+    colors_.clear();
 }
