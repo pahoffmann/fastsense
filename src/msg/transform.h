@@ -15,7 +15,7 @@ struct Transform
     Transform() = default;
     ~Transform() = default;
 
-    Eigen::Quaternionf rotation;
+    Quaternionf rotation;
     Vector3f translation;
 };
 

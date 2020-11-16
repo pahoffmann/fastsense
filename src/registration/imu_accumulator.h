@@ -20,19 +20,19 @@ public:
 
     ~ImuAccumulator() = default;
 
-    const Eigen::Matrix4f& combined_transform() const;
+    const Matrix4f& combined_transform() const;
 
     void reset();
 
     void update(const fastsense::msg::ImuStamped& imu);
 
-    void update(const fastsense::msg::Imu& imu, float acc_time);
+    void update(const fastsense::msg::Imu& imu, double acc_time);
 
 private:
-    void apply_transform(float acc_time, const Vector3f& ang_vel);
+    void apply_transform(double acc_time, const Vector3f& ang_vel);
 
     bool first_imu_msg_;
-    Eigen::Matrix4f combined_transform_;
+    Matrix4f combined_transform_;
     Matrix4f local_transform_;
     util::HighResTimePoint last_imu_timestamp_;
 };

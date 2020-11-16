@@ -38,12 +38,12 @@ void ImuAccumulator::update(const fastsense::msg::ImuStamped& imu)
     last_imu_timestamp_ = imu.second;
 }
 
-void ImuAccumulator::update(const fastsense::msg::Imu& imu, float acc_time)
+void ImuAccumulator::update(const fastsense::msg::Imu& imu, double acc_time)
 {
     apply_transform(acc_time, imu.ang);
 }
 
-void ImuAccumulator::apply_transform(float acc_time, const Vector3f& ang_vel)
+void ImuAccumulator::apply_transform(double acc_time, const Vector3f& ang_vel)
 {
     Vector3f orientation = ang_vel * acc_time; //in radiants [rad, rad, rad]
     auto rotation =   Eigen::AngleAxisf(orientation.x(), Vector3f::UnitX())
@@ -51,6 +51,6 @@ void ImuAccumulator::apply_transform(float acc_time, const Vector3f& ang_vel)
                         * Eigen::AngleAxisf(orientation.z(), Vector3f::UnitZ());
 
     local_transform_.block<3, 3>(0, 0) = rotation.toRotationMatrix();
-
+    local_transform_.data();
     combined_transform_ = local_transform_ * combined_transform_; //combine/update transforms
 }

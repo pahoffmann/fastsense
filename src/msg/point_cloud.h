@@ -27,10 +27,35 @@ namespace fastsense::msg
 class PointCloud : public ZMQConverter
 {
 public:
-    PointCloud() : points_{}, rings_{} {}
-    ~PointCloud() override = default;
     using Ptr = std::shared_ptr<PointCloud>;
 
+    PointCloud() 
+        : points_{}
+        , rings_{} 
+    {
+    }
+    
+    PointCloud(PointCloud&& pcl)
+        : points_{std::move(pcl.points_)}
+        , rings_{pcl.rings_}
+    {
+    }
+
+    PointCloud& operator=(PointCloud&& other)
+    {
+        points_ = std::move(other.points_);
+        rings_ = other.rings_;
+        return *this;
+    }
+
+    PointCloud(const PointCloud &p)
+        : points_(p.points_) 
+        , rings_(p.rings_)
+    {
+    }
+
+    
+    ~PointCloud() override = default;
     std::vector<fastsense::ScanPoint> points_;
     uint16_t rings_;
 
