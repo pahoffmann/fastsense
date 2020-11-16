@@ -131,24 +131,23 @@ void CloudCallback::callback()
         //     kernel_points_sw[i] = scan_point_buffer[i];
         // }
 
+        // auto& size = local_map.get_size();
+        // auto& pos = local_map.get_pos();
+        // auto& offset = local_map.get_offset();
+
+
         // fastsense::tsdf::krnl_tsdf_sw(kernel_points_sw.data(),
-        //                             kernel_points_sw.data(),
-        //                             scan_point_buffer.size(),
-        //                             local_map.getBuffer(),
-        //                             local_map.getBuffer(),
-        //                             local_map.get_size().x(),
-        //                             local_map.get_size().y(),
-        //                             local_map.get_size().z(),
-        //                             0,
-        //                             0,
-        //                             0,
-        //                             local_map.get_offset().x(),
-        //                             local_map.get_offset().y(),
-        //                             local_map.get_offset().z(),
-        //                             new_entries,
-        //                             new_entries,
-        //                             tau,
-        //                             ConfigManager::config().slam.max_weight());
+        //                               kernel_points_sw.data(),
+        //                               scan_point_buffer.size(),
+        //                               local_map.getBuffer().getVirtualAddress(),
+        //                               local_map.getBuffer().getVirtualAddress(),
+        //                               size.x(), size.y(), size.z(),
+        //                               pos.x(), pos.y(), pos.z(),
+        //                               offset.x(), offset.y(), offset.z(),
+        //                               new_entries.getVirtualAddress(),
+        //                               new_entries.getVirtualAddress(),
+        //                               tau,
+        //                               ConfigManager::config().slam.max_weight());
 
 #ifdef TIME_MEASUREMENT
         eval.stop("tsdf");

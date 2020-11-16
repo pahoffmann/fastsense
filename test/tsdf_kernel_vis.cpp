@@ -97,13 +97,13 @@ TEST_CASE("TSDF_Kernel_Vis", "[tsdf_kernel_vis]")
         fastsense::tsdf::krnl_tsdf_sw(kernel_points_sw.data(),
                                       kernel_points_sw.data(),
                                       num_points,
-                                      local_map.getBuffer(),
-                                      local_map.getBuffer(),
+                                      local_map.getBuffer().getVirtualAddress(),
+                                      local_map.getBuffer().getVirtualAddress(),
                                       size.x(), size.y(), size.z(),
                                       pos.x(), pos.y(), pos.z(),
                                       offset.x(), offset.y(), offset.z(),
-                                      new_entries,
-                                      new_entries,
+                                      new_entries.getVirtualAddress(),
+                                      new_entries.getVirtualAddress(),
                                       TAU,
                                       MAX_WEIGHT);
 

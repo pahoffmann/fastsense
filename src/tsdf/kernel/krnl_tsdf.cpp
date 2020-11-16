@@ -32,23 +32,16 @@ extern "C"
 {
     void read_points(PointHW* scanPoints,
                      int numPoints,
-                     int sizeX,   int sizeY,   int sizeZ,
-                     int posX,    int posY,    int posZ,
-                     int offsetX, int offsetY, int offsetZ,
+                     const LocalMapHW& map,
                      int tau,
-                     hls::stream<int>& value_fifo,
-                     hls::stream<int>& weight_fifo,
+                     hls::stream<IntTuple>& value_fifo,
                      hls::stream<PointHW>& index_fifo,
-                     hls::stream<int>& lowest_fifo,
-                     hls::stream<int>& highest_fifo
-                     )
+                     hls::stream<IntTuple>& bounds_fifo)
     {
-        fastsense::map::LocalMapHW map{sizeX,   sizeY,   sizeZ,
-                                       posX,    posY,    posZ,
-                                       offsetX, offsetY, offsetZ};
-        PointHW map_pos{posX, posY, posZ};
+        PointHW map_pos{map.posX, map.posY, map.posZ};
 
         int weight_epsilon = tau / 10;
+        int max_distance = (map.sizeX / 2 + map.sizeY / 2 + map.sizeZ / 2) * MAP_RESOLUTION;
 
     points_loop:
         for (int point_idx = 0; point_idx < numPoints; point_idx++)
@@ -61,190 +54,149 @@ extern "C"
 
             int distance = direction.norm();
             int distance_tau = distance + tau;
-            int inv_distance = MATRIX_RESOLUTION / distance;
-
-            int prev[2] = {0, 0};
-#pragma HLS ARRAY_PARTITION variable=prev complete
+            if (distance_tau > max_distance)
+            {
+                distance_tau = max_distance;
+            }
 
         tsdf_loop:
-            for (int len = MAP_RESOLUTION; len <= distance_tau; len += MAP_RESOLUTION)
+            for (int len = MAP_RESOLUTION; len <= distance_tau; len += MAP_RESOLUTION / 2)
             {
 #pragma HLS pipeline II=1
 #pragma HLS loop_tripcount min=0 max=128
 
-                PointHW proj = map_pos.to_mm() + direction * len * inv_distance / MATRIX_RESOLUTION;
+                PointHW proj = map_pos.to_mm() + direction * len / distance;
                 PointHW index = proj.to_map();
-
-                if (index.x == prev[0] && index.y == prev[1])
-                {
-                    continue;
-                }
-                prev[0] = index.x;
-                prev[1] = index.y;
 
                 if (!map.in_bounds(index.x, index.y, index.z))
                 {
                     continue;
                 }
 
-                int tsdf_value = (scan_point - index.to_mm()).norm();
-                if (tsdf_value > tau)
+                IntTuple value;
+                value.first = (scan_point - index.to_mm()).norm();
+                if (value.first > tau)
                 {
-                    tsdf_value = tau;
+                    value.first = tau;
                 }
 
                 if (len > distance)
                 {
-                    tsdf_value = -tsdf_value;
+                    value.first = -value.first;
                 }
 
-                int weight = WEIGHT_RESOLUTION;
+                value.second = WEIGHT_RESOLUTION;
 
-                if (tsdf_value < -weight_epsilon)
+                if (value.first < -weight_epsilon)
                 {
-                    weight = WEIGHT_RESOLUTION * (tau + tsdf_value) / (tau - weight_epsilon);
+                    value.second = WEIGHT_RESOLUTION * (tau + value.first) / (tau - weight_epsilon);
                 }
 
-                if (weight == 0)
+                if (value.second == 0)
                 {
                     continue;
                 }
 
                 int delta_z = dz_per_distance * len / MATRIX_RESOLUTION;
-                int lowest = (proj.z - delta_z) / MAP_RESOLUTION;
-                int highest = (proj.z + delta_z) / MAP_RESOLUTION;
-                if (lowest < posZ - sizeZ / 2)
+                IntTuple bounds;
+                bounds.first = (proj.z - delta_z) / MAP_RESOLUTION;
+                bounds.second = (proj.z + delta_z) / MAP_RESOLUTION;
+                if (bounds.first < map_pos.z - map.sizeZ / 2)
                 {
-                    lowest = posZ - sizeZ / 2;
+                    bounds.first = map_pos.z - map.sizeZ / 2;
                 }
-                if (highest < posZ + sizeZ / 2)
+                if (bounds.second > map_pos.z + map.sizeZ / 2)
                 {
-                    highest = posZ + sizeZ / 2;
+                    bounds.second = map_pos.z + map.sizeZ / 2;
                 }
 
-                value_fifo << tsdf_value;
-                weight_fifo << weight;
+                value_fifo << value;
                 index_fifo << index;
-                lowest_fifo << lowest;
-                highest_fifo << highest;
+                bounds_fifo << bounds;
             }
         }
+        value_fifo << IntTuple{0, 0};
+        index_fifo << PointHW();
+        bounds_fifo << IntTuple{0, 0};
     }
 
-    void update_tsdf(int numPoints,
-                     int sizeX,   int sizeY,   int sizeZ,
-                     int posX,    int posY,    int posZ,
-                     int offsetX, int offsetY, int offsetZ,
+    void update_tsdf(const LocalMapHW& map,
                      IntTuple* new_entries,
-                     int tau,
-                     hls::stream<int>& value_fifo,
-                     hls::stream<int>& weight_fifo,
+                     hls::stream<IntTuple>& value_fifo,
                      hls::stream<PointHW>& index_fifo,
-                     hls::stream<int>& lowest_fifo,
-                     hls::stream<int>& highest_fifo)
+                     hls::stream<IntTuple>& bounds_fifo)
     {
-        fastsense::map::LocalMapHW map{sizeX,   sizeY,   sizeZ,
-                                       posX,    posY,    posZ,
-                                       offsetX, offsetY, offsetZ};
-        PointHW map_pos{posX, posY, posZ};
-
-        int tsdf_value;
-        int weight;
-        PointHW index;
-        int lowest;
-        int highest;
+        IntTuple value;
+        PointHW index, old_index{0, 0, 0};
+        IntTuple bounds{0, 0};
+        int z = 1;
 
     update_loop:
-        for (int point_idx = 0; point_idx < numPoints; ++point_idx)
+        while (true)
         {
-#pragma HLS loop_tripcount max=NUM_POINTS/SPLIT_FACTOR
-
-        tsdf_loop:
-			for (int len = MAP_RESOLUTION; len <= MAP_RESOLUTION + 128; len += MAP_RESOLUTION)
-			{
+#pragma HLS loop_tripcount max=NUM_POINTS/SPLIT_FACTOR*128*2
 #pragma HLS pipeline II=1
-#pragma HLS loop_tripcount min=0 max=128
+#pragma HLS dependence variable=new_entries inter false
 
-				value_fifo >> tsdf_value;
-				weight_fifo >> weight;
-				index_fifo >> index;
-				lowest_fifo >> lowest;
-				highest_fifo >> highest;
+            if (z > bounds.second)
+            {
+                old_index = index;
 
-			interpolate_loop:
-				for (int z = lowest; z <= highest; ++z)
-				{
-	#pragma HLS loop_tripcount min=1 max=2
-	#pragma HLS pipeline II=1
-	#pragma HLS dependence variable=new_entries inter false
+                value_fifo >> value;
+                index_fifo >> index;
+                bounds_fifo >> bounds;
 
-					if (!map.in_bounds(index.x, index.y, z))
-					{
-						continue;
-					}
+                if (value.second == 0)
+                {
+                    break;
+                }
+                z = bounds.first;
+            }
 
-					IntTuple entry = map.get(new_entries, index.x, index.y, z);
+            if (index.x != old_index.x || index.y != old_index.y)
+            {
+                int map_index = map.getIndex(index.x, index.y, z);
+                IntTuple entry = new_entries[map_index];
 
-					IntTuple new_entry;
-
-					if (entry.second == 0 || hls_abs(tsdf_value) < hls_abs(entry.first))
-					{
-						new_entry.first = tsdf_value;
-						new_entry.second = weight;
-					}
-					else
-					{
-						new_entry.first = entry.first;
-						new_entry.second = entry.second;
-					}
-
-					map.set(new_entries, index.x, index.y, z, new_entry);
-				}
-			}
+                if (entry.second == 0 || hls_abs(value.first) < hls_abs(entry.first))
+                {
+                    new_entries[map_index] = value;
+                }
+                z++;
+            }
+            else
+            {
+                z = bounds.second + 1;
+            }
         }
     }
 
     void tsdf_dataflow(PointHW* scanPoints,
                        int numPoints,
-                       int sizeX,   int sizeY,   int sizeZ,
-                       int posX,    int posY,    int posZ,
-                       int offsetX, int offsetY, int offsetZ,
+                       const LocalMapHW& map,
                        IntTuple* new_entries,
                        int tau)
     {
 #pragma HLS dataflow
-        hls::stream<int> value_fifo;
-        hls::stream<int> weight_fifo;
+        hls::stream<IntTuple> value_fifo;
         hls::stream<PointHW> index_fifo;
-        hls::stream<int> lowest_fifo;
-        hls::stream<int> highest_fifo;
+        hls::stream<IntTuple> bounds_fifo;
 #pragma HLS stream depth=16 variable=value_fifo
-#pragma HLS stream depth=16 variable=weight_fifo
 #pragma HLS stream depth=16 variable=index_fifo
-#pragma HLS stream depth=16 variable=lowest_fifo
-#pragma HLS stream depth=16 variable=highest_fifo
+#pragma HLS stream depth=16 variable=bounds_fifo
 
         read_points(scanPoints, numPoints,
-                    sizeX,   sizeY,   sizeZ,
-                    posX,    posY,    posZ,
-                    offsetX, offsetY, offsetZ,
+                    map,
                     tau,
                     value_fifo,
-                    weight_fifo,
                     index_fifo,
-                    lowest_fifo,
-                    highest_fifo);
+                    bounds_fifo);
 
-        update_tsdf(numPoints,
-                    sizeX,   sizeY,   sizeZ,
-                    posX,    posY,    posZ,
-                    offsetX, offsetY, offsetZ,
-                    new_entries, tau,
+        update_tsdf(map,
+                    new_entries,
                     value_fifo,
-                    weight_fifo,
                     index_fifo,
-                    lowest_fifo,
-                    highest_fifo);
+                    bounds_fifo);
     }
 
     void sync_loop(
@@ -282,41 +234,31 @@ extern "C"
         }
     }
 
-    void tsdf_dataflower(
-        PointHW* scanPoints0,
-        PointHW* scanPoints1,
-        int step,
-        int last_step,
-        IntTuple* new_entries0,
-        IntTuple* new_entries1,
-        int sizeX,   int sizeY,   int sizeZ,
-        int posX,    int posY,    int posZ,
-        int offsetX, int offsetY, int offsetZ,
-        int tau)
+    void tsdf_dataflower(PointHW* scanPoints0,
+                         PointHW* scanPoints1,
+                         int step,
+                         int last_step,
+                         IntTuple* new_entries0,
+                         IntTuple* new_entries1,
+                         const LocalMapHW& map,
+                         int tau)
     {
 #pragma HLS dataflow
 
         tsdf_dataflow(scanPoints0 + 0 * step, step,
-                      sizeX,   sizeY,   sizeZ,
-                      posX,    posY,    posZ,
-                      offsetX, offsetY, offsetZ,
-                      new_entries0, tau);
+                      map, new_entries0, tau);
 
         tsdf_dataflow(scanPoints1 + 1 * step, last_step,
-                      sizeX,   sizeY,   sizeZ,
-                      posX,    posY,    posZ,
-                      offsetX, offsetY, offsetZ,
-                      new_entries1, tau);
+                      map, new_entries1, tau);
     }
 
-    void sync_looper(
-        IntTuple* mapData0,
-        IntTuple* mapData1,
-        int step,
-        int numPoints,
-        IntTuple* new_entries0,
-        IntTuple* new_entries1,
-        int max_weight)
+    void sync_looper(IntTuple* mapData0,
+                     IntTuple* mapData1,
+                     int step,
+                     int numPoints,
+                     IntTuple* new_entries0,
+                     IntTuple* new_entries1,
+                     int max_weight)
     {
 #pragma HLS dataflow
         sync_loop(mapData0, step * 0, step * (0 + 1), new_entries0, max_weight);
@@ -365,6 +307,10 @@ extern "C"
 #pragma HLS INTERFACE m_axi port=new_entries0 offset=slave bundle=entry0mem latency=22 depth=18491
 #pragma HLS INTERFACE m_axi port=new_entries1 offset=slave bundle=entry1mem latency=22 depth=18491
 
+        LocalMapHW map{sizeX,   sizeY,   sizeZ,
+                       posX,    posY,    posZ,
+                       offsetX, offsetY, offsetZ};
+
         int step = numPoints / SPLIT_FACTOR + 1;
         int last_step = numPoints - (SPLIT_FACTOR - 1) * step;
         tsdf_dataflower(scanPoints0,
@@ -373,9 +319,7 @@ extern "C"
                         last_step,
                         new_entries0,
                         new_entries1,
-                        sizeX,   sizeY,   sizeZ,
-                        posX,    posY,    posZ,
-                        offsetX, offsetY, offsetZ,
+                        map,
                         tau);
 
 
