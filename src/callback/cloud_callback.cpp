@@ -12,9 +12,11 @@
 #include <eigen3/Eigen/Geometry>
 #include <tsdf/update_tsdf_hw.h>
 #include <tsdf/krnl_tsdf_sw.h>
+#include <util/logging/logger.h>
 
 using namespace fastsense::callback;
 using namespace fastsense::util;
+using fastsense::util::logging::Logger;
 using fastsense::buffer::InputBuffer;
 
 CloudCallback::CloudCallback(Registration& registration, const std::shared_ptr<PointCloudBuffer>& cloud_buffer, LocalMap& local_map, const std::shared_ptr<GlobalMap>& global_map, Matrix4f& pose,
@@ -86,18 +88,17 @@ void CloudCallback::callback()
 
             Matrix4f transform = registration.register_cloud(local_map, scan_point_buffer);
 
-            std::cout << transform << std::endl;
-
 #ifdef TIME_MEASUREMENT
             eval.stop("reg");
             eval.start("shift");
 #endif
 
             pose = transform * pose;
+            Logger::info("Pose:\n", pose);
+
             int x = (int)std::floor(pose(0, 3) / MAP_RESOLUTION);
             int y = (int)std::floor(pose(1, 3) / MAP_RESOLUTION);
             int z = (int)std::floor(pose(2, 3) / MAP_RESOLUTION);
-
             local_map.shift(x, y, z);
 
 #ifdef TIME_MEASUREMENT
