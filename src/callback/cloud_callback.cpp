@@ -67,10 +67,10 @@ void CloudCallback::callback()
         point_cloud2.first = std::make_shared<msg::PointCloud>(*point_cloud.first);
         point_cloud2.second = point_cloud.second;
 
-        preprocessor.median_filter(point_cloud, 5);
-        preprocessor.reduction_filter(point_cloud);
-        InputBuffer<PointHW> scan_point_buffer{q, point_cloud.first->points_.size()};
-        preprocessor.preprocess_scan(point_cloud, scan_point_buffer, pose);
+        preprocessor.median_filter(point_cloud2, 5);
+        preprocessor.reduction_filter(point_cloud2);
+        InputBuffer<PointHW> scan_point_buffer{q, point_cloud2.first->points_.size()};
+        preprocessor.preprocess_scan(point_cloud2, scan_point_buffer, pose);
 
 #ifdef TIME_MEASUREMENT
         eval.stop("init");
