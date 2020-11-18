@@ -244,8 +244,9 @@ extern "C"
             }
         }
 
+        int i;
     registration_loop:
-        for (int i = 0; i < max_iterations; i++)
+        for (i = 0; i < max_iterations; i++)
         {
 #pragma HLS loop_tripcount min=200 max=200
 #pragma HLS pipeline off
@@ -319,9 +320,6 @@ extern "C"
             constexpr float epsilon = 0.0001; // TODO: make parameter?
             if (d1 >= -epsilon && d1 <= epsilon && d2 >= -epsilon && d2 <= epsilon)
             {
-#ifndef __SYNTHESIS__
-                std::cout << std::endl << "Stopped after " << i << " / " << max_iterations << " Iterations" << std::endl;
-#endif
                 break;
             }
             for (int e = 1; e < 4; e++)
@@ -345,5 +343,6 @@ extern "C"
                 out_transform[row * 4 + col] = total_transform[row][col];
             }
         }
+        out_transform[16] = i;
     }
 }

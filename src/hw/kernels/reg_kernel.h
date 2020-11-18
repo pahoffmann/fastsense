@@ -8,6 +8,7 @@
 #include <hw/kernels/base_kernel.h>
 #include <map/local_map.h>
 #include <util/point_hw.h>
+#include <util/logging/logger.h>
 
 namespace fastsense::kernels
 {
@@ -35,7 +36,8 @@ public:
      */
     void synchronized_run(map::LocalMap& map, buffer::InputBuffer<PointHW>& point_data, int max_iterations, float it_weight_gradient, Eigen::Matrix4f& transform)
     {
-        buffer::OutputBuffer<float> out_transform(cmd_q_, 16); //matrix buffer for g matrix TODO: determine if this needs to be in registration.cpp
+        // 4x4 Matrix and Number of iterations = 17
+        buffer::OutputBuffer<float> out_transform(cmd_q_, 17);
 
         buffer::InputBuffer<float> in_transform(cmd_q_, 16);
 
@@ -60,7 +62,12 @@ public:
                 transform(row, col) = out_transform[row * 4 + col];
             }
         }
-        // std::cout << "Transform matrix sw kernel:\n" << transform << std::endl;
+
+        int i = out_transform[16];
+        if (i + 1 < max_iterations)
+        {
+            fastsense::util::logging::Logger::info("Stopped after ", i + 1, " / ", max_iterations, " Iterations");
+        }
     }
 
     /**
