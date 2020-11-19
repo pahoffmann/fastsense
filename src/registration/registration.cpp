@@ -215,7 +215,7 @@ Matrix4f Registration::register_cloud(fastsense::map::LocalMap& localmap, fastse
 /**
  * @brief Gets angluar velocity data from the IMU and stores them in the global_transform object
  *
- * @param imu ROS Message containing the necessary data
+ * @param imu Message containing the necessary data
  * TODO: auslagern in andere Klasse
  * TODO: determine weather the queue of the pcl callback might be a probl.
  */

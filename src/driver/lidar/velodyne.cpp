@@ -160,8 +160,11 @@ void VelodyneDriver::start()
 
 void VelodyneDriver::stop()
 {
-    running = false;
-    worker.join();
+    if (running)
+    {
+        worker.join();
+        running = false;
+    }
 }
 
 fastsense::msg::PointCloudStamped VelodyneDriver::getScan()

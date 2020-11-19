@@ -4,6 +4,7 @@
 #include <sensor_msgs/PointCloud2.h>
 #include <sensor_msgs/point_cloud2_iterator.h>
 
+#include <iomanip>
 #include <util/time.h>
 #include <util/concurrent_ring_buffer.h>
 #include <msg/point_cloud.h>
@@ -25,7 +26,8 @@ public:
     {
         spinner_.start();
         imu_sub_ = nh_.subscribe<sensor_msgs::Imu>("/imu/data_raw", 1000, &Bridge::imu_callback, this);
-        pcl_sub_ = nh_.subscribe<sensor_msgs::PointCloud2>("/pointcloud2", 1000, &Bridge::pcl_callback, this);
+        pcl_sub_ = nh_.subscribe<sensor_msgs::PointCloud2>("/velodyne_points", 1000, &Bridge::pcl_callback, this);
+        ROS_INFO("to_trenz subscriber initiated");
     }
 
     ~Bridge()
@@ -46,7 +48,7 @@ public:
     void imu_callback(const sensor_msgs::ImuConstPtr& msg)
     {
         imu_receiver_buffer_.push(msg);
-        ROS_INFO("Counter [imu]");
+        // ROS_INFO("[imu] received");
     }
 
     void pcl_callback(const sensor_msgs::PointCloud2ConstPtr &pcl)
@@ -57,14 +59,11 @@ public:
 
         sensor_msgs::ImuConstPtr imu_msg;
 
-        size_t n_imu_msg = 0;
         while (imu_receiver_buffer_.pop_nb(&imu_msg)) {
             if (imu_older(pcl_stamp, imu_msg->header.stamp))
             {
                 break;
             }
-
-            n_imu_msg += 1;
 
             if (first_msg)
             {
@@ -104,8 +103,7 @@ public:
         }
 
         fs::msg::RegistrationInput trenz_msg{imu_accumulator_.combined_transform(), std::move(trenz_pcl)};
-        ROS_INFO_STREAM("Counter [pcl]: combined transform \n" << imu_accumulator_.combined_transform()); //:", counter_);
-        ROS_INFO("%ld", n_imu_msg);
+        ROS_INFO_STREAM("[pcl] rotation: " << imu_accumulator_);
         imu_accumulator_.reset();
     }
 

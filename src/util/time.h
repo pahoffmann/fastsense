@@ -10,7 +10,7 @@ using HighResTimePoint = HighResTime::time_point;
 
 namespace time
 {
-using secs_float = std::chrono::duration<float>;
+using secs_double = std::chrono::duration<double>;
 }
 
 } // namespace time

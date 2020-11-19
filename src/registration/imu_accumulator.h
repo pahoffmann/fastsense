@@ -22,6 +22,8 @@ public:
 
     const Matrix4f& combined_transform() const;
 
+    fastsense::Vector3f rot_in_euler() const;
+
     void reset();
 
     void update(const fastsense::msg::ImuStamped& imu);
@@ -38,3 +40,5 @@ private:
 };
 
 } // namespace fastsense::registration
+
+std::ostream& operator<<(std::ostream& os, const fastsense::registration::ImuAccumulator& acc);

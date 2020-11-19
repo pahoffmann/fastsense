@@ -4,9 +4,11 @@
  */
 
 #include "imu_accumulator.h"
+#include <iomanip>
+#include <iostream>
 
 using namespace fastsense::registration;
-
+// TODO first imu msg immer ture, auch wenn von ROS 
 ImuAccumulator::ImuAccumulator()
     :   first_imu_msg_{true},
         combined_transform_{Matrix4f::Identity()},
@@ -17,6 +19,11 @@ ImuAccumulator::ImuAccumulator()
 const Eigen::Matrix4f& ImuAccumulator::combined_transform() const
 {
     return combined_transform_;
+}
+
+fastsense::Vector3f ImuAccumulator::rot_in_euler() const
+{
+    return combined_transform_.block<3, 3>(0, 0).eulerAngles(0, 1, 2) ;
 }
 
 void ImuAccumulator::reset()
@@ -33,7 +40,7 @@ void ImuAccumulator::update(const fastsense::msg::ImuStamped& imu)
         return;
     }
 
-    float acc_time = std::chrono::duration_cast<util::time::secs_float>(imu.second - last_imu_timestamp_).count();
+    double acc_time = std::chrono::duration_cast<util::time::secs_double>(imu.second - last_imu_timestamp_).count();
     apply_transform(acc_time, imu.first.ang);
     last_imu_timestamp_ = imu.second;
 }
@@ -51,6 +58,15 @@ void ImuAccumulator::apply_transform(double acc_time, const Vector3f& ang_vel)
                         * Eigen::AngleAxisf(orientation.z(), Vector3f::UnitZ());
 
     local_transform_.block<3, 3>(0, 0) = rotation.toRotationMatrix();
-    local_transform_.data();
     combined_transform_ = local_transform_ * combined_transform_; //combine/update transforms
+}
+
+std::ostream& operator<<(std::ostream& os, const ImuAccumulator& acc)
+{
+    const auto& rotation = acc.rot_in_euler();
+    os.precision(4);
+    os.width(5);
+    os << std::fixed;
+    os << "\n" << rotation.x() << "\n" << rotation.y() << "\n" << rotation.z() << "\n";
+    return os;
 }
