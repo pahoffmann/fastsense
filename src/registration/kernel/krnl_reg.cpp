@@ -193,7 +193,7 @@ extern "C"
                   int posX,    int posY,    int posZ,
                   int offsetX, int offsetY, int offsetZ,
                   int max_iterations,
-                  int it_weight_gradient,
+                  float it_weight_gradient,
                   float* in_transform,
                   float* out_transform
                  )
