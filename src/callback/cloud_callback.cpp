@@ -42,9 +42,9 @@ void CloudCallback::thread_run()
     while (running)
     {
         if (!cloud_buffer->pop_nb(&point_cloud, DEFAULT_POP_TIMEOUT))
-{
+        {
             continue;
-}
+        }
 
 #ifdef TIME_MEASUREMENT
         auto& eval = RuntimeEvaluator::get_instance();
@@ -64,6 +64,7 @@ void CloudCallback::thread_run()
         eval.stop("init");
 #endif
 
+        bool tsdf_dirty = true;
         if (first_iteration)
         {
             first_iteration = false;
@@ -81,13 +82,24 @@ void CloudCallback::thread_run()
             eval.start("shift");
 #endif
 
-            pose = transform * pose;
-            Logger::info("Pose:\n", pose);
+            Eigen::Quaternionf rotation(transform.block<3, 3>(0, 0));
+            Vector3f pos = transform.block<3, 1>(0, 3);
+            float angle = rotation.angularDistance(Eigen::Quaternionf::Identity());
 
-            int x = (int)std::floor(pose(0, 3) / MAP_RESOLUTION);
-            int y = (int)std::floor(pose(1, 3) / MAP_RESOLUTION);
-            int z = (int)std::floor(pose(2, 3) / MAP_RESOLUTION);
-            local_map.shift(x, y, z);
+            if (pos.norm() < MAP_RESOLUTION / 2 && angle < M_PI / 180)
+            {
+                tsdf_dirty = false;
+            }
+            else
+            {
+                pose = transform * pose;
+                Logger::info("Pose:\n", std::fixed, std::setprecision(4), pose);
+
+                int x = (int)std::floor(pose(0, 3) / MAP_RESOLUTION);
+                int y = (int)std::floor(pose(1, 3) / MAP_RESOLUTION);
+                int z = (int)std::floor(pose(2, 3) / MAP_RESOLUTION);
+                local_map.shift(x, y, z);
+            }
 
 #ifdef TIME_MEASUREMENT
             eval.stop("shift");
@@ -100,8 +112,11 @@ void CloudCallback::thread_run()
         eval.start("tsdf");
 #endif
 
-        tsdf_krnl.run(local_map, scan_point_buffer, tau, ConfigManager::config().slam.max_weight());
-        tsdf_krnl.waitComplete();
+        if (tsdf_dirty)
+        {
+            tsdf_krnl.run(local_map, scan_point_buffer, tau, ConfigManager::config().slam.max_weight());
+            tsdf_krnl.waitComplete();
+        }
 
         // fastsense::tsdf::update_tsdf_hw(scan_point_buffer, local_map, tau, ConfigManager::config().slam.max_weight());
 
