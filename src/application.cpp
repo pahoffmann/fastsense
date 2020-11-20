@@ -115,5 +115,10 @@ int Application::run()
     }
 
     Logger::info("Stopping Application...");
+
+    // ensure that last Scan has finished processing
+    cloud_callback.stop();
+    // save Map to Disk
+    local_map.write_back();
     return 0;
 }

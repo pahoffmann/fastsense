@@ -36,15 +36,7 @@ public:
     CloudCallback(Registration& registration, const std::shared_ptr<PointCloudBuffer>& cloud_buffer, LocalMap& local_map, const std::shared_ptr<GlobalMap>& global_map, Matrix4f& pose,
                   const std::shared_ptr<TSDFBuffer>& tsdf_buffer, const std::shared_ptr<TransformBuffer>& transform_buffer, fastsense::CommandQueuePtr& q);
 
-    void start() override;
-
-    void callback();
-
-    void preprocess_scan(const fastsense::msg::PointCloudStamped& cloud, InputBuffer<PointHW>& scan_points);
-
-    size_t determineBufferSize(const fastsense::msg::PointCloudStamped& cloud);
-
-    void stop() override;
+    void thread_run() override;
 
 private:
     Registration& registration;

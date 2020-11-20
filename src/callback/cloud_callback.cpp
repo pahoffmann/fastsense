@@ -36,33 +36,21 @@ CloudCallback::CloudCallback(Registration& registration, const std::shared_ptr<P
 
 }
 
-void CloudCallback::start()
+void CloudCallback::thread_run()
 {
-    if (!running)
-    {
-        running = true;
-        worker = std::thread(&CloudCallback::callback, this);
-    }
-}
-
-void CloudCallback::stop()
-{
-    running = false;
-}
-
-
-void CloudCallback::callback()
-{
+    fastsense::msg::PointCloudStamped point_cloud;
     while (running)
     {
+        if (!cloud_buffer->pop_nb(&point_cloud, DEFAULT_POP_TIMEOUT))
+{
+            continue;
+}
+
 #ifdef TIME_MEASUREMENT
         auto& eval = RuntimeEvaluator::get_instance();
         eval.start("total");
         eval.start("init");
 #endif
-
-        fastsense::msg::PointCloudStamped point_cloud;
-        cloud_buffer->pop(&point_cloud);
         fastsense::msg::PointCloudStamped point_cloud2;
         point_cloud2.first = std::make_shared<msg::PointCloud>(*point_cloud.first);
         point_cloud2.second = point_cloud.second;
@@ -179,4 +167,5 @@ void CloudCallback::callback()
         std::cout << eval << std::endl;
 #endif
     }
+    Logger::info("Stopped Callback");
 }

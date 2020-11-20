@@ -29,24 +29,6 @@ ImuBridge::ImuBridge(ros::NodeHandle& n, const std::string& board_addr)
     initCovariance();
 }
 
-void ImuBridge::start()
-{
-    if (running == false)
-    {
-        running = true;
-        worker = std::thread(&ImuBridge::run, this);
-    }
-}
-
-void ImuBridge::stop()
-{
-    if (running)
-    {
-        running = false;
-        worker.join();
-    }
-}
-
 void ImuBridge::run()
 {
     while (running && ros::ok())

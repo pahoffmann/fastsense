@@ -23,10 +23,13 @@ int main(int argc, char** argv)
     fastsense::driver::VelodyneDriver v(2368, buffer);
     v.start();
 
+    fastsense::msg::PointCloudStamped scan_stamped;
     while (ros::ok())
     {
-        fastsense::msg::PointCloudStamped scan_stamped;
-        buffer->pop(&scan_stamped);
+        if (!buffer->pop_nb(&scan_stamped, DEFAULT_POP_TIMEOUT))
+        {
+            continue;
+        }
 
         auto& [scan, time] = scan_stamped;
 

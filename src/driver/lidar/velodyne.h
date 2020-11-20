@@ -85,12 +85,6 @@ public:
     void start() override;
 
     /**
-     * @brief Stop the receiver thread.
-     *
-     */
-    void stop() override;
-
-    /**
      * @brief Get the next scan.
      *
      * @return PointCloudStamped The next scan with timestamp
@@ -102,7 +96,7 @@ protected:
      * @brief Receives a packet. This is the main receiver thread function.
      *
      */
-    void receive_packet();
+    void thread_run() override;
 
     /**
      * @brief Decode the packet and make point clouds from the data.

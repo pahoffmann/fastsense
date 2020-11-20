@@ -28,10 +28,13 @@ int main(int argc, char** argv)
     imu.start();
     auto timestamp = fs::util::TimeStamp();
 
+    fs::msg::ImuStamped data_stamped;
     while (ros::ok())
     {
-        fs::msg::ImuStamped data_stamped;
-        imu_buffer->pop(&data_stamped);
+        if (!imu_buffer->pop_nb(&data_stamped, DEFAULT_POP_TIMEOUT))
+        {
+            continue;
+        }
         std::cout << fs::util::TimeStamp() - timestamp << "\n";
         timestamp = fs::util::TimeStamp();
 

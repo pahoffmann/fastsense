@@ -35,16 +35,6 @@ public:
      * @brief Destroy the TSDFBridge object
      */
     ~TSDFBridge() = default;
-
-    /**
-     * @brief Starts the tsdf bridge in its own thread
-     */
-    void start() override;
-    
-    /**
-     * @brief Stops the velodyne bridge thread
-     */
-    void stop() override;
 private:
 
     /**
@@ -62,6 +52,12 @@ private:
      * and publishes in an endless loop (running in its own thread)
      */
     void run() override;
+
+    void thread_run() override
+    {
+        run();
+    }
+
     bool in_bounds(int x, int y, int z);
     std::pair<int, int> get_tsdf_value(int x, int y, int z);
 

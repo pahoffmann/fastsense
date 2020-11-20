@@ -155,14 +155,8 @@ void VelodyneDriver::start()
         az_last_ = 0.f;
         current_scan_ = std::make_shared<PointCloud>();
         scan_buffer_->clear();
-        worker = std::thread(&VelodyneDriver::receive_packet, this);
+        worker = std::thread(&VelodyneDriver::thread_run, this);
     }
-}
-
-void VelodyneDriver::stop()
-{
-    running = false;
-    worker.join();
 }
 
 fastsense::msg::PointCloudStamped VelodyneDriver::getScan()
@@ -172,7 +166,7 @@ fastsense::msg::PointCloudStamped VelodyneDriver::getScan()
     return pcs;
 }
 
-void VelodyneDriver::receive_packet()
+void VelodyneDriver::thread_run()
 {
     constexpr int POLL_TIMEOUT = 1000;
     struct pollfd fds[1];

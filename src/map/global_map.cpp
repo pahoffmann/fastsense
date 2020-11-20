@@ -7,8 +7,10 @@
 #include <sstream>
 
 #include "global_map.h"
+#include <util/logging/logger.h>
 
 using namespace fastsense::map;
+using fastsense::util::logging::Logger;
 
 GlobalMap::GlobalMap(std::string name, int initial_tsdf_value, int initial_weight)
     : file_{name, HighFive::File::OpenOrCreate | HighFive::File::Truncate}, // Truncate clears already existing file
@@ -152,6 +154,8 @@ void GlobalMap::save_pose(float t_x, float t_y, float t_z, float quat_x, float q
 
 void GlobalMap::write_back()
 {
+    Logger::info("GlobalMap: Writing Chunks");
+
     HighFive::Group g = file_.getGroup("/map");
     for (auto& chunk : active_chunks_)
     {
@@ -168,4 +172,6 @@ void GlobalMap::write_back()
         }
     }
     file_.flush();
+
+    Logger::info("GlobalMap: Finished writing Chunks");
 }

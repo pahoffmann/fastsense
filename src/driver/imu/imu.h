@@ -59,6 +59,8 @@ public:
      */
     void start() override;
 
+    void thread_run() override {}
+
     /**
      * @brief Stops Imu
      * **NOTE** in contrast to velodyne driver, libphidget ALREADY listens to data coming from driver

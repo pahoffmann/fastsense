@@ -36,16 +36,6 @@ public:
      * @brief Destroy the Imu Bridge object
      */
     ~ImuBridge() = default;
-
-    /**
-     * @brief Starts the imu bridge in its own thread
-     */
-    void start() override;
-    
-    /**
-     * @brief Stops the imu bridge thread
-     */
-    void stop() override;
 private:
     /**
      * @brief Publishes an sensor_msgs::Imu (convert() FIRST for newest data)
@@ -62,6 +52,11 @@ private:
      * and publishes in an endless loop (running in its own thread)
      */
     void run() override;
+
+    void thread_run() override
+    {
+        run();
+    }
 
     /**
      * @brief Initialize covariance matrices (in accordance with imu driver)

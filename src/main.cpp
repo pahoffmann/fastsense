@@ -55,7 +55,6 @@ int main()
     catch (const std::exception& e)
     {
         Logger::fatal("Run Application failed: ", e.what());
-        return -1;
     }
 
     FPGAManager::release();

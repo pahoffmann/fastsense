@@ -64,6 +64,11 @@ private:
      */
     void run() override;
 
+    void thread_run() override
+    {
+        run();
+    }
+
     void broadcast();
 
     tf2_ros::TransformBroadcaster broadcaster;

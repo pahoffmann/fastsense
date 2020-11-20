@@ -3,6 +3,7 @@
 /**
  * @file process_thread.h
  * @author Julian Gaal
+ * @author Malte Hillmann
  */
 
 #include <thread>
@@ -17,17 +18,34 @@ public:
 
     virtual ~ProcessThread()
     {
+        stop();
+    }
+
+    virtual void start()
+    {
+        if (!running)
+        {
+            running = true;
+            worker = std::thread([&]()
+            {
+                this->thread_run();
+            });
+        }
+    }
+
+    virtual void stop()
+    {
         if (running && worker.joinable())
         {
+            running = false;
             worker.join();
         }
     }
 
-    virtual void start() = 0;
-
-    virtual void stop() = 0;
-
 protected:
+
+    virtual void thread_run() = 0;
+
     /// Worker thread
     std::thread worker;
     /// Flag if the thread is running
