@@ -19,21 +19,61 @@ using namespace fastsense::util;
 using fastsense::util::logging::Logger;
 using fastsense::buffer::InputBuffer;
 
-CloudCallback::CloudCallback(Registration& registration, const std::shared_ptr<PointCloudBuffer>& cloud_buffer, LocalMap& local_map, const std::shared_ptr<GlobalMap>& global_map, Matrix4f& pose,
-                             const std::shared_ptr<TSDFBuffer>& tsdf_buffer, const std::shared_ptr<TransformBuffer>& transform_buffer, fastsense::CommandQueuePtr& q)
+CloudCallback::CloudCallback(Registration& registration,
+                             const std::shared_ptr<PointCloudBuffer>& cloud_buffer,
+                             const std::shared_ptr<LocalMap>& local_map,
+                             const std::shared_ptr<GlobalMap>& global_map,
+                             Matrix4f& pose,
+                             const VisPublisher::BufferPtr& vis_buffer,
+                             const std::shared_ptr<TransformBuffer>& transform_buffer,
+                             fastsense::CommandQueuePtr& q)
     : ProcessThread(),
       registration{registration},
       cloud_buffer{cloud_buffer},
       local_map{local_map},
       global_map{global_map},
       pose{pose},
-      tsdf_buffer{tsdf_buffer},
       transform_buffer{transform_buffer},
       first_iteration{true},
       q{q},
-      tsdf_krnl(q, local_map.getBuffer().size())
+      tsdf_krnl(q, local_map->getBuffer().size()),
+      vis_buffer{vis_buffer}
 {
 
+}
+
+Eigen::Vector3f Matrix4ToEuler(const Matrix4f& inputMat)
+{
+    Eigen::Matrix4d mat = inputMat.transpose().cast<double>();
+    Eigen::Vector3d rPosTheta;
+
+    double _trX, _trY;
+
+    // Calculate Y-axis angle
+    rPosTheta[1] = asin(std::max(-1.0, std::min(1.0, mat(2, 0)))); // asin returns nan for any number outside [-1, 1]
+    if (mat(0, 0) <= 0.0)
+    {
+        rPosTheta[1] = M_PI - rPosTheta[1];
+    }
+
+    double C = cos(rPosTheta[1]);
+    if (fabs( C ) > 0.005)                    // Gimbal lock?
+    {
+        _trX      =  mat(2, 2) / C;             // No, so get X-axis angle
+        _trY      =  -mat(2, 1) / C;
+        rPosTheta[0]  = atan2( _trY, _trX );
+        _trX      =  mat(0, 0) / C;              // Get Z-axis angle
+        _trY      = -mat(1, 0) / C;
+        rPosTheta[2]  = atan2( _trY, _trX );
+    }
+    else                                        // Gimbal lock has occurred
+    {
+        rPosTheta[0] = 0.0;                       // Set X-axis angle to zero
+        _trX      =  mat(1, 1);  //1                // And calculate Z-axis angle
+        _trY      =  mat(0, 1);  //2
+        rPosTheta[2]  = atan2( _trY, _trX );
+    }
+    return rPosTheta.cast<float>();
 }
 
 void CloudCallback::thread_run()
@@ -75,7 +115,7 @@ void CloudCallback::thread_run()
             eval.start("reg");
 #endif
 
-            Matrix4f transform = registration.register_cloud(local_map, scan_point_buffer);
+            Matrix4f transform = registration.register_cloud(*local_map, scan_point_buffer);
 
 #ifdef TIME_MEASUREMENT
             eval.stop("reg");
@@ -98,7 +138,7 @@ void CloudCallback::thread_run()
                 int x = (int)std::floor(pose(0, 3) / MAP_RESOLUTION);
                 int y = (int)std::floor(pose(1, 3) / MAP_RESOLUTION);
                 int z = (int)std::floor(pose(2, 3) / MAP_RESOLUTION);
-                local_map.shift(x, y, z);
+                local_map->shift(x, y, z);
             }
 
 #ifdef TIME_MEASUREMENT
@@ -114,15 +154,15 @@ void CloudCallback::thread_run()
 
         if (tsdf_dirty)
         {
-            tsdf_krnl.run(local_map, scan_point_buffer, tau, ConfigManager::config().slam.max_weight());
+            tsdf_krnl.run(*local_map, scan_point_buffer, tau, ConfigManager::config().slam.max_weight());
             tsdf_krnl.waitComplete();
         }
 
         // fastsense::tsdf::update_tsdf_hw(scan_point_buffer, local_map, tau, ConfigManager::config().slam.max_weight());
 
-        // fastsense::buffer::InputOutputBuffer<std::pair<int, int>> new_entries(q, local_map.get_size().x() * local_map.get_size().y() * local_map.get_size().z());
+        // fastsense::buffer::InputOutputBuffer<std::pair<int, int>> new_entries(q, local_map->get_size().x() * local_map->get_size().y() * local_map->get_size().z());
 
-        // for(int i = 0; i < local_map.get_size().x() * local_map.get_size().y() * local_map.get_size().z(); ++i)
+        // for(int i = 0; i < local_map->get_size().x() * local_map->get_size().y() * local_map->get_size().z(); ++i)
         // {
         //     new_entries[i].first = 0;
         //     new_entries[i].second = 0;
@@ -135,16 +175,16 @@ void CloudCallback::thread_run()
         //     kernel_points_sw[i] = scan_point_buffer[i];
         // }
 
-        // auto& size = local_map.get_size();
-        // auto& pos = local_map.get_pos();
-        // auto& offset = local_map.get_offset();
+        // auto& size = local_map->get_size();
+        // auto& pos = local_map->get_pos();
+        // auto& offset = local_map->get_offset();
 
 
         // fastsense::tsdf::krnl_tsdf_sw(kernel_points_sw.data(),
         //                               kernel_points_sw.data(),
         //                               scan_point_buffer.size(),
-        //                               local_map.getBuffer().getVirtualAddress(),
-        //                               local_map.getBuffer().getVirtualAddress(),
+        //                               local_map->getBuffer().getVirtualAddress(),
+        //                               local_map->getBuffer().getVirtualAddress(),
         //                               size.x(), size.y(), size.z(),
         //                               pos.x(), pos.y(), pos.z(),
         //                               offset.x(), offset.y(), offset.z(),
@@ -165,16 +205,9 @@ void CloudCallback::thread_run()
         msg::Transform transform;
         transform.translation = pose.block<3, 1>(0, 3);
         transform.rotation = quat;
-        transform_buffer->push(transform);
+        transform_buffer->push_nb(transform, true);
 
-        msg::TSDFBridgeMessage tsdf_msg;
-        tsdf_msg.tau_ = tau;
-        tsdf_msg.size_ = local_map.get_size();
-        tsdf_msg.pos_ = local_map.get_pos();
-        tsdf_msg.offset_ = local_map.get_offset();
-        tsdf_msg.tsdf_data_.reserve(local_map.getBuffer().size());
-        std::copy(local_map.getBuffer().cbegin(), local_map.getBuffer().cend(), std::back_inserter(tsdf_msg.tsdf_data_));
-        tsdf_buffer->push_nb(tsdf_msg, true);
+        vis_buffer->push_nb(pose, true);
 
 #ifdef TIME_MEASUREMENT
         eval.stop("vis");
@@ -183,4 +216,25 @@ void CloudCallback::thread_run()
 #endif
     }
     Logger::info("Stopped Callback");
+}
+
+void VisPublisher::thread_run()
+{
+    Matrix4f val;
+    while (running)
+    {
+        if (!vis_buffer->pop_nb(&val, DEFAULT_POP_TIMEOUT))
+        {
+            continue;
+        }
+
+        msg::TSDFBridgeMessage tsdf_msg;
+        tsdf_msg.tau_ = ConfigManager::config().slam.max_distance();
+        tsdf_msg.size_ = local_map->get_size();
+        tsdf_msg.pos_ = local_map->get_pos();
+        tsdf_msg.offset_ = local_map->get_offset();
+        tsdf_msg.tsdf_data_.reserve(local_map->getBuffer().size());
+        std::copy(local_map->getBuffer().cbegin(), local_map->getBuffer().cend(), std::back_inserter(tsdf_msg.tsdf_data_));
+        tsdf_buffer->push_nb(tsdf_msg, true);
+    }
 }
