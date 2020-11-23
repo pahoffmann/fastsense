@@ -20,7 +20,7 @@ public:
 
     ~ImuAccumulator() = default;
 
-    const Matrix4f& combined_transform() const;
+    const Matrix4f& acc_transform() const;
 
     fastsense::Vector3f rot_in_euler() const;
 
@@ -34,7 +34,7 @@ private:
     void apply_transform(double acc_time, const Vector3f& ang_vel);
 
     bool first_imu_msg_;
-    Matrix4f combined_transform_;
+    Matrix4f acc_transform_;
     Matrix4f local_transform_;
     util::HighResTimePoint last_imu_timestamp_;
 };

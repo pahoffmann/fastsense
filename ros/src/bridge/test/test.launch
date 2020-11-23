@@ -1,0 +1,17 @@
+<!-- Phidgets IMU launch file -->
+
+<launch>
+  #### Bridge ###########################################################
+
+  <node pkg="bridge" type="bridge" name="bridge"/>
+
+  #### IMU Orientation Filter ###############################################
+
+  <node pkg="imu_filter_madgwick" type="imu_filter_node" name="imu_filter_node" 
+    output="screen">
+    <remap from="/bridge/imu_bridge/raw" to="/imu/data_raw"/>
+    <param name="use_mag" value="true"/>
+    <param name="use_magnetic_field_msg" value="true"/>
+  </node>
+
+</launch>

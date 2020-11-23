@@ -15,27 +15,43 @@ namespace fastsense::msg
 class RegistrationInput : public ZMQConverter
 {
 public:
-    RegistrationInput(const Matrix4f& global_transform, PointCloud pcl)
-    : global_transform_{global_transform}, pcl_{std::move(pcl)}
+    RegistrationInput()
+    : acc_transform_{Matrix4f::Identity()}, pcl_{}
+    {}
+
+    RegistrationInput(const Matrix4f& acc_transform, PointCloud pcl)
+    : acc_transform_{acc_transform}, pcl_{std::move(pcl)}
     {}
 
     ~RegistrationInput() = default;
 
     void from_zmq_msg(zmq::multipart_t& msg) override
     {
-        global_transform_ = msg.poptyp<Matrix4f>();
+        zmq::message_t acc_transform_msg = msg.pop();
+        memcpy(&acc_transform_, acc_transform_msg.data(), sizeof(Matrix4f));
         pcl_.from_zmq_msg(msg);
     }
 
     zmq::multipart_t to_zmq_msg() const override
     {
         zmq::multipart_t multi;
-        multi.addtyp(global_transform_);
+        multi.addtyp(acc_transform_);
         multi.append(pcl_.to_zmq_msg());
         return multi;
     }
+
+    const Matrix4f& acc_transform() const
+    {
+        return acc_transform_;
+    }
+
+    const PointCloud& pcl() const
+    {
+        return pcl_;
+    }
+
 private:
-    Matrix4f global_transform_;
+    Matrix4f acc_transform_;
     PointCloud pcl_;
 };
 

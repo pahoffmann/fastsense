@@ -17,6 +17,7 @@ find_package(catkin REQUIRED COMPONENTS
   tf2
   tf2_ros
   message_filters
+  rostest
 )
 
 find_package(ZeroMQ 4.3.2 REQUIRED EXACT)
@@ -37,3 +38,6 @@ catkin_package()
 add_subdirectory(${FASTSENSE_DIR}/ext/HighFive ${CMAKE_CURRENT_BINARY_DIR}/HighFive)
 add_subdirectory(src/from_trenz)
 add_subdirectory(src/to_trenz)
+
+add_rostest_gtest(to_trenz_test test/test.launch test/test.cpp)
+target_link_libraries(to_trenz_test ${catkin_LIBRARIES})

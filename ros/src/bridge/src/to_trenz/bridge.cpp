@@ -1,16 +1,22 @@
 #include <mutex>
+#include <iomanip>
 #include <ros/ros.h>
 #include <sensor_msgs/Imu.h>
 #include <sensor_msgs/PointCloud2.h>
 #include <sensor_msgs/point_cloud2_iterator.h>
 
-#include <iomanip>
+
 #include <util/time.h>
 #include <util/concurrent_ring_buffer.h>
-#include <msg/point_cloud.h>
+
+#include <comm/sender.h>
+#include <comm/receiver.h>
+
 #include <msg/imu.h>
-#include <registration/imu_accumulator.h>
+#include <msg/point_cloud.h>
 #include <msg/registration_input.h>
+
+#include <registration/imu_accumulator.h>
 
 namespace fs = fastsense;
 
@@ -23,10 +29,12 @@ public:
         , imu_sub_{}
         , pcl_sub_{}
         , imu_receiver_buffer_{100'000}
+        , sender_{4444}
+        , recv_{"127.0.0.1", 4444}
     {
         spinner_.start();
         imu_sub_ = nh_.subscribe<sensor_msgs::Imu>("/imu/data_raw", 1000, &Bridge::imu_callback, this);
-        pcl_sub_ = nh_.subscribe<sensor_msgs::PointCloud2>("/velodyne_points", 1000, &Bridge::pcl_callback, this);
+        pcl_sub_ = nh_.subscribe<sensor_msgs::PointCloud2>("/os1_cloud_node/points", 1000, &Bridge::pcl_callback, this);
         ROS_INFO("to_trenz subscriber initiated");
     }
 
@@ -102,8 +110,10 @@ public:
             }
         }
 
-        fs::msg::RegistrationInput trenz_msg{imu_accumulator_.combined_transform(), std::move(trenz_pcl)};
-        ROS_INFO_STREAM("[pcl] rotation: " << imu_accumulator_);
+        ROS_INFO_STREAM("[pcl] sending rotation: " << imu_accumulator_.acc_transform()*4 << " and a pcl of size " << trenz_points.size());
+        fs::msg::RegistrationInput trenz_msg{imu_accumulator_.acc_transform()*4, std::move(trenz_pcl)};
+        sender_.send(trenz_msg);
+
         imu_accumulator_.reset();
     }
 
@@ -114,6 +124,8 @@ private:
     ros::Subscriber pcl_sub_;
     fastsense::registration::ImuAccumulator imu_accumulator_;
     fs::util::ConcurrentRingBuffer<sensor_msgs::ImuConstPtr> imu_receiver_buffer_;
+    fs::comm::Sender<fs::msg::RegistrationInput> sender_;
+    fs::comm::Receiver<fs::msg::RegistrationInput> recv_;
 };
 
 int main(int argc, char **argv)

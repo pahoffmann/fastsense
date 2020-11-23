@@ -11,24 +11,24 @@ using namespace fastsense::registration;
 // TODO first imu msg immer ture, auch wenn von ROS 
 ImuAccumulator::ImuAccumulator()
     :   first_imu_msg_{true},
-        combined_transform_{Matrix4f::Identity()},
+        acc_transform_{Matrix4f::Identity()},
         local_transform_{Matrix4f::Identity()},
         last_imu_timestamp_{}
 {}
 
-const Eigen::Matrix4f& ImuAccumulator::combined_transform() const
+const Eigen::Matrix4f& ImuAccumulator::acc_transform() const
 {
-    return combined_transform_;
+    return acc_transform_;
 }
 
 fastsense::Vector3f ImuAccumulator::rot_in_euler() const
 {
-    return combined_transform_.block<3, 3>(0, 0).eulerAngles(0, 1, 2) ;
+    return acc_transform_.block<3, 3>(0, 0).eulerAngles(0, 1, 2) ;
 }
 
 void ImuAccumulator::reset()
 {
-    combined_transform_.setIdentity();
+    acc_transform_.setIdentity();
 }
 
 void ImuAccumulator::update(const fastsense::msg::ImuStamped& imu)
@@ -58,7 +58,7 @@ void ImuAccumulator::apply_transform(double acc_time, const Vector3f& ang_vel)
                         * Eigen::AngleAxisf(orientation.z(), Vector3f::UnitZ());
 
     local_transform_.block<3, 3>(0, 0) = rotation.toRotationMatrix();
-    combined_transform_ = local_transform_ * combined_transform_; //combine/update transforms
+    acc_transform_ = local_transform_ * acc_transform_; //combine/update transforms
 }
 
 std::ostream& operator<<(std::ostream& os, const ImuAccumulator& acc)
