@@ -7,11 +7,14 @@
 #include "catch2_config.h"
 #include <comm/receiver.h>
 #include <comm/sender.h>
+#include <util/point.h>
 #include <msg/point_cloud.h>
 #include <msg/tsdf_bridge_msg.h>
+#include <msg/registration_input.h>
 #include <iostream>
 #include <thread>
 
+using namespace fastsense;
 using namespace fastsense::comm;
 using namespace fastsense::msg;
 
@@ -123,4 +126,44 @@ TEST_CASE("TSDFBridgeMessage Sender Receiver Test", "[communication]")
     REQUIRE(tsdf_msg.pos_ == tsdf_received.pos_);
     REQUIRE(tsdf_msg.offset_ == tsdf_received.offset_);
     REQUIRE(tsdf_msg.tsdf_data_ == tsdf_received.tsdf_data_);
+}
+
+TEST_CASE("RegistrationInput Sender Receiver Test", "[communication]")
+{
+    std::cout << "Testing 'RegistrationInput Sender Receiver Test'" << std::endl;
+    PointCloud pc_to_send;
+    pc_to_send.rings_ = 2;
+    pc_to_send.points_.push_back({1, 2, 3});
+    pc_to_send.points_.push_back({2, 3, 4});
+    pc_to_send.points_.push_back({3, 4, 5});
+
+    Matrix4f acc_transform_to_send = Matrix4f::Identity();
+
+    RegistrationInput to_send{acc_transform_to_send, pc_to_send};
+    RegistrationInput to_receive;
+
+    std::thread receive_thread{[&]()
+    {
+        Receiver<RegistrationInput> receiver{"127.0.0.1", 1234};
+        std::this_thread::sleep_for(std::chrono::milliseconds(200));
+        receiver.receive(to_receive);
+    }};
+
+    std::thread send_thread{[&]()
+    {
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        Sender<RegistrationInput> sender{1234};
+        std::this_thread::sleep_for(std::chrono::milliseconds(200));
+        sender.send(to_send);
+    }};
+
+    const PointCloud& pc_received = to_receive.pcl();
+    const auto& acc_transform_received = to_receive.acc_transform();
+
+    receive_thread.join();
+    send_thread.join();
+
+    REQUIRE(acc_transform_to_send == acc_transform_received);
+    REQUIRE(pc_to_send.rings_ == pc_received.rings_);
+    REQUIRE(pc_to_send.points_ == pc_received.points_);
 }
