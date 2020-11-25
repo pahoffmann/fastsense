@@ -41,7 +41,9 @@ void Logger::writeMessage(LogLevel level, const Args& ...args)
         auto t = std::chrono::system_clock::to_time_t(now);
         auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch()).count()  % 1000;
         msg << std::put_time(std::localtime(&t), "%F %T.");
+        auto default_fill = msg.fill();
         msg << std::setfill('0') << std::setw(3) << ms << ' ';
+        msg << std::setfill(default_fill);
 
         msg << logLevelToString[(int)level];
         print(msg, args...);

@@ -220,22 +220,20 @@ TEST_CASE("Kernel_TSDF", "[kernel][slow]")
             new_entries[i].second = 0;
         }
 
+        auto& size = local_map_sw.get_size();
+        auto& pos = local_map_sw.get_pos();
+        auto& offset = local_map_sw.get_offset();
+
         fastsense::tsdf::krnl_tsdf_sw(kernel_points_sw.data(),
                                       kernel_points_sw.data(),
                                       num_points,
-                                      local_map_sw.getBuffer(),
-                                      local_map_sw.getBuffer(),
-                                      local_map_sw.get_size().x(),
-                                      local_map_sw.get_size().y(),
-                                      local_map_sw.get_size().z(),
-                                      0,
-                                      0,
-                                      0,
-                                      local_map_sw.get_offset().x(),
-                                      local_map_sw.get_offset().y(),
-                                      local_map_sw.get_offset().z(),
-                                      new_entries,
-                                      new_entries,
+                                      local_map_sw.getBuffer().getVirtualAddress(),
+                                      local_map_sw.getBuffer().getVirtualAddress(),
+                                      size.x(), size.y(), size.z(),
+                                      pos.x(), pos.y(), pos.z(),
+                                      offset.x(), offset.y(), offset.z(),
+                                      new_entries.getVirtualAddress(),
+                                      new_entries.getVirtualAddress(),
                                       TAU,
                                       MAX_WEIGHT);
 

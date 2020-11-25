@@ -34,7 +34,7 @@ public:
     /**
      * @brief Destroy the Transform Bridge object
      */
-    ~TransformBridge() override = default;
+    virtual ~TransformBridge() override = default;
 
     /**
      * @brief Starts the Transform Bridge in its own thread
@@ -62,6 +62,11 @@ private:
      * and publishes in an endless loop (running in its own thread)
      */
     void run() override;
+
+    void thread_run() override
+    {
+        run();
+    }
 
     void broadcast();
 

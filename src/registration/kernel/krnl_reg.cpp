@@ -6,6 +6,7 @@
 #include <map/local_map_hw.h>
 #include <util/point_hw.h>
 #include <registration/kernel/reg_hw.h>
+#include <registration/kernel/linear_solver.h>
 #include <iostream>
 
 struct IntTuple
@@ -14,102 +15,116 @@ struct IntTuple
     int second;
 };
 
-// constexpr int MAP_SHIFT = 6;
-// constexpr int MAP_RESOLUTION = 64;
-// constexpr int MATRIX_RESOLUTION = 1024;
+using namespace fastsense::map;
+using namespace fastsense::registration;
+
+constexpr int NUM_POINTS = 6000;
 
 extern "C"
 {
 
-    void krnl_reg(PointHW* pointData,
-                  int numPoints,
-                  IntTuple* mapData0,
-                  IntTuple* mapData1,
-                  IntTuple* mapData2,
-                  int sizeX,
-                  int sizeY,
-                  int sizeZ,
-                  int posX,
-                  int posY,
-                  int posZ,
-                  int offsetX,
-                  int offsetY,
-                  int offsetZ,
-                  int* transform,
-                  long* outbuf
-                 )
+    void xi_to_transform(float xi[6], float transform[4][4])
     {
-#pragma HLS INTERFACE m_axi port=pointData offset=slave bundle=scanmem latency=22
-#pragma HLS INTERFACE m_axi port=mapData0 offset=slave bundle=mapmem0 latency=22
-#pragma HLS INTERFACE m_axi port=mapData1 offset=slave bundle=mapmem1 latency=22
-#pragma HLS INTERFACE m_axi port=mapData2 offset=slave bundle=mapmem2 latency=22
-#pragma HLS INTERFACE m_axi port=transform offset=slave bundle=gmem latency=22
-#pragma HLS INTERFACE m_axi port=outbuf offset=slave bundle=gmem latency=22
+        float theta = hls_sqrt_float(xi[0] * xi[0] + xi[1] * xi[1] + xi[2] * xi[2]);
+        float sin_theta, cos_theta;
+        hls_sincos(theta, &sin_theta, &cos_theta);
+        cos_theta = 1 - cos_theta;
 
-        fastsense::map::LocalMapHW map{sizeX, sizeY, sizeZ,
-                                       posX, posY, posZ,
-                                       offsetX, offsetY, offsetZ};
-        //define local variables
-        long local_h[6][6];
-        long local_g[6];
+        xi[0] /= theta;
+        xi[1] /= theta;
+        xi[2] /= theta;
+        float L[3][3] =
+        {
+            {0, -xi[2], xi[1]},
+            {xi[2], 0, -xi[0]},
+            {-xi[1], xi[0], 0}
+        };
 
-#pragma HLS array_partition variable=local_h complete dim=0
-#pragma HLS array_partition variable=local_g complete
+        for (int row = 0; row < 3; row++)
+        {
+#pragma HLS unroll
+            for (int col = 0; col < 3; col++)
+            {
+#pragma HLS unroll
+                transform[row][col] = sin_theta * L[row][col];
+                for (int k = 0; k < 3; k++)
+                {
+#pragma HLS unroll
+                    transform[row][col] += cos_theta * L[row][k] * L[k][col];
+                }
+            }
+        }
 
+        // identity diagonal
+        transform[0][0] += 1;
+        transform[1][1] += 1;
+        transform[2][2] += 1;
+
+        // translation
+        transform[0][3] = xi[3];
+        transform[1][3] = xi[4];
+        transform[2][3] = xi[5];
+
+        // bottom row
+        transform[3][0] = 0;
+        transform[3][1] = 0;
+        transform[3][2] = 0;
+        transform[3][3] = 1;
+    }
+
+    void registration_step(PointHW* pointData,
+                           int numPoints,
+                           IntTuple* mapData0,
+                           IntTuple* mapData1,
+                           IntTuple* mapData2,
+                           const LocalMapHW& map,
+                           int transform_matrix[4][4],
+                           long h[6][6],
+                           long g[6],
+                           long& error,
+                           long& count
+                          )
+    {
         for (int row = 0; row < 6; row++)
         {
 #pragma HLS unroll
             for (int col = 0; col < 6; col++)
             {
 #pragma HLS unroll
-                local_h[row][col] = 0;
+                h[row][col] = 0;
             }
-            local_g[row] = 0;
+            g[row] = 0;
         }
-
-        long local_error = 0;
-        long local_count = 0;
-
-
-        int transform_matrix[4][4];
-
-        // Pipeline to save ressources
-    transform_loop:
-        for (int row = 0; row < 4; row++)
-        {
-            for (int col = 0; col < 4; col++)
-            {
-#pragma HLS pipeline II=1
-                transform_matrix[row][col] = transform[row * 4 + col];
-            }
-        }
+        error = 0;
+        count = 0;
 
     point_loop:
         for (int i = 0; i < numPoints; i++)
         {
-#pragma HLS loop_tripcount min=0 max=30000
+#pragma HLS loop_tripcount min=NUM_POINTS max=NUM_POINTS
+#pragma HLS pipeline II=1
 
             PointHW point_tmp = pointData[i];
 
-            int point[4][1], point_mul[4][1];
-            point_mul[0][0] = point_tmp.x;
-            point_mul[1][0] = point_tmp.y;
-            point_mul[2][0] = point_tmp.z;
-            point_mul[3][0] = 1;
+            int point[3], point_mul[3];
+#pragma HLS array_partition variable=point complete
+#pragma HLS array_partition variable=point_mul complete
+            point_mul[0] = point_tmp.x;
+            point_mul[1] = point_tmp.y;
+            point_mul[2] = point_tmp.z;
 
             //apply transform for point.
-            fastsense::registration::MatrixMulTransform(transform_matrix, point_mul, point);
+            transform_point(transform_matrix, point_mul, point);
 
             //revert matrix resolution step => point has real data
-            point[0][0] /= MATRIX_RESOLUTION;
-            point[1][0] /= MATRIX_RESOLUTION;
-            point[2][0] /= MATRIX_RESOLUTION;
-            point[3][0] /= MATRIX_RESOLUTION;
+            point[0] /= MATRIX_RESOLUTION;
+            point[1] /= MATRIX_RESOLUTION;
+            point[2] /= MATRIX_RESOLUTION;
 
             PointHW buf;
-            buf.x = point[0][0] / MAP_RESOLUTION;
-            buf.y = point[1][0] / MAP_RESOLUTION;
-            buf.z = point[2][0] / MAP_RESOLUTION;
+            buf.x = point[0] / MAP_RESOLUTION;
+            buf.y = point[1] / MAP_RESOLUTION;
+            buf.z = point[2] / MAP_RESOLUTION;
 
             //get value of local map
             const auto& current = map.get(mapData0, buf.x, buf.y, buf.z);
@@ -119,18 +134,13 @@ extern "C"
                 continue;
             }
 
-            int gradient[3];
+            int gradient[3] = {0, 0, 0};
 #pragma HLS array_partition variable=gradient complete
-
-            gradient[0] = 0;
-            gradient[1] = 0;
-            gradient[2] = 0;
 
         gradient_loop:
             for (size_t axis = 0; axis < 3; axis++)
             {
 #pragma HLS unroll
-
                 int index[3] = {buf.x, buf.y, buf.z};
 
                 index[axis] -= 1;
@@ -143,72 +153,196 @@ extern "C"
                 }
             }
 
-            long cross_p_x = static_cast<long>(point[1][0]) * gradient[2] - static_cast<long>(point[2][0]) * gradient[1];
-            long cross_p_y = static_cast<long>(point[2][0]) * gradient[0] - static_cast<long>(point[0][0]) * gradient[2];
-            long cross_p_z = static_cast<long>(point[0][0]) * gradient[1] - static_cast<long>(point[1][0]) * gradient[0];
-
             long jacobi[6];
 #pragma HLS array_partition variable=jacobi complete
 
-            jacobi[0] = cross_p_x;
-            jacobi[1] = cross_p_y;
-            jacobi[2] = cross_p_z;
+            // cross product point x gradient
+            jacobi[0] = static_cast<long>(point[1]) * gradient[2] - static_cast<long>(point[2]) * gradient[1];
+            jacobi[1] = static_cast<long>(point[2]) * gradient[0] - static_cast<long>(point[0]) * gradient[2];
+            jacobi[2] = static_cast<long>(point[0]) * gradient[1] - static_cast<long>(point[1]) * gradient[0];
             jacobi[3] = gradient[0];
             jacobi[4] = gradient[1];
             jacobi[5] = gradient[2];
 
-            //add multiplication result to local_h
+            //add multiplication result to h
 
-        local_h_loop:
             for (int row = 0; row < 6; row++)
             {
 #pragma HLS unroll
                 for (int col = 0; col < 6; col++)
                 {
 #pragma HLS unroll
-                    // local_h += jacobi * jacobi.transpose()
+                    // h += jacobi * jacobi.transpose()
                     // transpose === swap row and column
-                    local_h[row][col] += jacobi[row] * jacobi[col];
+                    h[row][col] += jacobi[row] * jacobi[col];
+                }
+                g[row] += jacobi[row] * current.first;
+            }
+
+            error += hls_abs(current.first);
+            count++;
+        }
+    }
+
+    void krnl_reg(PointHW* pointData,
+                  int numPoints,
+                  IntTuple* mapData0,
+                  IntTuple* mapData1,
+                  IntTuple* mapData2,
+                  int sizeX,   int sizeY,   int sizeZ,
+                  int posX,    int posY,    int posZ,
+                  int offsetX, int offsetY, int offsetZ,
+                  int max_iterations,
+                  float it_weight_gradient,
+                  float* in_transform,
+                  float* out_transform
+                 )
+    {
+#pragma HLS INTERFACE m_axi port=pointData offset=slave bundle=scanmem latency=22
+#pragma HLS INTERFACE m_axi port=mapData0 offset=slave bundle=mapmem0 latency=22
+#pragma HLS INTERFACE m_axi port=mapData1 offset=slave bundle=mapmem1 latency=22
+#pragma HLS INTERFACE m_axi port=mapData2 offset=slave bundle=mapmem2 latency=22
+#pragma HLS INTERFACE m_axi port=in_transform offset=slave bundle=gmem latency=22
+#pragma HLS INTERFACE m_axi port=out_transform offset=slave bundle=gmem latency=22
+
+        LocalMapHW map{sizeX, sizeY, sizeZ,
+                       posX, posY, posZ,
+                       offsetX, offsetY, offsetZ};
+        float alpha = 0.0f;
+        //define local variables
+        long h[6][6];
+        long g[6];
+        int int_transform[4][4]; // converted to int using MATRIX_RESOLUTION
+        float next_transform[4][4]; // result of one iteration
+        float total_transform[4][4]; // accumulated total transform
+        float temp_transform[4][4]; // for matrix multiplication
+        float previous_errors[4] = {0, 0, 0, 0};
+        float h_float[6][6];
+        float g_float[6];
+        float xi[6];
+#pragma HLS array_partition variable=h complete dim=0
+#pragma HLS array_partition variable=g complete
+#pragma HLS array_partition variable=int_transform complete dim=0
+#pragma HLS array_partition variable=next_transform complete dim=0
+#pragma HLS array_partition variable=total_transform complete dim=0
+#pragma HLS array_partition variable=temp_transform complete dim=0
+#pragma HLS array_partition variable=previous_errors complete
+#pragma HLS array_partition variable=h_float complete
+#pragma HLS array_partition variable=g_float complete
+#pragma HLS array_partition variable=xi complete
+
+        long error, count;
+
+        // Pipeline to save ressources
+    in_transform_loop:
+        for (int row = 0; row < 4; row++)
+        {
+            for (int col = 0; col < 4; col++)
+            {
+#pragma HLS pipeline II=1
+                total_transform[row][col] = in_transform[row * 4 + col];
+            }
+        }
+
+        int i;
+    registration_loop:
+        for (i = 0; i < max_iterations; i++)
+        {
+#pragma HLS loop_tripcount min=200 max=200
+#pragma HLS pipeline off
+
+            // convert total_transform to int_transform
+            for (int row = 0; row < 4; row++)
+            {
+#pragma HLS unroll
+                for (int col = 0; col < 4; col++)
+                {
+#pragma HLS unroll
+                    int_transform[row][col] = static_cast<int>(total_transform[row][col] * MATRIX_RESOLUTION);
                 }
             }
 
-        local_g_loop:
-            for (int count = 0; count < 6; count++)
+#ifndef __SYNTHESIS__
+            std::cout << "\r" << i << " / " << max_iterations << std::flush;
+#endif
+
+            registration_step(pointData,
+                              numPoints,
+                              mapData0,
+                              mapData1,
+                              mapData2,
+                              map,
+                              int_transform,
+                              h,
+                              g,
+                              error,
+                              count
+                             );
+
+            float alpha_bonus = alpha * count;
+
+            for (int row = 0; row < 6; row++)
             {
 #pragma HLS unroll
-                local_g[count] += jacobi[count] * current.first;
+                for (int col = 0; col < 6; col++)
+                {
+#pragma HLS unroll
+                    h_float[row][col] = static_cast<float>(h[row][col]);
+                }
+                g_float[row] = static_cast<float>(-g[row]);
+
+                h_float[row][row] += alpha_bonus;
             }
 
-            local_error += abs(current.first);
-            local_count++;
-        }
+            lu_decomposition<float, 6>(h_float);
+            lu_solve<float, 6>(h_float, g_float, xi);
 
-        //fill output buffer.
-        long tmp[44];
-#pragma HLS array_partition variable=tmp complete
-    out_row_loop:
-        for (int row = 0; row < 6; row++)
-        {
-#pragma HLS unroll
-        out_col_loop:
-            for (int col = 0; col < 6; col++)
+            xi_to_transform(xi, next_transform);
+            MatrixMul<float, 4, 4, 4>(next_transform, total_transform, temp_transform);
+
+            // copy temp_transform to total_transform
+            // TODO: multiply in-place to avoid copy?
+            for (int row = 0; row < 4; row++)
             {
 #pragma HLS unroll
-                tmp[row + col * 6] = local_h[row][col]; //from 0 to 35: local_h
+                for (int col = 0; col < 4; col++)
+                {
+#pragma HLS unroll
+                    total_transform[row][col] = temp_transform[row][col];
+                }
             }
 
-            tmp[36 + row] = local_g[row]; //from 36 to 41: local_g
-        }
+            alpha += it_weight_gradient;
+            float err = (float)error / count;
+            float d1 = err - previous_errors[2];
+            float d2 = err - previous_errors[0];
 
-        tmp[42] = local_error;
-        tmp[43] = local_count;
+            constexpr float epsilon = 0.0001; // TODO: make parameter?
+            if (d1 >= -epsilon && d1 <= epsilon && d2 >= -epsilon && d2 <= epsilon)
+            {
+                break;
+            }
+            for (int e = 1; e < 4; e++)
+            {
+#pragma HLS unroll
+                previous_errors[e - 1] = previous_errors[e];
+            }
+            previous_errors[3] = err;
+        }
+#ifndef __SYNTHESIS__
+        std::cout << std::endl;
+#endif
 
         // Pipeline to save ressources
-    write_outbuf:
-        for (int i = 0; i < 44; i++)
+    out_transform_loop:
+        for (int row = 0; row < 4; row++)
         {
+            for (int col = 0; col < 4; col++)
+            {
 #pragma HLS pipeline II=1
-            outbuf[i] = tmp[i];
+                out_transform[row * 4 + col] = total_transform[row][col];
+            }
         }
+        out_transform[16] = i;
     }
 }

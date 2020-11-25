@@ -26,7 +26,7 @@ public:
      */
     explicit Imu(const fastsense::msg::ImuStampedBufferPtr& ringbuffer);
 
-    virtual ~Imu() = default;
+    ~Imu() override = default;
 
     /**
      * @brief delete assignment operator because of pointer member variable
@@ -58,6 +58,8 @@ public:
      * from separate thread. This function only serves to provide the same api for all sensors
      */
     void start() override;
+
+    void thread_run() override {}
 
     /**
      * @brief Stops Imu

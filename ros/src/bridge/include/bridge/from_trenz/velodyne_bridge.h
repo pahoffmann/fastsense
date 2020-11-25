@@ -32,17 +32,7 @@ public:
     /**
      * @brief Destroy the Velodyne Bridge object
      */
-    ~VelodyneBridge() override = default;
-
-    /**
-     * @brief Starts the velodyne bridge in its own thread
-     */
-    void start() override;
-
-    /**
-     * @brief Stops the velodyne bridge thread
-     */
-    void stop() override;
+    virtual ~VelodyneBridge() = default;
 private:
 
     /**
@@ -60,6 +50,11 @@ private:
      * and publishes in an endless loop (running in its own thread)
      */
     void run() override;
+
+    void thread_run() override
+    {
+        run();
+    }
 
     /// Local vector of lidar points that are published
     std::vector<geometry_msgs::Point32> points_;

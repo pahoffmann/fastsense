@@ -18,8 +18,18 @@ template<typename T>
 T overflow(T val, T max)
 {
 #pragma HLS INLINE
-    return (val >= max) ? val - max : val;
-    // return val % max;
+    if (val >= 2 * max)
+    {
+        return val - 2 * max;
+    }
+    else if (val >= max)
+    {
+        return val - max;
+    }
+    else
+    {
+        return val;
+    }
 }
 
 /**

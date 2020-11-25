@@ -23,7 +23,7 @@ public:
     : acc_transform_{acc_transform}, pcl_{std::move(pcl)}
     {}
 
-    ~RegistrationInput() = default;
+    ~RegistrationInput() override = default;
 
     void from_zmq_msg(zmq::multipart_t& msg) override
     {

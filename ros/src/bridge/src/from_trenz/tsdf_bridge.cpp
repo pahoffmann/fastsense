@@ -22,24 +22,6 @@ TSDFBridge::TSDFBridge(ros::NodeHandle& n, const std::string& board_addr)
     colors_.reserve(30'000);
 }
 
-void TSDFBridge::start()
-{
-    if (!running)
-    {
-        running = true;
-        worker = std::thread(&TSDFBridge::run, this);
-    }
-}
-
-void TSDFBridge::stop()
-{
-    if (running)
-    {
-        running = false;
-        worker.join();
-    }
-}
-
 void TSDFBridge::run()
 {   
     while (running && ros::ok())
@@ -174,4 +156,7 @@ void TSDFBridge::publish()
     pub().publish(marker);
 
     ROS_INFO_STREAM("Published " << points_.size() << " tsdf values\n");
+
+    points_.clear();
+    colors_.clear();
 }

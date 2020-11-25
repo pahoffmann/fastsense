@@ -3,89 +3,59 @@
 /**
  * @file reg_hw.h
  * @author Marc Eisoldt (meisoldt@uos.de)
- * @brief
- * @version 0.1
- * @date 2020-10-05
- *
- * @copyright Copyright (c) 2020
- *
  */
 
-#include <cmath>
-
-#define MAT_A_ROWS 6
-#define MAT_A_COLS 1
-#define MAT_B_ROWS 1
-#define MAT_B_COLS 6
-
-typedef long mat_a_t;
-typedef long mat_b_t;
-typedef long result_t; // select the required bit width
-
-namespace fastsense
-{
-
-namespace registration
+namespace fastsense::registration
 {
 
 // Prototype of top level function for C-synthesis
+template<typename T, int a_rows, int a_cols, int b_cols>
 void MatrixMul(
-    mat_a_t a[MAT_A_ROWS][MAT_A_COLS],
-    mat_b_t b[MAT_B_ROWS][MAT_B_COLS],
-    result_t res[MAT_A_ROWS][MAT_B_COLS])
+    T a[a_rows][a_cols],
+    T b[a_cols][b_cols],
+    T res[a_rows][b_cols])
 {
 #pragma HLS INLINE
 
-    // Iterate over the rows of the A matrix
-    for (int i = 0; i < MAT_A_ROWS; i++)
+    for (int i = 0; i < a_rows; i++)
     {
 #pragma HLS unroll
 
-        // Iterate over the columns of the B Matrix
-        for (int j = 0; j < MAT_B_COLS; j++)
+        for (int j = 0; j < b_cols; j++)
         {
 #pragma HLS unroll
             res[i][j] = 0;
 
-            for (int k = 0; k < MAT_B_ROWS; k++)
+            for (int k = 0; k < a_cols; k++)
             {
 #pragma HLS unroll
-
-                res[i][j] += (result_t)(a[i][k]) * (result_t)(b[k][j]);
+                res[i][j] += a[i][k] * b[k][j];
             }
         }
     }
 }
 
-//TODO: template this..
-void MatrixMulTransform(
-    int a[4][4],
-    int b[4][1],
-    int res[4][1])
+void transform_point(
+    int mat[4][4],
+    int point[3],
+    int res[3])
 {
 #pragma HLS INLINE
 
     // Iterate over the rows of the A matrix
-    for (int i = 0; i < 4; i++)
+    for (int i = 0; i < 3; i++)
     {
 #pragma HLS unroll
+        // translation
+        res[i] = mat[i][3];
 
-        // Iterate over the columns of the B Matrix
-        for (int j = 0; j < 1; j++)
+        // rotation
+        for (int k = 0; k < 3; k++)
         {
 #pragma HLS unroll
-            res[i][j] = 0;
-
-            for (int k = 0; k < 4; k++)
-            {
-#pragma HLS unroll
-
-                res[i][j] += (result_t)(a[i][k]) * (result_t)(b[k][j]);
-            }
+            res[i] += mat[i][k] * point[k];
         }
     }
 }
 
-} // namespace registration
-
-} // namespace fastsense
+} // namespace fastsense::registration

@@ -14,26 +14,14 @@ ImuCallback::ImuCallback(Registration& registration, std::shared_ptr<ImuBuffer>&
       registration{registration},
       imu_buffer{imu_buffer} {}
 
-void ImuCallback::start()
+void ImuCallback::thread_run()
 {
-    if (not running)
-    {
-        running = true;
-        worker = std::thread(&ImuCallback::callback, this);
-    }
-}
-
-void ImuCallback::stop()
-{
-    running = false;
-}
-
-void ImuCallback::callback()
-{
+    fastsense::msg::ImuStamped imu;
     while (running)
     {
-        fastsense::msg::ImuStamped imu;
-        imu_buffer->pop(&imu);
-        registration.update_imu_data(imu);
+        if (imu_buffer->pop_nb(&imu, DEFAULT_POP_TIMEOUT))
+        {
+            registration.update_imu_data(imu);
+        }
     }
 }

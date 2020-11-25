@@ -17,24 +17,6 @@ VelodyneBridge::VelodyneBridge(ros::NodeHandle& n, const std::string& board_addr
 {
 }
 
-void VelodyneBridge::start()
-{
-    if (running == false)
-    {
-        running = true;
-        worker = std::thread(&VelodyneBridge::run, this);
-    }
-}
-
-void VelodyneBridge::stop()
-{
-    if (running)
-    {
-        running = false;
-        worker.join();
-    }
-}
-
 void VelodyneBridge::run()
 {
     while (running && ros::ok())

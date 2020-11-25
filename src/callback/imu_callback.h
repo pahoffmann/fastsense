@@ -21,11 +21,7 @@ class ImuCallback : public fastsense::util::ProcessThread
 public:
     ImuCallback(Registration& registration, std::shared_ptr<ImuBuffer>& imu_buffer);
 
-    void start() override;
-
-    void callback();
-
-    void stop() override;
+    void thread_run() override;
 
 private:
     Registration& registration;

@@ -9,6 +9,8 @@
 #include <vector>
 #include <condition_variable>
 
+constexpr uint32_t DEFAULT_POP_TIMEOUT = 100;
+
 namespace fastsense::util
 {
 

@@ -114,7 +114,7 @@ void Imu::data_handler(const double* acceleration, const double* angularRate, co
     }
 
     msg::Imu msg(acceleration, angularRate, magneticField);
-    data_buffer_->push(std::make_pair(msg, util::HighResTime::now()));
+    data_buffer_->push_nb(std::make_pair(msg, fastsense::util::HighResTimePoint()), false);
 }
 
 void Imu::attach_handler()

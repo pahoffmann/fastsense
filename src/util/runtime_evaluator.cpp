@@ -61,6 +61,7 @@ int RuntimeEvaluator::find_formular(const std::string& task_name)
 
 void RuntimeEvaluator::start(const std::string& task_name)
 {
+#ifdef TIME_MEASUREMENT
     pause();
 
     // get or create task that is started
@@ -81,10 +82,12 @@ void RuntimeEvaluator::start(const std::string& task_name)
     forms_[index].accumulate = 0;
 
     resume();
+#endif
 }
 
 void RuntimeEvaluator::stop(const std::string& task_name)
 {
+#ifdef TIME_MEASUREMENT
     pause();
 
     // get task that is stopped
@@ -111,6 +114,7 @@ void RuntimeEvaluator::stop(const std::string& task_name)
     }
 
     resume();
+#endif
 }
 
 const std::vector<EvaluationFormular> RuntimeEvaluator::get_forms()
@@ -122,32 +126,38 @@ std::string RuntimeEvaluator::to_string()
 {
     pause();
 
+    size_t task_length = std::string("task").length();
+    for (const auto& ef : forms_)
+    {
+        task_length = std::max(task_length, ef.name.length());
+    }
+
     std::stringstream ss;
-    ss << " " << std::setw(16) << "task" << " | "
-       << std::setw(10) << "count" << " | "
-       << std::setw(10) << "last [µs]" << " | "
-       << std::setw(10) << "sum [µs]" << " | "
-       << std::setw(10) << "min [µs]" << " | "
-       << std::setw(10) << "max [µs]" << " | "
-       << std::setw(10) << "avg [µs]" << "\n-" << std::setfill('-')
-       << std::setw(16) << "" << "-+-"
-       << std::setw(10) << "" << "-+-"
-       << std::setw(10) << "" << "-+-"
-       << std::setw(10) << "" << "-+-"
-       << std::setw(10) << "" << "-+-"
-       << std::setw(10) << "" << "-+-"
-       << std::setw(10) << "" << "-\n" << std::setfill(' ');
+    ss << "\n " << std::setw(task_length) << "task" << " | "
+       << std::setw(6) << "count" << " | "
+       << std::setw(8) << "last(ms)" << " | "
+       //    << std::setw(10) << "sum(ms)" << " | "
+       << std::setw(8) << "min(ms)" << " | "
+       << std::setw(8) << "max(ms)" << " | "
+       << std::setw(8) << "avg(ms)" << "\n-" << std::setfill('-')
+       << std::setw(task_length) << "" << "-+-" // task
+       << std::setw(6) << "" << "-+-" // count
+       << std::setw(8) << "" << "-+-" // last
+       //    << std::setw(10) << "" << "-+-" // sum
+       << std::setw(8) << "" << "-+-" // min
+       << std::setw(8) << "" << "-+-" // max
+       << std::setw(8) << "" << "-\n" << std::setfill(' '); // avg
     for (const auto& ef : forms_)
     {
         unsigned long long avg = ef.sum / ef.count;
         // the name is displayed red if the measurement of the task is still active
-        ss << " " << (ef.active ? "\033[31m" /* red */ : "") << std::setw(16) << ef.name << "\033[0m" /* reset */ << " | "
-           << std::setw(10) << ef.count << " | "
-           << std::setw(10) << ef.last << " | "
-           << std::setw(10) << ef.sum << " | "
-           << std::setw(10) << (ef.min == std::numeric_limits<unsigned long long>::max() ? "infinity" : std::to_string(ef.min)) << " | "
-           << std::setw(10) << ef.max << " | "
-           << std::setw(10) << avg << "\n";
+        ss << " " << (ef.active ? "\033[31m" /* red */ : "") << std::setw(task_length) << ef.name << "\033[0m" /* reset */ << " | "
+           << std::setw(6) << ef.count << " | "
+           << std::setw(8) << ef.last / 1000 << " | "
+           //    << std::setw(10) << ef.sum / 1000 << " | "
+           << std::setw(8) << (ef.min == std::numeric_limits<unsigned long long>::max() ? "infinity" : std::to_string(ef.min / 1000)) << " | "
+           << std::setw(8) << ef.max / 1000 << " | "
+           << std::setw(8) << avg / 1000 << "\n";
     }
 
     resume();
@@ -156,7 +166,9 @@ std::string RuntimeEvaluator::to_string()
 
 std::ostream& operator<<(std::ostream& os, RuntimeEvaluator& evaluator)
 {
+#ifdef TIME_MEASUREMENT
     os << evaluator.to_string();
+#endif
     return os;
 }
 
