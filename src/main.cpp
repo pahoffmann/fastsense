@@ -19,6 +19,7 @@ int main()
     auto coutSink = std::make_shared<CoutSink>();
     auto fileSink = std::make_shared<FileSink>("FastSense.log");
     Logger::addSink(coutSink);
+    Logger::addSink(fileSink);
     Logger::setLoglevel(LogLevel::Debug);
 
     // Initialize Config

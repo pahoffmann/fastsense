@@ -79,6 +79,7 @@ Eigen::Vector3f Matrix4ToEuler(const Matrix4f& inputMat)
 void CloudCallback::thread_run()
 {
     fastsense::msg::PointCloudStamped point_cloud;
+    auto& eval = RuntimeEvaluator::get_instance();
     while (running)
     {
         if (!cloud_buffer->pop_nb(&point_cloud, DEFAULT_POP_TIMEOUT))
@@ -86,11 +87,9 @@ void CloudCallback::thread_run()
             continue;
         }
 
-#ifdef TIME_MEASUREMENT
-        auto& eval = RuntimeEvaluator::get_instance();
         eval.start("total");
-        eval.start("init");
-#endif
+        eval.start("prep");
+
         fastsense::msg::PointCloudStamped point_cloud2;
         point_cloud2.first = std::make_shared<msg::PointCloud>(*point_cloud.first);
         point_cloud2.second = point_cloud.second;
@@ -100,9 +99,7 @@ void CloudCallback::thread_run()
         InputBuffer<PointHW> scan_point_buffer{q, point_cloud2.first->points_.size()};
         preprocessor.preprocess_scan(point_cloud2, scan_point_buffer, pose);
 
-#ifdef TIME_MEASUREMENT
-        eval.stop("init");
-#endif
+        eval.stop("prep");
 
         bool tsdf_dirty = true;
         if (first_iteration)
@@ -111,16 +108,9 @@ void CloudCallback::thread_run()
         }
         else
         {
-#ifdef TIME_MEASUREMENT
             eval.start("reg");
-#endif
-
             Matrix4f transform = registration.register_cloud(*local_map, scan_point_buffer);
-
-#ifdef TIME_MEASUREMENT
             eval.stop("reg");
-            eval.start("shift");
-#endif
 
             Eigen::Quaternionf rotation(transform.block<3, 3>(0, 0));
             Vector3f pos = transform.block<3, 1>(0, 3);
@@ -138,65 +128,60 @@ void CloudCallback::thread_run()
                 int x = (int)std::floor(pose(0, 3) / MAP_RESOLUTION);
                 int y = (int)std::floor(pose(1, 3) / MAP_RESOLUTION);
                 int z = (int)std::floor(pose(2, 3) / MAP_RESOLUTION);
-                local_map->shift(x, y, z);
-            }
 
-#ifdef TIME_MEASUREMENT
-            eval.stop("shift");
-#endif
+                eval.start("shift");
+                local_map->shift(x, y, z);
+                eval.stop("shift");
+            }
         }
 
         int tau = (int)ConfigManager::config().slam.max_distance();
 
-#ifdef TIME_MEASUREMENT
-        eval.start("tsdf");
-#endif
-
         if (tsdf_dirty)
         {
+            eval.start("tsdf");
             tsdf_krnl.run(*local_map, scan_point_buffer, tau, ConfigManager::config().slam.max_weight());
             tsdf_krnl.waitComplete();
+
+            // fastsense::tsdf::update_tsdf_hw(scan_point_buffer, local_map, tau, ConfigManager::config().slam.max_weight());
+
+            // fastsense::buffer::InputOutputBuffer<std::pair<int, int>> new_entries(q, local_map->get_size().x() * local_map->get_size().y() * local_map->get_size().z());
+
+            // for(int i = 0; i < local_map->get_size().x() * local_map->get_size().y() * local_map->get_size().z(); ++i)
+            // {
+            //     new_entries[i].first = 0;
+            //     new_entries[i].second = 0;
+            // }
+
+            // std::vector<PointHW> kernel_points_sw(scan_point_buffer.size());
+
+            // for(size_t i = 0; i < scan_point_buffer.size(); ++i)
+            // {
+            //     kernel_points_sw[i] = scan_point_buffer[i];
+            // }
+
+            // auto& size = local_map->get_size();
+            // auto& pos = local_map->get_pos();
+            // auto& offset = local_map->get_offset();
+
+
+            // fastsense::tsdf::krnl_tsdf_sw(kernel_points_sw.data(),
+            //                               kernel_points_sw.data(),
+            //                               scan_point_buffer.size(),
+            //                               local_map->getBuffer().getVirtualAddress(),
+            //                               local_map->getBuffer().getVirtualAddress(),
+            //                               size.x(), size.y(), size.z(),
+            //                               pos.x(), pos.y(), pos.z(),
+            //                               offset.x(), offset.y(), offset.z(),
+            //                               new_entries.getVirtualAddress(),
+            //                               new_entries.getVirtualAddress(),
+            //                               tau,
+            //                               ConfigManager::config().slam.max_weight());
+
+            eval.stop("tsdf");
         }
 
-        // fastsense::tsdf::update_tsdf_hw(scan_point_buffer, local_map, tau, ConfigManager::config().slam.max_weight());
-
-        // fastsense::buffer::InputOutputBuffer<std::pair<int, int>> new_entries(q, local_map->get_size().x() * local_map->get_size().y() * local_map->get_size().z());
-
-        // for(int i = 0; i < local_map->get_size().x() * local_map->get_size().y() * local_map->get_size().z(); ++i)
-        // {
-        //     new_entries[i].first = 0;
-        //     new_entries[i].second = 0;
-        // }
-
-        // std::vector<PointHW> kernel_points_sw(scan_point_buffer.size());
-
-        // for(size_t i = 0; i < scan_point_buffer.size(); ++i)
-        // {
-        //     kernel_points_sw[i] = scan_point_buffer[i];
-        // }
-
-        // auto& size = local_map->get_size();
-        // auto& pos = local_map->get_pos();
-        // auto& offset = local_map->get_offset();
-
-
-        // fastsense::tsdf::krnl_tsdf_sw(kernel_points_sw.data(),
-        //                               kernel_points_sw.data(),
-        //                               scan_point_buffer.size(),
-        //                               local_map->getBuffer().getVirtualAddress(),
-        //                               local_map->getBuffer().getVirtualAddress(),
-        //                               size.x(), size.y(), size.z(),
-        //                               pos.x(), pos.y(), pos.z(),
-        //                               offset.x(), offset.y(), offset.z(),
-        //                               new_entries.getVirtualAddress(),
-        //                               new_entries.getVirtualAddress(),
-        //                               tau,
-        //                               ConfigManager::config().slam.max_weight());
-
-#ifdef TIME_MEASUREMENT
-        eval.stop("tsdf");
         eval.start("vis");
-#endif
 
         Eigen::Quaternionf quat(pose.block<3, 3>(0, 0));
         global_map->save_pose(pose(0, 3), pose(1, 3), pose(2, 3),
@@ -209,10 +194,10 @@ void CloudCallback::thread_run()
 
         vis_buffer->push_nb(pose, true);
 
-#ifdef TIME_MEASUREMENT
         eval.stop("vis");
         eval.stop("total");
-        std::cout << eval << std::endl;
+#ifdef TIME_MEASUREMENT
+        Logger::info(eval.to_string());
 #endif
     }
     Logger::info("Stopped Callback");
