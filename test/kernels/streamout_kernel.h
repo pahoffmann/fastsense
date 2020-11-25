@@ -34,6 +34,11 @@ public:
         // Read buffers
         // No Buffers
     }
+
+    void waitComplete() override
+    {
+        cl::Event::waitForEvents(execute_events_);
+    }
 };
 
 } // namespace fastsense::kernels

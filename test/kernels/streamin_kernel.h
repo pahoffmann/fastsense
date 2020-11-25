@@ -29,7 +29,7 @@ public:
         // No buffers
 
         // Launch the Kernel
-        cmd_q_->enqueueTask(kernel_, &pre_events_, &execute_events_[0]);
+        cmd_q_->enqueueTask(kernel_, nullptr, &execute_events_[0]);
 
         // Read buffers
         cmd_q_->enqueueMigrateMemObjects({out.getBuffer()}, CL_MIGRATE_MEM_OBJECT_HOST, &execute_events_, &post_events_[0]);
