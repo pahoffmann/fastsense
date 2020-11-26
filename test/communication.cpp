@@ -8,6 +8,8 @@
 #include <comm/receiver.h>
 #include <comm/sender.h>
 #include <util/point.h>
+#include <util/time.h>
+#include <msg/imu.h>
 #include <msg/point_cloud.h>
 #include <msg/tsdf_bridge_msg.h>
 #include <msg/registration_input.h>
@@ -75,6 +77,37 @@ TEST_CASE("PointCloud Sender Receiver Test", "[communication]")
     REQUIRE(pc_to_send.points_ == pc_received.points_);
 }
 
+TEST_CASE("PointCloud::Ptr Sender Receiver Test", "[communication]")
+{
+    std::cout << "Testing 'PointCloud::Ptr Sender Receiver Test'" << std::endl;
+    PointCloud::Ptr pc_to_send;
+    pc_to_send->rings_ = 2;
+    pc_to_send->points_.push_back({1, 2, 3});
+    pc_to_send->points_.push_back({2, 3, 4});
+    pc_to_send->points_.push_back({3, 4, 5});
+    PointCloud::Ptr pc_received;
+
+    std::thread receive_thread{[&]()
+    {
+        Receiver<PointCloud::Ptr> receiver{"127.0.0.1", 1234};
+        std::this_thread::sleep_for(std::chrono::milliseconds(200));
+        receiver.receive(pc_received);
+    }};
+
+    std::thread send_thread{[&]()
+    {
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        Sender<PointCloud::Ptr> sender{1234};
+        std::this_thread::sleep_for(std::chrono::milliseconds(200));
+        sender.send(pc_to_send);
+    }};
+
+    receive_thread.join();
+    send_thread.join();
+    REQUIRE(pc_to_send->rings_ == pc_received->rings_);
+    REQUIRE(pc_to_send->points_ == pc_received->points_);
+}
+
 TEST_CASE("TSDFBridgeMessage Sender Receiver Test", "[communication]")
 {
     std::cout << "Testing 'TSDFBridgeMessage Sender Receiver Test'" << std::endl;
@@ -128,42 +161,47 @@ TEST_CASE("TSDFBridgeMessage Sender Receiver Test", "[communication]")
     REQUIRE(tsdf_msg.tsdf_data_ == tsdf_received.tsdf_data_);
 }
 
-TEST_CASE("RegistrationInput Sender Receiver Test", "[communication]")
+TEST_CASE("ImuStamped Sender Receiver Test", "[communication]")
 {
-    std::cout << "Testing 'RegistrationInput Sender Receiver Test'" << std::endl;
-    PointCloud pc_to_send;
-    pc_to_send.rings_ = 2;
-    pc_to_send.points_.push_back({1, 2, 3});
-    pc_to_send.points_.push_back({2, 3, 4});
-    pc_to_send.points_.push_back({3, 4, 5});
+    std::cout << "Testing 'ImuStamped Sender Receiver Test'" << std::endl;
+    auto tp = util::HighResTimePoint{std::chrono::nanoseconds{1000}};
 
-    Matrix4f acc_transform_to_send = Matrix4f::Identity();
+    LinearAcceleration acc{1, 2, 3};
+    AngularVelocity ang{4, 5, 6};
+    MagneticField mag{7, 8, 9};
+    Imu imu{acc, ang, mag};
 
-    RegistrationInput to_send{acc_transform_to_send, pc_to_send};
-    RegistrationInput to_receive;
+    ImuStamped imu_stamped = {imu, tp};
+    ImuStamped value_received{};
 
     std::thread receive_thread{[&]()
     {
-        Receiver<RegistrationInput> receiver{"127.0.0.1", 1234};
+        Receiver<ImuStamped> receiver{"127.0.0.1", 1234};
         std::this_thread::sleep_for(std::chrono::milliseconds(200));
-        receiver.receive(to_receive);
+        value_received = receiver.receive();
     }};
 
     std::thread send_thread{[&]()
     {
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
-        Sender<RegistrationInput> sender{1234};
+        Sender<ImuStamped> sender{1234};
         std::this_thread::sleep_for(std::chrono::milliseconds(200));
-        sender.send(to_send);
+        sender.send(imu_stamped);
     }};
-
-    const PointCloud& pc_received = to_receive.pcl();
-    const auto& acc_transform_received = to_receive.acc_transform();
 
     receive_thread.join();
     send_thread.join();
 
-    REQUIRE(acc_transform_to_send == acc_transform_received);
-    REQUIRE(pc_to_send.rings_ == pc_received.rings_);
-    REQUIRE(pc_to_send.points_ == pc_received.points_);
+    auto& [ imu_received, tp_received ] = value_received;
+
+    REQUIRE(imu_received.acc.x() == 1);
+    REQUIRE(imu_received.acc.y() == 2);
+    REQUIRE(imu_received.acc.z() == 3);
+    REQUIRE(imu_received.ang.x() == 4);
+    REQUIRE(imu_received.ang.y() == 5);
+    REQUIRE(imu_received.ang.z() == 6);
+    REQUIRE(imu_received.mag.x() == 7);
+    REQUIRE(imu_received.mag.y() == 8);
+    REQUIRE(imu_received.mag.z() == 9);
+    REQUIRE(tp_received == tp);
 }
