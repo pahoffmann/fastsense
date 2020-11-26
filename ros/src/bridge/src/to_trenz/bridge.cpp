@@ -7,14 +7,13 @@
 
 
 #include <util/time.h>
+#include <util/point.h>
 #include <util/concurrent_ring_buffer.h>
 
 #include <comm/sender.h>
-#include <comm/receiver.h>
 
 #include <msg/imu.h>
 #include <msg/point_cloud.h>
-#include <msg/registration_input.h>
 
 #include <registration/imu_accumulator.h>
 
@@ -29,13 +28,13 @@ public:
         , imu_sub_{}
         , pcl_sub_{}
         , imu_receiver_buffer_{100'000}
-        , sender_{4444}
-        , recv_{"127.0.0.1", 4444}
+        , imu_sender_{4444}
+        , pcl_sender_{3333}
     {
         spinner_.start();
         imu_sub_ = nh_.subscribe<sensor_msgs::Imu>("/imu/data_raw", 1000, &Bridge::imu_callback, this);
-        pcl_sub_ = nh_.subscribe<sensor_msgs::PointCloud2>("/os1_cloud_node/points", 1000, &Bridge::pcl_callback, this);
-        ROS_INFO("to_trenz subscriber initiated");
+        pcl_sub_ = nh_.subscribe<sensor_msgs::PointCloud2>("/velodyne_points", 1000, &Bridge::pcl_callback, this);
+        ROS_INFO("to_trenz bridge initiated");
     }
 
     ~Bridge()
@@ -43,78 +42,54 @@ public:
         spinner_.stop();
     };
 
-    static bool imu_younger(ros::Time pcl_stamp, ros::Time imu_stamp)
-    {
-        return (pcl_stamp - imu_stamp).toNSec() >= 0;
-    }
-
-    static bool imu_older(ros::Time pcl_stamp, ros::Time imu_stamp)
-    {
-        return not imu_younger(pcl_stamp, imu_stamp);
-    }
-
     void imu_callback(const sensor_msgs::ImuConstPtr& msg)
     {
-        imu_receiver_buffer_.push(msg);
-        // ROS_INFO("[imu] received");
+        fs::msg::Imu imu;
+        imu.ang.x() = msg->angular_velocity.x;
+        imu.ang.y() = msg->angular_velocity.y;
+        imu.ang.z() = msg->angular_velocity.z;
+        imu.acc.x() = msg->linear_acceleration.x;
+        imu.acc.y() = msg->linear_acceleration.y;
+        imu.acc.z() = msg->linear_acceleration.z;
+
+        auto tp = fs::util::HighResTimePoint{std::chrono::nanoseconds{msg->header.stamp.toNSec()}};
+
+        imu_sender_.send({std::move(imu), tp});
+
+        ROS_INFO("Sent imu\n");
     }
 
     void pcl_callback(const sensor_msgs::PointCloud2ConstPtr &pcl)
     {
-        auto& pcl_stamp = pcl->header.stamp;
-        bool first_msg = true;
-        ros::Time last_imu_timestamp;
-
-        sensor_msgs::ImuConstPtr imu_msg;
-
-        while (imu_receiver_buffer_.pop_nb(&imu_msg)) {
-            if (imu_older(pcl_stamp, imu_msg->header.stamp))
-            {
-                break;
-            }
-
-            if (first_msg)
-            {
-                last_imu_timestamp = imu_msg->header.stamp;
-                first_msg = false;
-                continue;
-            }
-
-            double acc_time = (imu_msg->header.stamp - last_imu_timestamp).toSec();
-
-            fs::msg::Imu imu;
-            imu.ang.x() = imu_msg->angular_velocity.x;
-            imu.ang.y() = imu_msg->angular_velocity.y;
-            imu.ang.z() = imu_msg->angular_velocity.z;
-            imu.acc.x() = imu_msg->linear_acceleration.x;
-            imu.acc.y() = imu_msg->linear_acceleration.y;
-            imu.acc.z() = imu_msg->linear_acceleration.z;
-
-            imu_accumulator_.update(imu, acc_time);
-            last_imu_timestamp = imu_msg->header.stamp;
-        }
+        auto tp = fs::util::HighResTimePoint{std::chrono::nanoseconds{pcl->header.stamp.toNSec()}};
 
         fastsense::msg::PointCloud trenz_pcl;
         auto& trenz_points = trenz_pcl.points_;
 
-        if (pcl->data.size() == 0)
+        size_t n_points = pcl->width * pcl->height;
+
+        if (pcl->data.empty())
         {
             ROS_WARN_STREAM("Received empty pointcloud");
         }
         else
         {
-            trenz_points.resize(pcl->data.size());
+            trenz_points.resize(n_points);
 
-            for (sensor_msgs::PointCloud2ConstIterator<float> it1(*pcl, "x"); it1 != it1.end(); ++it1) {
-                trenz_points.emplace_back(it1[0], it1[1], it1[2]);
+            auto pcl_start = sensor_msgs::PointCloud2ConstIterator<float>(*pcl, "x");
+
+
+            #pragma omp parallel for schedule(static)
+            for (size_t i = 0; i < n_points; ++i)
+            {
+                const auto it = pcl_start + i;
+                trenz_points[i] = fs::ScanPoint(it[0] * 1000.f, it[1] * 1000.f, it[2] * 1000.f);
             }
         }
 
-        ROS_INFO_STREAM("[pcl] sending rotation: " << imu_accumulator_.acc_transform()*4 << " and a pcl of size " << trenz_points.size());
-        fs::msg::RegistrationInput trenz_msg{imu_accumulator_.acc_transform()*4, std::move(trenz_pcl)};
-        sender_.send(trenz_msg);
+        pcl_sender_.send({std::move(trenz_pcl), tp});
 
-        imu_accumulator_.reset();
+        ROS_INFO("Sent pcl\n");
     }
 
 private:
@@ -124,8 +99,8 @@ private:
     ros::Subscriber pcl_sub_;
     fastsense::registration::ImuAccumulator imu_accumulator_;
     fs::util::ConcurrentRingBuffer<sensor_msgs::ImuConstPtr> imu_receiver_buffer_;
-    fs::comm::Sender<fs::msg::RegistrationInput> sender_;
-    fs::comm::Receiver<fs::msg::RegistrationInput> recv_;
+    fs::comm::Sender<fs::msg::ImuStamped> imu_sender_;
+    fs::comm::Sender<std::pair<fs::msg::PointCloud, fs::util::HighResTimePoint>> pcl_sender_;
 };
 
 int main(int argc, char **argv)

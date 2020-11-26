@@ -12,6 +12,10 @@
 namespace fastsense::comm
 {
 
+// Board -> bind
+// Host -> connect
+// netstat -ltp | grep qemu
+
 /**
  * @brief Receiver wraps zeromq via cppzmq and supports receiving data of type T
  *
@@ -37,7 +41,7 @@ public:
     /**
      * @brief Destroy the Receiver object
      */
-    ~Receiver() = default;
+    virtual ~Receiver() = default;
 
     /**
      * @brief Receive a message of static size
@@ -66,7 +70,7 @@ public:
     {
         zmq::message_t msg;
         socket_.recv(msg, flags);
-        memcpy(&target, msg.data(), sizeof(T));
+        target = *static_cast<T*>(msg.data());
     }
 
     /**

@@ -48,6 +48,13 @@ public:
         return *this;
     }
 
+    PointCloud& operator=(const PointCloud& other)
+    {
+        points_ = other.points_;
+        rings_ = other.rings_;
+        return *this;
+    }
+
     PointCloud(const PointCloud &p)
         : points_(p.points_) 
         , rings_(p.rings_)
