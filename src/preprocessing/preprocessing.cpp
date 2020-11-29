@@ -3,9 +3,9 @@
 using namespace fastsense::preprocessing;
 using fastsense::buffer::InputBuffer;
 
-void Preprocessing::preprocess_scan(const fastsense::msg::PointCloudStamped& cloud, InputBuffer<PointHW>& scan_points, const Matrix4f& pose)
+void Preprocessing::preprocess_scan(const fastsense::msg::PointCloudPtrStamped& cloud, InputBuffer<PointHW>& scan_points, const Matrix4f& pose)
 {
-    const auto& cloud_points = cloud.first->points_;
+    const auto& cloud_points = cloud.data_->points_;
     Eigen::Vector4f v;
 
     int scan_points_index = 0;
@@ -24,9 +24,9 @@ void Preprocessing::preprocess_scan(const fastsense::msg::PointCloudStamped& clo
     }
 }
 
-void Preprocessing::reduction_filter(fastsense::msg::PointCloudStamped& cloud)
+void Preprocessing::reduction_filter(fastsense::msg::PointCloudPtrStamped& cloud)
 {
-    auto& cloud_points = cloud.first->points_;
+    auto& cloud_points = cloud.data_->points_;
 
     std::unordered_map<uint64_t, std::pair<Vector3i, int>> point_map;
     std::pair<Vector3i, int> default_value = std::make_pair(Vector3i::Zero(), 0);
@@ -77,28 +77,28 @@ uint8_t Preprocessing::median_from_array(std::vector<ScanPoint*> medians)
     return distances[distances.size()/2].first;
 }
 
-void Preprocessing::median_filter(fastsense::msg::PointCloudStamped& cloud, uint8_t window_size)
+void Preprocessing::median_filter(fastsense::msg::PointCloudPtrStamped& cloud, uint8_t window_size)
 {
     if (window_size % 2 == 0)
     {
         return;
     }
 
-    std::vector<ScanPoint> result(cloud.first->points_.size());
+    std::vector<ScanPoint> result(cloud.data_->points_.size());
     std::vector<ScanPoint*> window(window_size); 
     
     int half_window_size = window_size/2;
-    for(uint32_t i = 0; i < cloud.first->points_.size(); i++)
+    for(uint32_t i = 0; i < cloud.data_->points_.size(); i++)
     {   
-        int first_element = (i - (half_window_size * cloud.first->rings_));
+        int first_element = (i - (half_window_size * cloud.data_->rings_));
         for(uint8_t j = 0; j < window_size; j++)
         {
-            int index = ((first_element + (j * cloud.first->rings_)) + cloud.first->points_.size()) % cloud.first->points_.size();
-            window[j] = (ScanPoint*)&cloud.first->points_[index];
+            int index = ((first_element + (j * cloud.data_->rings_)) + cloud.data_->points_.size()) % cloud.data_->points_.size();
+            window[j] = (ScanPoint*)&cloud.data_->points_[index];
         }        
 
         result[i] = *window[median_from_array(window)];
     }
 
-    cloud.first->points_ = result;
+    cloud.data_->points_ = result;
 }

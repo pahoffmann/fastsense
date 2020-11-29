@@ -20,7 +20,7 @@ template <typename BUFF_T, typename RECV_T>
 class BufferedReceiver : public util::ProcessThread
 {
 public:
-    BufferedReceiver(std::string addr, uint16_t port, std::shared_ptr<util::ConcurrentRingBuffer<BUFF_T>> buffer)
+    BufferedReceiver(const std::string& addr, uint16_t port, std::shared_ptr<util::ConcurrentRingBuffer<BUFF_T>> buffer)
     : receiver_{addr, port}
     , buffer_{buffer}
     {}
@@ -29,13 +29,12 @@ public:
 
     virtual void receive() = 0;
 
+    [[noreturn]]
     void thread_run() override
     {
         for (;;)
         {
-            std::cout << "recv attempt\n";
             receive();
-            std::cout << "recv done\n";
         }
     }
 
@@ -48,7 +47,7 @@ protected:
 class BufferedImuReceiver : public BufferedReceiver<msg::ImuStamped, msg::ImuStamped>
 {
 public:
-    BufferedImuReceiver(std::string addr, uint16_t port, msg::ImuStampedBufferPtr buffer)
+    BufferedImuReceiver(const std::string& addr, uint16_t port, msg::ImuStampedBuffer::Ptr buffer)
     : BufferedReceiver{addr, port, buffer}
     {}
 
@@ -65,10 +64,10 @@ private:
 
 };
 
-class BufferedPCLReceiver : public BufferedReceiver<msg::PointCloudStamped, std::pair<msg::PointCloud, util::HighResTimePoint>>
+class BufferedPCLReceiver : public BufferedReceiver<msg::PointCloudPtrStamped, std::pair<msg::PointCloud, util::HighResTimePoint>>
 {
 public:
-    BufferedPCLReceiver(std::string addr, uint16_t port, msg::PointCloudStampedBufferPtr buffer)
+    BufferedPCLReceiver(const std::string& addr, uint16_t port, msg::PointCloudPtrStampedBuffer::Ptr buffer)
     : BufferedReceiver{addr, port, buffer}
     {}
 
@@ -81,7 +80,8 @@ private:
         receiver_.receive(msg_);
         std::cout << "Received pcl\n";
         auto& [ pcl, ts ] = msg_;
-        buffer_->push_nb({ std::make_shared<msg::PointCloud>(pcl), ts });
+        // TODO std::move() ?
+        buffer_->push_nb(msg::PointCloudPtrStamped{std::make_shared<msg::PointCloud>(pcl), ts });
     }
 };
 

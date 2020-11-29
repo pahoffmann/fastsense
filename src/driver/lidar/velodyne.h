@@ -71,7 +71,7 @@ public:
      * @param port Port for receiving the sensor data.
      * @param buffer Ring buffer for storing the sensor data and transfer to the next step.
      */
-    VelodyneDriver(uint16_t port, const fastsense::msg::PointCloudStampedBufferPtr& buffer);
+    VelodyneDriver(uint16_t port, const fastsense::msg::PointCloudPtrStampedBuffer::Ptr& buffer);
 
     /**
      * @brief Destroy the Velodyne Driver object.
@@ -90,7 +90,7 @@ public:
      *
      * @return PointCloudStamped The next scan with timestamp
      */
-    fastsense::msg::PointCloudStamped getScan();
+    fastsense::msg::PointCloudPtrStamped getScan();
 
 protected:
     /**
@@ -118,7 +118,7 @@ protected:
     float az_last_;
 
     /// Buffer to write scans to
-    fastsense::util::ConcurrentRingBuffer<fastsense::msg::PointCloudStamped>::ptr scan_buffer_;
+    fastsense::util::ConcurrentRingBuffer<fastsense::msg::PointCloudPtrStamped>::Ptr scan_buffer_;
 
     /// Current scan
     fastsense::msg::PointCloud::Ptr current_scan_;

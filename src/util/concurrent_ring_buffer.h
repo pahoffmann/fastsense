@@ -79,7 +79,7 @@ public:
         return length;
     }
 
-    using ptr = std::shared_ptr<ConcurrentRingBuffer<T>>;
+    using Ptr = std::shared_ptr<ConcurrentRingBuffer<T>>;
 
 private:
     /**

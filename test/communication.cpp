@@ -10,7 +10,7 @@
 #include <util/point.h>
 #include <util/time.h>
 #include <msg/imu.h>
-#include <msg/point_cloud.h>
+#include <msg/point_cloud_stamped.h>
 #include <msg/tsdf_bridge_msg.h>
 #include <msg/registration_input.h>
 #include <iostream>
@@ -77,35 +77,41 @@ TEST_CASE("PointCloud Sender Receiver Test", "[communication]")
     REQUIRE(pc_to_send.points_ == pc_received.points_);
 }
 
-TEST_CASE("PointCloud::Ptr Sender Receiver Test", "[communication]")
+TEST_CASE("PointCloudStamped Sender Receiver Test", "[communication]")
 {
-    std::cout << "Testing 'PointCloud::Ptr Sender Receiver Test'" << std::endl;
-    PointCloud::Ptr pc_to_send;
-    pc_to_send->rings_ = 2;
-    pc_to_send->points_.push_back({1, 2, 3});
-    pc_to_send->points_.push_back({2, 3, 4});
-    pc_to_send->points_.push_back({3, 4, 5});
-    PointCloud::Ptr pc_received;
+    std::cout << "Testing 'PointCloudStamped Sender Receiver Test'" << std::endl;
+    PointCloud pc_to_send;
+    pc_to_send.rings_ = 2;
+    pc_to_send.points_.push_back({1, 2, 3});
+    pc_to_send.points_.push_back({2, 3, 4});
+    pc_to_send.points_.push_back({3, 4, 5});
+
+    auto tp_to_send = util::HighResTime::now();
+
+    PointCloudStamped pcl_stamped{pc_to_send, tp_to_send};
+    PointCloudStamped pcl_stamped_received;
 
     std::thread receive_thread{[&]()
     {
-        Receiver<PointCloud::Ptr> receiver{"127.0.0.1", 1234};
+        Receiver<PointCloudStamped> receiver{"127.0.0.1", 1234};
         std::this_thread::sleep_for(std::chrono::milliseconds(200));
-        receiver.receive(pc_received);
+        receiver.receive(pcl_stamped_received);
     }};
 
     std::thread send_thread{[&]()
     {
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
-        Sender<PointCloud::Ptr> sender{1234};
+        Sender<PointCloudStamped> sender{1234};
         std::this_thread::sleep_for(std::chrono::milliseconds(200));
-        sender.send(pc_to_send);
+        sender.send(pcl_stamped);
     }};
 
     receive_thread.join();
     send_thread.join();
-    REQUIRE(pc_to_send->rings_ == pc_received->rings_);
-    REQUIRE(pc_to_send->points_ == pc_received->points_);
+
+    REQUIRE(pcl_stamped.data_.rings_ == pcl_stamped_received.data_.rings_);
+    REQUIRE(pcl_stamped.data_.points_ == pcl_stamped_received.data_.points_);
+    REQUIRE(pcl_stamped.timestamp_ == pcl_stamped_received.timestamp_);
 }
 
 TEST_CASE("TSDFBridgeMessage Sender Receiver Test", "[communication]")

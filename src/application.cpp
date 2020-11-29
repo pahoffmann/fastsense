@@ -10,8 +10,10 @@
 #include <iostream>
 
 #include "application.h"
+#include <msg/point_cloud_stamped.h>
 #include <msg/imu.h>
 #include <msg/tsdf_bridge_msg.h>
+#include <msg/stamped.h>
 #include <util/config/config_manager.h>
 #include <util/logging/logger.h>
 #include <registration/registration.h>
@@ -40,7 +42,7 @@ class Runner
 private:
     T& object;
 public:
-    Runner(T& obj) : object(obj)
+    explicit Runner(T& obj) : object(obj)
     {
         object.start();
     }
@@ -72,11 +74,11 @@ int Application::run()
     comm::BufferedImuReceiver imu_driver{"192.168.1.1", 4444, imu_buffer};
     comm::QueueBridge<msg::ImuStamped, true> imu_bridge(imu_buffer, imu_bridge_buffer, 5555);
 
-    auto pointcloud_buffer = std::make_shared<msg::PointCloudStampedBuffer>(ConfigManager::config().lidar.bufferSize());
-    auto pointcloud_bridge_buffer = std::make_shared<msg::PointCloudStampedBuffer>(ConfigManager::config().lidar.bufferSize());
+    auto pointcloud_buffer = std::make_shared<msg::PointCloudPtrStampedBuffer>(ConfigManager::config().lidar.bufferSize());
+    auto pointcloud_bridge_buffer = std::make_shared<msg::PointCloudPtrStampedBuffer>(ConfigManager::config().lidar.bufferSize());
 
     comm::BufferedPCLReceiver lidar_driver{"192.168.1.1", 3333, pointcloud_buffer};
-    comm::QueueBridge<msg::PointCloudStamped, true> lidar_bridge(pointcloud_buffer, pointcloud_bridge_buffer, 7777);
+    comm::QueueBridge<msg::PointCloudPtrStamped, true> lidar_bridge(pointcloud_buffer, pointcloud_bridge_buffer, 7777);
 
     // auto command_queue = fastsense::hw::FPGAManager::create_command_queue();
 

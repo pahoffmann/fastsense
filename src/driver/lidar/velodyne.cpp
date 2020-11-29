@@ -103,7 +103,7 @@ constexpr uint8_t LASER_ID_TO_RING[16] =
     0
 };
 
-VelodyneDriver::VelodyneDriver(uint16_t port, const PointCloudStampedBufferPtr& buffer) :
+VelodyneDriver::VelodyneDriver(uint16_t port, const PointCloudPtrStampedBuffer::Ptr& buffer) :
     port_{port},
     sockfd_{},
     packet_{},
@@ -158,9 +158,9 @@ void VelodyneDriver::start()
     }
 }
 
-fastsense::msg::PointCloudStamped VelodyneDriver::getScan()
+fastsense::msg::PointCloudPtrStamped VelodyneDriver::getScan()
 {
-    PointCloudStamped pcs;
+    PointCloudPtrStamped pcs;
     scan_buffer_->pop(&pcs);
     return pcs;
 }
@@ -240,7 +240,8 @@ void VelodyneDriver::decode_packet()
             if (az_block < az_last_)
             {
                 // TODO set new time point?
-                scan_buffer_->push_nb(std::make_pair(current_scan_, util::HighResTime::now()), true);
+                // TODO std::move()
+                scan_buffer_->push_nb(Stamped<PointCloud::Ptr>{current_scan_, util::HighResTime::now()}, true);
                 current_scan_ = std::make_shared<PointCloud>();
                 current_scan_->rings_ = 16;
             }

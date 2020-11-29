@@ -78,7 +78,7 @@ Eigen::Vector3f Matrix4ToEuler(const Matrix4f& inputMat)
 
 void CloudCallback::thread_run()
 {
-    fastsense::msg::PointCloudStamped point_cloud;
+    fastsense::msg::PointCloudPtrStamped point_cloud;
     auto& eval = RuntimeEvaluator::get_instance();
     while (running)
     {
@@ -90,13 +90,13 @@ void CloudCallback::thread_run()
         eval.start("total");
         eval.start("prep");
 
-        fastsense::msg::PointCloudStamped point_cloud2;
-        point_cloud2.first = std::make_shared<msg::PointCloud>(*point_cloud.first);
-        point_cloud2.second = point_cloud.second;
+        fastsense::msg::PointCloudPtrStamped point_cloud2;
+        point_cloud2.data_ = point_cloud.data_;
+        point_cloud2.timestamp_ = point_cloud.timestamp_;
 
         preprocessor.median_filter(point_cloud2, 5);
         preprocessor.reduction_filter(point_cloud2);
-        InputBuffer<PointHW> scan_point_buffer{q, point_cloud2.first->points_.size()};
+        InputBuffer<PointHW> scan_point_buffer{q, point_cloud2.data_->points_.size()};
         preprocessor.preprocess_scan(point_cloud2, scan_point_buffer, pose);
 
         eval.stop("prep");

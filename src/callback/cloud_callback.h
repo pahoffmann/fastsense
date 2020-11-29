@@ -21,7 +21,7 @@ namespace fastsense::callback
 {
 
 using Registration = fastsense::registration::Registration;
-using PointCloudBuffer = fastsense::util::ConcurrentRingBuffer<fastsense::msg::PointCloudStamped>;
+using PointCloudBuffer = fastsense::util::ConcurrentRingBuffer<fastsense::msg::PointCloudPtrStamped>;
 using fastsense::map::LocalMap;
 using fastsense::map::GlobalMap;
 using Eigen::Matrix4f;
