@@ -92,6 +92,8 @@ int Application::run()
                          ConfigManager::config().slam.map_size_z(),
                          global_map_ptr, command_queue);
 
+    // TODO: EVERYTHING (asynchrones Shiften, wahrscheinlich hier eine weitere Map)
+
     Matrix4f pose = Matrix4f::Identity();
     auto tsdf_buffer = std::make_shared<util::ConcurrentRingBuffer<msg::TSDFBridgeMessage>>(2);
     auto transform_buffer = std::make_shared<util::ConcurrentRingBuffer<msg::Transform>>(16);
