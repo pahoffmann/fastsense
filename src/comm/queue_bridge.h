@@ -2,7 +2,7 @@
 
 /**
  * @file queue_bridge.h
- * @author Marcel Flottmann
+ * @author Marcel Flottmann, Julian Gaal
  * @date 2020-10-06
  */
 
@@ -113,6 +113,40 @@ protected:
     void send(const std::pair<std::shared_ptr<T>, util::HighResTimePoint>& val) override
     {
         this->sender_.send(*val.first);
+    }
+};
+
+/**
+ * @brief QueueBridgeBase specialization for PointCloudStamped (trenz to ROS)
+ * 
+ * @tparam T 
+ * @tparam FORCE 
+ */
+template<typename T, bool FORCE>
+class QueueBridge<msg::Stamped<std::shared_ptr<msg::PointCloud>>, FORCE> : public QueueBridgeBase<msg::Stamped<std::shared_ptr<PointCloud>>, msg::PointCloudStamped, FORCE>
+{
+public:
+    using QueueBridgeBase<msg::Stamped<std::shared_ptr<msg::PointCloud>>, msg::PointCloudStamped, FORCE>::QueueBridgeBase;
+    ~QueueBridge() override = default;
+
+protected:
+    void send(const msg::Stamped<std::shared_ptr<msg::PointCloud>>& val) override
+    {
+        this->sender_.send(msg::PointCloudStamped{*val.data_, val.timestamp_});
+    }
+};
+
+template<typename T, bool FORCE>
+class QueueBridge<msg::Stamped<T>, FORCE> : public QueueBridgeBase<msg::Stamped<T>, T, FORCE>
+{
+public:
+    using QueueBridgeBase<msg::Stamped<T>, T, FORCE>::QueueBridgeBase;
+    ~QueueBridge() override = default;
+
+protected:
+    void send(const msg::Stamped<T>& val) override
+    {
+        this->sender_.send(val);
     }
 };
 

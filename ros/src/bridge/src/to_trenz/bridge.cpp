@@ -13,7 +13,7 @@
 #include <comm/sender.h>
 
 #include <msg/imu.h>
-#include <msg/point_cloud.h>
+#include <msg/point_cloud_stamped.h>
 
 #include <registration/imu_accumulator.h>
 
@@ -87,7 +87,7 @@ public:
             }
         }
 
-        pcl_sender_.send({std::move(trenz_pcl), tp});
+        pcl_sender_.send(fs::msg::PointCloudStamped{std::move(trenz_pcl), tp});
 
         ROS_INFO("Sent pcl\n");
     }
@@ -100,7 +100,7 @@ private:
     fastsense::registration::ImuAccumulator imu_accumulator_;
     fs::util::ConcurrentRingBuffer<sensor_msgs::ImuConstPtr> imu_receiver_buffer_;
     fs::comm::Sender<fs::msg::ImuStamped> imu_sender_;
-    fs::comm::Sender<std::pair<fs::msg::PointCloud, fs::util::HighResTimePoint>> pcl_sender_;
+    fs::comm::Sender<fs::msg::PointCloudStamped> pcl_sender_;
 };
 
 int main(int argc, char **argv)

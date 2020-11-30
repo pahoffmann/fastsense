@@ -56,15 +56,13 @@ public:
 private:
     void receive() override
     {
-        std::cout << "Receive attempt imu\n";
         receiver_.receive(msg_);
-        std::cout << "Received imu\n";
         buffer_->push_nb(msg_);
     }
 
 };
 
-class BufferedPCLReceiver : public BufferedReceiver<msg::PointCloudPtrStamped, std::pair<msg::PointCloud, util::HighResTimePoint>>
+class BufferedPCLReceiver : public BufferedReceiver<msg::PointCloudPtrStamped, msg::PointCloudStamped>
 {
 public:
     BufferedPCLReceiver(const std::string& addr, uint16_t port, msg::PointCloudPtrStampedBuffer::Ptr buffer)
@@ -76,9 +74,7 @@ public:
 private:
     void receive() override
     {
-        std::cout << "Receive attempt pcl\n";
         receiver_.receive(msg_);
-        std::cout << "Received pcl\n";
         auto& [ pcl, ts ] = msg_;
         // TODO std::move() ?
         buffer_->push_nb(msg::PointCloudPtrStamped{std::make_shared<msg::PointCloud>(pcl), ts });

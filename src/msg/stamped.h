@@ -5,7 +5,7 @@
  * @author Julian Gaal
  */
 
-#include <util/time.h>
+#include "../util/time.h"
 
 namespace fastsense::msg {
 
