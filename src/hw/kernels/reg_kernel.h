@@ -88,7 +88,11 @@ public:
         auto m = map.get_hardware_representation();
 
         setArg(point_data.getBuffer());
+        setArg(point_data.getBuffer());
         setArg(static_cast<int>(point_data.size()));
+        setArg(map.getBuffer().getBuffer());
+        setArg(map.getBuffer().getBuffer());
+        setArg(map.getBuffer().getBuffer());
         setArg(map.getBuffer().getBuffer());
         setArg(map.getBuffer().getBuffer());
         setArg(map.getBuffer().getBuffer());
