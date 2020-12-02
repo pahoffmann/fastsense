@@ -84,22 +84,27 @@ void ImuBridge::initCovariance()
 }
 
 void ImuBridge::convert()
-{   
-    auto time_now = ros::Time::now();
+{  
+    const auto& [ data, timestamp ] = msg();
+
+    auto t_since_epoch = timestamp.time_since_epoch();
+    auto sec = std::chrono::duration_cast<std::chrono::seconds>(t_since_epoch).count();
+    auto nsec = std::chrono::duration_cast<std::chrono::nanoseconds>(t_since_epoch).count() % 1'000'000;
+
     imu_ros_.header.frame_id = "base_link";
-    imu_ros_.header.stamp = time_now;
+    imu_ros_.header.stamp = ros::Time(sec, nsec);
     imu_ros_.orientation.x = 0;
     imu_ros_.orientation.y = 0;
     imu_ros_.orientation.z = 0;
     imu_ros_.orientation.w = 0;
 
-    imu_ros_.angular_velocity.x = msg().ang.x();
-    imu_ros_.angular_velocity.y = msg().ang.y();
-    imu_ros_.angular_velocity.z = msg().ang.z();
+    imu_ros_.angular_velocity.x = data.ang.x();
+    imu_ros_.angular_velocity.y = data.ang.y();
+    imu_ros_.angular_velocity.z = data.ang.z();
 
-    imu_ros_.linear_acceleration.x = msg().acc.x();
-    imu_ros_.linear_acceleration.y = msg().acc.y();
-    imu_ros_.linear_acceleration.z = msg().acc.z();
+    imu_ros_.linear_acceleration.x = data.acc.x();
+    imu_ros_.linear_acceleration.y = data.acc.y();
+    imu_ros_.linear_acceleration.z = data.acc.z();
 
     std::copy(  linear_acceleration_covariance_.begin(),
                 linear_acceleration_covariance_.end(),
@@ -110,10 +115,10 @@ void ImuBridge::convert()
                 imu_ros_.angular_velocity_covariance.begin());
 
     mag_ros_.header.frame_id = "base_link";
-    mag_ros_.header.stamp = time_now;
-    mag_ros_.magnetic_field.x = msg().mag.x();
-    mag_ros_.magnetic_field.y = msg().mag.y();
-    mag_ros_.magnetic_field.z = msg().mag.z();
+    mag_ros_.header.stamp = ros::Time(sec, nsec);
+    mag_ros_.magnetic_field.x = data.mag.x();
+    mag_ros_.magnetic_field.y = data.mag.y();
+    mag_ros_.magnetic_field.z = data.mag.z();
 
     std::copy(  magnetic_field_covariance_.begin(), 
                 magnetic_field_covariance_.end(), 

@@ -54,7 +54,7 @@ public:
 
         auto tp = fs::util::HighResTimePoint{std::chrono::nanoseconds{msg->header.stamp.toNSec()}};
 
-        imu_sender_.send({std::move(imu), tp});
+        imu_sender_.send(fs::msg::ImuStamped{std::move(imu), tp});
 
         ROS_INFO("Sent imu\n");
     }
