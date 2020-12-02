@@ -35,14 +35,14 @@ void ImuAccumulator::update(const fastsense::msg::ImuStamped& imu)
 {
     if (first_imu_msg_)
     {
-        last_imu_timestamp_ = imu.second;
+        last_imu_timestamp_ = imu.timestamp_;
         first_imu_msg_ = false;
         return;
     }
 
-    double acc_time = std::chrono::duration_cast<util::time::secs_double>(imu.second - last_imu_timestamp_).count();
-    apply_transform(acc_time, imu.first.ang);
-    last_imu_timestamp_ = imu.second;
+    double acc_time = std::chrono::duration_cast<util::time::secs_double>(imu.timestamp_ - last_imu_timestamp_).count();
+    apply_transform(acc_time, imu.data_.ang);
+    last_imu_timestamp_ = imu.timestamp_;
 }
 
 void ImuAccumulator::update(const fastsense::msg::Imu& imu, double acc_time)

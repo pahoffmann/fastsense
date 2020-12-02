@@ -12,9 +12,9 @@
 
 namespace fastsense::msg {
 
-struct PointCloudStamped : public Stamped<PointCloud>, public ZMQConverter {
+struct PointCloudStamped : public Stamped<PointCloud> {
     PointCloudStamped()
-    : Stamped{PointCloud{}, util::HighResTime::now()}
+    : Stamped{}
     {
     }
 
@@ -23,22 +23,22 @@ struct PointCloudStamped : public Stamped<PointCloud>, public ZMQConverter {
     {
     }
 
-    ~PointCloudStamped() override = default;
+    ~PointCloudStamped() override final = default;
+    
+    // void from_zmq_msg(zmq::multipart_t &msg) override final
+    // {
+    //     timestamp_ = msg.poptyp<util::HighResTimePoint>();
+    //     data_.from_zmq_msg(msg);
+    // }
 
-    void from_zmq_msg(zmq::multipart_t &msg) override
-    {
-        timestamp_ = msg.poptyp<util::HighResTimePoint>();
-        data_.from_zmq_msg(msg);
-    }
-
-    [[nodiscard]]
-    zmq::multipart_t to_zmq_msg() const override
-    {
-        zmq::multipart_t multi;
-        multi.addtyp(timestamp_);
-        multi.append(data_.to_zmq_msg());
-        return multi;
-    }
+    // [[nodiscard]]
+    // zmq::multipart_t to_zmq_msg() const override final
+    // {
+    //     zmq::multipart_t multi;
+    //     multi.addtyp(timestamp_);
+    //     multi.append(data_.to_zmq_msg());
+    //     return multi;
+    // }
 };
 
 } // namespace fastsense::msg

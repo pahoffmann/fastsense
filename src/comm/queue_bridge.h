@@ -132,15 +132,16 @@ public:
 protected:
     void send(const msg::Stamped<std::shared_ptr<msg::PointCloud>>& val) override
     {
-        this->sender_.send(msg::PointCloudStamped{*val.data_, val.timestamp_});
+        msg::PointCloud pcl = *val.data_;
+        this->sender_.send(msg::PointCloudStamped{std::move(pcl), val.timestamp_});
     }
 };
 
 template<typename T, bool FORCE>
-class QueueBridge<msg::Stamped<T>, FORCE> : public QueueBridgeBase<msg::Stamped<T>, T, FORCE>
+class QueueBridge<msg::Stamped<T>, FORCE> : public QueueBridgeBase<msg::Stamped<T>, msg::Stamped<T>, FORCE>
 {
 public:
-    using QueueBridgeBase<msg::Stamped<T>, T, FORCE>::QueueBridgeBase;
+    using QueueBridgeBase<msg::Stamped<T>, msg::Stamped<T>, FORCE>::QueueBridgeBase;
     ~QueueBridge() override = default;
 
 protected:

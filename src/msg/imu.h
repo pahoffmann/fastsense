@@ -8,6 +8,7 @@
 #include <iostream>
 #include <memory>
 
+#include <msg/stamped.h>
 #include <util/time.h>
 #include <msg/linear_acceleration.h>
 #include <msg/angular_velocity.h>
@@ -45,12 +46,11 @@ struct Imu
     AngularVelocity ang;
     MagneticField mag;
 
-    using ptr = std::shared_ptr<Imu>;
+    using Ptr = std::shared_ptr<Imu>;
 };
 
-using ImuStamped = std::pair<Imu, util::HighResTimePoint>;
+using ImuStamped = msg::Stamped<Imu>;
 using ImuStampedBuffer = util::ConcurrentRingBuffer<ImuStamped>;
-using ImuStampedBufferPtr = std::shared_ptr<ImuStampedBuffer>;
 
 } // namespace fastsense::msg
 

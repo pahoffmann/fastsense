@@ -34,6 +34,11 @@ public:
     Receiver(std::string addr, uint16_t port)
         :   socket_(ZMQContextManager::getContext(), zmq::socket_type::sub)
     {
+        if (addr.empty())
+        {
+            throw std::runtime_error("Can't connect to address ''");
+        }
+        
         socket_.connect("tcp://" + addr + ":" + std::to_string(port));
         socket_.setsockopt(ZMQ_SUBSCRIBE, "", 0);
     }

@@ -24,7 +24,7 @@ public:
      * Creates Imu instance
      * @param ringbuffer
      */
-    explicit Imu(const fastsense::msg::ImuStampedBufferPtr& ringbuffer);
+    explicit Imu(const fastsense::msg::ImuStampedBuffer::Ptr& ringbuffer);
 
     ~Imu() override = default;
 
@@ -90,7 +90,7 @@ public:
 
 private:
     /// buffer, in which imu readings are saved
-    fastsense::msg::ImuStampedBufferPtr data_buffer_;
+    fastsense::msg::ImuStampedBuffer::Ptr data_buffer_;
 
     /// whether or not imu is connected
     bool is_connected_;

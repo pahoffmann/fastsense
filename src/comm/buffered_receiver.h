@@ -57,7 +57,7 @@ private:
     void receive() override
     {
         receiver_.receive(msg_);
-        buffer_->push_nb(msg_);
+        buffer_->push_nb(std::move(msg_));
     }
 
 };
@@ -76,8 +76,7 @@ private:
     {
         receiver_.receive(msg_);
         auto& [ pcl, ts ] = msg_;
-        // TODO std::move() ?
-        buffer_->push_nb(msg::PointCloudPtrStamped{std::make_shared<msg::PointCloud>(pcl), ts });
+        buffer_->push_nb(msg::PointCloudPtrStamped{std::make_shared<msg::PointCloud>(std::move(pcl)), ts });
     }
 };
 

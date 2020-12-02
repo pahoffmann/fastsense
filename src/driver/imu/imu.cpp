@@ -15,11 +15,11 @@
 using namespace fastsense::driver;
 using namespace fastsense::util;
 
-using fastsense::msg::ImuStampedBufferPtr;
+using fastsense::msg::ImuStampedBuffer;
 
 // TODO detach handler? How to handle connected/disconnectedness
 
-Imu::Imu(const ImuStampedBufferPtr& ringbuffer)
+Imu::Imu(const ImuStampedBuffer::Ptr& ringbuffer)
     :   Phidget(),
         ProcessThread(),
         data_buffer_{ringbuffer},
@@ -115,7 +115,7 @@ void Imu::data_handler(const double* acceleration, const double* angularRate, co
     }
 
     msg::Imu msg(acceleration, angularRate, magneticField);
-    data_buffer_->push_nb(std::make_pair(msg, fastsense::util::HighResTimePoint()), false);
+    data_buffer_->push_nb(msg::ImuStamped{std::move(msg), util::HighResTime::now()}, false);
 }
 
 void Imu::attach_handler()

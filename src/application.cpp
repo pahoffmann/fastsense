@@ -71,13 +71,13 @@ int Application::run()
     auto imu_buffer = std::make_shared<msg::ImuStampedBuffer>(ConfigManager::config().imu.bufferSize());
     auto imu_bridge_buffer = std::make_shared<msg::ImuStampedBuffer>(ConfigManager::config().imu.bufferSize());
 
-    comm::BufferedImuReceiver imu_driver{"192.168.1.2", 4444, imu_buffer};
+    comm::BufferedImuReceiver imu_driver{ConfigManager::config().bridge.host(), 4444, imu_buffer};
     comm::QueueBridge<msg::ImuStamped, true> imu_bridge(imu_buffer, imu_bridge_buffer, 5555);
 
     auto pointcloud_buffer = std::make_shared<msg::PointCloudPtrStampedBuffer>(ConfigManager::config().lidar.bufferSize());
     auto pointcloud_bridge_buffer = std::make_shared<msg::PointCloudPtrStampedBuffer>(ConfigManager::config().lidar.bufferSize());
 
-    comm::BufferedPCLReceiver lidar_driver{"192.168.1.2", 3333, pointcloud_buffer};
+    comm::BufferedPCLReceiver lidar_driver{ConfigManager::config().bridge.host(), 3333, pointcloud_buffer};
     comm::QueueBridge<msg::PointCloudPtrStamped, true> lidar_bridge(pointcloud_buffer, pointcloud_bridge_buffer, 7777);
 
     // auto command_queue = fastsense::hw::FPGAManager::create_command_queue();

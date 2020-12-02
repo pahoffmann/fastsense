@@ -32,6 +32,14 @@ struct SensorSyncConfig : public ConfigGroup
     DECLARE_CONFIG_ENTRY(size_t, bufferSize);
 };
 
+struct BridgeConfig : public ConfigGroup
+{
+    using ConfigGroup::ConfigGroup;
+
+    DECLARE_CONFIG_ENTRY(std::string, host);
+};
+
+
 struct RegistrationConfig : public ConfigGroup
 {
     using ConfigGroup::ConfigGroup;
@@ -63,6 +71,7 @@ struct Config : public ConfigGroup
     DECLARE_CONFIG_GROUP(SensorSyncConfig, sensorSync);
     DECLARE_CONFIG_GROUP(RegistrationConfig, registration);
     DECLARE_CONFIG_GROUP(SlamConfig, slam);
+    DECLARE_CONFIG_GROUP(BridgeConfig, bridge);
 };
 
 } // namespace fastsense::util::config
