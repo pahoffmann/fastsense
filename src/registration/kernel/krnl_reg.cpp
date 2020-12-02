@@ -225,18 +225,18 @@ extern "C"
                   float* out_transform
                  )
     {
-#pragma HLS INTERFACE m_axi latency=22 offset=slave port=pointData0    bundle=pointmem0
-#pragma HLS INTERFACE m_axi latency=22 offset=slave port=mapData00     bundle=pointmem0
-#pragma HLS INTERFACE m_axi latency=22 offset=slave port=mapData01     bundle=mapmem01
-#pragma HLS INTERFACE m_axi latency=22 offset=slave port=mapData02     bundle=mapmem02
+#pragma HLS INTERFACE m_axi latency=22 offset=slave port=pointData0    bundle=pointData0mem
+#pragma HLS INTERFACE m_axi latency=22 offset=slave port=mapData00     bundle=mapData00mem
+#pragma HLS INTERFACE m_axi latency=22 offset=slave port=mapData01     bundle=mapData01mem
+#pragma HLS INTERFACE m_axi latency=22 offset=slave port=mapData02     bundle=mapData02mem
 
-#pragma HLS INTERFACE m_axi latency=22 offset=slave port=pointData1    bundle=pointmem1
-#pragma HLS INTERFACE m_axi latency=22 offset=slave port=mapData10     bundle=pointmem1
-#pragma HLS INTERFACE m_axi latency=22 offset=slave port=mapData11     bundle=mapmem11
-#pragma HLS INTERFACE m_axi latency=22 offset=slave port=mapData12     bundle=mapmem12
+#pragma HLS INTERFACE m_axi latency=22 offset=slave port=pointData1    bundle=pointData1mem
+#pragma HLS INTERFACE m_axi latency=22 offset=slave port=mapData10     bundle=mapData10mem
+#pragma HLS INTERFACE m_axi latency=22 offset=slave port=mapData11     bundle=mapData11mem
+#pragma HLS INTERFACE m_axi latency=22 offset=slave port=mapData12     bundle=mapData12mem
 
-#pragma HLS INTERFACE m_axi latency=22 offset=slave port=in_transform  bundle=gmem
-#pragma HLS INTERFACE m_axi latency=22 offset=slave port=out_transform bundle=gmem
+#pragma HLS INTERFACE m_axi latency=22 offset=slave port=in_transform  bundle=transformmem
+#pragma HLS INTERFACE m_axi latency=22 offset=slave port=out_transform bundle=transformmem
 
         LocalMapHW map{sizeX, sizeY, sizeZ,
                        posX, posY, posZ,
