@@ -117,13 +117,13 @@ protected:
 };
 
 /**
- * @brief QueueBridgeBase specialization for PointCloudStamped (trenz to ROS)
+ * @brief QueueBridgeBase specialization for PointCloudPtrStamped (trenz to ROS)
  * 
  * @tparam T 
  * @tparam FORCE 
  */
-template<typename T, bool FORCE>
-class QueueBridge<msg::Stamped<std::shared_ptr<msg::PointCloud>>, FORCE> : public QueueBridgeBase<msg::Stamped<std::shared_ptr<PointCloud>>, msg::PointCloudStamped, FORCE>
+template<bool FORCE>
+class QueueBridge<msg::Stamped<std::shared_ptr<msg::PointCloud>>, FORCE> : public QueueBridgeBase<msg::Stamped<std::shared_ptr<msg::PointCloud>>, msg::PointCloudStamped, FORCE>
 {
 public:
     using QueueBridgeBase<msg::Stamped<std::shared_ptr<msg::PointCloud>>, msg::PointCloudStamped, FORCE>::QueueBridgeBase;
