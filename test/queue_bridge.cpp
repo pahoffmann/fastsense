@@ -6,6 +6,9 @@
 
 #include "catch2_config.h"
 #include <comm/receiver.h>
+#include <msg/stamped.h>
+#include <msg/point_cloud_stamped.h>
+#include <comm/buffered_receiver.h>
 #include <comm/queue_bridge.h>
 #include <iostream>
 
@@ -100,5 +103,63 @@ TEST_CASE("QueueBridge shared_ptr", "[communication]")
     receive_thread.join();
     send_thread.join();
     REQUIRE(value_to_send == value_received);
+    REQUIRE(out->getLength() != 0);
+}
+
+TEST_CASE("QueueBridge Stamped<T>", "[communication]")
+{
+    std::cout << "Testing 'QueueBridge Stamped<T>'" << std::endl;
+    Imu imu{{1, 2, 3}, {4, 5, 6}, {7, 8, 9}};
+    auto ts_sent = HighResTime::now();
+    ImuStamped value_to_send{std::move(imu), ts_sent};
+    ImuStamped value_received;
+
+    bool received = false;
+    bool sending = true;
+
+    auto in = std::make_shared<ConcurrentRingBuffer<ImuStamped>>(16);
+    auto out = std::make_shared<ConcurrentRingBuffer<ImuStamped>>(16);
+    QueueBridge<ImuStamped, true> bridge{in, out, 1234};
+
+    std::thread receive_thread{[&]()
+    {
+        Receiver<ImuStamped> receiver{"127.0.0.1", 1234};
+        std::this_thread::sleep_for(std::chrono::milliseconds(200));
+        receiver.receive(value_received);
+        received = true;
+    }};
+
+    std::thread send_thread{[&]()
+    {
+        while (sending)
+        {
+            in->push(value_to_send);
+            std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        }
+    }};
+
+    bridge.start();
+    while (!received)
+    {
+        std::this_thread::yield();
+    }
+    bridge.stop();
+
+    sending = false;
+
+    receive_thread.join();
+    send_thread.join();
+
+    const auto& [ imu_received, ts ] = value_received;
+    REQUIRE(imu_received.acc.x() == 1);
+    REQUIRE(imu_received.acc.y() == 2);
+    REQUIRE(imu_received.acc.z() == 3);
+    REQUIRE(imu_received.ang.x() == 4);
+    REQUIRE(imu_received.ang.y() == 5);
+    REQUIRE(imu_received.ang.z() == 6);
+    REQUIRE(imu_received.mag.x() == 7);
+    REQUIRE(imu_received.mag.y() == 8);
+    REQUIRE(imu_received.mag.z() == 9);
+    REQUIRE(ts == ts_sent);
     REQUIRE(out->getLength() != 0);
 }

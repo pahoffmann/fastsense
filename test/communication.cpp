@@ -194,7 +194,7 @@ TEST_CASE("ImuStamped Sender Receiver Test", "[communication]")
         MagneticField mag{7, 8, 9};
         Imu imu{acc, ang, mag};
 
-        ImuStamped imu_stamped = {imu, tp};
+        ImuStamped imu_stamped{imu, tp};
         ImuStamped value_received{};
 
         std::thread receive_thread{[&]()
