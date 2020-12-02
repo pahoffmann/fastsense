@@ -17,6 +17,10 @@
         "it_weight_gradient": 0.1
     },
 
+    "bridge": {
+        "host": "192.168.1.2"
+    },
+
     "slam": {
         "max_distance": 600,
         "map_size_x": 201,
