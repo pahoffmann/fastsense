@@ -19,10 +19,12 @@ namespace fastsense::msg
  */
 struct MagneticField : public Vector3f
 {
-    MagneticField() = default;
+    MagneticField()
+    :   Vector3f{0.0f, 0.0f, 0.0f}
+    {}
 
     MagneticField(float x, float y, float z)
-    :   Vector3f{}
+    :   Vector3f{0.0f, 0.0f, 0.0f}
     {
         (*this)[0] = x;
         (*this)[1] = y;
@@ -30,7 +32,7 @@ struct MagneticField : public Vector3f
     }
 
     explicit MagneticField(const double* magneticField)
-    :   Vector3f{}
+    :   Vector3f{0.0f, 0.0f, 0.0f}
     {
         if (magneticField[0] != PUNK_DBL)
         {

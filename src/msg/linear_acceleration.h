@@ -16,10 +16,12 @@ namespace fastsense::msg
  */
 struct LinearAcceleration : public Vector3f
 {
-    LinearAcceleration() = default;
+    LinearAcceleration()
+    :   Vector3f{0.0f, 0.0f, 0.0f}
+    {}
 
     LinearAcceleration(float x, float y, float z)
-    :   Vector3f{}
+    :   Vector3f{0.0f, 0.0f, 0.0f}
     {
         (*this)[0] = x;
         (*this)[1] = y;
@@ -27,7 +29,7 @@ struct LinearAcceleration : public Vector3f
     }
 
     explicit LinearAcceleration(const double* acceleration)
-    :   Vector3f{}
+    :   Vector3f{0.0f, 0.0f, 0.0f}
     {
         (*this)[0] = -acceleration[0] * fastsense::util::params::G;
         (*this)[1] = -acceleration[1] * fastsense::util::params::G;

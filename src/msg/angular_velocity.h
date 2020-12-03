@@ -18,10 +18,12 @@ namespace fastsense::msg
  */
 struct AngularVelocity : public Vector3f
 {
-    AngularVelocity() = default;
+    AngularVelocity()
+    :   Vector3f{0.0f, 0.0f, 0.0f}
+    {}
 
     AngularVelocity(float x, float y, float z)
-    :   Vector3f{}
+    :   Vector3f{0.0f, 0.0f, 0.0f}
     {
         (*this)[0] = x;
         (*this)[1] = y;
@@ -29,6 +31,7 @@ struct AngularVelocity : public Vector3f
     }
 
     AngularVelocity(const double* angular_rate)
+    :   Vector3f{0.0f, 0.0f, 0.0f}
     {
         (*this)[0] = angular_rate[0] * DEEGREES_TO_RADIANS;
         (*this)[1] = angular_rate[1] * DEEGREES_TO_RADIANS;

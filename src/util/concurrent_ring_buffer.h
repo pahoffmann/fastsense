@@ -8,6 +8,7 @@
 #include <mutex>
 #include <vector>
 #include <condition_variable>
+#include <functional>
 
 constexpr uint32_t DEFAULT_POP_TIMEOUT = 100;
 
@@ -63,6 +64,10 @@ public:
      * @param val Pointer to element to fill with popped value. If val is a nullptr no value is assigned, but an element is popped nonetheless.
      */
     void pop(T* val);
+
+    bool pop_nb_if(T* val, std::function<bool(T&)> func, uint32_t timeout_ms = 0);
+
+    bool pop_if(T* val, std::function<bool(T&)> func);
 
     /**
      * 

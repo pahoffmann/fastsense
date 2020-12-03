@@ -85,6 +85,56 @@ void ConcurrentRingBuffer<T>::pop(T* val)
 }
 
 template<typename T>
+bool ConcurrentRingBuffer<T>::pop_nb_if(T* val, std::function<bool(T&)> func, uint32_t timeout_ms)
+{
+    std::unique_lock<std::mutex> lock(mutex_);
+    if (empty())
+    {
+        if(timeout_ms == 0 || !cvEmpty_.wait_for(lock, std::chrono::milliseconds(timeout_ms), [&] { return size_ != 0; }))
+        {
+            return false;
+        }
+    }
+
+    if (func(buffer_[popIdx_]))
+    {
+        doPop(val);
+    }
+    else //das ist kriminell
+    {
+        return false;
+    }
+
+    cvFull_.notify_one();
+
+    return true;
+}
+
+
+template<typename T>
+bool ConcurrentRingBuffer<T>::pop_if(T* val, std::function<bool(T&)> func)
+{
+    std::unique_lock<std::mutex> lock(mutex_);
+    if (empty())
+    {
+        cvEmpty_.wait(lock, [&] { return size_ != 0; });
+    }
+
+    if (func(buffer_[popIdx_]))
+    {
+        doPop(val);
+    }
+    else //das ist kriminell
+    {
+        return false;
+    }
+
+    cvFull_.notify_one();
+
+    return true;
+}
+
+template<typename T>
 bool ConcurrentRingBuffer<T>::peek_nb(T* peeker, uint32_t timeout_ms)
 {
     std::unique_lock<std::mutex> lock(mutex_);
