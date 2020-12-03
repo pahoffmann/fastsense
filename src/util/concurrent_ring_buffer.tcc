@@ -85,6 +85,34 @@ void ConcurrentRingBuffer<T>::pop(T* val)
 }
 
 template<typename T>
+bool ConcurrentRingBuffer<T>::peek_nb(T* peeker, uint32_t timeout_ms)
+{
+    std::unique_lock<std::mutex> lock(mutex);
+    if (length == 0)
+    {
+        if(timeout_ms == 0 || !cvEmpty.wait_for(lock, std::chrono::milliseconds(timeout_ms), [&] { return length != 0; }))
+        {
+            return false;
+        }
+    }
+
+    *peeker = buffer[popIdx];
+    return true;
+}
+
+template<typename T>
+void ConcurrentRingBuffer<T>::peek(T* val)
+{
+    std::unique_lock<std::mutex> lock(mutex);
+    if (length == 0)
+    {
+       cvEmpty.wait(lock, [&] { return length != 0; });
+    }
+
+    *val = buffer[popIdx];
+}
+
+template<typename T>
 void ConcurrentRingBuffer<T>::clear()
 {
     std::unique_lock<std::mutex> lock(mutex_);

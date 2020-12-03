@@ -5,7 +5,7 @@
  */
 
 
-#include "imu_callback.h"
+/*#include "imu_callback.h"
 
 using namespace fastsense::callback;
 
@@ -24,4 +24,4 @@ void ImuCallback::thread_run()
             registration.update_imu_data(imu);
         }
     }
-}
+}*/

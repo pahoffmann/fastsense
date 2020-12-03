@@ -65,6 +65,15 @@ public:
     void pop(T* val);
 
     /**
+     * 
+     *
+     *  
+     */
+    bool peek_nb(T* val, uint32_t timeout_ms = 0);
+
+    void peek(T* val);
+
+    /**
      * @brief Clear the buffer
      *
      */

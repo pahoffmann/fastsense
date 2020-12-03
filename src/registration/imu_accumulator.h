@@ -51,13 +51,16 @@ public:
      */
     void reset();
 
-    void update(const fastsense::msg::ImuStamped& imu);
+    //void update(const fastsense::msg::ImuStamped& imu);
 
-    void update(const fastsense::msg::Imu& imu, double acc_time);
+    //void update(const fastsense::msg::Imu& imu, double acc_time);
+
+    Matrix4f acc_transform(msg::ImuStampedBuffer& buffer, util::HighResTimePoint pcl_timestamp);
 
 private:
-    void apply_transform(double acc_time, const Vector3f& ang_vel);
-
+    void apply_transform(const msg::ImuStamped& imu_msg);
+    bool imu_before_pcl(util::HighResTimePoint& imu_ts, util::HighResTimePoint& pcl_ts);
+    
     /// first imu message needs to be catched to calculate diff
     bool first_imu_msg_;
 

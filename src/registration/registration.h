@@ -70,13 +70,6 @@ public:
     Matrix4f register_cloud(fastsense::map::LocalMap& localmap, fastsense::buffer::InputBuffer<PointHW>& cloud);
 
     /**
-     * @brief Updates the IMU data used by the registration method
-     *
-     * @param imu
-     */
-    void update_imu_data(const fastsense::msg::ImuStamped& imu);
-
-    /**
      * @brief Transforms a given pointcloud with the transform
      *
      * @param in_cloud

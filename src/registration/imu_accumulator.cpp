@@ -4,6 +4,7 @@
  */
 
 #include "imu_accumulator.h"
+#include "util/time.h"
 #include <iomanip>
 #include <iostream>
 
@@ -31,7 +32,7 @@ void ImuAccumulator::reset()
     acc_transform_.setIdentity();
 }
 
-void ImuAccumulator::update(const fastsense::msg::ImuStamped& imu)
+/*void ImuAccumulator::update(const fastsense::msg::ImuStamped& imu)
 {
     if (first_imu_msg_)
     {
@@ -49,9 +50,37 @@ void ImuAccumulator::update(const fastsense::msg::Imu& imu, double acc_time)
 {
     apply_transform(acc_time, imu.ang);
 }
+*/
 
-void ImuAccumulator::apply_transform(double acc_time, const Vector3f& ang_vel)
+bool ImuAccumulator::imu_before_pcl(fastsense::util::HighResTimePoint& imu_ts, fastsense::util::HighResTimePoint& pcl_ts){
+    return std::chrono::duration_cast<std::chrono::milliseconds>(pcl_ts - imu_ts).count() >= 0;
+}
+
+Eigen::Matrix4f ImuAccumulator::acc_transform(msg::ImuStampedBuffer& imu_buffer, util::HighResTimePoint pcl_timestamp){
+    msg::ImuStamped imu_msg;
+    std::cout << "got here" << std::endl;
+    while(imu_buffer.pop_nb(&imu_msg) && imu_before_pcl(imu_msg.timestamp_, pcl_timestamp)){
+        std::cout << "got here too" << std::endl;
+        if(first_imu_msg_){
+            last_imu_timestamp_ = imu_msg.timestamp_;
+            first_imu_msg_ = false;
+            continue;
+        }
+        apply_transform(imu_msg);
+        last_imu_timestamp_ = imu_msg.timestamp_;
+    }
+
+    Matrix4f acc_result = acc_transform_;
+    reset();
+    apply_transform(imu_msg);
+
+    return acc_result;
+}
+
+void ImuAccumulator::apply_transform(const msg::ImuStamped& imu_msg)
 {
+    const auto& ang_vel = imu_msg.data_.ang;
+    const double acc_time = std::chrono::duration_cast<util::time::secs_double>(imu_msg.timestamp_ - last_imu_timestamp_).count();
     Vector3f orientation = ang_vel * acc_time; //in radiants [rad, rad, rad]
     auto rotation =   Eigen::AngleAxisf(orientation.x(), Vector3f::UnitX())
                         * Eigen::AngleAxisf(orientation.y(), Vector3f::UnitY())
