@@ -42,6 +42,12 @@ public:
     Imu(Imu&) = delete;
 
     /**
+     * @brief delete move constructor 
+     * @param Imu& other imu
+     */
+    Imu(Imu&&) = delete;
+
+    /**
      * @brief Whether or not device has been calibrated
      *
      * @return true if device has been calibrated
