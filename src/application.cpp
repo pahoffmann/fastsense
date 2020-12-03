@@ -10,12 +10,12 @@
 #include <iostream>
 
 #include "application.h"
-#include <msg/point_cloud_stamped.h>
 #include <msg/imu.h>
 #include <msg/tsdf_bridge_msg.h>
 #include <msg/stamped.h>
 #include <util/config/config_manager.h>
 #include <util/logging/logger.h>
+#include <util/runner.h>
 #include <registration/registration.h>
 #include <callback/cloud_callback.h>
 #include <callback/imu_callback.h>
@@ -35,23 +35,6 @@ using fastsense::map::GlobalMap;
 using fastsense::callback::CloudCallback;
 using fastsense::callback::VisPublisher;
 using fastsense::callback::ImuCallback;
-
-template<typename T>
-class Runner
-{
-private:
-    T& object;
-public:
-    explicit Runner(T& obj) : object(obj)
-    {
-        object.start();
-    }
-
-    ~Runner()
-    {
-        object.stop();
-    }
-};
 
 Application::Application()
     : signal_set{}
