@@ -87,29 +87,29 @@ void ConcurrentRingBuffer<T>::pop(T* val)
 template<typename T>
 bool ConcurrentRingBuffer<T>::peek_nb(T* peeker, uint32_t timeout_ms)
 {
-    std::unique_lock<std::mutex> lock(mutex);
-    if (length == 0)
+    std::unique_lock<std::mutex> lock(mutex_);
+    if (empty())
     {
-        if(timeout_ms == 0 || !cvEmpty.wait_for(lock, std::chrono::milliseconds(timeout_ms), [&] { return length != 0; }))
+        if(timeout_ms == 0 || !cvEmpty_.wait_for(lock, std::chrono::milliseconds(timeout_ms), [&] { return size_ != 0; }))
         {
             return false;
         }
     }
 
-    *peeker = buffer[popIdx];
+    *peeker = buffer_[popIdx_];
     return true;
 }
 
 template<typename T>
 void ConcurrentRingBuffer<T>::peek(T* val)
 {
-    std::unique_lock<std::mutex> lock(mutex);
-    if (length == 0)
+    std::unique_lock<std::mutex> lock(mutex_);
+    if (empty())
     {
-       cvEmpty.wait(lock, [&] { return length != 0; });
+       cvEmpty_.wait(lock, [&] { return size_ != 0; });
     }
 
-    *val = buffer[popIdx];
+    *val = buffer_[popIdx_];
 }
 
 template<typename T>
@@ -129,7 +129,7 @@ void ConcurrentRingBuffer<T>::doPush(const T& val)
     buffer_[pushIdx_] = val;
     size_++;
     pushIdx_++;
-    
+
     if (pushIdx_ == buffer_.size())
     {
         pushIdx_ = 0;
