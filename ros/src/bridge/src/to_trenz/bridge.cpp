@@ -1,3 +1,8 @@
+/**
+ * @file bridge.cpp
+ * @author Julian Gaal
+ */
+
 #include <mutex>
 #include <iomanip>
 #include <ros/ros.h>

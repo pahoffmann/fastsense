@@ -1,6 +1,6 @@
 /**
- * @file imu_accululator.cpp
- * @author Julian Gaal
+ * @file imu_accumulator.cpp
+ * @author Julian Gaal, Pascal Buschermoeller
  */
 
 #include "imu_accumulator.h"
@@ -9,7 +9,7 @@
 #include <iostream>
 
 using namespace fastsense::registration;
-// TODO first imu msg immer ture, auch wenn von ROS 
+
 ImuAccumulator::ImuAccumulator()
     :   first_imu_msg_{true},
         acc_transform_{Matrix4f::Identity()},
