@@ -58,7 +58,7 @@ TEST_CASE("QueueBridge", "[communication]")
     receive_thread.join();
     send_thread.join();
     REQUIRE(value_to_send == value_received);
-    REQUIRE(out->getLength() != 0);
+    REQUIRE(out->size() != 0);
 }
 
 TEST_CASE("QueueBridge shared_ptr", "[communication]")
@@ -103,7 +103,7 @@ TEST_CASE("QueueBridge shared_ptr", "[communication]")
     receive_thread.join();
     send_thread.join();
     REQUIRE(value_to_send == value_received);
-    REQUIRE(out->getLength() != 0);
+    REQUIRE(out->size() != 0);
 }
 
 TEST_CASE("QueueBridge Stamped<T>", "[communication]")
@@ -161,5 +161,5 @@ TEST_CASE("QueueBridge Stamped<T>", "[communication]")
     REQUIRE(imu_received.mag.y() == 8);
     REQUIRE(imu_received.mag.z() == 9);
     REQUIRE(ts == ts_sent);
-    REQUIRE(out->getLength() != 0);
+    REQUIRE(out->size() != 0);
 }
