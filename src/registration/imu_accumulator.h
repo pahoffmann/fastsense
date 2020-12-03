@@ -1,8 +1,8 @@
 #pragma once
 
 /**
- * @file imu_accululator.h
- * @author Julian Gaal
+ * @file imu_accumulator.h
+ * @author Julian Gaal, Pascal Buschemoeller
  */
 
 #include <util/time.h>
@@ -13,17 +13,42 @@
 namespace fastsense::registration
 {
 
+/**
+ * @brief Accumulates multiple ImuStamped messages to create an accumulated transform 
+ * since the last PointCloud Message
+ * 
+ */
 class ImuAccumulator
 {
 public:
+    /**
+     * @brief Construct a new Imu Accumulator object
+     */
     ImuAccumulator();
 
+    /**
+     * @brief Destroy the Imu Accumulator object
+     * 
+     */
     ~ImuAccumulator() = default;
 
+    /**
+     * @brief Return acculated transform
+     * 
+     * @return const Matrix4f& the accumulated transform
+     */
     const Matrix4f& acc_transform() const;
 
+    /**
+     * @brief Return accumulated transformation matrix in euler angles
+     * 
+     * @return fastsense::Vector3f vector of rotations in roll/pitch/yaw
+     */
     fastsense::Vector3f rot_in_euler() const;
 
+    /**
+     * @brief Reset accumulated transform to identify matrix
+     */
     void reset();
 
     void update(const fastsense::msg::ImuStamped& imu);
@@ -33,9 +58,16 @@ public:
 private:
     void apply_transform(double acc_time, const Vector3f& ang_vel);
 
+    /// first imu message needs to be catched to calculate diff
     bool first_imu_msg_;
+
+    /// accumulated transformation matrix
     Matrix4f acc_transform_;
+
+    /// 
     Matrix4f local_transform_;
+
+    /// last timestamp of imu to calculate difference to incoming messages
     util::HighResTimePoint last_imu_timestamp_;
 };
 
