@@ -1,5 +1,5 @@
 /**
- * @file 
+ * @file tsdf_bridge.cpp
  * @author Julian Gaal
  * @date 2020-09-29
  */
