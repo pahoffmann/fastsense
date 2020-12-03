@@ -85,29 +85,11 @@ Matrix4f Registration::xi_to_transform(Vector6f xi)
 
 Matrix4f Registration::register_cloud(fastsense::map::LocalMap& localmap, fastsense::buffer::InputBuffer<PointHW>& cloud)
 {
-    mutex_.lock();
     Matrix4f total_transform = imu_accumulator_.acc_transform(); //transform used to register the pcl
-    imu_accumulator_.reset();
-    mutex_.unlock();
-
     krnl.synchronized_run(localmap, cloud, max_iterations_, it_weight_gradient_, total_transform);
 
     // apply final transformation
     transform_point_cloud(cloud, total_transform);
 
     return total_transform;
-}
-
-/**
- * @brief Gets angluar velocity data from the IMU and stores them in the global_transform object
- *
- * @param imu Message containing the necessary data
- * TODO: auslagern in andere Klasse
- * TODO: determine weather the queue of the pcl callback might be a probl.
- */
-void Registration::update_imu_data(const fastsense::msg::ImuStamped& imu)
-{
-    mutex_.lock();
-    imu_accumulator_.update(imu);
-    mutex_.unlock();
 }

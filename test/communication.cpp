@@ -184,6 +184,15 @@ TEST_CASE("TSDFBridgeMessage Sender Receiver Test", "[communication]")
 TEST_CASE("ImuStamped Sender Receiver Test", "[communication]")
 {
     std::cout << "Testing 'ImuStamped Sender Receiver Test'" << std::endl;
+    auto tp = util::HighResTimePoint{std::chrono::nanoseconds{1000}};
+
+    LinearAcceleration acc{1, 2, 3};
+    AngularVelocity ang{4, 5, 6};
+    MagneticField mag{7, 8, 9};
+    Imu imu{acc, ang, mag};
+
+    ImuStamped imu_stamped{imu, tp};
+    ImuStamped value_received{};
 
     for (size_t i = 0; i < iterations; ++i)
     {

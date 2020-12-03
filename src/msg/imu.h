@@ -13,6 +13,7 @@
 #include <msg/linear_acceleration.h>
 #include <msg/angular_velocity.h>
 #include <msg/magnetic_field.h>
+#include <msg/stamped.h>
 
 #include <util/concurrent_ring_buffer.h>
 
@@ -49,6 +50,7 @@ struct Imu
     using Ptr = std::shared_ptr<Imu>;
 };
 
+//using ImuStamped = std::pair<Imu, util::HighResTimePoint>;
 using ImuStamped = msg::Stamped<Imu>;
 using ImuStampedBuffer = util::ConcurrentRingBuffer<ImuStamped>;
 
