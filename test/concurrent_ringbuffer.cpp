@@ -19,15 +19,18 @@ TEST_CASE("ConcRingBuffer", "[ConcRingBuffer]")
 
     ConcurrentRingBuffer<size_t> crb(buffer_size);
 
-    std::cout << "    Section 'Test push, length'" << std::endl;
-    REQUIRE(crb.getLength() == 0);
+    std::cout << "    Section 'Test push, size, capacit, empty'" << std::endl;
+    REQUIRE(crb.size() == 0);
+    REQUIRE(crb.capacity() == buffer_size);
+    REQUIRE(crb.empty());
 
     for (size_t i = 0; i < buffer_size; ++i)
     {
         crb.push(i);
     }
 
-    REQUIRE(crb.getLength() == buffer_size);
+    REQUIRE(crb.size() == buffer_size);
+    REQUIRE(crb.full());
 
 
     SECTION("Test push_nb, pop, and pop_nb")
@@ -42,17 +45,17 @@ TEST_CASE("ConcRingBuffer", "[ConcRingBuffer]")
         size_t val;
         crb.pop(&val);
         REQUIRE(val == 1);
-        REQUIRE(crb.getLength() == buffer_size - 1);
+        REQUIRE(crb.size() == buffer_size - 1);
 
         // test pop_nb, buffer begins with 2
         for (size_t i = 2; i <= buffer_size; i++)
         {
             REQUIRE(crb.pop_nb(&val));
             REQUIRE(val == i);
-            REQUIRE(crb.getLength() == buffer_size - i);
+            REQUIRE(crb.size() == buffer_size - i);
         }
 
-        REQUIRE(crb.getLength() == 0);
+        REQUIRE(crb.size() == 0);
         REQUIRE(!crb.pop_nb(&val));
     }
 
@@ -61,7 +64,8 @@ TEST_CASE("ConcRingBuffer", "[ConcRingBuffer]")
         std::cout << "    Section 'clear'" << std::endl;
 
         crb.clear();
-        REQUIRE(crb.getLength() == 0);
+        REQUIRE(crb.size() == 0);
+        REQUIRE(crb.empty());
     }
 
     SECTION("Test multithreading")
@@ -71,14 +75,14 @@ TEST_CASE("ConcRingBuffer", "[ConcRingBuffer]")
         size_t val;
         size_t length;
 
-        REQUIRE(crb.getLength() == buffer_size);
+        REQUIRE(crb.size() == buffer_size);
 
         // test waiting to push
         std::thread push_thread{[&]()
         {
             // wait for other thread to pop
             crb.push(buffer_size);
-            length = crb.getLength();
+            length = crb.size();
         }};
 
         std::thread pop_thread{[&]()
@@ -106,7 +110,7 @@ TEST_CASE("ConcRingBuffer", "[ConcRingBuffer]")
         {
             // wait for other thread to push
             crb.pop(&val);
-            length = crb.getLength();
+            length = crb.size();
         }};
 
         push_thread2.join();
@@ -115,4 +119,7 @@ TEST_CASE("ConcRingBuffer", "[ConcRingBuffer]")
         REQUIRE(length == 0);
         REQUIRE(val == 1);
     }
+
+    // after all these changes, capcity should not change
+    REQUIRE(crb.capacity() == buffer_size);
 }
