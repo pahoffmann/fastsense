@@ -10,7 +10,7 @@
 #include <util/concurrent_ring_buffer.h>
 #include <comm/receiver.h>
 #include <msg/imu.h>
-#include <msg/point_cloud.h>
+#include <msg/point_cloud_stamped.h>
 #include <iostream>
 
 namespace fastsense::comm
@@ -112,7 +112,6 @@ public:
      */
     virtual ~BufferedImuStampedReceiver() = default;
 
-private:
     /**
      * @brief Receive ImuStamped and write into buffer
      */
@@ -147,7 +146,6 @@ public:
      */
     ~BufferedPclStampedReceiver() override = default;
 
-private:
     /**
      * @brief Receive PointCloudStamped, convert to PointCloud*Ptr*Stamped
      */
