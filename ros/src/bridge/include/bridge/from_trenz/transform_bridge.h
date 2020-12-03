@@ -34,7 +34,7 @@ public:
     /**
      * @brief Destroy the Transform Bridge object
      */
-    virtual ~TransformBridge() override = default;
+    ~TransformBridge() override = default;
 
     /**
      * @brief Starts the Transform Bridge in its own thread

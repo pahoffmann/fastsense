@@ -34,7 +34,7 @@ public:
     /**
      * @brief Destroy the Velodyne Bridge object
      */
-    virtual ~VelodyneBridge() = default;
+    ~VelodyneBridge() override = default;
 private:
 
     /**
