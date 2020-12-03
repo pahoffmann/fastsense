@@ -85,7 +85,7 @@ Matrix4f Registration::xi_to_transform(Vector6f xi)
 
 Matrix4f Registration::register_cloud(fastsense::map::LocalMap& localmap, fastsense::buffer::InputBuffer<PointHW>& cloud)
 {
-    Matrix4f total_transform = imu_accumulator_.acc_transform(); //transform used to register the pcl
+    Matrix4f total_transform = Matrix4f::Identity();//imu_accumulator_.acc_transform(); //transform used to register the pcl
     krnl.synchronized_run(localmap, cloud, max_iterations_, it_weight_gradient_, total_transform);
 
     // apply final transformation
