@@ -87,15 +87,22 @@ public:
 
         auto m = map.get_hardware_representation();
 
-        setArg(point_data.getBuffer());
-        setArg(point_data.getBuffer());
+        // MARKER: SPLIT
+        constexpr int SPLIT_FACTOR = 3;
+
+        for (int i = 0; i < SPLIT_FACTOR; i++)
+        {
+            setArg(point_data.getBuffer());
+        }
         setArg(static_cast<int>(point_data.size()));
-        setArg(map.getBuffer().getBuffer());
-        setArg(map.getBuffer().getBuffer());
-        setArg(map.getBuffer().getBuffer());
-        setArg(map.getBuffer().getBuffer());
-        setArg(map.getBuffer().getBuffer());
-        setArg(map.getBuffer().getBuffer());
+
+        for (int i = 0; i < SPLIT_FACTOR; i++)
+        {
+            setArg(map.getBuffer().getBuffer());
+            setArg(map.getBuffer().getBuffer());
+            setArg(map.getBuffer().getBuffer());
+        }
+
         setArg(m.sizeX);
         setArg(m.sizeY);
         setArg(m.sizeZ);
