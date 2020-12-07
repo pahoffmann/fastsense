@@ -23,8 +23,10 @@ class ImuAccumulator
 public:
     /**
      * @brief Construct a new Imu Accumulator object
+     * 
+     * @param buffer stamped imu buffer
      */
-    ImuAccumulator();
+    ImuAccumulator(msg::ImuStampedBuffer& buffer);
 
     /**
      * @brief Destroy the Imu Accumulator object
@@ -35,28 +37,23 @@ public:
     /**
      * @brief Return acculated transform for given pointcloud timestamp
      *
-     * @param buffer stamped imu buffer
      * @param pcl_timestamp timestamp of received pointcloud 
      * 
      * @return const Matrix4f the accumulated transform
      */
-    Matrix4f acc_transform(msg::ImuStampedBuffer& buffer, util::HighResTimePoint pcl_timestamp);
-
-    static fastsense::Vector3f rot_in_euler(const Matrix4f& m);
-
-    /**
-     * @brief Reset accumulated transform to identify matrix
-     */
-    void reset();
-
-    //void update(const fastsense::msg::ImuStamped& imu);
-
-    //void update(const fastsense::msg::Imu& imu, double acc_time);
+    Matrix4f acc_transform(util::HighResTimePoint pcl_timestamp);
 
 private:
+    /**
+     * @brief applies single imu transform with duration since last imu message to accumulation matrix
+     * 
+     * @param acc_transform current acculumation matrix
+     * @param imu_msg stamped imu message
+     */
     void apply_transform(Matrix4f& acc_transform, const msg::ImuStamped& imu_msg);
-    bool imu_before_pcl(util::HighResTimePoint& imu_ts, util::HighResTimePoint& pcl_ts);
-    
+    bool before(util::HighResTimePoint& ts_1, util::HighResTimePoint& ts_2);
+    /// imu buffer to use for accumulation
+    msg::ImuStampedBuffer& buffer_;
     /// first imu message needs to be catched to calculate diff
     bool first_imu_msg_;
 

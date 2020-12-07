@@ -53,7 +53,7 @@ public:
      * @brief Construct a new Registration object, used to register a pointcloud with the current ring buffer
      *
      */
-    Registration(const fastsense::CommandQueuePtr& q, size_t max_iterations = 50, float it_weight_gradient = 0.0);
+    Registration(const fastsense::CommandQueuePtr& q, msg::ImuStampedBuffer& buffer, size_t max_iterations = 50, float it_weight_gradient = 0.0);
 
     /**
      * Destructor of the registration.
@@ -67,7 +67,7 @@ public:
      * @param cloud
      * @return Matrix4f
      */
-    Matrix4f register_cloud(fastsense::map::LocalMap& localmap, fastsense::buffer::InputBuffer<PointHW>& cloud);
+    Matrix4f register_cloud(fastsense::map::LocalMap& localmap, fastsense::buffer::InputBuffer<PointHW>& cloud, const util::HighResTimePoint& cloud_timestamp);
 
     /**
      * @brief Transforms a given pointcloud with the transform

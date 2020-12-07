@@ -10,10 +10,10 @@
 using namespace fastsense;
 using namespace fastsense::registration;
 
-Registration::Registration(const fastsense::CommandQueuePtr& q, size_t max_iterations, float it_weight_gradient) :
+Registration::Registration(const fastsense::CommandQueuePtr& q, msg::ImuStampedBuffer& buffer, size_t max_iterations, float it_weight_gradient) :
         max_iterations_{max_iterations},
         it_weight_gradient_{it_weight_gradient},
-        imu_accumulator_{},
+        imu_accumulator_{buffer},
         krnl{q}
 {}
 
@@ -83,9 +83,10 @@ Matrix4f Registration::xi_to_transform(Vector6f xi)
     return transform;
 }
 
-Matrix4f Registration::register_cloud(fastsense::map::LocalMap& localmap, fastsense::buffer::InputBuffer<PointHW>& cloud)
+Matrix4f Registration::register_cloud(fastsense::map::LocalMap& localmap, fastsense::buffer::InputBuffer<PointHW>& cloud, const util::HighResTimePoint& cloud_timestamp)
 {
-    Matrix4f total_transform = Matrix4f::Identity();//imu_accumulator_.acc_transform(); //transform used to register the pcl
+    // Matrix4f total_transform = Matrix4f::Identity();
+    Matrix4f total_transform = imu_accumulator_.acc_transform(cloud_timestamp); //transform used to register the pcl
     krnl.synchronized_run(localmap, cloud, max_iterations_, it_weight_gradient_, total_transform);
 
     // apply final transformation

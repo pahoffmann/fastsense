@@ -90,6 +90,7 @@ void CloudCallback::thread_run()
         eval.start("total");
         eval.start("prep");
 
+        //DO NOT TOUCH THE ORIGINAL POINT CLOUD, USE COPY INSTEAD
         fastsense::msg::PointCloudPtrStamped point_cloud2;
         point_cloud2.data_ = point_cloud.data_;
         point_cloud2.timestamp_ = point_cloud.timestamp_;
@@ -111,7 +112,7 @@ void CloudCallback::thread_run()
         else
         {
             eval.start("reg");
-            Matrix4f transform = registration.register_cloud(*local_map, scan_point_buffer);
+            Matrix4f transform = registration.register_cloud(*local_map, scan_point_buffer, point_cloud2.timestamp_);
             eval.stop("reg");
 
             Eigen::Quaternionf rotation(transform.block<3, 3>(0, 0));

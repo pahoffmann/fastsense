@@ -7,29 +7,27 @@
 #include <util/time.h>
 
 using namespace fastsense::registration;
+using namespace fastsense;
 
-ImuAccumulator::ImuAccumulator()
-    :   first_imu_msg_{true},
+ImuAccumulator::ImuAccumulator(msg::ImuStampedBuffer& buffer)
+    :   buffer_{buffer},
+        first_imu_msg_{true},
         last_imu_timestamp_{}
 {}
 
-fastsense::Vector3f ImuAccumulator::rot_in_euler(const Matrix4f& m)
-{
-    return m.block<3, 3>(0, 0).eulerAngles(0, 1, 2);
+
+bool ImuAccumulator::before(fastsense::util::HighResTimePoint& ts_1, fastsense::util::HighResTimePoint& ts_2){
+    return std::chrono::duration_cast<std::chrono::milliseconds>(ts_2 - ts_1).count() >= 0;
 }
 
-bool ImuAccumulator::imu_before_pcl(fastsense::util::HighResTimePoint& imu_ts, fastsense::util::HighResTimePoint& pcl_ts){
-    return std::chrono::duration_cast<std::chrono::milliseconds>(pcl_ts - imu_ts).count() >= 0;
-}
-
-Eigen::Matrix4f ImuAccumulator::acc_transform(msg::ImuStampedBuffer& imu_buffer, util::HighResTimePoint pcl_timestamp) {
+Eigen::Matrix4f ImuAccumulator::acc_transform(util::HighResTimePoint pcl_timestamp) {
     
     msg::ImuStamped imu_msg;
     Matrix4f acc_transform = Matrix4f::Identity();
     
-    auto keep_if = [&](msg::ImuStamped& msg){ return imu_before_pcl(msg.timestamp_, pcl_timestamp); };
+    auto imu_before_pcl = [&](msg::ImuStamped& msg){ return before(msg.timestamp_, pcl_timestamp); };
     
-    while(imu_buffer.pop_nb_if(&imu_msg, keep_if)) 
+    while(buffer_.pop_nb_if(&imu_msg, imu_before_pcl)) 
     {
         if(first_imu_msg_)
         {
