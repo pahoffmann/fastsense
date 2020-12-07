@@ -14,6 +14,8 @@ namespace fastsense::util
 class ProcessThread
 {
 public:
+    using UPtr = std::unique_ptr<ProcessThread>;
+
     ProcessThread() : worker{}, running{false} {}
 
     virtual ~ProcessThread()

@@ -18,6 +18,8 @@ namespace fastsense::driver
 class Imu : public Phidget, public fastsense::util::ProcessThread
 {
 public:
+    using UPtr = std::unique_ptr<Imu>;
+
     Imu() = delete;
 
     /**

@@ -121,6 +121,7 @@ public:
         buffer_->push_nb(std::move(msg_));
     }
 
+    using UPtr = std::unique_ptr<BufferedImuStampedReceiver>;
 };
 
 /**
@@ -155,6 +156,8 @@ public:
         auto& [ pcl, ts ] = msg_;
         buffer_->push_nb(msg::PointCloudPtrStamped{std::make_shared<msg::PointCloud>(std::move(pcl)), ts });
     }
+
+    using UPtr = std::unique_ptr<BufferedPclStampedReceiver>;
 };
 
 

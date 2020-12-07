@@ -51,17 +51,34 @@ Application::Application()
 int Application::run()
 {
     Logger::info("Application setup...");
+   
+    auto& config = ConfigManager::config();
+   
     auto imu_buffer = std::make_shared<msg::ImuStampedBuffer>(ConfigManager::config().imu.bufferSize());
     auto imu_bridge_buffer = std::make_shared<msg::ImuStampedBuffer>(ConfigManager::config().imu.bufferSize());
-
-    comm::BufferedImuStampedReceiver imu_driver{ConfigManager::config().bridge.host(), 4444, imu_buffer};
-    comm::QueueBridge<msg::ImuStamped, true> imu_bridge(imu_buffer, imu_bridge_buffer, 5555);
-
     auto pointcloud_buffer = std::make_shared<msg::PointCloudPtrStampedBuffer>(ConfigManager::config().lidar.bufferSize());
     auto pointcloud_bridge_buffer = std::make_shared<msg::PointCloudPtrStampedBuffer>(ConfigManager::config().lidar.bufferSize());
 
-    comm::BufferedPclStampedReceiver lidar_driver{ConfigManager::config().bridge.host(), 3333, pointcloud_buffer};
-    comm::QueueBridge<msg::PointCloudPtrStamped, true> lidar_bridge(pointcloud_buffer, pointcloud_bridge_buffer, 7777);
+    util::ProcessThread::UPtr imu_driver;
+    util::ProcessThread::UPtr lidar_driver;
+
+    if (config.bridge.use_from())
+    {
+        Logger::info("Launching BufferedReceivers");
+        imu_driver.reset(new comm::BufferedImuStampedReceiver{config.bridge.host_from(), config.bridge.imu_port_from(), imu_buffer});
+        lidar_driver.reset(new comm::BufferedPclStampedReceiver{ConfigManager::config().bridge.host_from(), config.bridge.pcl_port_from(), pointcloud_buffer});
+    }
+    else
+    {
+        Logger::info("Starting Sensors");
+        imu_driver.reset(new driver::Imu{imu_buffer});
+        lidar_driver.reset(new driver::VelodyneDriver{ConfigManager::config().lidar.port(), pointcloud_buffer});
+    }
+
+    bool send = config.bridge.use_to();
+
+    comm::QueueBridge<msg::ImuStamped, true> imu_bridge{imu_buffer, imu_bridge_buffer, config.bridge.imu_port_to(), send};
+    comm::QueueBridge<msg::PointCloudPtrStamped, true> lidar_bridge{pointcloud_buffer, pointcloud_bridge_buffer, config.bridge.pcl_port_to(), send};
 
     // auto command_queue = fastsense::hw::FPGAManager::create_command_queue();
 
@@ -94,9 +111,9 @@ int Application::run()
 
     Logger::info("Application starting...");
 
-    Runner run_lidar_driver(lidar_driver);
+    Runner run_lidar_driver(*lidar_driver);
     Runner run_lidar_bridge(lidar_bridge);
-    Runner run_imu_driver(imu_driver);
+    Runner run_imu_driver(*imu_driver);
     Runner run_imu_bridge(imu_bridge);
     // Runner run_cloud_callback{cloud_callback};
     // Runner run_vis_publisher{vis_publisher};

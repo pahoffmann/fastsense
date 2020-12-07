@@ -26,6 +26,7 @@ protected:
     BufferType out_;
 
     Sender<T_MSG> sender_;
+    bool send_;
 
     void thread_run() override
     {
@@ -47,18 +48,24 @@ protected:
                     this->out_->push(val);
                 }
             }
-            this->send(val);
+
+            if (send_)
+            {
+                this->send(val);
+            }
+
         }
     }
 
     virtual void send(const T_QUEUE& val) = 0;
 
 public:
-    QueueBridgeBase(const BufferType& in, const BufferType& out, uint16_t port) :
-        in_{in}, out_{out}, sender_{port}
+    QueueBridgeBase(const BufferType& in, const BufferType& out, uint16_t port, bool send) :
+        in_{in}, out_{out}, sender_{port}, send_{send}
     {}
 
     virtual ~QueueBridgeBase() = default;
+
 };
 
 template<typename T, bool FORCE>
