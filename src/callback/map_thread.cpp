@@ -40,8 +40,8 @@ void MapThread::go(const Vector3i& pos, const fastsense::buffer::InputBuffer<Poi
     float distance = ((pos.cast<float>() - old_pos.cast<float>()) * MAP_RESOLUTION).norm();
 
     // TODO: aus Config
-    float param_pos = 500;
-    int param_reg_cnt = 50;
+    float param_pos = ConfigManager::config().slam.map_update_position_threshold() * 1000;
+    int param_reg_cnt = ConfigManager::config().slam.map_update_period();
 
     bool position_condition = distance > param_pos;
     bool reg_cnt_condition = param_reg_cnt > 0 && reg_cnt_ >= param_reg_cnt;
