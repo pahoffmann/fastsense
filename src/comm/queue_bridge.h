@@ -60,7 +60,7 @@ protected:
     virtual void send(const T_QUEUE& val) = 0;
 
 public:
-    QueueBridgeBase(const BufferType& in, const BufferType& out, uint16_t port, bool send) :
+    QueueBridgeBase(const BufferType& in, const BufferType& out, uint16_t port, bool send = true) :
         in_{in}, out_{out}, sender_{port}, send_{send}
     {}
 
