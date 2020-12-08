@@ -184,7 +184,13 @@ public:
      * @brief delete copy constructor because of pointer member variable
      * @param Buffer& other buffer
      */
-    Buffer(Buffer&) = delete;
+    Buffer(const Buffer& rhs) : Buffer<T>(rhs.queue_, rhs.num_elements_, rhs.size_in_bytes_, rhs.mem_flag_, rhs.map_flag_)
+    {
+        for (size_t index = 0; index < num_elements_; ++index)
+        {
+            (*this)[index] = rhs[index];
+        }
+    }
 
     /**
      * @brief Get the virtual address that buffer was mapped to
@@ -287,7 +293,7 @@ public:
     ~InputBuffer() = default;
 
     InputBuffer& operator=(InputBuffer&) = delete;
-    InputBuffer(InputBuffer&) = delete;
+    InputBuffer(const InputBuffer& rhs) : Buffer<T>(rhs) {}
 };
 
 /**
@@ -312,7 +318,7 @@ public:
     ~OutputBuffer() = default;
 
     OutputBuffer& operator=(OutputBuffer&) = delete;
-    OutputBuffer(OutputBuffer&) = delete;
+    OutputBuffer(const OutputBuffer& rhs) : Buffer<T>(rhs) {}
 };
 
 /**
@@ -337,7 +343,7 @@ public:
     ~InputOutputBuffer() = default;
 
     InputOutputBuffer& operator=(InputOutputBuffer&) = delete;
-    InputOutputBuffer(InputOutputBuffer&) = delete;
+    InputOutputBuffer(const InputOutputBuffer& rhs) : Buffer<T>(rhs) {}
 };
 
 } // namespace fastsense::buffer

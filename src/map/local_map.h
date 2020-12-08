@@ -70,6 +70,14 @@ public:
      */
     virtual ~LocalMap() = default;
 
+    LocalMap(const LocalMap&) = default;
+
+    LocalMap& operator=(const LocalMap&) = delete; 
+
+    LocalMap(LocalMap&&) = delete;
+
+    LocalMap& operator=(LocalMap&&) = default;
+
     /**
      * Returns a value from the local map per reference.
      * Throws an exception if the index is out of bounds i.e. if it is more than size / 2 away from the position.
