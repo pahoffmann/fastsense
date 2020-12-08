@@ -1,22 +1,29 @@
+/**
+ * @file map_thread.cpp
+ * @author Steffen Hinderink, Marc Eisoldt
+ */
+
 #include <callback/map_thread.h>
 #include <util/logging/logger.h>
 #include <util/config/config_manager.h>
 
-using fastsense::util::config::ConfigManager;
-using fastsense::util::logging::Logger;
-
 namespace fastsense::callback
 {
 
-MapThread::MapThread(const std::shared_ptr<fastsense::map::LocalMap>& local_map, 
+using fastsense::util::config::ConfigManager;
+using fastsense::util::logging::Logger;
+
+MapThread::MapThread(const std::shared_ptr<fastsense::map::LocalMap>& local_map,
                      std::mutex& map_mutex,
+                     std::shared_ptr<TSDFBuffer> tsdf_buffer,
                      fastsense::CommandQueuePtr& q)
     : ProcessThread(),
       local_map_(local_map),
       tsdf_krnl_(q, local_map->getBuffer().size()),
       map_mutex_(map_mutex),
       active_(false),
-      reg_cnt_(0)
+      reg_cnt_(0),
+      tsdf_buffer_(tsdf_buffer)
 {
     /*
     Use the mutex as a 1-semaphore.
@@ -33,8 +40,8 @@ void MapThread::go(const Vector3i& pos, const fastsense::buffer::InputBuffer<Poi
     float distance = ((pos.cast<float>() - old_pos.cast<float>()) * MAP_RESOLUTION).norm();
 
     // TODO: aus Config
-    float param_pos = 0.5;
-    int param_reg_cnt = 0;
+    float param_pos = 500;
+    int param_reg_cnt = 50;
 
     bool position_condition = distance > param_pos;
     bool reg_cnt_condition = param_reg_cnt > 0 && reg_cnt_ >= param_reg_cnt;
@@ -52,16 +59,49 @@ void MapThread::thread_run()
 {
     while (running)
     {
-        start_mutex_.lock(); // wait
-        Logger::info("Starting asynchronous map shift and tsdf update");
-
-        local_map_->shift(pos_.x(), pos_.y(), pos_.z());
+        start_mutex_.lock();
+        if (!running)
+        {
+            break;
+        }
+        Logger::info("Starting SUV");
         
-        tsdf_krnl_.run(*local_map_, *points_ptr_, (int) ConfigManager::config().slam.max_distance(), ConfigManager::config().slam.max_weight());
+        map::LocalMap tmp_map(*local_map_);
+
+        // shift
+        tmp_map.shift(pos_.x(), pos_.y(), pos_.z());
+
+        // tsdf update
+        int tau = (int) ConfigManager::config().slam.max_distance();
+        tsdf_krnl_.run(tmp_map, *points_ptr_, tau, ConfigManager::config().slam.max_weight());
         tsdf_krnl_.waitComplete();
 
-        Logger::info("Stopping asynchronous map shift and tsdf update");
+        map_mutex_.lock();
+        *local_map_ = std::move(tmp_map);
+        map_mutex_.unlock();
+
+        // visualize
+        msg::TSDFBridgeMessage tsdf_msg;
+        tsdf_msg.tau_ = tau;
+        tsdf_msg.size_ = local_map_->get_size();
+        tsdf_msg.pos_ = local_map_->get_pos();
+        tsdf_msg.offset_ = local_map_->get_offset();
+        tsdf_msg.tsdf_data_.reserve(local_map_->getBuffer().size());
+        std::copy(local_map_->getBuffer().cbegin(), local_map_->getBuffer().cend(), std::back_inserter(tsdf_msg.tsdf_data_));
+        tsdf_buffer_->push_nb(tsdf_msg, true);
+
+        Logger::info("Stopping SUV");
         active_ = false;
+    }
+}
+
+void MapThread::stop()
+{
+    if (running && worker.joinable())
+    {
+        running = false;
+        start_mutex_.unlock();
+        worker.join();
     }
 }
 

@@ -32,7 +32,6 @@ using fastsense::map::LocalMap;
 using fastsense::map::GlobalMap;
 using fastsense::callback::CloudCallback;
 using fastsense::callback::MapThread;
-using fastsense::callback::VisPublisher;
 using fastsense::callback::ImuCallback;
 
 template<typename T>
@@ -101,11 +100,9 @@ int Application::run()
 
     std::mutex map_mutex;
 
-    MapThread map_thread{local_map, map_mutex, command_queue};
+    MapThread map_thread{local_map, map_mutex, tsdf_buffer, command_queue};
 
-    CloudCallback cloud_callback{registration, pointcloud_bridge_buffer, local_map, global_map_ptr, pose, vis_buffer, transform_buffer, command_queue, map_thread, map_mutex};
-
-    VisPublisher vis_publisher{vis_buffer, local_map, tsdf_buffer};
+    CloudCallback cloud_callback{registration, pointcloud_bridge_buffer, local_map, global_map_ptr, pose, transform_buffer, command_queue, map_thread, map_mutex};
 
     ImuCallback imu_callback{registration, imu_bridge_buffer};
 
@@ -119,7 +116,6 @@ int Application::run()
     Runner run_imu_driver(imu_driver);
     Runner run_imu_bridge(imu_bridge);
     Runner run_cloud_callback{cloud_callback};
-    Runner run_vis_publisher{vis_publisher};
     Runner run_imu_callback{imu_callback};
     Runner run_tsdf_bridge(tsdf_bridge);
     Runner run_transform_bridge(transform_bridge);

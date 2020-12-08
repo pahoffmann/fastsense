@@ -27,25 +27,8 @@ using fastsense::map::LocalMap;
 using fastsense::map::GlobalMap;
 using Eigen::Matrix4f;
 using fastsense::util::config::ConfigManager;
-using TSDFBuffer = util::ConcurrentRingBuffer<msg::TSDFBridgeMessage>;
 using fastsense::buffer::InputBuffer;
 using TransformBuffer = fastsense::util::ConcurrentRingBuffer<fastsense::msg::Transform>;
-
-class VisPublisher : public fastsense::util::ProcessThread
-{
-public:
-    using BufferPtr = std::shared_ptr<util::ConcurrentRingBuffer<Matrix4f>>;
-
-    VisPublisher(const BufferPtr& buffer, const std::shared_ptr<LocalMap>& local_map, const std::shared_ptr<TSDFBuffer>& tsdf_buffer)
-        : vis_buffer{buffer}, local_map{local_map}, tsdf_buffer{tsdf_buffer}
-    {}
-protected:
-    void thread_run() override;
-private:
-    BufferPtr vis_buffer;
-    std::shared_ptr<LocalMap> local_map;
-    std::shared_ptr<TSDFBuffer> tsdf_buffer;
-};
 
 class CloudCallback : public fastsense::util::ProcessThread
 {
@@ -55,7 +38,6 @@ public:
                   const std::shared_ptr<LocalMap>& local_map,
                   const std::shared_ptr<GlobalMap>& global_map,
                   Matrix4f& pose,
-                  const VisPublisher::BufferPtr& vis_buffer,
                   const std::shared_ptr<TransformBuffer>& transform_buffer,
                   fastsense::CommandQueuePtr& q,
                   MapThread& map_thread,
@@ -75,7 +57,6 @@ private:
     fastsense::CommandQueuePtr& q;
     fastsense::kernels::TSDFKernel tsdf_krnl;
     fastsense::preprocessing::Preprocessing preprocessor;
-    VisPublisher::BufferPtr vis_buffer;
     MapThread& map_thread;
     std::mutex& map_mutex;
 };

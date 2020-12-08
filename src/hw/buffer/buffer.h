@@ -294,6 +294,8 @@ public:
 
     InputBuffer& operator=(InputBuffer&) = delete;
     InputBuffer(const InputBuffer& rhs) : Buffer<T>(rhs) {}
+
+    InputBuffer& operator=(InputBuffer&&) = default;
 };
 
 /**
@@ -319,6 +321,8 @@ public:
 
     OutputBuffer& operator=(OutputBuffer&) = delete;
     OutputBuffer(const OutputBuffer& rhs) : Buffer<T>(rhs) {}
+
+    OutputBuffer& operator=(OutputBuffer&&) = default;
 };
 
 /**
@@ -344,6 +348,8 @@ public:
 
     InputOutputBuffer& operator=(InputOutputBuffer&) = delete;
     InputOutputBuffer(const InputOutputBuffer& rhs) : Buffer<T>(rhs) {}
+    
+    InputOutputBuffer& operator=(InputOutputBuffer&&) = default;
 };
 
 } // namespace fastsense::buffer
