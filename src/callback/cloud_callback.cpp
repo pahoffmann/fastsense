@@ -26,7 +26,9 @@ CloudCallback::CloudCallback(Registration& registration,
                              Matrix4f& pose,
                              const VisPublisher::BufferPtr& vis_buffer,
                              const std::shared_ptr<TransformBuffer>& transform_buffer,
-                             fastsense::CommandQueuePtr& q)
+                             fastsense::CommandQueuePtr& q,
+                             MapThread& map_thread,
+                             std::mutex& map_mutex)
     : ProcessThread(),
       registration{registration},
       cloud_buffer{cloud_buffer},
@@ -37,43 +39,11 @@ CloudCallback::CloudCallback(Registration& registration,
       first_iteration{true},
       q{q},
       tsdf_krnl(q, local_map->getBuffer().size()),
-      vis_buffer{vis_buffer}
+      vis_buffer{vis_buffer},
+      map_thread{map_thread},
+      map_mutex{map_mutex}
 {
 
-}
-
-Eigen::Vector3f Matrix4ToEuler(const Matrix4f& inputMat)
-{
-    Eigen::Matrix4d mat = inputMat.transpose().cast<double>();
-    Eigen::Vector3d rPosTheta;
-
-    double _trX, _trY;
-
-    // Calculate Y-axis angle
-    rPosTheta[1] = asin(std::max(-1.0, std::min(1.0, mat(2, 0)))); // asin returns nan for any number outside [-1, 1]
-    if (mat(0, 0) <= 0.0)
-    {
-        rPosTheta[1] = M_PI - rPosTheta[1];
-    }
-
-    double C = cos(rPosTheta[1]);
-    if (fabs( C ) > 0.005)                    // Gimbal lock?
-    {
-        _trX      =  mat(2, 2) / C;             // No, so get X-axis angle
-        _trY      =  -mat(2, 1) / C;
-        rPosTheta[0]  = atan2( _trY, _trX );
-        _trX      =  mat(0, 0) / C;              // Get Z-axis angle
-        _trY      = -mat(1, 0) / C;
-        rPosTheta[2]  = atan2( _trY, _trX );
-    }
-    else                                        // Gimbal lock has occurred
-    {
-        rPosTheta[0] = 0.0;                       // Set X-axis angle to zero
-        _trX      =  mat(1, 1);  //1                // And calculate Z-axis angle
-        _trY      =  mat(0, 1);  //2
-        rPosTheta[2]  = atan2( _trY, _trX );
-    }
-    return rPosTheta.cast<float>();
 }
 
 void CloudCallback::thread_run()
@@ -101,7 +71,6 @@ void CloudCallback::thread_run()
 
         eval.stop("prep");
 
-        bool tsdf_dirty = true;
         if (first_iteration)
         {
             first_iteration = false;
@@ -112,81 +81,23 @@ void CloudCallback::thread_run()
             Matrix4f transform = registration.register_cloud(*local_map, scan_point_buffer);
             eval.stop("reg");
 
-            Eigen::Quaternionf rotation(transform.block<3, 3>(0, 0));
-            Vector3f pos = transform.block<3, 1>(0, 3);
-            float angle = rotation.angularDistance(Eigen::Quaternionf::Identity());
-
-            if (pos.norm() < MAP_RESOLUTION / 2 && angle < M_PI / 180)
-            {
-                tsdf_dirty = false;
-            }
-            else
-            {
-                pose = transform * pose;
-                Logger::info("Pose:\n", std::fixed, std::setprecision(4), pose);
-
-                int x = (int)std::floor(pose(0, 3) / MAP_RESOLUTION);
-                int y = (int)std::floor(pose(1, 3) / MAP_RESOLUTION);
-                int z = (int)std::floor(pose(2, 3) / MAP_RESOLUTION);
-
-                eval.start("shift");
-                local_map->shift(x, y, z);
-                eval.stop("shift");
-            }
+            pose = transform * pose;
+            Logger::info("Pose:\n", std::fixed, std::setprecision(4), pose);
         }
 
-        int tau = (int)ConfigManager::config().slam.max_distance();
-
-        if (tsdf_dirty)
-        {
-            eval.start("tsdf");
-            tsdf_krnl.run(*local_map, scan_point_buffer, tau, ConfigManager::config().slam.max_weight());
-            tsdf_krnl.waitComplete();
-
-            // fastsense::tsdf::update_tsdf_hw(scan_point_buffer, local_map, tau, ConfigManager::config().slam.max_weight());
-
-            // fastsense::buffer::InputOutputBuffer<std::pair<int, int>> new_entries(q, local_map->get_size().x() * local_map->get_size().y() * local_map->get_size().z());
-
-            // for(int i = 0; i < local_map->get_size().x() * local_map->get_size().y() * local_map->get_size().z(); ++i)
-            // {
-            //     new_entries[i].first = 0;
-            //     new_entries[i].second = 0;
-            // }
-
-            // std::vector<PointHW> kernel_points_sw(scan_point_buffer.size());
-
-            // for(size_t i = 0; i < scan_point_buffer.size(); ++i)
-            // {
-            //     kernel_points_sw[i] = scan_point_buffer[i];
-            // }
-
-            // auto& size = local_map->get_size();
-            // auto& pos = local_map->get_pos();
-            // auto& offset = local_map->get_offset();
-
-
-            // fastsense::tsdf::krnl_tsdf_sw(kernel_points_sw.data(),
-            //                               kernel_points_sw.data(),
-            //                               scan_point_buffer.size(),
-            //                               local_map->getBuffer().getVirtualAddress(),
-            //                               local_map->getBuffer().getVirtualAddress(),
-            //                               size.x(), size.y(), size.z(),
-            //                               pos.x(), pos.y(), pos.z(),
-            //                               offset.x(), offset.y(), offset.z(),
-            //                               new_entries.getVirtualAddress(),
-            //                               new_entries.getVirtualAddress(),
-            //                               tau,
-            //                               ConfigManager::config().slam.max_weight());
-
-            eval.stop("tsdf");
-        }
+        map_mutex.lock();
+        Vector3i pos((int)std::floor(pose(0, 3) / MAP_RESOLUTION),
+                     (int)std::floor(pose(1, 3) / MAP_RESOLUTION),
+                     (int)std::floor(pose(2, 3) / MAP_RESOLUTION));
+        map_thread.go(pos, scan_point_buffer);
+        map_mutex.unlock();
 
         eval.start("vis");
 
         Eigen::Quaternionf quat(pose.block<3, 3>(0, 0));
         
-        //global_map->save_pose(pose(0, 3), pose(1, 3), pose(2, 3),
-        //                      quat.x(), quat.y(), quat.z(), quat.w());
+        // global_map->save_pose(pose(0, 3), pose(1, 3), pose(2, 3),
+        //                       quat.x(), quat.y(), quat.z(), quat.w());
 
         msg::Transform transform;
         transform.translation = pose.block<3, 1>(0, 3);

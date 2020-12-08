@@ -16,6 +16,7 @@
 #include <util/config/config_manager.h>
 #include <util/concurrent_ring_buffer.h>
 #include <preprocessing/preprocessing.h>
+#include <callback/map_thread.h>
 
 namespace fastsense::callback
 {
@@ -56,7 +57,9 @@ public:
                   Matrix4f& pose,
                   const VisPublisher::BufferPtr& vis_buffer,
                   const std::shared_ptr<TransformBuffer>& transform_buffer,
-                  fastsense::CommandQueuePtr& q);
+                  fastsense::CommandQueuePtr& q,
+                  MapThread& map_thread,
+                  std::mutex& map_mutex);
 
 protected:
     void thread_run() override;
@@ -73,5 +76,8 @@ private:
     fastsense::kernels::TSDFKernel tsdf_krnl;
     fastsense::preprocessing::Preprocessing preprocessor;
     VisPublisher::BufferPtr vis_buffer;
+    MapThread& map_thread;
+    std::mutex& map_mutex;
 };
+
 }

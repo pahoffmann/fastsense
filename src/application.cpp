@@ -16,6 +16,7 @@
 #include <util/logging/logger.h>
 #include <registration/registration.h>
 #include <callback/cloud_callback.h>
+#include <callback/map_thread.h>
 #include <callback/imu_callback.h>
 #include <map/local_map.h>
 #include <map/global_map.h>
@@ -30,6 +31,7 @@ using fastsense::registration::Registration;
 using fastsense::map::LocalMap;
 using fastsense::map::GlobalMap;
 using fastsense::callback::CloudCallback;
+using fastsense::callback::MapThread;
 using fastsense::callback::VisPublisher;
 using fastsense::callback::ImuCallback;
 
@@ -92,14 +94,16 @@ int Application::run()
                          ConfigManager::config().slam.map_size_z(),
                          global_map_ptr, command_queue);
 
-    // TODO: EVERYTHING (asynchrones Shiften, wahrscheinlich hier eine weitere Map)
-
     Matrix4f pose = Matrix4f::Identity();
     auto tsdf_buffer = std::make_shared<util::ConcurrentRingBuffer<msg::TSDFBridgeMessage>>(2);
     auto transform_buffer = std::make_shared<util::ConcurrentRingBuffer<msg::Transform>>(16);
     auto vis_buffer = std::make_shared<util::ConcurrentRingBuffer<Matrix4f>>(2);
 
-    CloudCallback cloud_callback{registration, pointcloud_bridge_buffer, local_map, global_map_ptr, pose, vis_buffer, transform_buffer, command_queue};
+    std::mutex map_mutex;
+
+    MapThread map_thread{local_map, map_mutex, command_queue};
+
+    CloudCallback cloud_callback{registration, pointcloud_bridge_buffer, local_map, global_map_ptr, pose, vis_buffer, transform_buffer, command_queue, map_thread, map_mutex};
 
     VisPublisher vis_publisher{vis_buffer, local_map, tsdf_buffer};
 
@@ -119,6 +123,7 @@ int Application::run()
     Runner run_imu_callback{imu_callback};
     Runner run_tsdf_bridge(tsdf_bridge);
     Runner run_transform_bridge(transform_bridge);
+    Runner run_map_thread(map_thread);
 
     Logger::info("Application started!");
 

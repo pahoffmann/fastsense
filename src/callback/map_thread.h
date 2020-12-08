@@ -13,8 +13,8 @@
 #include <msg/tsdf_bridge_msg.h>
 #include <hw/kernels/tsdf_kernel.h>
 #include <util/config/config_manager.h>
-
 #include <mutex>
+#include <atomic>
 
 namespace fastsense::callback
 {
@@ -26,10 +26,10 @@ class MapThread : public fastsense::util::ProcessThread
 public:
 
     MapThread(const std::shared_ptr<fastsense::map::LocalMap>& local_map, 
-              const std::shared_ptr<std::mutex>& map_mutex,
+              std::mutex& map_mutex,
               fastsense::CommandQueuePtr& q);
 
-    void start(const Vector3i& pos, const fastsense::buffer::InputBuffer<PointHW>& points);
+    void go(const Vector3i& pos, const fastsense::buffer::InputBuffer<PointHW>& points);
 
 protected:
     void thread_run() override;
@@ -37,11 +37,12 @@ protected:
 private:
     const std::shared_ptr<fastsense::map::LocalMap> local_map_;
     fastsense::kernels::TSDFKernel tsdf_krnl_;
-    const std::shared_ptr<std::mutex> map_mutex_;
+    std::mutex& map_mutex_;
     std::mutex start_mutex_;
-    bool running_;
+    std::atomic<bool> active_;
     Vector3i pos_;
     std::unique_ptr<fastsense::buffer::InputBuffer<PointHW>> points_ptr_;
+    int reg_cnt_;  
 };
 
 } // namespace fastsense::callback

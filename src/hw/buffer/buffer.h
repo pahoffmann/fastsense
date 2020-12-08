@@ -184,7 +184,7 @@ public:
      * @brief delete copy constructor because of pointer member variable
      * @param Buffer& other buffer
      */
-    Buffer(const Buffer& rhs) : Buffer<T>(rhs.queue_, rhs.num_elements_, rhs.size_in_bytes_, rhs.mem_flag_, rhs.map_flag_)
+    Buffer(const Buffer& rhs) : Buffer<T>(rhs.queue_, rhs.num_elements_, rhs.mem_flag_, rhs.map_flag_)
     {
         for (size_t index = 0; index < num_elements_; ++index)
         {
