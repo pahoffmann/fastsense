@@ -6,7 +6,7 @@
 namespace fastsense::bridge
 {
 
-ros::Time timestamp_to_rostime(const fastsense::util::HighResTimePoint& ts)
+inline ros::Time timestamp_to_rostime(const fastsense::util::HighResTimePoint& ts)
 {
     auto t_since_epoch = ts.time_since_epoch();
     auto sec = std::chrono::duration_cast<std::chrono::seconds>(t_since_epoch).count();

@@ -60,7 +60,7 @@ void VelodyneBridge::publish()
 {
     sensor_msgs::PointCloud pc;
     pc.header.stamp = timestamp_;
-    pc.header.frame_id = "velodyne";
+    pc.header.frame_id = "base_link";
     pc.points = points_;
     pub().publish(pc);
 

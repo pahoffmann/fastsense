@@ -35,13 +35,6 @@ private:
     bool pub_init;
 
 public:
-    inline BridgeBase(const std::string& board_addr)
-    :   receiver_{board_addr, PORT},
-        pub_{},
-        pub_init{false},
-        msg_{}
-    {
-    }
 
     /**
      * @brief Destroy the Bridge Base object
@@ -83,6 +76,14 @@ public:
     }
 
 protected:
+    inline BridgeBase(const std::string& board_addr)
+    :   receiver_{board_addr, PORT},
+        pub_{},
+        pub_init{false},
+        msg_{}
+    {
+    }
+    
     /**
      * @brief Construct a new Bridge Base object
      * 
