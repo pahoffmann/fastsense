@@ -14,7 +14,8 @@
 
     "registration": {
         "max_iterations": 100,
-        "it_weight_gradient": 0.1
+        "it_weight_gradient": 0.1,
+        "epsilon": 0.001
     },
 
     "slam": {

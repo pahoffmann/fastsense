@@ -32,6 +32,7 @@ class Registration
 private:
     int max_iterations_;
     float it_weight_gradient_;
+    float epsilon_;
 
     std::mutex mutex_;
     Matrix4f imu_accumulator_; //used to store the transform since the last registration (right now calculated using the angular velocities by the IMU)
@@ -54,9 +55,10 @@ public:
      * @brief Construct a new Registration object, used to register a pointcloud with the current ring buffer
      *
      */
-    Registration(fastsense::CommandQueuePtr q, unsigned int max_iterations = 50, float it_weight_gradient = 0.0) :
+    Registration(fastsense::CommandQueuePtr q, unsigned int max_iterations = 50, float it_weight_gradient = 0.0, float epsilon = 0.0001) :
         max_iterations_(max_iterations),
         it_weight_gradient_(it_weight_gradient),
+        epsilon_(epsilon),
         first_imu_msg_(true),
         krnl{q}
     {

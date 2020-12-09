@@ -34,12 +34,18 @@ public:
      * @param local_count   local count ref
      * @param transform     transform from last registration iteration (including imu one) - needs to be applied in the kernel
      */
-    void synchronized_run(map::LocalMap& map, buffer::InputBuffer<PointHW>& point_data, int max_iterations, float it_weight_gradient, Eigen::Matrix4f& transform)
+    void synchronized_run(map::LocalMap& map,
+                          buffer::InputBuffer<PointHW>& point_data,
+                          int max_iterations,
+                          float it_weight_gradient,
+                          float epsilon,
+                          Eigen::Matrix4f& transform)
     {
         // 4x4 Matrix and Number of iterations = 17
         buffer::OutputBuffer<float> out_transform(cmd_q_, 17);
 
-        buffer::InputBuffer<float> in_transform(cmd_q_, 16);
+        // 4x4 Matrix and epsilon = 17
+        buffer::InputBuffer<float> in_transform(cmd_q_, 17);
 
         //write last transform to buffer
         for (int row = 0; row < 4; row++)
@@ -49,6 +55,7 @@ public:
                 in_transform[row * 4 + col] = transform(row, col);
             }
         }
+        in_transform[16] = epsilon;
 
         //run the encapsulated kernel
         run(map, point_data, max_iterations, it_weight_gradient, in_transform, out_transform);

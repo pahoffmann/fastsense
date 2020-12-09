@@ -302,6 +302,7 @@ extern "C"
                 total_transform[row][col] = in_transform[row * 4 + col];
             }
         }
+        float epsilon = in_transform[16];
 
         int i;
     registration_loop:
@@ -378,7 +379,6 @@ extern "C"
             float d1 = err - previous_errors[2];
             float d2 = err - previous_errors[0];
 
-            constexpr float epsilon = 0.0001; // TODO: make parameter?
             if (d1 >= -epsilon && d1 <= epsilon && d2 >= -epsilon && d2 <= epsilon)
             {
                 break;
