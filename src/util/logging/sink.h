@@ -25,7 +25,7 @@ public:
 class CoutSink : public Sink
 {
 public:
-    ~CoutSink() override = default;
+    ~CoutSink() = default;
 
     void write(const std::string& msg) override;
 };
@@ -36,7 +36,7 @@ private:
     std::ofstream file;
 public:
     explicit FileSink(const std::string& filename, std::ios_base::openmode mode = std::ios_base::app);
-    ~FileSink() override = default;
+    ~FileSink() = default;
 
     void write(const std::string& msg) override;
 };

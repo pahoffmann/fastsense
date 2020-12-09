@@ -6,21 +6,18 @@
 #include "catch2_config.h"
 #include <preprocessing/preprocessing.h>
 #include <util/point.h>
-#include <msg/point_cloud_stamped.h>
+#include <msg/point_cloud.h>
 
-using namespace fastsense;
-using namespace fastsense::msg;
 using namespace fastsense::preprocessing;
 using fastsense::ScanPoint;
 
-TEST_CASE("Preprocessing", "[Preprocessing]")
-{
+TEST_CASE("Preprocessing", "[Preprocessing]"){
     REQUIRE(1 == 1);
 
     Preprocessing preprocessor;
-    PointCloud::Ptr cloud = std::make_shared<PointCloud>();
-    Stamped<PointCloud::Ptr> cloud_stamped;
-    cloud_stamped.data_ = cloud;
+    fastsense::msg::PointCloud::Ptr cloud = std::make_shared<fastsense::msg::PointCloud>();
+    fastsense::msg::PointCloudStamped cloud_stamped;
+    cloud_stamped.first = cloud;
 
     std::vector<ScanPoint> points(24);
     //RING 1
@@ -55,8 +52,8 @@ TEST_CASE("Preprocessing", "[Preprocessing]")
 
     //cloud->rings_ = 2;
     //cloud->points_ = points;
-    cloud_stamped.data_->points_ = points;
-    cloud_stamped.data_->rings_ = 2;
+    cloud_stamped.first->points_ = points;
+    cloud_stamped.first->rings_ = 2;
 
     SECTION("Test median filter"){
 
@@ -91,7 +88,7 @@ TEST_CASE("Preprocessing", "[Preprocessing]")
 
         for(uint32_t i = 0; i < result.size(); i++)
         {
-            REQUIRE(cloud_stamped.data_->points_[i] == result[i]);
+            REQUIRE(cloud_stamped.first->points_[i] == result[i]);
         }
     }
 
@@ -184,8 +181,8 @@ TEST_CASE("Preprocessing", "[Preprocessing]")
         points[22] = {-3, 22, -15};
         points[23] = {-60, 56, -27};
 
-        cloud_stamped.data_->points_ = points;
-        cloud_stamped.data_->rings_ = 2;
+        cloud_stamped.first->points_ = points;
+        cloud_stamped.first->rings_ = 2;
 
         preprocessor.reduction_filter(cloud_stamped);
 
@@ -204,7 +201,7 @@ TEST_CASE("Preprocessing", "[Preprocessing]")
 
         for(uint32_t i = 0; i < result_reduction.size(); i++)
         {
-            auto f = std::find(result_reduction.begin(), result_reduction.end(), cloud_stamped.data_->points_[i]);
+            auto f = std::find(result_reduction.begin(), result_reduction.end(), cloud_stamped.first->points_[i]);
             REQUIRE(f != result_reduction.end());
         }
     }

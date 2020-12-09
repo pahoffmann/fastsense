@@ -20,21 +20,22 @@ namespace fastsense::bridge
  * @brief TransformBridge converts transform data from the application to ROS messages
  * 
  */
-class TransformBridge :  public BridgeBase<msg::TransformStamped, geometry_msgs::Transform, 8888>,
+class TransformBridge :  public BridgeBase<msg::Transform, geometry_msgs::TransformStamped, 8888>,
     public util::ProcessThread
 {
 public:
     /**
      * @brief Construct a new Transform Bridge object
      * 
+     * @param n nodehandle
      * @param board_addr ip addr of Trenz board
      */
-    TransformBridge(const std::string& board_addr);
+    TransformBridge(ros::NodeHandle& n, const std::string& board_addr);
 
     /**
      * @brief Destroy the Transform Bridge object
      */
-    ~TransformBridge() override = default;
+    ~TransformBridge() = default;
 
     /**
      * @brief Starts the Transform Bridge in its own thread

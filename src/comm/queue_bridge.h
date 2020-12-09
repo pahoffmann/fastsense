@@ -2,15 +2,14 @@
 
 /**
  * @file queue_bridge.h
- * @author Marcel Flottmann, Julian Gaal
+ * @author Marcel Flottmann
  * @date 2020-10-06
  */
 
-#include <util/time.h>
 #include <util/concurrent_ring_buffer.h>
-#include <msg/point_cloud_stamped.h>
 #include <util/process_thread.h>
 #include <comm/sender.h>
+#include <util/time_stamp.h>
 
 namespace fastsense::comm
 {
@@ -26,7 +25,6 @@ protected:
     BufferType out_;
 
     Sender<T_MSG> sender_;
-    bool send_;
 
     void thread_run() override
     {
@@ -48,24 +46,18 @@ protected:
                     this->out_->push(val);
                 }
             }
-
-            if (send_)
-            {
-                this->send(val);
-            }
-
+            this->send(val);
         }
     }
 
     virtual void send(const T_QUEUE& val) = 0;
 
 public:
-    QueueBridgeBase(const BufferType& in, const BufferType& out, uint16_t port, bool send = true) :
-        in_{in}, out_{out}, sender_{port}, send_{send}
+    QueueBridgeBase(const BufferType& in, const BufferType& out, uint16_t port) :
+        in_{in}, out_{out}, sender_{port}
     {}
 
-    virtual ~QueueBridgeBase() = default;
-
+    ~QueueBridgeBase() = default;
 };
 
 template<typename T, bool FORCE>
@@ -73,7 +65,7 @@ class QueueBridge : public QueueBridgeBase<T, T, FORCE>
 {
 public:
     using QueueBridgeBase<T, T, FORCE>::QueueBridgeBase;
-    ~QueueBridge() override = default;
+    ~QueueBridge() = default;
 
 protected:
     void send(const T& val) override
@@ -87,7 +79,7 @@ class QueueBridge<std::shared_ptr<T>, FORCE> : public QueueBridgeBase<std::share
 {
 public:
     using QueueBridgeBase<std::shared_ptr<T>, T, FORCE>::QueueBridgeBase;
-    ~QueueBridge() override = default;
+    ~QueueBridge() = default;
 
 protected:
     void send(const std::shared_ptr<T>& val) override
@@ -97,65 +89,30 @@ protected:
 };
 
 template<typename T, bool FORCE>
-class QueueBridge<std::pair<T, util::HighResTimePoint>, FORCE> : public QueueBridgeBase<std::pair<T, util::HighResTimePoint>, T, FORCE>
+class QueueBridge<std::pair<T, util::TimeStamp>, FORCE> : public QueueBridgeBase<std::pair<T, util::TimeStamp>, T, FORCE>
 {
 public:
-    using QueueBridgeBase<std::pair<T, util::HighResTimePoint>, T, FORCE>::QueueBridgeBase;
-    ~QueueBridge() override = default;
+    using QueueBridgeBase<std::pair<T, util::TimeStamp>, T, FORCE>::QueueBridgeBase;
+    ~QueueBridge() = default;
 
 protected:
-    void send(const std::pair<T, util::HighResTimePoint>& val) override
+    void send(const std::pair<T, util::TimeStamp>& val) override
     {
         this->sender_.send(val.first);
     }
 };
 
 template<typename T, bool FORCE>
-class QueueBridge<std::pair<std::shared_ptr<T>, util::HighResTimePoint>, FORCE> : public QueueBridgeBase<std::pair<std::shared_ptr<T>, util::HighResTimePoint>, T, FORCE>
+class QueueBridge<std::pair<std::shared_ptr<T>, util::TimeStamp>, FORCE> : public QueueBridgeBase<std::pair<std::shared_ptr<T>, util::TimeStamp>, T, FORCE>
 {
 public:
-    using QueueBridgeBase<std::pair<std::shared_ptr<T>, util::HighResTimePoint>, T, FORCE>::QueueBridgeBase;
-    ~QueueBridge() override = default;
+    using QueueBridgeBase<std::pair<std::shared_ptr<T>, util::TimeStamp>, T, FORCE>::QueueBridgeBase;
+    ~QueueBridge() = default;
 
 protected:
-    void send(const std::pair<std::shared_ptr<T>, util::HighResTimePoint>& val) override
+    void send(const std::pair<std::shared_ptr<T>, util::TimeStamp>& val) override
     {
         this->sender_.send(*val.first);
-    }
-};
-
-/**
- * @brief QueueBridgeBase specialization for PointCloudPtrStamped (trenz to ROS)
- * 
- * @tparam T 
- * @tparam FORCE 
- */
-template<bool FORCE>
-class QueueBridge<msg::Stamped<std::shared_ptr<msg::PointCloud>>, FORCE> : public QueueBridgeBase<msg::Stamped<std::shared_ptr<msg::PointCloud>>, msg::PointCloudStamped, FORCE>
-{
-public:
-    using QueueBridgeBase<msg::Stamped<std::shared_ptr<msg::PointCloud>>, msg::PointCloudStamped, FORCE>::QueueBridgeBase;
-    ~QueueBridge() override = default;
-
-protected:
-    void send(const msg::Stamped<std::shared_ptr<msg::PointCloud>>& val) override
-    {
-        msg::PointCloud pcl = *val.data_;
-        this->sender_.send(msg::PointCloudStamped{std::move(pcl), val.timestamp_});
-    }
-};
-
-template<typename T, bool FORCE>
-class QueueBridge<msg::Stamped<T>, FORCE> : public QueueBridgeBase<msg::Stamped<T>, msg::Stamped<T>, FORCE>
-{
-public:
-    using QueueBridgeBase<msg::Stamped<T>, msg::Stamped<T>, FORCE>::QueueBridgeBase;
-    ~QueueBridge() override = default;
-
-protected:
-    void send(const msg::Stamped<T>& val) override
-    {
-        this->sender_.send(val);
     }
 };
 

@@ -18,17 +18,15 @@ namespace fastsense::driver
 class Imu : public Phidget, public fastsense::util::ProcessThread
 {
 public:
-    using UPtr = std::unique_ptr<Imu>;
-
     Imu() = delete;
 
     /**
      * Creates Imu instance
      * @param ringbuffer
      */
-    explicit Imu(const fastsense::msg::ImuStampedBuffer::Ptr& ringbuffer);
+    explicit Imu(const fastsense::msg::ImuStampedBufferPtr& ringbuffer);
 
-    ~Imu() override = default;
+    virtual ~Imu() = default;
 
     /**
      * @brief delete assignment operator because of pointer member variable
@@ -42,12 +40,6 @@ public:
      * @param Imu& other imu
      */
     Imu(Imu&) = delete;
-
-    /**
-     * @brief delete move constructor 
-     * @param Imu& other imu
-     */
-    Imu(Imu&&) = delete;
 
     /**
      * @brief Whether or not device has been calibrated
@@ -98,7 +90,7 @@ public:
 
 private:
     /// buffer, in which imu readings are saved
-    fastsense::msg::ImuStampedBuffer::Ptr data_buffer_;
+    fastsense::msg::ImuStampedBufferPtr data_buffer_;
 
     /// whether or not imu is connected
     bool is_connected_;

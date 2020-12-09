@@ -25,7 +25,7 @@ CloudCallback::CloudCallback(Registration& registration,
                              const std::shared_ptr<GlobalMap>& global_map,
                              Matrix4f& pose,
                              const VisPublisher::BufferPtr& vis_buffer,
-                             const msg::TransformStampedBuffer::Ptr& transform_buffer,
+                             const std::shared_ptr<TransformBuffer>& transform_buffer,
                              fastsense::CommandQueuePtr& q)
     : ProcessThread(),
       registration{registration},
@@ -78,7 +78,7 @@ Eigen::Vector3f Matrix4ToEuler(const Matrix4f& inputMat)
 
 void CloudCallback::thread_run()
 {
-    fastsense::msg::PointCloudPtrStamped point_cloud;
+    fastsense::msg::PointCloudStamped point_cloud;
     auto& eval = RuntimeEvaluator::get_instance();
     while (running)
     {
@@ -90,15 +90,13 @@ void CloudCallback::thread_run()
         eval.start("total");
         eval.start("prep");
 
-        fastsense::msg::PointCloudPtrStamped point_cloud2;
-        point_cloud2.data_ = point_cloud.data_;
-        point_cloud2.timestamp_ = point_cloud.timestamp_;
-
-        
+        fastsense::msg::PointCloudStamped point_cloud2;
+        point_cloud2.first = std::make_shared<msg::PointCloud>(*point_cloud.first);
+        point_cloud2.second = point_cloud.second;
 
         preprocessor.median_filter(point_cloud2, 5);
         preprocessor.reduction_filter(point_cloud2);
-        InputBuffer<PointHW> scan_point_buffer{q, point_cloud2.data_->points_.size()};
+        InputBuffer<PointHW> scan_point_buffer{q, point_cloud2.first->points_.size()};
         preprocessor.preprocess_scan(point_cloud2, scan_point_buffer, pose);
 
         eval.stop("prep");
@@ -189,9 +187,9 @@ void CloudCallback::thread_run()
         global_map->save_pose(pose(0, 3), pose(1, 3), pose(2, 3),
                               quat.x(), quat.y(), quat.z(), quat.w());
 
-        msg::TransformStamped transform;
-        transform.data_.translation = pose.block<3, 1>(0, 3);
-        transform.data_.rotation = quat;
+        msg::Transform transform;
+        transform.translation = pose.block<3, 1>(0, 3);
+        transform.rotation = quat;
         transform_buffer->push_nb(transform, true);
 
         vis_buffer->push_nb(pose, true);

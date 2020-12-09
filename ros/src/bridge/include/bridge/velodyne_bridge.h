@@ -6,9 +6,7 @@
 
 #pragma once
 
-#include <ros/time.h>
 #include <sensor_msgs/PointCloud.h>
-#include <msg/point_cloud_stamped.h>
 #include "bridge_base.h"
 
 namespace fastsense::bridge
@@ -19,7 +17,7 @@ namespace fastsense::bridge
  * on Trenz board and publishes a sensor_msgs::PointCloud
  * 
  */
-class VelodyneBridge :  public BridgeBase<msg::PointCloudStamped, sensor_msgs::PointCloud, 7777>,
+class VelodyneBridge :  public BridgeBase<msg::PointCloud, sensor_msgs::PointCloud, 7777>,
     public util::ProcessThread
 {
 public:
@@ -34,7 +32,7 @@ public:
     /**
      * @brief Destroy the Velodyne Bridge object
      */
-    ~VelodyneBridge() override = default;
+    ~VelodyneBridge() = default;
 private:
 
     /**
@@ -60,7 +58,6 @@ private:
 
     /// Local vector of lidar points that are published
     std::vector<geometry_msgs::Point32> points_;
-    ros::Time timestamp_;
 };
 
 } // namespace fastsense::bridge

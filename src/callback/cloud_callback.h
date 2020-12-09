@@ -21,13 +21,14 @@ namespace fastsense::callback
 {
 
 using Registration = fastsense::registration::Registration;
-using PointCloudBuffer = fastsense::util::ConcurrentRingBuffer<fastsense::msg::PointCloudPtrStamped>;
+using PointCloudBuffer = fastsense::util::ConcurrentRingBuffer<fastsense::msg::PointCloudStamped>;
 using fastsense::map::LocalMap;
 using fastsense::map::GlobalMap;
 using Eigen::Matrix4f;
 using fastsense::util::config::ConfigManager;
 using TSDFBuffer = util::ConcurrentRingBuffer<msg::TSDFBridgeMessage>;
 using fastsense::buffer::InputBuffer;
+using TransformBuffer = fastsense::util::ConcurrentRingBuffer<fastsense::msg::Transform>;
 
 class VisPublisher : public fastsense::util::ProcessThread
 {
@@ -54,7 +55,7 @@ public:
                   const std::shared_ptr<GlobalMap>& global_map,
                   Matrix4f& pose,
                   const VisPublisher::BufferPtr& vis_buffer,
-                  const msg::TransformStampedBuffer::Ptr& transform_buffer,
+                  const std::shared_ptr<TransformBuffer>& transform_buffer,
                   fastsense::CommandQueuePtr& q);
 
 protected:
@@ -66,7 +67,7 @@ private:
     std::shared_ptr<LocalMap> local_map;
     std::shared_ptr<GlobalMap> global_map;
     Matrix4f& pose;
-    msg::TransformStampedBuffer::Ptr transform_buffer;
+    std::shared_ptr<TransformBuffer> transform_buffer;
     bool first_iteration;
     fastsense::CommandQueuePtr& q;
     fastsense::kernels::TSDFKernel tsdf_krnl;

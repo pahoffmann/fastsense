@@ -20,7 +20,7 @@ public:
         : BaseKernel{queue, "krnl_reg"}
     {}
 
-    ~RegistrationKernel() override = default;
+    ~RegistrationKernel() = default;
 
     /**
      * @brief interface between the software and the hw, calls the run method of the kernel, writes all the data coming from the kernel

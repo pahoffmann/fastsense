@@ -3,7 +3,7 @@
  * @author Marcel Flottmann
  */
 
-#include <util/time.h>
+#include <chrono>
 #include <csignal>
 #include <cstring>
 #include <algorithm>
@@ -12,16 +12,14 @@
 #include "application.h"
 #include <msg/imu.h>
 #include <msg/tsdf_bridge_msg.h>
-#include <msg/stamped.h>
 #include <util/config/config_manager.h>
 #include <util/logging/logger.h>
-#include <util/runner.h>
 #include <registration/registration.h>
 #include <callback/cloud_callback.h>
+#include <callback/imu_callback.h>
 #include <map/local_map.h>
 #include <map/global_map.h>
 #include <comm/queue_bridge.h>
-#include <comm/buffered_receiver.h>
 
 using namespace fastsense;
 using namespace fastsense::util::config;
@@ -33,10 +31,27 @@ using fastsense::map::LocalMap;
 using fastsense::map::GlobalMap;
 using fastsense::callback::CloudCallback;
 using fastsense::callback::VisPublisher;
+using fastsense::callback::ImuCallback;
+
+template<typename T>
+class Runner
+{
+private:
+    T& object;
+public:
+    Runner(T& obj) : object(obj)
+    {
+        object.start();
+    }
+
+    ~Runner()
+    {
+        object.stop();
+    }
+};
 
 Application::Application()
     : signal_set{}
-    , config{ConfigManager::config()}
 {
     // block signals
     sigemptyset(&signal_set);
@@ -47,105 +62,59 @@ Application::Application()
     Logger::info("Application initialized");
 }
 
-std::unique_ptr<util::ProcessThread> Application::init_imu(msg::ImuStampedBuffer::Ptr imu_buffer)
-{   
-    util::ProcessThread::UPtr imu_driver;
-    if (config.bridge.use_from())
-    {
-        imu_driver.reset(new comm::BufferedImuStampedReceiver{config.bridge.host_from(), config.bridge.imu_port_from(), imu_buffer});
-    }
-    else
-    {
-        imu_driver.reset(new driver::Imu{imu_buffer});
-    }
-
-    return imu_driver;
-}
-
-
-std::unique_ptr<util::ProcessThread> Application::init_lidar(msg::PointCloudPtrStampedBuffer::Ptr pcl_buffer)
-{
-    util::ProcessThread::UPtr lidar_driver;
-
-    if (config.bridge.use_from())
-    {
-        lidar_driver.reset(new comm::BufferedPclStampedReceiver{config.bridge.host_from(), config.bridge.pcl_port_from(), pcl_buffer});
-    }
-    else
-    {
-        lidar_driver.reset(new driver::VelodyneDriver{config.lidar.port(), pcl_buffer}); 
-    }
-
-    return lidar_driver;
-}
-
 int Application::run()
 {
     Logger::info("Application setup...");
-   
-    auto imu_buffer = std::make_shared<msg::ImuStampedBuffer>(config.imu.bufferSize());
-    auto imu_bridge_buffer = std::make_shared<msg::ImuStampedBuffer>(config.imu.bufferSize());
-    auto pointcloud_buffer = std::make_shared<msg::PointCloudPtrStampedBuffer>(config.lidar.bufferSize());
-    auto pointcloud_bridge_buffer = std::make_shared<msg::PointCloudPtrStampedBuffer>(config.lidar.bufferSize());
+    auto imu_buffer = std::make_shared<msg::ImuStampedBuffer>(ConfigManager::config().imu.bufferSize());
+    auto imu_bridge_buffer = std::make_shared<msg::ImuStampedBuffer>(ConfigManager::config().imu.bufferSize());
 
-    util::ProcessThread::UPtr imu_driver;
-    util::ProcessThread::UPtr lidar_driver;
+    driver::Imu imu_driver{imu_buffer};
+    comm::QueueBridge<msg::ImuStamped, true> imu_bridge(imu_buffer, imu_bridge_buffer, 5555);
 
-    if (config.bridge.use_from())
-    {
-        Logger::info("Launching BufferedReceivers");
-        imu_driver.reset(new comm::BufferedImuStampedReceiver{config.bridge.host_from(), config.bridge.imu_port_from(), imu_buffer});
-        lidar_driver.reset(new comm::BufferedPclStampedReceiver{config.bridge.host_from(), config.bridge.pcl_port_from(), pointcloud_buffer});
-    }
-    else
-    {
-        Logger::info("Starting Sensors");
-        imu_driver.reset(new driver::Imu{imu_buffer});
-        lidar_driver.reset(new driver::VelodyneDriver{config.lidar.port(), pointcloud_buffer});
-    }
+    auto pointcloud_buffer = std::make_shared<msg::PointCloudStampedBuffer>(ConfigManager::config().lidar.bufferSize());
+    auto pointcloud_bridge_buffer = std::make_shared<msg::PointCloudStampedBuffer>(ConfigManager::config().lidar.bufferSize());
 
-    bool send = config.bridge.use_to();
-
-    // std::cout 
-
-    comm::QueueBridge<msg::ImuStamped, true> imu_bridge{imu_buffer, imu_bridge_buffer, config.bridge.imu_port_to(), send};
-    comm::QueueBridge<msg::PointCloudPtrStamped, true> lidar_bridge{pointcloud_buffer, pointcloud_bridge_buffer, config.bridge.pcl_port_to(), send};
+    driver::VelodyneDriver lidar_driver{ConfigManager::config().lidar.port(), pointcloud_buffer};
+    comm::QueueBridge<msg::PointCloudStamped, true> lidar_bridge(pointcloud_buffer, pointcloud_bridge_buffer, 7777);
 
     auto command_queue = fastsense::hw::FPGAManager::create_command_queue();
 
-    Registration registration{command_queue, config.registration.max_iterations(), config.registration.it_weight_gradient()};
+    Registration registration{command_queue, ConfigManager::config().registration.max_iterations(), ConfigManager::config().registration.it_weight_gradient()};
 
     auto global_map_ptr = std::make_shared<GlobalMap>(
                               "GlobalMap.h5",
-                              config.slam.max_distance() / config.slam.map_resolution(),
-                              config.slam.initial_map_weight());
+                              ConfigManager::config().slam.max_distance() / ConfigManager::config().slam.map_resolution(),
+                              ConfigManager::config().slam.initial_map_weight());
 
     auto local_map = std::make_shared<LocalMap>(
-                         config.slam.map_size_x(),
-                         config.slam.map_size_y(),
-                         config.slam.map_size_z(),
+                         ConfigManager::config().slam.map_size_x(),
+                         ConfigManager::config().slam.map_size_y(),
+                         ConfigManager::config().slam.map_size_z(),
                          global_map_ptr, command_queue);
 
     Matrix4f pose = Matrix4f::Identity();
     auto tsdf_buffer = std::make_shared<util::ConcurrentRingBuffer<msg::TSDFBridgeMessage>>(2);
-    auto transform_buffer = std::make_shared<util::ConcurrentRingBuffer<msg::TransformStamped>>(16);
+    auto transform_buffer = std::make_shared<util::ConcurrentRingBuffer<msg::Transform>>(16);
     auto vis_buffer = std::make_shared<util::ConcurrentRingBuffer<Matrix4f>>(2);
 
     CloudCallback cloud_callback{registration, pointcloud_bridge_buffer, local_map, global_map_ptr, pose, vis_buffer, transform_buffer, command_queue};
 
     VisPublisher vis_publisher{vis_buffer, local_map, tsdf_buffer};
 
+    ImuCallback imu_callback{registration, imu_bridge_buffer};
+
     comm::QueueBridge<msg::TSDFBridgeMessage, true> tsdf_bridge{tsdf_buffer, nullptr, 6666};
-    comm::QueueBridge<msg::TransformStamped, true> transform_bridge{transform_buffer, nullptr, 8888};
+    comm::QueueBridge<msg::Transform, true> transform_bridge{transform_buffer, nullptr, 8888};
 
     Logger::info("Application starting...");
 
-    Runner run_lidar_driver(*lidar_driver);
+    Runner run_lidar_driver(lidar_driver);
     Runner run_lidar_bridge(lidar_bridge);
-    Runner run_imu_driver(*imu_driver);
+    Runner run_imu_driver(imu_driver);
     Runner run_imu_bridge(imu_bridge);
     Runner run_cloud_callback{cloud_callback};
     Runner run_vis_publisher{vis_publisher};
+    Runner run_imu_callback{imu_callback};
     Runner run_tsdf_bridge(tsdf_bridge);
     Runner run_transform_bridge(transform_bridge);
 
@@ -162,5 +131,9 @@ int Application::run()
 
     Logger::info("Stopping Application...");
 
+    // ensure that last Scan has finished processing
+    cloud_callback.stop();
+    // save Map to Disk
+    local_map->write_back();
     return 0;
 }

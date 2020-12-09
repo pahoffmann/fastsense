@@ -16,7 +16,6 @@ using Eigen::Vector3i;
 using Eigen::Vector3f;
 using Eigen::Matrix4i;
 using Eigen::Matrix4f;
-using Eigen::Quaternionf;
 using ScanPoints_t = std::vector<Vector3i>;
 using ScanPointType = int16_t;
 using ScanPoint = Eigen::Matrix<ScanPointType, 3, 1>;

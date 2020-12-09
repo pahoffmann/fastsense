@@ -34,7 +34,7 @@ public:
     /**
      * @brief Destroy the TSDFBridge object
      */
-    ~TSDFBridge() override = default;
+    ~TSDFBridge() = default;
 private:
 
     /**

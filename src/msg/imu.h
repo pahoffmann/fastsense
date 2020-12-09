@@ -8,13 +8,11 @@
 #include <iostream>
 #include <memory>
 
-#include <msg/stamped.h>
-#include <util/time.h>
 #include <msg/linear_acceleration.h>
 #include <msg/angular_velocity.h>
 #include <msg/magnetic_field.h>
-#include <msg/stamped.h>
 
+#include <util/time_stamp.h>
 #include <util/concurrent_ring_buffer.h>
 
 namespace fastsense::msg
@@ -25,53 +23,19 @@ namespace fastsense::msg
  */
 struct Imu
 {
-    Imu()
-    : acc{}
-    , ang{}
-    , mag{}
-    {}
-
-    Imu(const double* acceleration, const double* angular_rate, const double* magField)
-    : acc{acceleration}
-    , ang{angular_rate}
-    , mag{magField}
-    {}
-
-    Imu(LinearAcceleration acc, AngularVelocity ang, MagneticField mag)
-    : acc{std::move(acc)}
-    , ang{std::move(ang)}
-    , mag{std::move(mag)}
-    {}
-
+    Imu();
+    Imu(const double* acc, const double* ang, const double* magField);
     LinearAcceleration acc;
     AngularVelocity ang;
     MagneticField mag;
 
-    using Ptr = std::shared_ptr<Imu>;
+    using ptr = std::shared_ptr<Imu>;
 };
 
-//using ImuStamped = std::pair<Imu, util::HighResTimePoint>;
-using ImuStamped = msg::Stamped<Imu>;
+using ImuStamped = std::pair<Imu, util::TimeStamp>;
 using ImuStampedBuffer = util::ConcurrentRingBuffer<ImuStamped>;
+using ImuStampedBufferPtr = std::shared_ptr<ImuStampedBuffer>;
 
 } // namespace fastsense::msg
 
-//std::ostream& operator<<(std::ostream& os, const fastsense::msg::Imu& data)
-//{
-//    os << "-- acc --\n";
-//    os << data.acc.x() << "\n";
-//    os << data.acc.y() << "\n";
-//    os << data.acc.z() << "\n";
-//
-//    os << "-- ang --\n";
-//    os << data.ang.x() << "\n";
-//    os << data.ang.y() << "\n";
-//    os << data.ang.z() << "\n";
-//
-//    os << "-- mag --\n";
-//    os << data.mag.x() << "\n";
-//    os << data.mag.y() << "\n";
-//    os << data.mag.z() << "\n";
-//
-//    return os;
-//}
+std::ostream& operator<<(std::ostream& os, const fastsense::msg::Imu& data);
