@@ -35,22 +35,6 @@ private:
     bool pub_init;
 
 public:
-    /**
-     * @brief Construct a new Bridge Base object
-     * 
-     * @param n ROS node handle
-     * @param topic ROS topic that will be published to
-     * @param board_addr board addr that will be listened to by zeromq
-     * @param msg_buffer_size ROS msg buffer size
-     */
-    inline BridgeBase(ros::NodeHandle& n, const std::string& topic, const std::string& board_addr, size_t msg_buffer_size = 1000) 
-    :   receiver_{board_addr, PORT},
-        pub_{n.advertise<P>(topic, msg_buffer_size)},
-        pub_init{true},
-        msg_{}
-    {
-    }
-
     inline BridgeBase(const std::string& board_addr)
     :   receiver_{board_addr, PORT},
         pub_{},
@@ -69,7 +53,7 @@ public:
      */
     virtual void run() 
     {
-        receiver_.receive(msg_);
+        receive();
         convert();
         publish();
     }
@@ -99,8 +83,29 @@ public:
     }
 
 protected:
+    /**
+     * @brief Construct a new Bridge Base object
+     * 
+     * @param n ROS node handle
+     * @param topic ROS topic that will be published to
+     * @param board_addr board addr that will be listened to by zeromq
+     * @param msg_buffer_size ROS msg buffer size
+     */
+    inline BridgeBase(ros::NodeHandle& n, const std::string& topic, const std::string& board_addr, size_t msg_buffer_size = 1000) 
+    :   receiver_{board_addr, PORT},
+        pub_{n.advertise<P>(topic, msg_buffer_size)},
+        pub_init{true},
+        msg_{}
+    {
+    }
+
     /// msg of type T that is received via zeromq
     T msg_;
+
+    virtual void receive() final
+    {
+        receiver_.receive(msg_);
+    }
 
     /**
      * @brief Pure virtual convert function: convert T to ROS message

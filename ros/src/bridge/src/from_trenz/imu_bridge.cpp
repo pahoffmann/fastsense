@@ -7,6 +7,7 @@
 #include <omp.h>
 #include <algorithm>
 #include <ros/ros.h>
+#include <bridge/util.h>
 #include <bridge/from_trenz/imu_bridge.h>
 
 using namespace fastsense::util;
@@ -16,7 +17,7 @@ using namespace fastsense::bridge;
 // TODO params
 
 ImuBridge::ImuBridge(ros::NodeHandle& n, const std::string& board_addr) 
-:   BridgeBase{n, "imu_bridge/from_trenz/raw", board_addr}, 
+:   BridgeBase{n, "imu/raw", board_addr}, 
     ProcessThread{},
     imu_ros_{},
     mag_ros_{},
@@ -25,16 +26,25 @@ ImuBridge::ImuBridge(ros::NodeHandle& n, const std::string& board_addr)
     linear_acceleration_covariance_{},
     magnetic_field_covariance_{}
 {
-    mag_pub_ = n.advertise<sensor_msgs::MagneticField>("imu_bridge/from_trenz/mag", 5);
+    mag_pub_ = n.advertise<sensor_msgs::MagneticField>("imu/mag", 5);
     initCovariance();
 }
 
 void ImuBridge::run()
 {
     while (running && ros::ok())
-    {
-        BridgeBase::run();
-        ROS_INFO_STREAM("Received imu msg\n");
+    {   
+        try
+        {
+            receive();
+            ROS_INFO_STREAM("Received imu msg\n");
+            convert();
+            publish();
+        }
+        catch(const std::exception& e)
+        {
+            std::cerr << "IMU "  << e.what() << '\n';
+        }
     }
 }
 
@@ -87,12 +97,10 @@ void ImuBridge::convert()
 {  
     const auto& [ data, timestamp ] = msg();
 
-    auto t_since_epoch = timestamp.time_since_epoch();
-    auto sec = std::chrono::duration_cast<std::chrono::seconds>(t_since_epoch).count();
-    auto nsec = std::chrono::duration_cast<std::chrono::nanoseconds>(t_since_epoch).count() % 1'000'000;
+    ros::Time ros_timestamp = timestamp_to_rostime(timestamp);
 
     imu_ros_.header.frame_id = "base_link";
-    imu_ros_.header.stamp = ros::Time(sec, nsec);
+    imu_ros_.header.stamp = ros_timestamp;
     imu_ros_.orientation.x = 0;
     imu_ros_.orientation.y = 0;
     imu_ros_.orientation.z = 0;
@@ -115,7 +123,7 @@ void ImuBridge::convert()
                 imu_ros_.angular_velocity_covariance.begin());
 
     mag_ros_.header.frame_id = "base_link";
-    mag_ros_.header.stamp = ros::Time(sec, nsec);
+    mag_ros_.header.stamp = ros_timestamp;
     mag_ros_.magnetic_field.x = data.mag.x();
     mag_ros_.magnetic_field.y = data.mag.y();
     mag_ros_.magnetic_field.z = data.mag.z();

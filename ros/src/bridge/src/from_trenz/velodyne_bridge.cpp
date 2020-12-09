@@ -7,12 +7,13 @@
 #include <chrono>
 #include <iterator>
 #include <ros/ros.h>
+#include <bridge/util.h>
 #include <bridge/from_trenz/velodyne_bridge.h>
 
 using namespace fastsense::bridge;
 
 VelodyneBridge::VelodyneBridge(ros::NodeHandle& n, const std::string& board_addr)
-    :   BridgeBase{n, "velodyne_bridge/from_trenz/points", board_addr},
+    :   BridgeBase{n, "velodyne/points", board_addr},
         ProcessThread{},
         points_{}
 {
@@ -22,8 +23,17 @@ void VelodyneBridge::run()
 {
     while (running && ros::ok())
     {
-        BridgeBase::run();
-        ROS_INFO_STREAM("Received " << msg_.data_.points_.size() << " points\n");
+        try
+        {
+            receive();
+            ROS_INFO_STREAM("Received " << msg_.data_.points_.size() << " points\n");
+            convert();
+            publish();
+        }
+        catch(const std::exception& e)
+        {
+            std::cerr << "VELO " << e.what() << '\n';
+        }
     }
 }
 
@@ -31,14 +41,10 @@ void VelodyneBridge::convert()
 {
     points_.clear();
 
-    const auto& data = msg_.data_;
+    timestamp_ = timestamp_to_rostime(msg_.timestamp_);
+    const auto& msg_points = msg_.data_.points_;
 
-    auto t_since_epoch = msg_.timestamp_.time_since_epoch();
-    auto sec = std::chrono::duration_cast<std::chrono::seconds>(t_since_epoch).count();
-    auto nsec = std::chrono::duration_cast<std::chrono::nanoseconds>(t_since_epoch).count() % 1'000'000;
-    timestamp_ = ros::Time(sec, nsec);
-
-    std::transform(data.points_.begin(), data.points_.end(), std::back_inserter(points_), [](const ScanPoint& p)
+    std::transform(msg_points.begin(), msg_points.end(), std::back_inserter(points_), [](const ScanPoint& p)
     {
         geometry_msgs::Point32 out;
         out.x = p.x() * 0.001f;
@@ -47,7 +53,7 @@ void VelodyneBridge::convert()
         return out;
     });
 
-    ROS_INFO_STREAM("Converted points: " << data.points_.size() << "->" << points_.size() << " points\n");
+    ROS_INFO_STREAM("Converted points: " << msg_points.size() << "->" << points_.size() << " points\n");
 }
 
 void VelodyneBridge::publish()

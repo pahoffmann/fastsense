@@ -24,7 +24,7 @@ int main(int argc, char** argv)
     {
         board_addr = "192.168.1.123"; // default hardware board
     }
-    std::cout << "Board address is " << board_addr << "\n";
+    ROS_INFO_STREAM("Board address is " << board_addr);
 
     fs::bridge::TSDFBridge tsdf_bridge{n, board_addr};
     fs::bridge::ImuBridge imu_bridge{n, board_addr};
