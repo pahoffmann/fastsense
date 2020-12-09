@@ -100,7 +100,7 @@ int Application::run()
 
     std::mutex map_mutex;
 
-    MapThread map_thread{local_map, map_mutex, tsdf_buffer, command_queue};
+    MapThread map_thread{local_map, map_mutex, tsdf_buffer, ConfigManager::config().slam.map_update_period(), ConfigManager::config().slam.map_update_position_threshold(), command_queue};
 
     CloudCallback cloud_callback{registration, pointcloud_bridge_buffer, local_map, global_map_ptr, pose, transform_buffer, command_queue, map_thread, map_mutex};
 

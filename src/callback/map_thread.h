@@ -24,7 +24,7 @@ using Eigen::Vector3i;
 using TSDFBuffer = util::ConcurrentRingBuffer<msg::TSDFBridgeMessage>;
 
 /**
- * @brief Encapsulates the async map shift and update
+ * @brief Encapsulate the async map shift and update
  */
 class MapThread : public fastsense::util::ProcessThread
 {
@@ -35,12 +35,17 @@ public:
      * 
      * @param local_map Map, which should be updated in the thread
      * @param map_mutex  Synchronisation between the map thread and the cloud callback to prevent race conditions while using the map
+     * @param period Number of periods from which a map shift and update must take place. 
+     *               This parameter will be ignored if set to value lower than 1
+     * @param position_threshold Distance from the current position to the last activated position at which the thread should be activated (in meters)
      * @param tsdf_buffer Buffer for starting the visusalization thread
      * @param q Program command queue
      */
     MapThread(const std::shared_ptr<fastsense::map::LocalMap>& local_map, 
               std::mutex& map_mutex,
               std::shared_ptr<TSDFBuffer> tsdf_buffer,
+              unsigned int period,
+              float position_threshold,
               fastsense::CommandQueuePtr& q);
 
 
@@ -93,8 +98,12 @@ private:
     Vector3i pos_;
     /// Scanner points ath the activation time of the thread
     std::unique_ptr<fastsense::buffer::InputBuffer<PointHW>> points_ptr_;
+    /// Maximum number of registration periods without a map shift and update. Ignored if lower than 1
+    unsigned int period_;
+    /// Distance from the current position to the last activated position at which the thread should be activated (in mm)
+    float position_threshold_;
     /// Counter for the number of performed registartions after the last thread activation
-    int reg_cnt_;
+    unsigned int reg_cnt_;
     /// Buffer for starting the map visualization thread
     std::shared_ptr<TSDFBuffer> tsdf_buffer_;
 };

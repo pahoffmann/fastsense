@@ -16,12 +16,16 @@ using fastsense::util::logging::Logger;
 MapThread::MapThread(const std::shared_ptr<fastsense::map::LocalMap>& local_map,
                      std::mutex& map_mutex,
                      std::shared_ptr<TSDFBuffer> tsdf_buffer,
+                     unsigned int period,
+                     float position_threshold,
                      fastsense::CommandQueuePtr& q)
     : ProcessThread(),
       local_map_(local_map),
       tsdf_krnl_(q, local_map->getBuffer().size()),
       map_mutex_(map_mutex),
       active_(false),
+      period_(period),
+      position_threshold_(position_threshold * 1000),
       reg_cnt_(0),
       tsdf_buffer_(tsdf_buffer)
 {
@@ -39,12 +43,8 @@ void MapThread::go(const Vector3i& pos, const fastsense::buffer::InputBuffer<Poi
     const Vector3i& old_pos = local_map_->get_pos();
     float distance = ((pos.cast<float>() - old_pos.cast<float>()) * MAP_RESOLUTION).norm();
 
-    // TODO: aus Config
-    float param_pos = ConfigManager::config().slam.map_update_position_threshold() * 1000;
-    int param_reg_cnt = ConfigManager::config().slam.map_update_period();
-
-    bool position_condition = distance > param_pos;
-    bool reg_cnt_condition = param_reg_cnt > 0 && reg_cnt_ >= param_reg_cnt;
+    bool position_condition = distance > position_threshold_;
+    bool reg_cnt_condition = period_ > 0 && reg_cnt_ >= period_;
     if (!active_ && (position_condition || reg_cnt_condition))
     {
         pos_ = pos;
