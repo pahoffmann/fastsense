@@ -18,7 +18,7 @@
     },
 
     "bridge": {
-        "use_from" : 1,
+        "use_from" : 0,
         "use_to" : 1,
 
         "host_from": "192.168.1.2",
