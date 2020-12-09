@@ -1,5 +1,5 @@
 /**
- * @file 
+ * @file imu_bridge.cpp
  * @author Julian Gaal
  * @date 2020-09-29
  */
@@ -7,7 +7,8 @@
 #include <omp.h>
 #include <algorithm>
 #include <ros/ros.h>
-#include <bridge/imu_bridge.h>
+#include <bridge/util.h>
+#include <bridge/from_trenz/imu_bridge.h>
 
 using namespace fastsense::util;
 using namespace fastsense::bridge;
@@ -16,7 +17,7 @@ using namespace fastsense::bridge;
 // TODO params
 
 ImuBridge::ImuBridge(ros::NodeHandle& n, const std::string& board_addr) 
-:   BridgeBase{n, "imu_bridge/raw", board_addr}, 
+:   BridgeBase{n, "imu/raw", board_addr}, 
     ProcessThread{},
     imu_ros_{},
     mag_ros_{},
@@ -25,16 +26,25 @@ ImuBridge::ImuBridge(ros::NodeHandle& n, const std::string& board_addr)
     linear_acceleration_covariance_{},
     magnetic_field_covariance_{}
 {
-    mag_pub_ = n.advertise<sensor_msgs::MagneticField>("imu_bridge/mag", 5);
+    mag_pub_ = n.advertise<sensor_msgs::MagneticField>("imu/mag", 5);
     initCovariance();
 }
 
 void ImuBridge::run()
 {
     while (running && ros::ok())
-    {
-        BridgeBase::run();
-        ROS_INFO_STREAM("Received imu msg\n");
+    {   
+        try
+        {
+            receive();
+            ROS_INFO_STREAM("Received imu msg\n");
+            convert();
+            publish();
+        }
+        catch(const std::exception& e)
+        {
+            std::cerr << "IMU "  << e.what() << '\n';
+        }
     }
 }
 
@@ -84,22 +94,25 @@ void ImuBridge::initCovariance()
 }
 
 void ImuBridge::convert()
-{   
-    auto time_now = ros::Time::now();
+{  
+    const auto& [ data, timestamp ] = msg();
+
+    ros::Time ros_timestamp = timestamp_to_rostime(timestamp);
+
     imu_ros_.header.frame_id = "base_link";
-    imu_ros_.header.stamp = time_now;
+    imu_ros_.header.stamp = ros_timestamp;
     imu_ros_.orientation.x = 0;
     imu_ros_.orientation.y = 0;
     imu_ros_.orientation.z = 0;
     imu_ros_.orientation.w = 0;
 
-    imu_ros_.angular_velocity.x = msg().ang.x();
-    imu_ros_.angular_velocity.y = msg().ang.y();
-    imu_ros_.angular_velocity.z = msg().ang.z();
+    imu_ros_.angular_velocity.x = data.ang.x();
+    imu_ros_.angular_velocity.y = data.ang.y();
+    imu_ros_.angular_velocity.z = data.ang.z();
 
-    imu_ros_.linear_acceleration.x = msg().acc.x();
-    imu_ros_.linear_acceleration.y = msg().acc.y();
-    imu_ros_.linear_acceleration.z = msg().acc.z();
+    imu_ros_.linear_acceleration.x = data.acc.x();
+    imu_ros_.linear_acceleration.y = data.acc.y();
+    imu_ros_.linear_acceleration.z = data.acc.z();
 
     std::copy(  linear_acceleration_covariance_.begin(),
                 linear_acceleration_covariance_.end(),
@@ -110,10 +123,10 @@ void ImuBridge::convert()
                 imu_ros_.angular_velocity_covariance.begin());
 
     mag_ros_.header.frame_id = "base_link";
-    mag_ros_.header.stamp = time_now;
-    mag_ros_.magnetic_field.x = msg().mag.x();
-    mag_ros_.magnetic_field.y = msg().mag.y();
-    mag_ros_.magnetic_field.z = msg().mag.z();
+    mag_ros_.header.stamp = ros_timestamp;
+    mag_ros_.magnetic_field.x = data.mag.x();
+    mag_ros_.magnetic_field.y = data.mag.y();
+    mag_ros_.magnetic_field.z = data.mag.z();
 
     std::copy(  magnetic_field_covariance_.begin(), 
                 magnetic_field_covariance_.end(), 

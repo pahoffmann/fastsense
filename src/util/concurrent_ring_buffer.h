@@ -65,21 +65,61 @@ public:
     void pop(T* val);
 
     /**
+     * 
+     *
+     *  
+     */
+    bool peek_nb(T* val, uint32_t timeout_ms = 0);
+
+    void peek(T* val);
+
+    /**
      * @brief Clear the buffer
      *
      */
     void clear();
 
     /**
-     * @brief return buffer length
-     * @return buffer length
+     * @brief return current buffer size
+     * @return buffer size
      */
-    inline size_t getLength() const
+    inline size_t size() const
     {
-        return length;
+        return size_;
     }
 
-    using ptr = std::shared_ptr<ConcurrentRingBuffer<T>>;
+    /**
+     * @brief return total capacity of concurrent ring buffer
+     * @return buffer size
+     */
+    inline size_t capacity() const
+    {
+        return buffer_.capacity();
+    }
+
+    /**
+     * @brief Check if buffer is empty
+     * 
+     * @return true if empty
+     * @return false if not empty
+     */
+    bool empty() const
+    {
+        return size_ == 0;
+    }
+
+    /**
+     * @brief Check if buffer is full
+     * 
+     * @return true if full
+     * @return false if not full
+     */
+    bool full() const
+    {
+        return size_ == buffer_.size();
+    }
+
+    using Ptr = std::shared_ptr<ConcurrentRingBuffer<T>>;
 
 private:
     /**
@@ -97,25 +137,25 @@ private:
     void doPop(T* val);
 
     /// Buffer containing the data
-    std::vector<T> buffer;
+    std::vector<T> buffer_;
 
-    /// Current length of the bufffer
-    size_t length;
+    /// Current size of the bufffer
+    size_t size_;
 
     /// Current push position
-    size_t pushIdx;
+    size_t pushIdx_;
 
     /// Current pop position
-    size_t popIdx;
+    size_t popIdx_;
 
     /// Mutex for locking
-    std::mutex mutex;
+    std::mutex mutex_;
 
     /// Condition variable to wait on, if the ring buffer is empty
-    std::condition_variable cvEmpty;
+    std::condition_variable cvEmpty_;
 
     /// Condition variable to wait on, if the ring bufer is full
-    std::condition_variable cvFull;
+    std::condition_variable cvFull_;
 };
 
 } // namespace fastsense::util

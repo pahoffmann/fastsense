@@ -8,7 +8,7 @@
  */
 #include "catch2_config.h"
 
-#include <msg/point_cloud.h>
+#include <msg/point_cloud_stamped.h>
 #include <tsdf/update_tsdf.h>
 #include <util/pcd/pcd_file.h>
 #include <comm/queue_bridge.h>

@@ -32,29 +32,9 @@ class BridgeBase
 private:
     comm::Receiver<T> receiver_;
     ros::Publisher pub_;
+    bool pub_init;
 
 public:
-    /**
-     * @brief Construct a new Bridge Base object
-     * 
-     * @param n ROS node handle
-     * @param topic ROS topic that will be published to
-     * @param board_addr board addr that will be listened to by zeromq
-     * @param msg_buffer_size ROS msg buffer size
-     */
-    inline BridgeBase(ros::NodeHandle& n, const std::string& topic, const std::string& board_addr, size_t msg_buffer_size = 1000) 
-    :   receiver_{board_addr, PORT}, 
-        msg_{},
-        pub_{n.advertise<P>(topic, msg_buffer_size)} 
-    {
-    }
-
-    inline BridgeBase(ros::NodeHandle& n, const std::string& board_addr, size_t msg_buffer_size = 1000)
-    :   receiver_{board_addr, PORT}, 
-        msg_{},
-        pub_{} 
-    {
-    }
 
     /**
      * @brief Destroy the Bridge Base object
@@ -66,7 +46,7 @@ public:
      */
     virtual void run() 
     {
-        receiver_.receive(msg_);
+        receive();
         convert();
         publish();
     }
@@ -86,14 +66,47 @@ public:
      * 
      * @return ros::Publisher& reference to publisher
      */
-    inline ros::Publisher& pub()
+    inline const ros::Publisher& pub() const
     {
+        if (!pub_init)
+        {
+            throw std::runtime_error("Publisher not initialized!");
+        }
         return pub_;
     }
 
 protected:
+    inline BridgeBase(const std::string& board_addr)
+    :   receiver_{board_addr, PORT},
+        pub_{},
+        pub_init{false},
+        msg_{}
+    {
+    }
+    
+    /**
+     * @brief Construct a new Bridge Base object
+     * 
+     * @param n ROS node handle
+     * @param topic ROS topic that will be published to
+     * @param board_addr board addr that will be listened to by zeromq
+     * @param msg_buffer_size ROS msg buffer size
+     */
+    inline BridgeBase(ros::NodeHandle& n, const std::string& topic, const std::string& board_addr, size_t msg_buffer_size = 1000) 
+    :   receiver_{board_addr, PORT},
+        pub_{n.advertise<P>(topic, msg_buffer_size)},
+        pub_init{true},
+        msg_{}
+    {
+    }
+
     /// msg of type T that is received via zeromq
     T msg_;
+
+    virtual void receive() final
+    {
+        receiver_.receive(msg_);
+    }
 
     /**
      * @brief Pure virtual convert function: convert T to ROS message

@@ -10,6 +10,14 @@
 using namespace fastsense;
 using namespace fastsense::registration;
 
+Registration::Registration(const fastsense::CommandQueuePtr& q, size_t max_iterations, float it_weight_gradient) :
+        max_iterations_{max_iterations},
+        it_weight_gradient_{it_weight_gradient},
+        imu_accumulator_{},
+        krnl{q}
+{}
+
+
 Vector3i transform(const Vector3i& input, const Matrix4i& mat)
 {
     return (mat.block<3, 3>(0, 0) * input + mat.block<3, 1>(0, 3)) / MATRIX_RESOLUTION;
@@ -77,50 +85,11 @@ Matrix4f Registration::xi_to_transform(Vector6f xi)
 
 Matrix4f Registration::register_cloud(fastsense::map::LocalMap& localmap, fastsense::buffer::InputBuffer<PointHW>& cloud)
 {
-    mutex_.lock();
-    Matrix4f total_transform = imu_accumulator_; //transform used to register the pcl
-    imu_accumulator_.setIdentity();
-    mutex_.unlock();
-
+    Matrix4f total_transform = imu_accumulator_.acc_transform(); //transform used to register the pcl
     krnl.synchronized_run(localmap, cloud, max_iterations_, it_weight_gradient_, total_transform);
 
     // apply final transformation
     transform_point_cloud(cloud, total_transform);
 
     return total_transform;
-}
-
-/**
- * @brief Gets angluar velocity data from the IMU and stores them in the global_transform object
- *
- * @param imu ROS Message containing the necessary data
- * TODO: auslagern in andere Klasse
- * TODO: determine weather the queue of the pcl callback might be a probl.
- */
-void Registration::update_imu_data(const fastsense::msg::ImuStamped& imu)
-{
-    if (first_imu_msg_ == true)
-    {
-        imu_time_ = imu.second;
-        first_imu_msg_ = false;
-        return;
-    }
-
-    float acc_time = std::chrono::duration_cast<std::chrono::milliseconds>(imu.second.time - imu_time_.time).count() / 1000.0f;
-
-    Vector3f ang_vel(imu.first.ang.x(), imu.first.ang.y(), imu.first.ang.z());
-
-    Vector3f orientation = ang_vel * acc_time; //in radiants [rad, rad, rad]
-    auto rotation =   Eigen::AngleAxisf(orientation.x(), Vector3f::UnitX())
-                      * Eigen::AngleAxisf(orientation.y(), Vector3f::UnitY())
-                      * Eigen::AngleAxisf(orientation.z(), Vector3f::UnitZ());
-
-    Matrix4f local_transform = Matrix4f::Identity();
-    local_transform.block<3, 3>(0, 0) = rotation.toRotationMatrix();
-
-    mutex_.lock();
-    imu_accumulator_ = local_transform * imu_accumulator_; //combine/update transforms
-    mutex_.unlock();
-
-    imu_time_ = imu.second;
 }

@@ -21,7 +21,7 @@ public:
         : BaseKernel(queue, "krnl_vadd")
     {}
 
-    ~VaddKernel() = default;
+    ~VaddKernel() override = default;
 
     void run(buffer::InputBuffer<int>& inbuffer_a, buffer::InputBuffer<int>& inbuffer_b, buffer::OutputBuffer<int>& outbuf, int data_size)
     {

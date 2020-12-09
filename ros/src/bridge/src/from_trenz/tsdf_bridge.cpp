@@ -1,5 +1,5 @@
 /**
- * @file 
+ * @file tsdf_bridge.cpp
  * @author Julian Gaal
  * @date 2020-09-29
  */
@@ -7,13 +7,13 @@
 #include <omp.h>
 #include <iterator>
 #include <ros/ros.h>
-#include <bridge/tsdf_bridge.h>
+#include <bridge/from_trenz/tsdf_bridge.h>
 #include <util/constants.h>
 
 using namespace fastsense::bridge;
 
 TSDFBridge::TSDFBridge(ros::NodeHandle& n, const std::string& board_addr) 
-:   BridgeBase{n, "tsdf_bridge/tsdf", board_addr}, 
+:   BridgeBase{n, "tsdf", board_addr}, 
     ProcessThread{},
     points_{},
     colors_{}
@@ -26,8 +26,17 @@ void TSDFBridge::run()
 {   
     while (running && ros::ok())
     {
-        BridgeBase::run();
-        ROS_INFO_STREAM("Received " << msg_.tsdf_data_.size() << " tsdf values\n");
+        try
+        {
+            receive();
+            ROS_INFO_STREAM("Received " << msg_.tsdf_data_.size() << " tsdf values\n");
+            convert();
+            publish();
+        }
+        catch(const std::exception& e)
+        {
+            std::cerr << e.what() << '\n';
+        }
     }
 }
 
@@ -61,7 +70,7 @@ void TSDFBridge::convert()
 
     int left[3], right[3];
 
-    for (int i = 0; i < 3; i++)
+    for (size_t i = 0; i < 3; i++)
     {
         left[i] = msg().pos_[i] - msg().size_[i] / 2;
         right[i] = msg().pos_[i] + msg().size_[i] / 2;
@@ -112,7 +121,7 @@ void TSDFBridge::convert()
 
     std::vector<int> offsets(thread_count, 0);
     size_t total_results = 0;
-    for (int i = 0; i < thread_count; i++)
+    for (size_t i = 0; i < thread_count; i++)
     {
         offsets[i] = total_results;
         total_results += results[i].size();
@@ -130,7 +139,7 @@ void TSDFBridge::convert()
     {   
         auto& result = results[omp_get_thread_num()];
         int offset = offsets[omp_get_thread_num()];
-        for (int i = 0; i < result.size(); i++)
+        for (size_t i = 0; i < result.size(); i++)
         {
             auto& p = result[i];
             points_[i + offset] = p.first;
