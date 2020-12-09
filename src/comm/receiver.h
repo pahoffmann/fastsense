@@ -28,38 +28,16 @@ public:
      * @param port which port receiver should listen to
      */
     Receiver(std::string addr, uint16_t port)
-    :   socket_(ZMQContextManager::getContext(), zmq::socket_type::sub)
+        :   socket_(ZMQContextManager::getContext(), zmq::socket_type::sub)
     {
-        if (addr.empty())
-        {
-            throw std::runtime_error("Can't connect to address ''");
-        }
-        
         socket_.connect("tcp://" + addr + ":" + std::to_string(port));
         socket_.setsockopt(ZMQ_SUBSCRIBE, "", 0);
     }
 
     /**
-     * @brief Delete copy constructor
-     */
-    Receiver(const Receiver&) = delete;
-
-
-    /**
-     * @brief Delete move constructor
-     */
-    Receiver(Receiver&&) = delete;
-
-
-    /**
-     * @brief Delete assignment operator
-     */
-    Receiver& operator=(Receiver const&) = delete;
-
-    /**
      * @brief Destroy the Receiver object
      */
-    virtual ~Receiver() = default;
+    ~Receiver() = default;
 
     /**
      * @brief Receive a message of static size
@@ -88,7 +66,7 @@ public:
     {
         zmq::message_t msg;
         socket_.recv(msg, flags);
-        target = *static_cast<T*>(msg.data());
+        memcpy(&target, msg.data(), sizeof(T));
     }
 
     /**

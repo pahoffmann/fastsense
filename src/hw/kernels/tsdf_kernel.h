@@ -34,7 +34,7 @@ public:
 
     }
 
-    ~TSDFKernel() override = default;
+    ~TSDFKernel() = default;
 
     void run(map::LocalMap& map, const buffer::InputBuffer<PointHW>& scan_points, int tau, int max_weight)
     {

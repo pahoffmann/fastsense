@@ -17,9 +17,6 @@ namespace fastsense::msg
 
 struct TSDFBridgeMessage : public ZMQConverter
 {
-    TSDFBridgeMessage() = default;
-    ~TSDFBridgeMessage() override = default;
-
     float tau_;
     Vector3i size_;
     Vector3i pos_;

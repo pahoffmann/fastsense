@@ -75,7 +75,7 @@ public:
     static void writeFile(const std::string& filename);
 
     /**
-     * @brief Get the current configuration
+     * @brief Get the curent configuration
      *
      * @return T& Reference to the current configuration
      */

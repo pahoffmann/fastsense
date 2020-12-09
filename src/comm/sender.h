@@ -27,7 +27,7 @@ public:
      * @param port Port to send on
      */
     Sender(uint16_t port)
-    :   socket_{ZMQContextManager::getContext(), zmq::socket_type::pub}
+        :   socket_{ZMQContextManager::getContext(), zmq::socket_type::pub}
     {
         socket_.setsockopt(ZMQ_SNDHWM, 2);
         socket_.bind("tcp://*:" + std::to_string(port));
@@ -38,22 +38,6 @@ public:
      */
     ~Sender() = default;
 
-    /**
-     * @brief Delete copy constructor
-     */
-    Sender(const Sender&) = delete;
-
-
-    /**
-     * @brief Delete move constructor
-     */
-    Sender(Sender&&) = delete;
-
-
-    /**
-     * @brief Delete assignment operator
-     */
-    Sender& operator=(Sender const&) = delete;
 
     /**
      * @brief Send data (with size known at compile time)

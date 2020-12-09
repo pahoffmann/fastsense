@@ -2,7 +2,7 @@
  * @author Marcel Flottmann
  */
 
-#include <util/time.h>
+#include <chrono>
 #include <system_error>
 #include <cerrno>
 #include <cstring>
@@ -16,6 +16,7 @@
 #include <poll.h>
 
 #include <driver/lidar/velodyne.h>
+#include <util/time_stamp.h>
 #include <util/logging/logger.h>
 
 using namespace fastsense::driver;
@@ -103,7 +104,7 @@ constexpr uint8_t LASER_ID_TO_RING[16] =
     0
 };
 
-VelodyneDriver::VelodyneDriver(uint16_t port, const PointCloudPtrStampedBuffer::Ptr& buffer) :
+VelodyneDriver::VelodyneDriver(uint16_t port, const PointCloudStampedBufferPtr& buffer) :
     port_{port},
     sockfd_{},
     packet_{},
@@ -142,7 +143,7 @@ VelodyneDriver::VelodyneDriver(uint16_t port, const PointCloudPtrStampedBuffer::
 
 VelodyneDriver::~VelodyneDriver()
 {
-    ProcessThread::stop();
+    stop();
     close(sockfd_);
 }
 
@@ -158,9 +159,9 @@ void VelodyneDriver::start()
     }
 }
 
-fastsense::msg::PointCloudPtrStamped VelodyneDriver::getScan()
+fastsense::msg::PointCloudStamped VelodyneDriver::getScan()
 {
-    PointCloudPtrStamped pcs;
+    PointCloudStamped pcs;
     scan_buffer_->pop(&pcs);
     return pcs;
 }
@@ -240,8 +241,7 @@ void VelodyneDriver::decode_packet()
             if (az_block < az_last_)
             {
                 // TODO set new time point?
-                // TODO std::move()
-                scan_buffer_->push_nb(Stamped<PointCloud::Ptr>{current_scan_, util::HighResTime::now()}, true);
+                scan_buffer_->push_nb(std::make_pair(current_scan_, fastsense::util::TimeStamp()), true);
                 current_scan_ = std::make_shared<PointCloud>();
                 current_scan_->rings_ = 16;
             }

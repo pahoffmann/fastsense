@@ -8,11 +8,10 @@
 #include <vector>
 #include <memory>
 
-#include "stamped.h"
-#include <util/time.h>
 #include <util/point.h>
 #include <msg/zmq_converter.h>
 
+#include <util/time_stamp.h>
 #include <util/concurrent_ring_buffer.h>
 
 namespace fastsense::msg
@@ -28,45 +27,14 @@ namespace fastsense::msg
 class PointCloud : public ZMQConverter
 {
 public:
+    PointCloud() : points_{}, rings_{} {}
+    ~PointCloud() = default;
     using Ptr = std::shared_ptr<PointCloud>;
 
-    PointCloud() 
-    : points_{}
-    , rings_{}
-    {
-    }
-    
-    PointCloud(PointCloud&& pcl) noexcept
-    : points_{std::move(pcl.points_)}
-    , rings_{pcl.rings_}
-    {
-    }
-
-    PointCloud& operator=(PointCloud&& other)
-    {
-        points_ = std::move(other.points_);
-        rings_ = other.rings_;
-        return *this;
-    }
-
-    PointCloud& operator=(const PointCloud& other)
-    {
-        points_ = other.points_;
-        rings_ = other.rings_;
-        return *this;
-    }
-
-    PointCloud(const PointCloud &p)
-    : points_(p.points_)
-    , rings_(p.rings_)
-    {
-    }
-
-    ~PointCloud() override = default;
     std::vector<fastsense::ScanPoint> points_;
     uint16_t rings_;
 
-    void from_zmq_msg(zmq::multipart_t& msg) override
+    void from_zmq_msg(zmq::multipart_t& msg)
     {
         rings_ = msg.poptyp<uint16_t>();
 
@@ -77,8 +45,7 @@ public:
         std::copy_n(static_cast<fastsense::ScanPoint*>(point_msg.data()), n_points, std::back_inserter(points_));
     }
 
-    [[nodiscard]]
-    zmq::multipart_t to_zmq_msg() const override
+    zmq::multipart_t to_zmq_msg() const
     {
         zmq::multipart_t multi;
         multi.addtyp(rings_);
@@ -87,7 +54,8 @@ public:
     }
 };
 
-using PointCloudPtrStamped = Stamped<PointCloud::Ptr>;
-using PointCloudPtrStampedBuffer = util::ConcurrentRingBuffer<PointCloudPtrStamped>;
+using PointCloudStamped = std::pair<PointCloud::Ptr, util::TimeStamp>;
+using PointCloudStampedBuffer = util::ConcurrentRingBuffer<PointCloudStamped>;
+using PointCloudStampedBufferPtr = std::shared_ptr<PointCloudStampedBuffer>;
 
 } // namespace fastsense::msg;

@@ -138,7 +138,7 @@ public:
     /**
      * @brief Destroy the Buffer object and unmap memory
      */
-    virtual ~Buffer()
+    ~Buffer()
     {
         unmap_memory();
     }
@@ -284,7 +284,7 @@ public:
         :   Buffer<T>(queue, num_elements, CL_MEM_READ_ONLY, CL_MAP_WRITE)
     {}
 
-    ~InputBuffer() override = default;
+    ~InputBuffer() = default;
 
     InputBuffer& operator=(InputBuffer&) = delete;
     InputBuffer(InputBuffer&) = delete;
@@ -309,7 +309,7 @@ public:
         :   Buffer<T>(queue, num_elements, CL_MEM_WRITE_ONLY, CL_MAP_READ)
     {}
 
-    ~OutputBuffer() override = default;
+    ~OutputBuffer() = default;
 
     OutputBuffer& operator=(OutputBuffer&) = delete;
     OutputBuffer(OutputBuffer&) = delete;
@@ -334,7 +334,7 @@ public:
         :   Buffer<T>(queue, num_elements, CL_MEM_READ_WRITE, CL_MAP_READ | CL_MAP_WRITE)
     {}
 
-    ~InputOutputBuffer() override = default;
+    ~InputOutputBuffer() = default;
 
     InputOutputBuffer& operator=(InputOutputBuffer&) = delete;
     InputOutputBuffer(InputOutputBuffer&) = delete;

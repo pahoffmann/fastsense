@@ -68,7 +68,7 @@ public:
      * Destructor of the local map.
      * Deletes the array in particular.
      */
-    ~LocalMap() = default;
+    virtual ~LocalMap() = default;
 
     /**
      * Returns a value from the local map per reference.

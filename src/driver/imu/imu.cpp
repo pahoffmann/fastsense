@@ -1,5 +1,4 @@
 /**
- * @file imu.cpp
  * @author Julian Gaal
  */
 
@@ -7,19 +6,19 @@
 #include <stdexcept>
 #include <cmath>
 
-#include "imu.h"
-#include <util/time.h>
 #include <util/params.h>
 #include <msg/imu.h>
+#include <util/time_stamp.h>
+#include "imu.h"
 
 using namespace fastsense::driver;
 using namespace fastsense::util;
 
-using fastsense::msg::ImuStampedBuffer;
+using fastsense::msg::ImuStampedBufferPtr;
 
 // TODO detach handler? How to handle connected/disconnectedness
 
-Imu::Imu(const ImuStampedBuffer::Ptr& ringbuffer)
+Imu::Imu(const ImuStampedBufferPtr& ringbuffer)
     :   Phidget(),
         ProcessThread(),
         data_buffer_{ringbuffer},
@@ -115,7 +114,7 @@ void Imu::data_handler(const double* acceleration, const double* angularRate, co
     }
 
     msg::Imu msg(acceleration, angularRate, magneticField);
-    data_buffer_->push_nb(msg::ImuStamped{std::move(msg), util::HighResTime::now()}, false);
+    data_buffer_->push_nb(std::make_pair(msg, fastsense::util::TimeStamp()), false);
 }
 
 void Imu::attach_handler()

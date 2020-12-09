@@ -20,7 +20,7 @@ namespace fastsense::bridge
  * @brief ImuBridge converts msg::ImuMsg. received with the zeromq receiver,
  *        to sensor_msgs::Imu and publishes the message
  */
-class ImuBridge :   public BridgeBase<msg::ImuStamped, sensor_msgs::Imu, 5555>, 
+class ImuBridge :   public BridgeBase<msg::Imu, sensor_msgs::Imu, 5555>, 
                     public util::ProcessThread
 {
 public:
@@ -35,7 +35,7 @@ public:
     /**
      * @brief Destroy the Imu Bridge object
      */
-    ~ImuBridge() override = default;
+    ~ImuBridge() = default;
 private:
     /**
      * @brief Publishes an sensor_msgs::Imu (convert() FIRST for newest data)
