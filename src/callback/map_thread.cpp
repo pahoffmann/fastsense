@@ -59,9 +59,6 @@ void MapThread::thread_run()
 {
     while (running)
     {
-        std::cout << "SLEEEEEEEEEEPING!" << std::endl;
-        sleep(5);
-        std::cout << "EEEEEEEEEEEEEEND SLEEEEEEEEEEPING!" << std::endl;
         start_mutex_.lock();
         if (!running)
         {
@@ -104,15 +101,8 @@ void MapThread::stop()
     if (running && worker.joinable())
     {
         running = false;
-        std::cout << "UNLOCK" << std::endl;
         start_mutex_.unlock();
         worker.join();
-
-        std::cout << "joining" << std::endl;
-    }
-    else
-    {
-        std::cout << "Not joining" << std::endl;
     }
 }
 
