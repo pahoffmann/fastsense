@@ -181,8 +181,9 @@ public:
     }
 
     /**
-     * @brief delete copy constructor because of pointer member variable
-     * @param Buffer& other buffer
+     * @brief Copy this buffer
+     *
+     * @param rhs Buffer which should be copied
      */
     Buffer(const Buffer& rhs) : Buffer<T>(rhs.queue_, rhs.num_elements_, rhs.mem_flag_, rhs.map_flag_)
     {
@@ -295,6 +296,9 @@ public:
     InputBuffer& operator=(InputBuffer&) = delete;
     InputBuffer(const InputBuffer& rhs) : Buffer<T>(rhs) {}
 
+    /**
+     * @brief Ensure that this buffer can be moved 
+     */
     InputBuffer& operator=(InputBuffer&&) = default;
 };
 
@@ -322,6 +326,9 @@ public:
     OutputBuffer& operator=(OutputBuffer&) = delete;
     OutputBuffer(const OutputBuffer& rhs) : Buffer<T>(rhs) {}
 
+    /**
+     * @brief Ensure that this buffer can be moved 
+     */
     OutputBuffer& operator=(OutputBuffer&&) = default;
 };
 
@@ -349,6 +356,9 @@ public:
     InputOutputBuffer& operator=(InputOutputBuffer&) = delete;
     InputOutputBuffer(const InputOutputBuffer& rhs) : Buffer<T>(rhs) {}
     
+    /**
+     * @brief Ensure that this buffer can be moved 
+     */
     InputOutputBuffer& operator=(InputOutputBuffer&&) = default;
 };
 

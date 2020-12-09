@@ -67,7 +67,7 @@ public:
     /**
      * @brief Stop the map thread safely
      */
-    void stop() override;
+    virtual void stop() override;
 
 protected:
 

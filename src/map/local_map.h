@@ -70,12 +70,24 @@ public:
      */
     virtual ~LocalMap() = default;
 
+    /**
+     * Force the default copy constructor (memberwise) for the local map
+     */
     LocalMap(const LocalMap&) = default;
 
+    /**
+     * Don't allow to assign the local map
+     */
     LocalMap& operator=(const LocalMap&) = delete; 
 
+    /**
+     * Don't allow to move assign the local map
+     */
     LocalMap(LocalMap&&) = delete;
 
+    /**
+     * Force the default move constructor (memberwise) for the local map
+     */
     LocalMap& operator=(LocalMap&&) = default;
 
     /**
