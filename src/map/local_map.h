@@ -71,22 +71,30 @@ public:
     virtual ~LocalMap() = default;
 
     /**
-     * Force the default copy constructor (memberwise) for the local map
+     * Copy constructor of the local map.
+     * This constructor is needed in the asynchronous shift, update and visualization.
+     * In the beginning of the thread the local map is copied
+     * so that the the cloud callback and the map thread can work simultaneously.
      */
     LocalMap(const LocalMap&) = default;
 
     /**
-     * Don't allow to assign the local map
+     * Deleted assignment operator of the local map.
      */
-    LocalMap& operator=(const LocalMap&) = delete; 
+    LocalMap& operator=(const LocalMap&) = delete;
 
     /**
-     * Don't allow to move assign the local map
+     * Deleted move copy constructor of the local map.
      */
     LocalMap(LocalMap&&) = delete;
 
     /**
-     * Force the default move constructor (memberwise) for the local map
+     * Move assignment operator of the local map.
+     * This operator is needed in the asynchronous shift, update and visualization.
+     * It is used to write back the local map of the thread to the cloud callback.
+     * This operation needs to be fast because it must be executed synchronous.
+     * A copy would be too slow and bending the pointer is not possible because it is used in other places too.
+     * Therefore the local map is moved.
      */
     LocalMap& operator=(LocalMap&&) = default;
 

@@ -24,22 +24,24 @@ using Eigen::Vector3i;
 using TSDFBuffer = util::ConcurrentRingBuffer<msg::TSDFBridgeMessage>;
 
 /**
- * @brief Encapsulate the async map shift and update
+ * @brief This class encapsulates the asynchronous map shift, tsdf update and visualization of the map.
  */
 class MapThread : public fastsense::util::ProcessThread
 {
 public:
 
     /**
-     * @brief Construct a new Map Thread object
+     * @brief Construct a new MapThread object.
      * 
-     * @param local_map Map, which should be updated in the thread
-     * @param map_mutex  Synchronisation between the map thread and the cloud callback to prevent race conditions while using the map
-     * @param period Number of periods from which a map shift and update must take place. 
-     *               This parameter will be ignored if set to value lower than 1
-     * @param position_threshold Distance from the current position to the last activated position at which the thread should be activated (in meters)
-     * @param tsdf_buffer Buffer for starting the visusalization thread
-     * @param q Program command queue
+     * @param local_map Local map pointer of the cloud callback.
+     *                  In this local map nothing is written, but it is copied into a "local" local map.
+     * @param map_mutex Mutex for synchronisation between the map thread and the cloud callback for access to the local map.
+     * @param period Parameter for the map thread.
+     *               Maximum number of registration periods without a map shift and update. Ignored if lower than 1.
+     * @param position_threshold Parameter for the map thread.
+     *                           Distance from the current position to the last activated position at which the thread is activated (in meters).
+     * @param tsdf_buffer Buffer for communication to the visualization thread.
+     * @param q Program command queue.
      */
     MapThread(const std::shared_ptr<fastsense::map::LocalMap>& local_map, 
               std::mutex& map_mutex,
@@ -48,61 +50,67 @@ public:
               float position_threshold,
               fastsense::CommandQueuePtr& q);
 
+    /**
+     * @brief Default destructor of the map thread.
+     */
+    ~MapThread() = default;
 
     /**
-     * @brief Don't allow to the make a copy of a map thread object
+     * @brief Deleted copy constructor of the map thread.
      */
     MapThread(const MapThread&) = delete;
     
     /**
-     * @brief Don't allow to assign a map thread object     
+     * @brief Deleted assignment operator of the map thread.   
      */
     MapThread& operator=(const MapThread&) = delete;
 
     /**
-     * @brief Unlocks the thread for shifting und updating the map, 
+     * @brief Starts the thread for shifting, updating and visualization the map
      *        if a specific number of registartion periods were performed 
-     *        or the position of the system has changed by a predefined threshold
+     *        or the position of the system has changed by a predefined threshold.
      * 
-     * @param pos Current position of the system
-     * @param points  Current scanned points 
+     * @param pos Current position
+     * @param points Current scan points
      */
     void go(const Vector3i& pos, const fastsense::buffer::InputBuffer<PointHW>& points);
 
     /**
-     * @brief Stop the map thread safely
+     * @brief Stop the map thread safely.
      */
     virtual void stop() override;
 
 protected:
 
     /**
-     * @brief Shift and update the local map based on the current scanner data.
-     *        Blocks as long as it is released by the go method
+     * @brief Shift, update and visualize the local map based on the current position and scanner data.
+     *        The thread runs in an infinite loop.
+     *        One iteration is started by the go function.
+     *        The communication is done by a mutex that functions as a semaphore.
      */
     void thread_run() override;
 
 private:
 
-    /// Pointer to the current local map
+    /// Pointer to the local map
     const std::shared_ptr<fastsense::map::LocalMap> local_map_;
-    /// kernel object to perform an map update on hardware
+    /// Kernel object to perform an map update on hardware
     fastsense::kernels::TSDFKernel tsdf_krnl_;
-    /// Synchronisation netween the cloud callcack and the map thread to prevent race conditions while using the local map
+    /// Mutex for synchronisation between the map thread and the cloud callback for access to the local map
     std::mutex& map_mutex_;
-    /// Mutex to control the when the map thread should be active
+    /// Mutex functions as a semaphore to control the when the map thread starts
     std::mutex start_mutex_;
-    /// Is the thread still active?
+    /// Flag that indicates if the thread is active
     std::atomic<bool> active_;
-    /// System position at the activation time of the thread 
+    /// Position that is used for shifting, updating and visualization
     Vector3i pos_;
-    /// Scanner points ath the activation time of the thread
+    /// Scan points that are used for shifting, updating and visualization
     std::unique_ptr<fastsense::buffer::InputBuffer<PointHW>> points_ptr_;
     /// Maximum number of registration periods without a map shift and update. Ignored if lower than 1
     unsigned int period_;
-    /// Distance from the current position to the last activated position at which the thread should be activated (in mm)
+    /// Distance from the current position to the last activated position at which the thread is activated (in mm)
     float position_threshold_;
-    /// Counter for the number of performed registartions after the last thread activation
+    /// Counter for the number of performed registrations after the last thread activation
     unsigned int reg_cnt_;
     /// Buffer for starting the map visualization thread
     std::shared_ptr<TSDFBuffer> tsdf_buffer_;
