@@ -27,11 +27,11 @@ TEST_CASE("QueueBridge", "[communication]")
 
     auto in = std::make_shared<ConcurrentRingBuffer<int>>(16);
     auto out = std::make_shared<ConcurrentRingBuffer<int>>(16);
-    QueueBridge<int, true> bridge{in, out, 1234};
+    QueueBridge<int, true> bridge{in, out, 5234};
 
     std::thread receive_thread{[&]()
     {
-        Receiver<int> receiver{"127.0.0.1", 1234};
+        Receiver<int> receiver{"127.0.0.1", 5234};
         std::this_thread::sleep_for(std::chrono::milliseconds(200));
         value_received = receiver.receive();
         received = true;
@@ -72,11 +72,11 @@ TEST_CASE("QueueBridge shared_ptr", "[communication]")
 
     auto in = std::make_shared<ConcurrentRingBuffer<std::shared_ptr<int>>>(16);
     auto out = std::make_shared<ConcurrentRingBuffer<std::shared_ptr<int>>>(16);
-    QueueBridge<std::shared_ptr<int>, true> bridge{in, out, 1234};
+    QueueBridge<std::shared_ptr<int>, true> bridge{in, out, 4234};
 
     std::thread receive_thread{[&]()
     {
-        Receiver<int> receiver{"127.0.0.1", 1234};
+        Receiver<int> receiver{"127.0.0.1", 4234};
         std::this_thread::sleep_for(std::chrono::milliseconds(200));
         value_received = receiver.receive();
         received = true;
@@ -106,9 +106,9 @@ TEST_CASE("QueueBridge shared_ptr", "[communication]")
     REQUIRE(out->size() != 0);
 }
 
-TEST_CASE("QueueBridge Stamped<T>", "[communication]")
+TEST_CASE("QueueBridge Stamped<Imu>", "[communication]")
 {
-    std::cout << "Testing 'QueueBridge Stamped<T>'" << std::endl;
+    std::cout << "Testing 'QueueBridge Stamped<Imu>'" << std::endl;
     Imu imu{{1, 2, 3}, {4, 5, 6}, {7, 8, 9}};
     auto ts_sent = HighResTime::now();
     ImuStamped value_to_send{std::move(imu), ts_sent};
@@ -119,11 +119,11 @@ TEST_CASE("QueueBridge Stamped<T>", "[communication]")
 
     auto in = std::make_shared<ConcurrentRingBuffer<ImuStamped>>(16);
     auto out = std::make_shared<ConcurrentRingBuffer<ImuStamped>>(16);
-    QueueBridge<ImuStamped, true> bridge{in, out, 1234};
+    QueueBridge<ImuStamped, true> bridge{in, out, 3234};
 
     std::thread receive_thread{[&]()
     {
-        Receiver<ImuStamped> receiver{"127.0.0.1", 1234};
+        Receiver<ImuStamped> receiver{"127.0.0.1", 3234};
         std::this_thread::sleep_for(std::chrono::milliseconds(200));
         receiver.receive(value_received);
         received = true;
@@ -160,6 +160,68 @@ TEST_CASE("QueueBridge Stamped<T>", "[communication]")
     REQUIRE(imu_received.mag.x() == 7);
     REQUIRE(imu_received.mag.y() == 8);
     REQUIRE(imu_received.mag.z() == 9);
+    REQUIRE(ts == ts_sent);
+    REQUIRE(out->size() != 0);
+}
+
+TEST_CASE("QueueBridge Stamped<PointCloud>", "[communication]")
+{
+    std::cout << "Testing 'QueueBridge Stamped<PointCloud>'" << std::endl;
+    Imu imu{{1, 2, 3}, {4, 5, 6}, {7, 8, 9}};
+    auto ts_sent = HighResTime::now();
+    PointCloud pc_to_send;
+    pc_to_send.rings_ = 2;
+    pc_to_send.points_.push_back({1, 2, 3});
+    pc_to_send.points_.push_back({2, 3, 4});
+    pc_to_send.points_.push_back({3, 4, 5});
+
+    Stamped<PointCloud> pcl_sent{std::move(pc_to_send), ts_sent};
+    Stamped<PointCloud> pcl_received;
+
+    bool received = false;
+    bool sending = true;
+
+    auto in = std::make_shared<ConcurrentRingBuffer<Stamped<PointCloud>>>(16);
+    auto out = std::make_shared<ConcurrentRingBuffer<Stamped<PointCloud>>>(16);
+    QueueBridge<Stamped<PointCloud>, true> bridge{in, out, 2234};
+
+    std::thread receive_thread{[&]()
+    {
+        Receiver<Stamped<PointCloud>> receiver{"127.0.0.1", 2234};
+        std::this_thread::sleep_for(std::chrono::milliseconds(200));
+        receiver.receive(pcl_received);
+
+        const auto& [ pcl_data, ts ] = pcl_received;
+        REQUIRE(pcl_data.points_ == pcl_sent.data_.points_);
+        
+        std::this_thread::sleep_for(std::chrono::milliseconds(200));
+        receiver.receive(pcl_received);
+        received = true;
+    }};
+
+    std::thread send_thread{[&]()
+    {
+        while (sending)
+        {
+            in->push(pcl_sent);
+            std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        }
+    }};
+
+    bridge.start();
+    while (!received)
+    {
+        std::this_thread::yield();
+    }
+    bridge.stop();
+
+    sending = false;
+
+    receive_thread.join();
+    send_thread.join();
+
+    const auto& [ pcl_data, ts ] = pcl_received;
+    REQUIRE(pcl_data.points_ == pcl_sent.data_.points_);
     REQUIRE(ts == ts_sent);
     REQUIRE(out->size() != 0);
 }
