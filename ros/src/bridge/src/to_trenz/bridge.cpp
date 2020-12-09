@@ -24,15 +24,33 @@
 
 namespace fs = fastsense;
 
+/**
+ * @brief Bridge that sends data to Trenz board
+ * 
+ * Imu at port 4444
+ * PCL at port 3333
+ * 
+ * For each PCL and IMU, a separate thread is starten and subscribes to /imu/data_raw and
+ * /velodyne_points respectively.
+ * 
+ * Each subscriber converts ROS messages to the corresponding messages on the Trenz Board 
+ * and sends them with a nonblocking sender
+ */
 class Bridge
 {
 public:
+    /**
+     * @brief Construct a new Bridge object
+     * 
+     * Create sender for IMU and PCL
+     * 
+     * Start Subscribers to Imu and PCL
+     */
     Bridge()
         : nh_{}
         , spinner_{2}
         , imu_sub_{}
         , pcl_sub_{}
-        , imu_receiver_buffer_{100'000}
         , imu_sender_{4444}
         , pcl_sender_{3333}
     {
@@ -42,11 +60,22 @@ public:
         ROS_INFO("to_trenz bridge initiated");
     }
 
+    /**
+     * @brief Destroy the Bridge object
+     * 
+     * Stop all threads listening for data from ROS 
+     */
     ~Bridge()
     {
         spinner_.stop();
     };
 
+    /**
+     * @brief ImuCallback waits for Imu Data and converts sensor_msgs/Imu to fastsense/msg/Imu 
+     * and sends it via zeromq
+     * 
+     * @param msg sensor_msgs::Imu
+     */
     void imu_callback(const sensor_msgs::ImuConstPtr& msg)
     {
         fs::msg::Imu imu;
@@ -64,6 +93,12 @@ public:
         ROS_INFO("Sent imu\n");
     }
 
+    /**
+     * @brief pcl_callback waits for sensor_msgs/PointCloud2, converts it to fastsense/msg/PointCloud
+     * and sends it via zeromq
+     * 
+     * @param pcl sensor_msgs::PointCloud
+     */
     void pcl_callback(const sensor_msgs::PointCloud2ConstPtr &pcl)
     {
         auto tp = fs::util::HighResTimePoint{std::chrono::nanoseconds{pcl->header.stamp.toNSec()}};
@@ -98,13 +133,22 @@ public:
     }
 
 private:
+    /// ROS Nodehandle
     ros::NodeHandle nh_;
+
+    /// Spinner that subscribes on multiple threads
     ros::AsyncSpinner spinner_;
+
+    /// Imu Subscriber
     ros::Subscriber imu_sub_;
+
+    /// PointCloud2 Subscriber
     ros::Subscriber pcl_sub_;
-    fastsense::registration::ImuAccumulator imu_accumulator_;
-    fs::util::ConcurrentRingBuffer<sensor_msgs::ImuConstPtr> imu_receiver_buffer_;
+
+    /// fastsense::msg::ImuStamped sender
     fs::comm::Sender<fs::msg::ImuStamped> imu_sender_;
+
+    /// fastsense::msg::PointCloud sender
     fs::comm::Sender<fs::msg::PointCloudStamped> pcl_sender_;
 };
 

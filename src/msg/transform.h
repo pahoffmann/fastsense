@@ -13,13 +13,25 @@
 namespace fastsense::msg
 {
 
+/**
+ * @brief Transform Message
+ */
 struct Transform : public ZMQConverter
-{
+{   
+    /**
+     * @brief Construct a new Transform object
+     */
     Transform() 
     : rotation{Quaternionf::Identity()}
     , translation{Vector3f::Zero()}
     {}
 
+    /**
+     * @brief Construct a new Transform object
+     * 
+     * @param q Eigen::Quaternionf
+     * @param t Eigen::Vector3f
+     */
     Transform(Quaternionf q, Vector3f t)
     : rotation{q}
     , translation{t}
@@ -55,8 +67,10 @@ struct Transform : public ZMQConverter
         return multi;
     }
     
-
+    /// rotation
     Quaternionf rotation;
+
+    /// translation
     Vector3f translation;
 };
 
