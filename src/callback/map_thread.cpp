@@ -25,7 +25,7 @@ MapThread::MapThread(const std::shared_ptr<fastsense::map::LocalMap>& local_map,
       map_mutex_(map_mutex),
       active_(false),
       period_(period),
-      position_threshold_(position_threshold * 1000),
+      position_threshold_(position_threshold),
       reg_cnt_(0),
       tsdf_buffer_(tsdf_buffer)
 {
@@ -59,9 +59,13 @@ void MapThread::thread_run()
 {
     while (running)
     {
+        std::cout << "SLEEEEEEEEEEPING!" << std::endl;
+        sleep(5);
+        std::cout << "EEEEEEEEEEEEEEND SLEEEEEEEEEEPING!" << std::endl;
         start_mutex_.lock();
         if (!running)
         {
+            std::cout << "BREAK" << std::endl;
             break;
         }
         Logger::info("Starting SUV");
@@ -100,8 +104,15 @@ void MapThread::stop()
     if (running && worker.joinable())
     {
         running = false;
+        std::cout << "UNLOCK" << std::endl;
         start_mutex_.unlock();
         worker.join();
+
+        std::cout << "joining" << std::endl;
+    }
+    else
+    {
+        std::cout << "Not joining" << std::endl;
     }
 }
 

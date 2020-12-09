@@ -39,7 +39,7 @@ public:
      * @param period Parameter for the map thread.
      *               Maximum number of registration periods without a map shift and update. Ignored if lower than 1.
      * @param position_threshold Parameter for the map thread.
-     *                           Distance from the current position to the last activated position at which the thread is activated (in meters).
+     *                           Distance from the current position to the last activated position at which the thread is activated (in mm).
      * @param tsdf_buffer Buffer for communication to the visualization thread.
      * @param q Program command queue.
      */
