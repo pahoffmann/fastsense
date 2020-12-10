@@ -18,7 +18,7 @@
  * ...
  * #endif
  */
-//#define TIME_MEASUREMENT
+#define TIME_MEASUREMENT
 
 using measurement_unit = std::chrono::microseconds;
 

@@ -86,17 +86,15 @@ Matrix4f Registration::register_cloud(fastsense::map::LocalMap& localmap, fastse
 {
     auto& eval = RuntimeEvaluator::get_instance();
     eval.start("imu_acc");
-    std::cout << "Imu Buffer size: " << imu_accumulator_.buffer_->size() << "\n";
     Matrix4f total_transform = imu_accumulator_.acc_transform(cloud_timestamp); //transform used to register the pcl
-    std::cout << "TOT\n " << total_transform << "\n";
     eval.stop("imu_acc");
 
 
-    eval.start("reg");
+    eval.start("reg_krnl");
     krnl.synchronized_run(localmap, cloud, max_iterations_, it_weight_gradient_, epsilon_, total_transform);
     // apply final transformation
     transform_point_cloud(cloud, total_transform);
-    eval.stop("reg");
+    eval.stop("reg_krnl");
 
     return total_transform;
 }

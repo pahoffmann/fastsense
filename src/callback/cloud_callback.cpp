@@ -47,6 +47,9 @@ void CloudCallback::thread_run()
 {
     fastsense::msg::PointCloudPtrStamped point_cloud;
     auto& eval = RuntimeEvaluator::get_instance();
+#ifdef TIME_MEASUREMENT
+    int cnt = 0;
+#endif
     while (running)
     {
         if (!cloud_buffer->pop_nb(&point_cloud, DEFAULT_POP_TIMEOUT))
@@ -62,7 +65,7 @@ void CloudCallback::thread_run()
         point_cloud2.data_ = point_cloud.data_;
         point_cloud2.timestamp_ = point_cloud.timestamp_;
 
-        
+
 
         preprocessor.median_filter(point_cloud2, 5);
         preprocessor.reduction_filter(point_cloud2);
@@ -85,7 +88,7 @@ void CloudCallback::thread_run()
             Matrix4f transform = registration.register_cloud(*local_map, scan_point_buffer, point_cloud2.timestamp_);
             eval.stop("reg");
             map_mutex.unlock();
-            
+
             pose = transform * pose;
             // Logger::info("Pose:\n", std::fixed, std::setprecision(4), pose);
         }
@@ -94,9 +97,9 @@ void CloudCallback::thread_run()
                      (int)std::floor(pose(1, 3) / MAP_RESOLUTION),
                      (int)std::floor(pose(2, 3) / MAP_RESOLUTION));
         map_thread.go(pos, scan_point_buffer);
-        
+
         Eigen::Quaternionf quat(pose.block<3, 3>(0, 0));
-        
+
         // global_map->save_pose(pose(0, 3), pose(1, 3), pose(2, 3),
         //                       quat.x(), quat.y(), quat.z(), quat.w());
 
@@ -112,7 +115,7 @@ void CloudCallback::thread_run()
             Logger::info(eval.to_string());
             cnt = 0;
         }
-        cnt++;        
+        cnt++;
 #endif
     }
     Logger::info("Stopped Callback");
