@@ -13,7 +13,7 @@
 using namespace fastsense::bridge;
 
 TSDFBridge::TSDFBridge(ros::NodeHandle& n, const std::string& board_addr) 
-:   BridgeBase{n, "tsdf_bridge/tsdf", board_addr}, 
+:   BridgeBase{n, "tsdf", board_addr}, 
     ProcessThread{},
     points_{},
     colors_{}
@@ -26,8 +26,17 @@ void TSDFBridge::run()
 {   
     while (running && ros::ok())
     {
-        BridgeBase::run();
-        ROS_INFO_STREAM("Received " << msg_.tsdf_data_.size() << " tsdf values\n");
+        try
+        {
+            receive();
+            ROS_INFO_STREAM("Received " << msg_.tsdf_data_.size() << " tsdf values\n");
+            convert();
+            publish();
+        }
+        catch(const std::exception& e)
+        {
+            std::cerr << e.what() << '\n';
+        }
     }
 }
 

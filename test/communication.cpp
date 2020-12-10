@@ -13,9 +13,9 @@
 #include <util/time.h>
 #include <util/runner.h>
 #include <msg/imu.h>
+#include <msg/transform.h>
 #include <msg/point_cloud_stamped.h>
 #include <msg/tsdf_bridge_msg.h>
-#include <msg/registration_input.h>
 #include <iostream>
 #include <thread>
 
@@ -68,7 +68,7 @@ TEST_CASE("PointCloud Sender Receiver Test", "[communication]")
 
         std::thread receive_thread{[&]()
         {
-            Receiver<PointCloud> receiver{"127.0.0.1", 1234};
+            Receiver<PointCloud> receiver{"127.0.0.1", 1235};
             std::this_thread::sleep_for(std::chrono::milliseconds(200));
             receiver.receive(pc_received);
         }};
@@ -76,7 +76,7 @@ TEST_CASE("PointCloud Sender Receiver Test", "[communication]")
         std::thread send_thread{[&]()
         {
             std::this_thread::sleep_for(std::chrono::milliseconds(100));
-            Sender<PointCloud> sender{1234};
+            Sender<PointCloud> sender{1235};
             std::this_thread::sleep_for(std::chrono::milliseconds(200));
             sender.send(pc_to_send);
         }};
@@ -106,7 +106,7 @@ TEST_CASE("PointCloudStamped Sender Receiver Test", "[communication]")
 
         std::thread receive_thread{[&]()
         {
-            Receiver<PointCloudStamped> receiver{"127.0.0.1", 1234};
+            Receiver<PointCloudStamped> receiver{"127.0.0.1", 1236};
             std::this_thread::sleep_for(std::chrono::milliseconds(200));
             receiver.receive(pcl_stamped_received);
         }};
@@ -114,7 +114,47 @@ TEST_CASE("PointCloudStamped Sender Receiver Test", "[communication]")
         std::thread send_thread{[&]()
         {
             std::this_thread::sleep_for(std::chrono::milliseconds(100));
-            Sender<PointCloudStamped> sender{1234};
+            Sender<PointCloudStamped> sender{1236};
+            std::this_thread::sleep_for(std::chrono::milliseconds(200));
+            sender.send(pcl_stamped);
+        }};
+
+        receive_thread.join();
+        send_thread.join();
+
+        REQUIRE(pcl_stamped.data_.rings_ == pcl_stamped_received.data_.rings_);
+        REQUIRE(pcl_stamped.data_.points_ == pcl_stamped_received.data_.points_);
+        REQUIRE(pcl_stamped.timestamp_ == pcl_stamped_received.timestamp_);
+    }
+}
+
+TEST_CASE("Stamped<PointCloud> Sender Receiver Test", "[communication]")
+{
+    std::cout << "Testing 'Stamped<PointCloud> Sender Receiver Test'" << std::endl;
+    for (size_t i = 0; i < iterations; ++i)
+    {
+        PointCloud pc_to_send;
+        pc_to_send.rings_ = 2;
+        pc_to_send.points_.push_back({1, 2, 3});
+        pc_to_send.points_.push_back({2, 3, 4});
+        pc_to_send.points_.push_back({3, 4, 5});
+
+        auto tp_to_send = util::HighResTime::now();
+
+        Stamped<PointCloud> pcl_stamped{std::move(pc_to_send), tp_to_send};
+        Stamped<PointCloud> pcl_stamped_received;
+
+        std::thread receive_thread{[&]()
+        {
+            Receiver<Stamped<PointCloud>> receiver{"127.0.0.1", 1237};
+            std::this_thread::sleep_for(std::chrono::milliseconds(200));
+            receiver.receive(pcl_stamped_received);
+        }};
+
+        std::thread send_thread{[&]()
+        {
+            std::this_thread::sleep_for(std::chrono::milliseconds(100));
+            Sender<Stamped<PointCloud>> sender{1237};
             std::this_thread::sleep_for(std::chrono::milliseconds(200));
             sender.send(pcl_stamped);
         }};
@@ -162,7 +202,7 @@ TEST_CASE("TSDFBridgeMessage Sender Receiver Test", "[communication]")
 
         std::thread receive_thread{[&]()
         {
-            Receiver<TSDFBridgeMessage> receiver{"127.0.0.1", 1234};
+            Receiver<TSDFBridgeMessage> receiver{"127.0.0.1", 1238};
             std::this_thread::sleep_for(std::chrono::milliseconds(200));
             receiver.receive(tsdf_received);
         }};
@@ -170,7 +210,7 @@ TEST_CASE("TSDFBridgeMessage Sender Receiver Test", "[communication]")
         std::thread send_thread{[&]()
         {
             std::this_thread::sleep_for(std::chrono::milliseconds(100));
-            Sender<TSDFBridgeMessage> sender{1234};
+            Sender<TSDFBridgeMessage> sender{1238};
             std::this_thread::sleep_for(std::chrono::milliseconds(200));
             sender.send(tsdf_msg);
         }};
@@ -212,7 +252,7 @@ TEST_CASE("ImuStamped Sender Receiver Test", "[communication]")
 
         std::thread receive_thread{[&]()
         {
-            Receiver<ImuStamped> receiver{"127.0.0.1", 1234};
+            Receiver<ImuStamped> receiver{"127.0.0.1", 1239};
             std::this_thread::sleep_for(std::chrono::milliseconds(200));
             value_received = receiver.receive();
         }};
@@ -220,7 +260,7 @@ TEST_CASE("ImuStamped Sender Receiver Test", "[communication]")
         std::thread send_thread{[&]()
         {
             std::this_thread::sleep_for(std::chrono::milliseconds(100));
-            Sender<ImuStamped> sender{1234};
+            Sender<ImuStamped> sender{1239};
             std::this_thread::sleep_for(std::chrono::milliseconds(200));
             sender.send(imu_stamped);
         }};
@@ -261,7 +301,7 @@ TEST_CASE("BufferedImuStampedReceiver Test", "[communication]")
 
     std::thread receive_thread{[&]()
     {
-        BufferedImuStampedReceiver receiver{"127.0.0.1", 1234, buffer};
+        BufferedImuStampedReceiver receiver{"127.0.0.1", 1244, buffer};
         std::this_thread::sleep_for(std::chrono::milliseconds(200));
         receiver.receive();
     }};
@@ -269,7 +309,7 @@ TEST_CASE("BufferedImuStampedReceiver Test", "[communication]")
     std::thread send_thread{[&]()
     {
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
-        Sender<ImuStamped> sender{1234};
+        Sender<ImuStamped> sender{1244};
         std::this_thread::sleep_for(std::chrono::milliseconds(200));
         sender.send(imu_stamped);
     }};
@@ -312,7 +352,7 @@ TEST_CASE("BufferedPclStampedReceiver Test", "[communication]")
 
     std::thread receive_thread{[&]()
     {
-        BufferedPclStampedReceiver receiver{"127.0.0.1", 1234, buffer};
+        BufferedPclStampedReceiver receiver{"127.0.0.1", 1254, buffer};
         std::this_thread::sleep_for(std::chrono::milliseconds(200));
         receiver.receive();
     }};
@@ -320,7 +360,7 @@ TEST_CASE("BufferedPclStampedReceiver Test", "[communication]")
     std::thread send_thread{[&]()
     {
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
-        Sender<PointCloudStamped> sender{1234};
+        Sender<PointCloudStamped> sender{1254};
         std::this_thread::sleep_for(std::chrono::milliseconds(200));
         sender.send(pcl_stamped_to_send);
     }};
@@ -334,4 +374,77 @@ TEST_CASE("BufferedPclStampedReceiver Test", "[communication]")
     REQUIRE(pcl_stamped_to_send.data_.rings_ == pcl_ptr_stamped_recv->rings_);
     REQUIRE(pcl_stamped_to_send.data_.points_ == pcl_ptr_stamped_recv->points_);
     REQUIRE(pcl_stamped_to_send.timestamp_ == tp_received);
+}
+
+TEST_CASE("Stamped<int> Sender Receiver Test", "[communication]")
+{
+    std::cout << "Testing 'Stamped<int> Sender Receiver Test'" << std::endl;
+    for (size_t i = 0; i < iterations; ++i)
+    {
+        auto tp = util::HighResTime::now();
+        msg::Stamped<int> value_received;
+        msg::Stamped<int> value_to_send(42, tp);
+
+        std::thread receive_thread{[&]()
+        {
+            Receiver<msg::Stamped<int>> receiver{"127.0.0.1", 1264};
+            std::this_thread::sleep_for(std::chrono::milliseconds(200));
+            receiver.receive(value_received);
+        }};
+
+        std::thread send_thread{[&]()
+        {
+            std::this_thread::sleep_for(std::chrono::milliseconds(100));
+            Sender<msg::Stamped<int>> sender{1264};
+            std::this_thread::sleep_for(std::chrono::milliseconds(200));
+            sender.send(value_to_send);
+        }};
+
+        receive_thread.join();
+        send_thread.join();
+
+        REQUIRE(value_to_send.data_ == value_received.data_);
+        REQUIRE(value_to_send.timestamp_ == value_received.timestamp_);
+    }
+}
+
+TEST_CASE("Stamped<msg::Transform> Sender Receiver Test", "[communication]")
+{
+    std::cout << "Testing 'Stamped<msg::Transform> Sender Receiver Test'" << std::endl;
+    for (size_t i = 0; i < iterations; ++i)
+    {
+        auto tp = util::HighResTime::now();
+        msg::Stamped<msg::Transform> value_received;
+        msg::Stamped<msg::Transform> value_to_send(std::move(msg::Transform{Quaternionf{1, 2, 3, 4}, Vector3f{5, 6, 7}}), tp);
+
+        std::thread receive_thread{[&]()
+        {
+            Receiver<msg::Stamped<msg::Transform>> receiver{"127.0.0.1", 1274};
+            std::this_thread::sleep_for(std::chrono::milliseconds(200));
+            receiver.receive(value_received);
+        }};
+
+        std::thread send_thread{[&]()
+        {
+            std::this_thread::sleep_for(std::chrono::milliseconds(100));
+            Sender<msg::Stamped<msg::Transform>> sender{1274};
+            std::this_thread::sleep_for(std::chrono::milliseconds(200));
+            sender.send(value_to_send);
+        }};
+
+        receive_thread.join();
+        send_thread.join();
+
+        std::cout << value_received.data_.rotation.x() << "\n";
+        std::cout << value_received.data_.rotation.y() << "\n";
+        std::cout << value_received.data_.rotation.z() << "\n";
+        std::cout << value_received.data_.rotation.w() << "\n";
+        
+        REQUIRE(value_to_send.data_.rotation.x() == Approx(value_received.data_.rotation.x()).margin(0.00001));
+        REQUIRE(value_to_send.data_.rotation.y() == Approx(value_received.data_.rotation.y()).margin(0.00001));
+        REQUIRE(value_to_send.data_.rotation.z() == Approx(value_received.data_.rotation.z()).margin(0.00001));
+        REQUIRE(value_to_send.data_.rotation.w() == Approx(value_received.data_.rotation.w()).margin(0.00001));
+        REQUIRE(value_to_send.data_.translation == value_received.data_.translation);
+        REQUIRE(value_to_send.timestamp_ == value_received.timestamp_);
+    }
 }

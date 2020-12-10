@@ -18,7 +18,16 @@
     },
 
     "bridge": {
-        "host": "192.168.1.2"
+        "use_from" : 0,
+        "use_to" : 1,
+
+        "host_from": "192.168.1.2",
+
+        "imu_port_from": 4444,
+        "imu_port_to": 5555,
+
+        "pcl_port_from": 3333,
+        "pcl_port_to": 7777
     },
 
     "slam": {

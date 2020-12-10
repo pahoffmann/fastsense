@@ -25,7 +25,7 @@ CloudCallback::CloudCallback(Registration& registration,
                              const std::shared_ptr<GlobalMap>& global_map,
                              Matrix4f& pose,
                              const VisPublisher::BufferPtr& vis_buffer,
-                             const std::shared_ptr<TransformBuffer>& transform_buffer,
+                             const msg::TransformStampedBuffer::Ptr& transform_buffer,
                              fastsense::CommandQueuePtr& q)
     : ProcessThread(),
       registration{registration},
@@ -190,9 +190,9 @@ void CloudCallback::thread_run()
         global_map->save_pose(pose(0, 3), pose(1, 3), pose(2, 3),
                               quat.x(), quat.y(), quat.z(), quat.w());
 
-        msg::Transform transform;
-        transform.translation = pose.block<3, 1>(0, 3);
-        transform.rotation = quat;
+        msg::TransformStamped transform;
+        transform.data_.translation = pose.block<3, 1>(0, 3);
+        transform.data_.rotation = quat;
         transform_buffer->push_nb(transform, true);
 
         vis_buffer->push_nb(pose, true);

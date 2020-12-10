@@ -20,7 +20,7 @@ namespace fastsense::bridge
  * @brief TransformBridge converts transform data from the application to ROS messages
  * 
  */
-class TransformBridge :  public BridgeBase<msg::Transform, geometry_msgs::TransformStamped, 8888>,
+class TransformBridge :  public BridgeBase<msg::TransformStamped, geometry_msgs::Transform, 8888>,
     public util::ProcessThread
 {
 public:
@@ -34,7 +34,7 @@ public:
     /**
      * @brief Destroy the Transform Bridge object
      */
-    virtual ~TransformBridge() override = default;
+    ~TransformBridge() override = default;
 
     /**
      * @brief Starts the Transform Bridge in its own thread

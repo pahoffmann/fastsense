@@ -35,7 +35,7 @@ public:
     /**
      * @brief Destroy the Imu Bridge object
      */
-    virtual ~ImuBridge() = default;
+    ~ImuBridge() override = default;
 private:
     /**
      * @brief Publishes an sensor_msgs::Imu (convert() FIRST for newest data)

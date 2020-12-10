@@ -142,7 +142,7 @@ VelodyneDriver::VelodyneDriver(uint16_t port, const PointCloudPtrStampedBuffer::
 
 VelodyneDriver::~VelodyneDriver()
 {
-    stop();
+    ProcessThread::stop();
     close(sockfd_);
 }
 

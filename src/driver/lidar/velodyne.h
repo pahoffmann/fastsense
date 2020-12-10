@@ -65,6 +65,8 @@ static_assert(sizeof(VelodynePacket) == 1206);
 class VelodyneDriver : public fastsense::util::ProcessThread
 {
 public:
+    using UPtr = std::unique_ptr<VelodyneDriver>;
+
     /**
      * @brief Construct a new Velodyne Driver object.
      *

@@ -2,7 +2,7 @@
 #  message(FATAL_ERROR "Can't compile in bash session in which Vitis Tools have been sourced!\nCompile from a clean bash environment")
 #endif()
 
-cmake_minimum_required(VERSION 3.10)
+cmake_minimum_required(VERSION 3.3)
 
 project(bridge CXX)
 set(CMAKE_CXX_STANDARD 17)

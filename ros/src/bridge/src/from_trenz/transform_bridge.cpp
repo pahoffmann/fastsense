@@ -6,6 +6,7 @@
 
 #include <iterator>
 #include <ros/ros.h>
+#include <bridge/util.h>
 #include <bridge/from_trenz/transform_bridge.h>
 
 using namespace fastsense::bridge;
@@ -44,32 +45,42 @@ void TransformBridge::stop()
 void TransformBridge::run()
 {
     while (running && ros::ok())
-    {
-        BridgeBase::run();
+    {   
+        try
+        {
+            receive();
+            ROS_INFO_STREAM("Received transform\n");
+            convert();
+            publish();
+        }
+        catch(const std::exception& e)
+        {
+            std::cerr << "VELO " << e.what() << '\n';
+        }
     }
 }
 
 void TransformBridge::convert()
 {
     std::lock_guard guard(mtx);
-    transform_data.transform.rotation.x = msg_.rotation.x();
-    transform_data.transform.rotation.y = msg_.rotation.y();
-    transform_data.transform.rotation.z = msg_.rotation.z();
-    transform_data.transform.rotation.w = msg_.rotation.w();
-    transform_data.transform.translation.x = msg_.translation.x() * 0.001;
-    transform_data.transform.translation.y = msg_.translation.y() * 0.001;
-    transform_data.transform.translation.z = msg_.translation.z() * 0.001;
+    transform_data.transform.rotation.x = msg_.data_.rotation.x();
+    transform_data.transform.rotation.y = msg_.data_.rotation.y();
+    transform_data.transform.rotation.z = msg_.data_.rotation.z();
+    transform_data.transform.rotation.w = msg_.data_.rotation.w();
+    transform_data.transform.translation.x = msg_.data_.translation.x() * 0.001;
+    transform_data.transform.translation.y = msg_.data_.translation.y() * 0.001;
+    transform_data.transform.translation.z = msg_.data_.translation.z() * 0.001;
 }
 
 void TransformBridge::publish()
 {
     std::lock_guard guard(mtx);
-    transform_data.header.stamp = ros::Time::now();
+    transform_data.header.stamp = timestamp_to_rostime(msg_.timestamp_);
     transform_data.header.frame_id = "map";
     transform_data.child_frame_id = "base_link";
 
     broadcaster.sendTransform(transform_data);    
-    ROS_INFO_STREAM("Transform published\n");
+    // ROS_INFO_STREAM("Transform published\n");
 }
 
 void TransformBridge::broadcast()

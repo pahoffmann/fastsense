@@ -2,7 +2,8 @@
 
 /**
  * @file queue_bridge.h
- * @author Marcel Flottmann, Julian Gaal
+ * @author Marcel Flottmann
+ * @author Julian Gaal
  * @date 2020-10-06
  */
 
@@ -19,14 +20,43 @@ template<typename T_QUEUE, typename T_MSG, bool FORCE>
 class QueueBridgeBase : public util::ProcessThread
 {
 public:
+    /// typedef for shared_ptr of in/out buffer
     using BufferType = std::shared_ptr<util::ConcurrentRingBuffer<T_QUEUE>>;
 
+    /**
+     * @brief Construct a new Queue Bridge Base object
+     * 
+     * @param in input buffer
+     * @param out output buffer
+     * @param port port to send to
+     * @param send if true, send, if not, directly to output buffer
+     */
+    QueueBridgeBase(const BufferType& in, const BufferType& out, uint16_t port, bool send = true) :
+        in_{in}, out_{out}, sender_{port}, send_{send}
+    {}
+
+    /**
+     * @brief Destroy the Queue Bridge Base object
+     */
+    virtual ~QueueBridgeBase() = default;
+
 protected:
+    /// Input Buffer
     BufferType in_;
+
+    /// Output Buffer
     BufferType out_;
 
+    /// Sender of Type of input buffer
     Sender<T_MSG> sender_;
 
+    /// To send of not. If not: pop and directly into output buffer
+    bool send_;
+
+    /**
+     * @brief Endless loop that pops from input buffer of type T, 
+     * sends via sender<T> and pushes popped data into output buffer
+     */
     void thread_run() override
     {
         T_QUEUE val;
@@ -47,20 +77,29 @@ protected:
                     this->out_->push(val);
                 }
             }
-            this->send(val);
+
+            if (send_)
+            {
+                this->send(val);
+            }
+
         }
     }
 
+    /**
+     * @brief Send value of type T_QUEUE (from input buffer)
+     * 
+     * @param val value of type T_QUEUE (from input buffer)
+     */
     virtual void send(const T_QUEUE& val) = 0;
-
-public:
-    QueueBridgeBase(const BufferType& in, const BufferType& out, uint16_t port) :
-        in_{in}, out_{out}, sender_{port}
-    {}
-
-    virtual ~QueueBridgeBase() = default;
 };
 
+/**
+ * @brief QueueBridge Specialization where data is poped, send and pushed to same buffer
+ * 
+ * @tparam T any type
+ * @tparam FORCE push non blocking in output buffer
+ */
 template<typename T, bool FORCE>
 class QueueBridge : public QueueBridgeBase<T, T, FORCE>
 {
@@ -75,6 +114,12 @@ protected:
     }
 };
 
+/**
+ * @brief QueueBridge specialization for shared_ptr<T>. Make copy of T and send T
+ * 
+ * @tparam T std::shared_ptr<T>
+ * @tparam FORCE if true, push non blocking in output buffer
+ */
 template<typename T, bool FORCE>
 class QueueBridge<std::shared_ptr<T>, FORCE> : public QueueBridgeBase<std::shared_ptr<T>, T, FORCE>
 {
@@ -89,39 +134,12 @@ protected:
     }
 };
 
-template<typename T, bool FORCE>
-class QueueBridge<std::pair<T, util::HighResTimePoint>, FORCE> : public QueueBridgeBase<std::pair<T, util::HighResTimePoint>, T, FORCE>
-{
-public:
-    using QueueBridgeBase<std::pair<T, util::HighResTimePoint>, T, FORCE>::QueueBridgeBase;
-    ~QueueBridge() override = default;
-
-protected:
-    void send(const std::pair<T, util::HighResTimePoint>& val) override
-    {
-        this->sender_.send(val.first);
-    }
-};
-
-template<typename T, bool FORCE>
-class QueueBridge<std::pair<std::shared_ptr<T>, util::HighResTimePoint>, FORCE> : public QueueBridgeBase<std::pair<std::shared_ptr<T>, util::HighResTimePoint>, T, FORCE>
-{
-public:
-    using QueueBridgeBase<std::pair<std::shared_ptr<T>, util::HighResTimePoint>, T, FORCE>::QueueBridgeBase;
-    ~QueueBridge() override = default;
-
-protected:
-    void send(const std::pair<std::shared_ptr<T>, util::HighResTimePoint>& val) override
-    {
-        this->sender_.send(*val.first);
-    }
-};
-
 /**
- * @brief QueueBridgeBase specialization for PointCloudPtrStamped (trenz to ROS)
+ * @brief QueueBridgeBase specialization for PointCloudPtrStamped (trenz to ROS). 
+ * Creates a copy of PointCloud from PointCloud::Ptr and sends a Stamped<PointCloud>
  * 
- * @tparam T 
- * @tparam FORCE 
+ * @tparam T msg::Stamped<std::shared_ptr<msg::PointCloud>>
+ * @tparam FORCE if true, push non blocking in output buffer
  */
 template<bool FORCE>
 class QueueBridge<msg::Stamped<std::shared_ptr<msg::PointCloud>>, FORCE> : public QueueBridgeBase<msg::Stamped<std::shared_ptr<msg::PointCloud>>, msg::PointCloudStamped, FORCE>
@@ -138,6 +156,12 @@ protected:
     }
 };
 
+/**
+ * @brief QueueBridge specialization for Stamped<T>
+ * 
+ * @tparam T Stamped<T>
+ * @tparam FORCE if true, push non blocking in output buffer
+ */
 template<typename T, bool FORCE>
 class QueueBridge<msg::Stamped<T>, FORCE> : public QueueBridgeBase<msg::Stamped<T>, msg::Stamped<T>, FORCE>
 {
