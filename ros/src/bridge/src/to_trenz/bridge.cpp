@@ -18,7 +18,7 @@
 #include <comm/sender.h>
 
 #include <msg/imu.h>
-#include <msg/point_cloud_stamped.h>
+#include <msg/point_cloud.h>
 
 #include <registration/imu_accumulator.h>
 
