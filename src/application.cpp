@@ -110,8 +110,6 @@ int Application::run()
 
     bool send = config.bridge.use_to();
 
-    // std::cout 
-
     comm::QueueBridge<msg::ImuStamped, true> imu_bridge{imu_buffer, imu_bridge_buffer, config.bridge.imu_port_to(), send};
     comm::QueueBridge<msg::PointCloudPtrStamped, true> lidar_bridge{pointcloud_buffer, pointcloud_bridge_buffer, config.bridge.pcl_port_to(), send};
 

@@ -19,7 +19,6 @@ Registration::Registration(const fastsense::CommandQueuePtr& q, msg::ImuStampedB
         krnl{q}
 {}
 
-
 Vector3i transform(const Vector3i& input, const Matrix4i& mat)
 {
     return (mat.block<3, 3>(0, 0) * input + mat.block<3, 1>(0, 3)) / MATRIX_RESOLUTION;
@@ -89,8 +88,11 @@ Matrix4f Registration::register_cloud(fastsense::map::LocalMap& localmap, fastse
 {
     auto& eval = RuntimeEvaluator::get_instance();
     eval.start("imu_acc");
+    std::cout << "Imu Buffer size: " << imu_accumulator_.buffer_->size() << "\n";
     Matrix4f total_transform = imu_accumulator_.acc_transform(cloud_timestamp); //transform used to register the pcl
+    std::cout << "TOT\n " << total_transform << "\n";
     eval.stop("imu_acc");
+    
 
     eval.start("reg");
     krnl.synchronized_run(localmap, cloud, max_iterations_, it_weight_gradient_, total_transform);

@@ -29,7 +29,7 @@ void TSDFBridge::run()
         try
         {
             receive();
-            ROS_INFO_STREAM("Received " << msg_.tsdf_data_.size() << " tsdf values\n");
+            // ROS_INFO_STREAM("Received " << msg_.tsdf_data_.size() << " tsdf values\n");
             convert();
             publish();
         }
@@ -146,7 +146,7 @@ void TSDFBridge::convert()
             colors_[i + offset] = p.second;
         }
     }
-    ROS_INFO_STREAM("Converted tsdf values: " << msg_.tsdf_data_.size() << "/" << points_.size() << " points\n");
+    // ROS_INFO_STREAM("Converted tsdf values: " << msg_.tsdf_data_.size() << "/" << points_.size() << " points\n");
 }
 
 void TSDFBridge::publish()
@@ -164,7 +164,7 @@ void TSDFBridge::publish()
     marker.colors = colors_;
     pub().publish(marker);
 
-    ROS_INFO_STREAM("Published " << points_.size() << " tsdf values\n");
+    // ROS_INFO_STREAM("Published " << points_.size() << " tsdf values\n");
 
     points_.clear();
     colors_.clear();

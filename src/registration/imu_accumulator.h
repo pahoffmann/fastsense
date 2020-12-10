@@ -43,6 +43,8 @@ public:
      */
     Matrix4f acc_transform(util::HighResTimePoint pcl_timestamp);
 
+    /// imu buffer to use for accumulation
+    msg::ImuStampedBuffer::Ptr& buffer_;
 private:
     /**
      * @brief applies single imu transform with duration since last imu message to accumulation matrix
@@ -61,9 +63,6 @@ private:
      * @return false if ts_1 happened after ts_2
      */
     bool before(util::HighResTimePoint& ts_1, util::HighResTimePoint& ts_2);
-
-    /// imu buffer to use for accumulation
-    msg::ImuStampedBuffer::Ptr& buffer_;
 
     /// first imu message needs to be catched to calculate diff
     bool first_imu_msg_;

@@ -21,12 +21,8 @@ struct LinearAcceleration : public Vector3f
     {}
 
     LinearAcceleration(float x, float y, float z)
-    :   Vector3f{0.0f, 0.0f, 0.0f}
-    {
-        (*this)[0] = x;
-        (*this)[1] = y;
-        (*this)[2] = z;
-    }
+    :   Vector3f{x, y, z}
+    {}
 
     explicit LinearAcceleration(const double* acceleration)
     :   Vector3f{0.0f, 0.0f, 0.0f}

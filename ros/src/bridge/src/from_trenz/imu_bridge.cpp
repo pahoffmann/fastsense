@@ -37,7 +37,7 @@ void ImuBridge::run()
         try
         {
             receive();
-            ROS_INFO_STREAM("Received imu msg\n");
+            // ROS_INFO_STREAM("Received imu msg\n");
             convert();
             publish();
         }
@@ -132,12 +132,12 @@ void ImuBridge::convert()
                 magnetic_field_covariance_.end(), 
                 mag_ros_.magnetic_field_covariance.begin());
 
-    ROS_INFO_STREAM("Converted imu values\n");
+    // ROS_INFO_STREAM("Converted imu values\n");
 }
 
 void ImuBridge::publish()
 {
     pub().publish(imu_ros_);
     mag_pub_.publish(mag_ros_);
-    ROS_INFO_STREAM("published imu values\n");
+    // ROS_INFO_STREAM("published imu values\n");
 }

@@ -23,12 +23,8 @@ struct AngularVelocity : public Vector3f
     {}
 
     AngularVelocity(float x, float y, float z)
-    :   Vector3f{0.0f, 0.0f, 0.0f}
-    {
-        (*this)[0] = x;
-        (*this)[1] = y;
-        (*this)[2] = z;
-    }
+    :   Vector3f{x, y, z}
+    {}
 
     AngularVelocity(const double* angular_rate)
     :   Vector3f{0.0f, 0.0f, 0.0f}

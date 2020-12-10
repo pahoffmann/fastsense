@@ -26,7 +26,7 @@ void VelodyneBridge::run()
         try
         {
             receive();
-            ROS_INFO_STREAM("Received " << msg_.data_.points_.size() << " points\n");
+            // ROS_INFO_STREAM("Received " << msg_.data_.points_.size() << " points\n");
             convert();
             publish();
         }
@@ -53,7 +53,7 @@ void VelodyneBridge::convert()
         return out;
     });
 
-    ROS_INFO_STREAM("Converted points: " << msg_points.size() << "->" << points_.size() << " points\n");
+    // ROS_INFO_STREAM("Converted points: " << msg_points.size() << "->" << points_.size() << " points\n");
 }
 
 void VelodyneBridge::publish()
@@ -64,5 +64,5 @@ void VelodyneBridge::publish()
     pc.points = points_;
     pub().publish(pc);
 
-    ROS_INFO_STREAM("Published points values\n");
+    // ROS_INFO_STREAM("Published points values\n");
 }

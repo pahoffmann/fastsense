@@ -26,9 +26,11 @@ Eigen::Matrix4f ImuAccumulator::acc_transform(util::HighResTimePoint pcl_timesta
     Matrix4f acc_transform = Matrix4f::Identity();
     
     auto imu_before_pcl = [&](msg::ImuStamped& msg){ return before(msg.timestamp_, pcl_timestamp); };
-    
+
     while(buffer_->pop_nb_if(&imu_msg, imu_before_pcl)) 
     {
+        std::cout << "IMU BEFORE: " << (imu_msg.timestamp_ - pcl_timestamp).count() << "\n";
+        std::cout << "IMU BEFORE: " << std::boolalpha << before(imu_msg.timestamp_, pcl_timestamp) << "\n";
         if(first_imu_msg_)
         {
             last_imu_timestamp_ = imu_msg.timestamp_;

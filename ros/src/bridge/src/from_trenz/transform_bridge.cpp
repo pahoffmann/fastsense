@@ -80,7 +80,7 @@ void TransformBridge::publish()
     transform_data.child_frame_id = "base_link";
 
     broadcaster.sendTransform(transform_data);    
-    // ROS_INFO_STREAM("Transform published\n");
+    ROS_INFO_STREAM("Transform published\n");
 }
 
 void TransformBridge::broadcast()

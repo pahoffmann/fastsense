@@ -115,7 +115,7 @@ void Imu::data_handler(const double* acceleration, const double* angularRate, co
     }
 
     msg::Imu msg(acceleration, angularRate, magneticField);
-    data_buffer_->push_nb(msg::ImuStamped{std::move(msg), util::HighResTime::now()}, false);
+    data_buffer_->push_nb(msg::ImuStamped{std::move(msg), util::HighResTime::now()}, true);
 }
 
 void Imu::attach_handler()
