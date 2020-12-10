@@ -11,8 +11,8 @@ namespace fastsense::registration
 // Prototype of top level function for C-synthesis
 template<typename T, int a_rows, int a_cols, int b_cols>
 void MatrixMul(
-    T a[a_rows][a_cols],
-    T b[a_cols][b_cols],
+    const T a[a_rows][a_cols],
+    const T b[a_cols][b_cols],
     T res[a_rows][b_cols])
 {
 #pragma HLS INLINE
@@ -36,8 +36,8 @@ void MatrixMul(
 }
 
 void transform_point(
-    int mat[4][4],
-    int point[3],
+    const int mat[4][4],
+    const int point[3],
     int res[3])
 {
 #pragma HLS INLINE

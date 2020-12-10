@@ -82,7 +82,7 @@ Matrix4f Registration::register_cloud(fastsense::map::LocalMap& localmap, fastse
     imu_accumulator_.setIdentity();
     mutex_.unlock();
 
-    krnl.synchronized_run(localmap, cloud, max_iterations_, it_weight_gradient_, total_transform);
+    krnl.synchronized_run(localmap, cloud, max_iterations_, it_weight_gradient_, epsilon_, total_transform);
 
     // apply final transformation
     transform_point_cloud(cloud, total_transform);
