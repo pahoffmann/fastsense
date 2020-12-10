@@ -87,7 +87,7 @@ public:
     }
 };
 
-// using PointCloudStamped = Stamped<PointCloud>;
+using PointCloudStamped = Stamped<PointCloud>;
 using PointCloudPtrStamped = Stamped<PointCloud::Ptr>;
 using PointCloudPtrStampedBuffer = util::ConcurrentRingBuffer<PointCloudPtrStamped>;
 

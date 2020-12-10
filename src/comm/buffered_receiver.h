@@ -10,7 +10,7 @@
 #include <util/concurrent_ring_buffer.h>
 #include <comm/receiver.h>
 #include <msg/imu.h>
-#include <msg/point_cloud_stamped.h>
+#include <msg/point_cloud.h>
 #include <iostream>
 
 namespace fastsense::comm

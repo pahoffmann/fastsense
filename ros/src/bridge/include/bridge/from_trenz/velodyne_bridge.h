@@ -8,7 +8,7 @@
 
 #include <ros/time.h>
 #include <sensor_msgs/PointCloud.h>
-#include <msg/point_cloud_stamped.h>
+#include <msg/point_cloud.h>
 #include "bridge_base.h"
 
 namespace fastsense::bridge

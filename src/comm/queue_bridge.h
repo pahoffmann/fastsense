@@ -9,7 +9,7 @@
 
 #include <util/time.h>
 #include <util/concurrent_ring_buffer.h>
-#include <msg/point_cloud_stamped.h>
+#include <msg/point_cloud.h>
 #include <util/process_thread.h>
 #include <comm/sender.h>
 
