@@ -6,7 +6,7 @@
 #include "catch2_config.h"
 #include <preprocessing/preprocessing.h>
 #include <util/point.h>
-#include <msg/point_cloud_stamped.h>
+#include <msg/point_cloud.h>
 
 using namespace fastsense;
 using namespace fastsense::msg;

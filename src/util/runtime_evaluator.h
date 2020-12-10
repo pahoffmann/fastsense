@@ -106,6 +106,11 @@ public:
     RuntimeEvaluator(RuntimeEvaluator&) = delete;
 
     /**
+     * @brief Clear all running time measurements
+     */
+    void clear();
+
+    /**
      * Starts a new measurent for a task.
      * @param task_name Name of the task, which will be shown in the printed overview
      *                  and is used as an identifier to find the right measurement variables

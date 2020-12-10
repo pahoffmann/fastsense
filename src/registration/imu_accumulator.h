@@ -24,9 +24,9 @@ public:
     /**
      * @brief Construct a new Imu Accumulator object
      * 
-     * @param buffer stamped imu buffer
+     * @param buffer stamped imu buffer shared_ptr
      */
-    ImuAccumulator(msg::ImuStampedBuffer& buffer);
+    ImuAccumulator(msg::ImuStampedBuffer::Ptr& buffer);
 
     /**
      * @brief Destroy the Imu Accumulator object
@@ -51,9 +51,20 @@ private:
      * @param imu_msg stamped imu message
      */
     void apply_transform(Matrix4f& acc_transform, const msg::ImuStamped& imu_msg);
+    
+    /**
+     * @brief Calculates whether or not ts_1 happened before ts_2 (before in the OS timestamp sense)
+     * 
+     * @param ts_1 timestamp 1
+     * @param ts_2 timestamp 2
+     * @return true if ts_1 happened before ts_2
+     * @return false if ts_1 happened after ts_2
+     */
     bool before(util::HighResTimePoint& ts_1, util::HighResTimePoint& ts_2);
+
     /// imu buffer to use for accumulation
-    msg::ImuStampedBuffer& buffer_;
+    msg::ImuStampedBuffer::Ptr& buffer_;
+
     /// first imu message needs to be catched to calculate diff
     bool first_imu_msg_;
 

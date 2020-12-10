@@ -111,9 +111,7 @@ void CloudCallback::thread_run()
         }
         else
         {
-            eval.start("reg");
             Matrix4f transform = registration.register_cloud(*local_map, scan_point_buffer, point_cloud2.timestamp_);
-            eval.stop("reg");
 
             Eigen::Quaternionf rotation(transform.block<3, 3>(0, 0));
             Vector3f pos = transform.block<3, 1>(0, 3);

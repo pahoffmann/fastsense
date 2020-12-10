@@ -28,7 +28,8 @@ static void transform_point_cloud(std::vector<Vector3f>& in_cloud, const Matrix4
 TEST_CASE("AccumulatorPos", "[Accumulator]")
 {
 
-    msg::ImuStampedBuffer imu_buffer(10);
+    //msg::ImuStampedBuffer imu_buffer(10);
+    auto imu_buffer = std::make_shared<msg::ImuStampedBuffer>(10);
 
     auto stamp = util::HighResTime::now();
     auto diff = 250ms;
@@ -38,7 +39,7 @@ TEST_CASE("AccumulatorPos", "[Accumulator]")
     for (const auto& i: {1, 2, 3, 4, 5, 6, 7})
     {
         msg::ImuStamped imu_msg{imu, util::HighResTimePoint(stamp + i * diff)};
-        imu_buffer.push(imu_msg);
+        imu_buffer->push(imu_msg);
     }
 
     registration::ImuAccumulator imu_acc{imu_buffer};
@@ -65,7 +66,7 @@ TEST_CASE("AccumulatorPos", "[Accumulator]")
     REQUIRE(acc(2,1) == Approx(rotation_mat(2,1)).margin(0.001));
     REQUIRE(acc(2,2) == Approx(rotation_mat(2,2)).margin(0.001));
 
-    REQUIRE(imu_buffer.size() ==  2);
+    REQUIRE(imu_buffer->size() ==  2);
     
     acc = imu_acc.acc_transform(util::HighResTimePoint(stamp + 7 * diff));
 
@@ -90,13 +91,13 @@ TEST_CASE("AccumulatorPos", "[Accumulator]")
     REQUIRE(acc(2,1) == Approx(rotation_mat(2,1)).margin(0.000001));
     REQUIRE(acc(2,2) == Approx(rotation_mat(2,2)).margin(0.000001));
 
-    REQUIRE(imu_buffer.empty());
+    REQUIRE(imu_buffer->empty());
 }
 
 TEST_CASE("AccumulatorNeg", "[Accumulator]")
 {
 
-    msg::ImuStampedBuffer imu_buffer(10);
+    auto imu_buffer = std::make_shared<msg::ImuStampedBuffer>(10);
 
     auto stamp = util::HighResTime::now();
     auto diff = 250ms;
@@ -106,7 +107,7 @@ TEST_CASE("AccumulatorNeg", "[Accumulator]")
     for (const auto& i: {1, 2, 3, 4, 5, 6, 7})
     {
         msg::ImuStamped imu_msg{imu, util::HighResTimePoint(stamp + i * diff)};
-        imu_buffer.push(imu_msg);
+        imu_buffer->push(imu_msg);
     }
 
     registration::ImuAccumulator imu_acc{imu_buffer};
@@ -133,7 +134,7 @@ TEST_CASE("AccumulatorNeg", "[Accumulator]")
     REQUIRE(acc(2,1) == Approx(rotation_mat(2,1)).margin(0.001));
     REQUIRE(acc(2,2) == Approx(rotation_mat(2,2)).margin(0.001));
 
-    REQUIRE(imu_buffer.size() ==  2);
+    REQUIRE(imu_buffer->size() ==  2);
     
     acc = imu_acc.acc_transform(util::HighResTimePoint(stamp + 7 * diff));
 
@@ -159,12 +160,12 @@ TEST_CASE("AccumulatorNeg", "[Accumulator]")
     REQUIRE(acc(2,1) == Approx(rotation_mat(2,1)).margin(0.000001));
     REQUIRE(acc(2,2) == Approx(rotation_mat(2,2)).margin(0.000001));
 
-    REQUIRE(imu_buffer.empty());
+    REQUIRE(imu_buffer->empty());
 }
 
 TEST_CASE("AccumulatorCloudRotation", "[Accumulator]")
 {
-    msg::ImuStampedBuffer imu_buffer(10);
+    auto imu_buffer = std::make_shared<msg::ImuStampedBuffer>(10);
 
     auto stamp = util::HighResTime::now();
     auto diff = 250ms;
@@ -174,7 +175,7 @@ TEST_CASE("AccumulatorCloudRotation", "[Accumulator]")
     for (const auto& i: {1, 2, 3, 4, 5, 6, 7})
     {
         msg::ImuStamped imu_msg{imu, util::HighResTimePoint(stamp + i * diff)};
-        imu_buffer.push(imu_msg);
+        imu_buffer->push(imu_msg);
     }
 
     registration::ImuAccumulator imu_acc{imu_buffer};

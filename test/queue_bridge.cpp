@@ -7,7 +7,7 @@
 #include "catch2_config.h"
 #include <comm/receiver.h>
 #include <msg/stamped.h>
-#include <msg/point_cloud_stamped.h>
+#include <msg/point_cloud.h>
 #include <comm/buffered_receiver.h>
 #include <comm/queue_bridge.h>
 #include <iostream>

@@ -6,11 +6,13 @@
 
 #include <util/point.h>
 #include <registration/registration.h>
+#include <util/runtime_evaluator.h>
 
 using namespace fastsense;
 using namespace fastsense::registration;
+using namespace fastsense::util;
 
-Registration::Registration(const fastsense::CommandQueuePtr& q, msg::ImuStampedBuffer& buffer, size_t max_iterations, float it_weight_gradient) :
+Registration::Registration(const fastsense::CommandQueuePtr& q, msg::ImuStampedBuffer::Ptr& buffer, size_t max_iterations, float it_weight_gradient) :
         max_iterations_{max_iterations},
         it_weight_gradient_{it_weight_gradient},
         imu_accumulator_{buffer},
@@ -85,12 +87,16 @@ Matrix4f Registration::xi_to_transform(Vector6f xi)
 
 Matrix4f Registration::register_cloud(fastsense::map::LocalMap& localmap, fastsense::buffer::InputBuffer<PointHW>& cloud, const util::HighResTimePoint& cloud_timestamp)
 {
-    // Matrix4f total_transform = Matrix4f::Identity();
+    auto& eval = RuntimeEvaluator::get_instance();
+    eval.start("imu_acc");
     Matrix4f total_transform = imu_accumulator_.acc_transform(cloud_timestamp); //transform used to register the pcl
-    krnl.synchronized_run(localmap, cloud, max_iterations_, it_weight_gradient_, total_transform);
+    eval.stop("imu_acc");
 
+    eval.start("reg");
+    krnl.synchronized_run(localmap, cloud, max_iterations_, it_weight_gradient_, total_transform);
     // apply final transformation
     transform_point_cloud(cloud, total_transform);
-
+    eval.stop("reg");
+    
     return total_transform;
 }

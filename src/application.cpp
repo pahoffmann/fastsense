@@ -52,10 +52,12 @@ std::unique_ptr<util::ProcessThread> Application::init_imu(msg::ImuStampedBuffer
     util::ProcessThread::UPtr imu_driver;
     if (config.bridge.use_from())
     {
+        Logger::info("Launching BufferedImuReceiver");
         imu_driver.reset(new comm::BufferedImuStampedReceiver{config.bridge.host_from(), config.bridge.imu_port_from(), imu_buffer});
     }
     else
     {
+        Logger::info("Launching Imu Driver");
         imu_driver.reset(new driver::Imu{imu_buffer});
     }
 
@@ -69,10 +71,12 @@ std::unique_ptr<util::ProcessThread> Application::init_lidar(msg::PointCloudPtrS
 
     if (config.bridge.use_from())
     {
+        Logger::info("Launching BufferedPCLReceiver");
         lidar_driver.reset(new comm::BufferedPclStampedReceiver{config.bridge.host_from(), config.bridge.pcl_port_from(), pcl_buffer});
     }
     else
     {
+        Logger::info("Launching Velodyne Driver");
         lidar_driver.reset(new driver::VelodyneDriver{config.lidar.port(), pcl_buffer}); 
     }
 
@@ -113,7 +117,7 @@ int Application::run()
 
     auto command_queue = fastsense::hw::FPGAManager::create_command_queue();
 
-    Registration registration{command_queue, config.registration.max_iterations(), config.registration.it_weight_gradient()};
+    Registration registration{command_queue, imu_bridge_buffer, config.registration.max_iterations(), config.registration.it_weight_gradient()};
 
     auto global_map_ptr = std::make_shared<GlobalMap>(
                               "GlobalMap.h5",

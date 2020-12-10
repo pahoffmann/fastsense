@@ -119,9 +119,9 @@ TEST_CASE("Registration", "[registration][slow]")
 
     fastsense::CommandQueuePtr q = fastsense::hw::FPGAManager::create_command_queue();
 
-    msg::ImuStampedBuffer buff(0);
+    auto buffer = std::make_shared<msg::ImuStampedBuffer>(0);
     //test registration
-    fastsense::registration::Registration reg(q, buff, MAX_ITERATIONS);
+    fastsense::registration::Registration reg(q, buffer, MAX_ITERATIONS);
 
     std::vector<std::vector<Vector3f>> float_points;
     unsigned int num_points;

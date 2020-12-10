@@ -85,6 +85,11 @@ void RuntimeEvaluator::start(const std::string& task_name)
 #endif
 }
 
+void RuntimeEvaluator::clear()
+{
+    forms_.clear();
+}
+
 void RuntimeEvaluator::stop(const std::string& task_name)
 {
 #ifdef TIME_MEASUREMENT

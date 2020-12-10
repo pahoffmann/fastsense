@@ -30,6 +30,7 @@ TEST_CASE("Time", "[Time]")
 
 #ifdef TIME_MEASUREMENT
     auto& re = RuntimeEvaluator::get_instance();
+    re.clear();
 
     re.start("outer total");
     for (int i = 1; i <= 10; i++)

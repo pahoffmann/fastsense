@@ -50,10 +50,14 @@ private:
 public:
 
     /**
-     * @brief Construct a new Registration object, used to register a pointcloud with the current ring buffer
-     *
+     * @brief Construct a new Registration object
+     * 
+     * @param q xilinx command queue
+     * @param buffer imu buffer stamped shared ptr
+     * @param max_iterations max convergence iterations
+     * @param it_weight_gradient learning rate weight gradient
      */
-    Registration(const fastsense::CommandQueuePtr& q, msg::ImuStampedBuffer& buffer, size_t max_iterations = 50, float it_weight_gradient = 0.0);
+    Registration(const fastsense::CommandQueuePtr& q, msg::ImuStampedBuffer::Ptr& buffer, size_t max_iterations = 50, float it_weight_gradient = 0.0);
 
     /**
      * Destructor of the registration.

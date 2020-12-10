@@ -9,7 +9,7 @@
 using namespace fastsense::registration;
 using namespace fastsense;
 
-ImuAccumulator::ImuAccumulator(msg::ImuStampedBuffer& buffer)
+ImuAccumulator::ImuAccumulator(msg::ImuStampedBuffer::Ptr& buffer)
     :   buffer_{buffer},
         first_imu_msg_{true},
         last_imu_timestamp_{}
@@ -27,7 +27,7 @@ Eigen::Matrix4f ImuAccumulator::acc_transform(util::HighResTimePoint pcl_timesta
     
     auto imu_before_pcl = [&](msg::ImuStamped& msg){ return before(msg.timestamp_, pcl_timestamp); };
     
-    while(buffer_.pop_nb_if(&imu_msg, imu_before_pcl)) 
+    while(buffer_->pop_nb_if(&imu_msg, imu_before_pcl)) 
     {
         if(first_imu_msg_)
         {

@@ -14,7 +14,7 @@
 #include <util/runner.h>
 #include <msg/imu.h>
 #include <msg/transform.h>
-#include <msg/point_cloud_stamped.h>
+#include <msg/point_cloud.h>
 #include <msg/tsdf_bridge_msg.h>
 #include <iostream>
 #include <thread>
@@ -434,11 +434,6 @@ TEST_CASE("Stamped<msg::Transform> Sender Receiver Test", "[communication]")
 
         receive_thread.join();
         send_thread.join();
-
-        std::cout << value_received.data_.rotation.x() << "\n";
-        std::cout << value_received.data_.rotation.y() << "\n";
-        std::cout << value_received.data_.rotation.z() << "\n";
-        std::cout << value_received.data_.rotation.w() << "\n";
         
         REQUIRE(value_to_send.data_.rotation.x() == Approx(value_received.data_.rotation.x()).margin(0.00001));
         REQUIRE(value_to_send.data_.rotation.y() == Approx(value_received.data_.rotation.y()).margin(0.00001));
