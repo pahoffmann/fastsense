@@ -12,16 +12,14 @@ using namespace fastsense;
 using namespace fastsense::registration;
 using namespace fastsense::util;
 
-Registration::Registration(const fastsense::CommandQueuePtr& q, msg::ImuStampedBuffer::Ptr& buffer, size_t max_iterations, float it_weight_gradient) :
-        max_iterations_{max_iterations},
-        it_weight_gradient_{it_weight_gradient},
-        imu_accumulator_{buffer},
-        krnl{q}
-{}
-
-Vector3i transform(const Vector3i& input, const Matrix4i& mat)
+Registration::Registration(fastsense::CommandQueuePtr q, msg::ImuStampedBuffer::Ptr& buffer, unsigned int max_iterations, float it_weight_gradient, float epsilon)
+    :
+    max_iterations_(max_iterations),
+    it_weight_gradient_(it_weight_gradient),
+    epsilon_(epsilon),
+    imu_accumulator_(buffer),
+    krnl{q}
 {
-    return (mat.block<3, 3>(0, 0) * input + mat.block<3, 1>(0, 3)) / MATRIX_RESOLUTION;
 }
 
 void Registration::transform_point_cloud(fastsense::ScanPoints_t& in_cloud, const Matrix4f& mat)
@@ -92,13 +90,13 @@ Matrix4f Registration::register_cloud(fastsense::map::LocalMap& localmap, fastse
     Matrix4f total_transform = imu_accumulator_.acc_transform(cloud_timestamp); //transform used to register the pcl
     std::cout << "TOT\n " << total_transform << "\n";
     eval.stop("imu_acc");
-    
+
 
     eval.start("reg");
-    krnl.synchronized_run(localmap, cloud, max_iterations_, it_weight_gradient_, total_transform);
+    krnl.synchronized_run(localmap, cloud, max_iterations_, it_weight_gradient_, epsilon_, total_transform);
     // apply final transformation
     transform_point_cloud(cloud, total_transform);
     eval.stop("reg");
-    
+
     return total_transform;
 }

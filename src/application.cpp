@@ -115,7 +115,11 @@ int Application::run()
 
     auto command_queue = fastsense::hw::FPGAManager::create_command_queue();
 
-    Registration registration{command_queue, imu_bridge_buffer, config.registration.max_iterations(), config.registration.it_weight_gradient()};
+    Registration registration{command_queue,
+                              imu_bridge_buffer,
+                              ConfigManager::config().registration.max_iterations(),
+                              ConfigManager::config().registration.it_weight_gradient(),
+                              ConfigManager::config().registration.epsilon()};
 
     auto global_map_ptr = std::make_shared<GlobalMap>(
                               "GlobalMap.h5",

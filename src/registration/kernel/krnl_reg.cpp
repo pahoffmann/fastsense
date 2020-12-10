@@ -1,6 +1,7 @@
 /**
  * @author Patrick Hoffmann
  * @author Marc Eisoldt
+ * @author Malte Hillmann
  */
 
 #include <map/local_map_hw.h>
@@ -19,25 +20,26 @@ using namespace fastsense::map;
 using namespace fastsense::registration;
 
 constexpr int NUM_POINTS = 6000;
+constexpr int SPLIT_FACTOR = 3; // MARKER: SPLIT
 
 extern "C"
 {
 
-    void xi_to_transform(float xi[6], float transform[4][4])
+    void xi_to_transform(const float xi[6], float transform[4][4])
     {
         float theta = hls_sqrt_float(xi[0] * xi[0] + xi[1] * xi[1] + xi[2] * xi[2]);
         float sin_theta, cos_theta;
         hls_sincos(theta, &sin_theta, &cos_theta);
         cos_theta = 1 - cos_theta;
 
-        xi[0] /= theta;
-        xi[1] /= theta;
-        xi[2] /= theta;
+        float xi_0 = xi[0] / theta;
+        float xi_1 = xi[1] / theta;
+        float xi_2 = xi[2] / theta;
         float L[3][3] =
         {
-            {0, -xi[2], xi[1]},
-            {xi[2], 0, -xi[0]},
-            {-xi[1], xi[0], 0}
+            {0, -xi_2, xi_1},
+            {xi_2, 0, -xi_0},
+            {-xi_1, xi_0, 0}
         };
 
         for (int row = 0; row < 3; row++)
@@ -72,13 +74,11 @@ extern "C"
         transform[3][3] = 1;
     }
 
-    void registration_step(PointHW* pointData,
+    void registration_step(const PointHW* pointData,
                            int numPoints,
-                           IntTuple* mapData0,
-                           IntTuple* mapData1,
-                           IntTuple* mapData2,
+                           IntTuple* mapData0, IntTuple* mapData1, IntTuple* mapData2,
                            const LocalMapHW& map,
-                           int transform_matrix[4][4],
+                           const int transform_matrix[4][4],
                            long h[6][6],
                            long g[6],
                            long& error,
@@ -101,8 +101,8 @@ extern "C"
     point_loop:
         for (int i = 0; i < numPoints; i++)
         {
-#pragma HLS loop_tripcount min=NUM_POINTS max=NUM_POINTS
-#pragma HLS pipeline II=1
+#pragma HLS loop_tripcount min=NUM_POINTS/SPLIT_FACTOR max=NUM_POINTS/SPLIT_FACTOR
+#pragma HLS pipeline II=3
 
             PointHW point_tmp = pointData[i];
 
@@ -184,11 +184,47 @@ extern "C"
         }
     }
 
-    void krnl_reg(PointHW* pointData,
+// Declares the parameters for variables ending with 'n'. Macro Syntax: ## means concat variable name with the contents of 'n'
+#define DECLARE_PARAMS(n) \
+    const PointHW* pointData##n, \
+    IntTuple* mapData##n##0, IntTuple* mapData##n##1, IntTuple* mapData##n##2, \
+    long h##n[6][6], long g##n[6], long& error##n, long& count##n
+
+#define USE_PARAMS(n) \
+    pointData##n, \
+    mapData##n##0, mapData##n##1, mapData##n##2, \
+    h##n, g##n, error##n, count##n
+
+    void reg_dataflow(DECLARE_PARAMS(0), // MARKER: SPLIT
+                      DECLARE_PARAMS(1),
+                      DECLARE_PARAMS(2),
+                      int step,
+                      int last_step,
+                      const LocalMapHW& map,
+                      const int transform_matrix[4][4]
+                     )
+    {
+#pragma HLS dataflow
+
+#define CALL_STEP(n, STEP_SIZE) \
+        registration_step(pointData##n + n * step, STEP_SIZE, \
+                          mapData##n##0, mapData##n##1, mapData##n##2, \
+                          map, \
+                          transform_matrix, \
+                          h##n, g##n, error##n, count##n);
+
+        CALL_STEP(0, step); // MARKER: SPLIT
+        CALL_STEP(1, step);
+        CALL_STEP(2, last_step);
+    }
+
+    void krnl_reg(const PointHW* pointData0, // MARKER: SPLIT
+                  const PointHW* pointData1,
+                  const PointHW* pointData2,
                   int numPoints,
-                  IntTuple* mapData0,
-                  IntTuple* mapData1,
-                  IntTuple* mapData2,
+                  IntTuple* mapData00, IntTuple* mapData01, IntTuple* mapData02, // MARKER: SPLIT
+                  IntTuple* mapData10, IntTuple* mapData11, IntTuple* mapData12,
+                  IntTuple* mapData20, IntTuple* mapData21, IntTuple* mapData22,
                   int sizeX,   int sizeY,   int sizeZ,
                   int posX,    int posY,    int posZ,
                   int offsetX, int offsetY, int offsetZ,
@@ -198,20 +234,30 @@ extern "C"
                   float* out_transform
                  )
     {
-#pragma HLS INTERFACE m_axi port=pointData offset=slave bundle=scanmem latency=22
-#pragma HLS INTERFACE m_axi port=mapData0 offset=slave bundle=mapmem0 latency=22
-#pragma HLS INTERFACE m_axi port=mapData1 offset=slave bundle=mapmem1 latency=22
-#pragma HLS INTERFACE m_axi port=mapData2 offset=slave bundle=mapmem2 latency=22
-#pragma HLS INTERFACE m_axi port=in_transform offset=slave bundle=gmem latency=22
-#pragma HLS INTERFACE m_axi port=out_transform offset=slave bundle=gmem latency=22
+        // MARKER: SPLIT
+#pragma HLS INTERFACE m_axi latency=22 offset=slave port=pointData0    bundle=pointData0mem
+#pragma HLS INTERFACE m_axi latency=22 offset=slave port=mapData00     bundle=mapData00mem
+#pragma HLS INTERFACE m_axi latency=22 offset=slave port=mapData01     bundle=mapData01mem
+#pragma HLS INTERFACE m_axi latency=22 offset=slave port=mapData02     bundle=mapData02mem
+
+#pragma HLS INTERFACE m_axi latency=22 offset=slave port=pointData1    bundle=pointData1mem
+#pragma HLS INTERFACE m_axi latency=22 offset=slave port=mapData10     bundle=mapData10mem
+#pragma HLS INTERFACE m_axi latency=22 offset=slave port=mapData11     bundle=mapData11mem
+#pragma HLS INTERFACE m_axi latency=22 offset=slave port=mapData12     bundle=mapData12mem
+
+#pragma HLS INTERFACE m_axi latency=22 offset=slave port=pointData2    bundle=pointData2mem
+#pragma HLS INTERFACE m_axi latency=22 offset=slave port=mapData20     bundle=mapData20mem
+#pragma HLS INTERFACE m_axi latency=22 offset=slave port=mapData21     bundle=mapData21mem
+#pragma HLS INTERFACE m_axi latency=22 offset=slave port=mapData22     bundle=mapData22mem
+
+#pragma HLS INTERFACE m_axi latency=22 offset=slave port=in_transform  bundle=transformmem
+#pragma HLS INTERFACE m_axi latency=22 offset=slave port=out_transform bundle=transformmem
 
         LocalMapHW map{sizeX, sizeY, sizeZ,
                        posX, posY, posZ,
                        offsetX, offsetY, offsetZ};
         float alpha = 0.0f;
         //define local variables
-        long h[6][6];
-        long g[6];
         int int_transform[4][4]; // converted to int using MATRIX_RESOLUTION
         float next_transform[4][4]; // result of one iteration
         float total_transform[4][4]; // accumulated total transform
@@ -220,18 +266,31 @@ extern "C"
         float h_float[6][6];
         float g_float[6];
         float xi[6];
-#pragma HLS array_partition variable=h complete dim=0
-#pragma HLS array_partition variable=g complete
-#pragma HLS array_partition variable=int_transform complete dim=0
-#pragma HLS array_partition variable=next_transform complete dim=0
-#pragma HLS array_partition variable=total_transform complete dim=0
-#pragma HLS array_partition variable=temp_transform complete dim=0
-#pragma HLS array_partition variable=previous_errors complete
-#pragma HLS array_partition variable=h_float complete
-#pragma HLS array_partition variable=g_float complete
-#pragma HLS array_partition variable=xi complete
+#pragma HLS array_partition complete variable=int_transform
+#pragma HLS array_partition complete variable=next_transform
+#pragma HLS array_partition complete variable=total_transform
+#pragma HLS array_partition complete variable=temp_transform
+#pragma HLS array_partition complete variable=previous_errors
+#pragma HLS array_partition complete variable=h_float
+#pragma HLS array_partition complete variable=g_float
+#pragma HLS array_partition complete variable=xi
 
-        long error, count;
+        // MARKER: SPLIT
+        long h0[6][6], g0[6], error0, count0;
+#pragma HLS array_partition complete variable=h0
+#pragma HLS array_partition complete variable=g0
+
+        long h1[6][6], g1[6], error1, count1;
+#pragma HLS array_partition complete variable=h1
+#pragma HLS array_partition complete variable=g1
+
+        long h2[6][6], g2[6], error2, count2;
+#pragma HLS array_partition complete variable=h2
+#pragma HLS array_partition complete variable=g2
+
+        // Split variables
+        int step = numPoints / SPLIT_FACTOR;
+        int last_step = numPoints - step * (SPLIT_FACTOR - 1);
 
         // Pipeline to save ressources
     in_transform_loop:
@@ -243,6 +302,7 @@ extern "C"
                 total_transform[row][col] = in_transform[row * 4 + col];
             }
         }
+        float epsilon = in_transform[16];
 
         int i;
     registration_loop:
@@ -266,20 +326,20 @@ extern "C"
             std::cout << "\r" << i << " / " << max_iterations << std::flush;
 #endif
 
-            registration_step(pointData,
-                              numPoints,
-                              mapData0,
-                              mapData1,
-                              mapData2,
-                              map,
-                              int_transform,
-                              h,
-                              g,
-                              error,
-                              count
-                             );
+            reg_dataflow(USE_PARAMS(0), // MARKER: SPLIT
+                         USE_PARAMS(1),
+                         USE_PARAMS(2),
+                         step,
+                         last_step,
+                         map,
+                         int_transform
+                        );
 
-            float alpha_bonus = alpha * count;
+            // MARKER: SPLIT
+            error0 += error1 + error2;
+            count0 += count1 + count2;
+
+            float alpha_bonus = alpha * count0;
 
             for (int row = 0; row < 6; row++)
             {
@@ -287,9 +347,11 @@ extern "C"
                 for (int col = 0; col < 6; col++)
                 {
 #pragma HLS unroll
-                    h_float[row][col] = static_cast<float>(h[row][col]);
+                    // MARKER: SPLIT
+                    h_float[row][col] = static_cast<float>(h0[row][col] + h1[row][col] + h2[row][col]);
                 }
-                g_float[row] = static_cast<float>(-g[row]);
+                // MARKER: SPLIT
+                g_float[row] = static_cast<float>(-(g0[row] + g1[row] + g2[row]));
 
                 h_float[row][row] += alpha_bonus;
             }
@@ -313,11 +375,10 @@ extern "C"
             }
 
             alpha += it_weight_gradient;
-            float err = (float)error / count;
+            float err = (float)error0 / count0;
             float d1 = err - previous_errors[2];
             float d2 = err - previous_errors[0];
 
-            constexpr float epsilon = 0.0001; // TODO: make parameter?
             if (d1 >= -epsilon && d1 <= epsilon && d2 >= -epsilon && d2 <= epsilon)
             {
                 break;

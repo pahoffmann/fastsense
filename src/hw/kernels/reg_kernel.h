@@ -34,12 +34,18 @@ public:
      * @param local_count   local count ref
      * @param transform     transform from last registration iteration (including imu one) - needs to be applied in the kernel
      */
-    void synchronized_run(map::LocalMap& map, buffer::InputBuffer<PointHW>& point_data, int max_iterations, float it_weight_gradient, Eigen::Matrix4f& transform)
+    void synchronized_run(map::LocalMap& map,
+                          buffer::InputBuffer<PointHW>& point_data,
+                          int max_iterations,
+                          float it_weight_gradient,
+                          float epsilon,
+                          Eigen::Matrix4f& transform)
     {
         // 4x4 Matrix and Number of iterations = 17
         buffer::OutputBuffer<float> out_transform(cmd_q_, 17);
 
-        buffer::InputBuffer<float> in_transform(cmd_q_, 16);
+        // 4x4 Matrix and epsilon = 17
+        buffer::InputBuffer<float> in_transform(cmd_q_, 17);
 
         //write last transform to buffer
         for (int row = 0; row < 4; row++)
@@ -49,6 +55,7 @@ public:
                 in_transform[row * 4 + col] = transform(row, col);
             }
         }
+        in_transform[16] = epsilon;
 
         //run the encapsulated kernel
         run(map, point_data, max_iterations, it_weight_gradient, in_transform, out_transform);
@@ -87,11 +94,22 @@ public:
 
         auto m = map.get_hardware_representation();
 
-        setArg(point_data.getBuffer());
+        // MARKER: SPLIT
+        constexpr int SPLIT_FACTOR = 3;
+
+        for (int i = 0; i < SPLIT_FACTOR; i++)
+        {
+            setArg(point_data.getBuffer());
+        }
         setArg(static_cast<int>(point_data.size()));
-        setArg(map.getBuffer().getBuffer());
-        setArg(map.getBuffer().getBuffer());
-        setArg(map.getBuffer().getBuffer());
+
+        for (int i = 0; i < SPLIT_FACTOR; i++)
+        {
+            setArg(map.getBuffer().getBuffer());
+            setArg(map.getBuffer().getBuffer());
+            setArg(map.getBuffer().getBuffer());
+        }
+
         setArg(m.sizeX);
         setArg(m.sizeY);
         setArg(m.sizeZ);

@@ -55,6 +55,7 @@ struct RegistrationConfig : public ConfigGroup
 
     DECLARE_CONFIG_ENTRY(unsigned int, max_iterations);
     DECLARE_CONFIG_ENTRY(float, it_weight_gradient);
+    DECLARE_CONFIG_ENTRY(float, epsilon);
 };
 
 struct SlamConfig : public ConfigGroup

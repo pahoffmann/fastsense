@@ -33,8 +33,8 @@ class Registration
 private:
     size_t max_iterations_;
     float it_weight_gradient_;
+    float epsilon_;
 
-    std::mutex mutex_;
     ImuAccumulator imu_accumulator_;
 
 
@@ -51,13 +51,15 @@ public:
 
     /**
      * @brief Construct a new Registration object
-     * 
+     *
+     * TODO
+     *
      * @param q xilinx command queue
      * @param buffer imu buffer stamped shared ptr
      * @param max_iterations max convergence iterations
      * @param it_weight_gradient learning rate weight gradient
      */
-    Registration(const fastsense::CommandQueuePtr& q, msg::ImuStampedBuffer::Ptr& buffer, size_t max_iterations = 50, float it_weight_gradient = 0.0);
+    Registration(fastsense::CommandQueuePtr q, msg::ImuStampedBuffer::Ptr& buffer, unsigned int max_iterations = 50, float it_weight_gradient = 0.0, float epsilon = 0.0001);
 
     /**
      * Destructor of the registration.
