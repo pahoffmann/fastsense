@@ -18,6 +18,7 @@
 #include <util/runner.h>
 #include <registration/registration.h>
 #include <callback/cloud_callback.h>
+#include <callback/map_thread.h>
 #include <map/local_map.h>
 #include <map/global_map.h>
 #include <comm/queue_bridge.h>
@@ -32,7 +33,7 @@ using fastsense::registration::Registration;
 using fastsense::map::LocalMap;
 using fastsense::map::GlobalMap;
 using fastsense::callback::CloudCallback;
-using fastsense::callback::VisPublisher;
+using fastsense::callback::MapThread;
 
 Application::Application()
     : signal_set{}
@@ -137,9 +138,11 @@ int Application::run()
     auto transform_buffer = std::make_shared<util::ConcurrentRingBuffer<msg::TransformStamped>>(16);
     auto vis_buffer = std::make_shared<util::ConcurrentRingBuffer<Matrix4f>>(2);
 
-    CloudCallback cloud_callback{registration, pointcloud_bridge_buffer, local_map, global_map_ptr, pose, vis_buffer, transform_buffer, command_queue};
+    std::mutex map_mutex;
 
-    VisPublisher vis_publisher{vis_buffer, local_map, tsdf_buffer};
+    MapThread map_thread{local_map, map_mutex, tsdf_buffer, ConfigManager::config().slam.map_update_period(), ConfigManager::config().slam.map_update_position_threshold(), command_queue};
+
+    CloudCallback cloud_callback{registration, pointcloud_bridge_buffer, local_map, global_map_ptr, pose, transform_buffer, command_queue, map_thread, map_mutex};
 
     comm::QueueBridge<msg::TSDFBridgeMessage, true> tsdf_bridge{tsdf_buffer, nullptr, 6666};
     comm::QueueBridge<msg::TransformStamped, true> transform_bridge{transform_buffer, nullptr, 8888};
@@ -151,9 +154,9 @@ int Application::run()
     Runner run_imu_driver(*imu_driver);
     Runner run_imu_bridge(imu_bridge);
     Runner run_cloud_callback{cloud_callback};
-    Runner run_vis_publisher{vis_publisher};
     Runner run_tsdf_bridge(tsdf_bridge);
     Runner run_transform_bridge(transform_bridge);
+    Runner run_map_thread(map_thread);
 
     Logger::info("Application started!");
 

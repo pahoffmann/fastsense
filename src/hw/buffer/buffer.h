@@ -181,10 +181,17 @@ public:
     }
 
     /**
-     * @brief delete copy constructor because of pointer member variable
-     * @param Buffer& other buffer
+     * @brief Copy this buffer
+     *
+     * @param rhs Buffer which should be copied
      */
-    Buffer(Buffer&) = delete;
+    Buffer(const Buffer& rhs) : Buffer<T>(rhs.queue_, rhs.num_elements_, rhs.mem_flag_, rhs.map_flag_)
+    {
+        for (size_t index = 0; index < num_elements_; ++index)
+        {
+            (*this)[index] = rhs[index];
+        }
+    }
 
     /**
      * @brief Get the virtual address that buffer was mapped to
@@ -287,7 +294,12 @@ public:
     ~InputBuffer() override = default;
 
     InputBuffer& operator=(InputBuffer&) = delete;
-    InputBuffer(InputBuffer&) = delete;
+    InputBuffer(const InputBuffer& rhs) : Buffer<T>(rhs) {}
+
+    /**
+     * @brief Ensure that this buffer can be moved 
+     */
+    InputBuffer& operator=(InputBuffer&&) = default;
 };
 
 /**
@@ -312,7 +324,12 @@ public:
     ~OutputBuffer() override = default;
 
     OutputBuffer& operator=(OutputBuffer&) = delete;
-    OutputBuffer(OutputBuffer&) = delete;
+    OutputBuffer(const OutputBuffer& rhs) : Buffer<T>(rhs) {}
+
+    /**
+     * @brief Ensure that this buffer can be moved 
+     */
+    OutputBuffer& operator=(OutputBuffer&&) = default;
 };
 
 /**
@@ -337,7 +354,12 @@ public:
     ~InputOutputBuffer() override = default;
 
     InputOutputBuffer& operator=(InputOutputBuffer&) = delete;
-    InputOutputBuffer(InputOutputBuffer&) = delete;
+    InputOutputBuffer(const InputOutputBuffer& rhs) : Buffer<T>(rhs) {}
+    
+    /**
+     * @brief Ensure that this buffer can be moved 
+     */
+    InputOutputBuffer& operator=(InputOutputBuffer&&) = default;
 };
 
 } // namespace fastsense::buffer

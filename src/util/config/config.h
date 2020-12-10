@@ -70,6 +70,9 @@ struct SlamConfig : public ConfigGroup
     DECLARE_CONFIG_ENTRY(int, max_weight);
     DECLARE_CONFIG_ENTRY(float, initial_map_weight);
 
+    DECLARE_CONFIG_ENTRY(unsigned int, map_update_period);
+    DECLARE_CONFIG_ENTRY(float, map_update_position_threshold);
+
 };
 
 struct Config : public ConfigGroup

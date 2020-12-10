@@ -71,6 +71,34 @@ public:
     ~LocalMap() = default;
 
     /**
+     * Copy constructor of the local map.
+     * This constructor is needed in the asynchronous shift, update and visualization.
+     * In the beginning of the thread the local map is copied
+     * so that the the cloud callback and the map thread can work simultaneously.
+     */
+    LocalMap(const LocalMap&) = default;
+
+    /**
+     * Deleted assignment operator of the local map.
+     */
+    LocalMap& operator=(const LocalMap&) = delete;
+
+    /**
+     * Deleted move copy constructor of the local map.
+     */
+    LocalMap(LocalMap&&) = delete;
+
+    /**
+     * Move assignment operator of the local map.
+     * This operator is needed in the asynchronous shift, update and visualization.
+     * It is used to write back the local map of the thread to the cloud callback.
+     * This operation needs to be fast because it must be executed synchronous.
+     * A copy would be too slow and bending the pointer is not possible because it is used in other places too.
+     * Therefore the local map is moved.
+     */
+    LocalMap& operator=(LocalMap&&) = default;
+
+    /**
      * Returns a value from the local map per reference.
      * Throws an exception if the index is out of bounds i.e. if it is more than size / 2 away from the position.
      * @param x x-coordinate of the index in global coordinates
