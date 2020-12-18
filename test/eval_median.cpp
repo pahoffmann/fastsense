@@ -94,7 +94,7 @@ static EvalStats get_transform_error(const ScanPoints_t& points_posttransform, c
 
     std::sort(dists.begin(), dists.end());
 
-    return {minimum, maximum, average, dists[dists.size() / 2 + 1]};
+    return {minimum, maximum, static_cast<int>(average / points_pretransform.size()), dists[dists.size() / 2 + 1]};
 }
 
 static std::shared_ptr<fastsense::buffer::InputBuffer<PointHW>> scan_points_to_input_buffer(ScanPoints_t& cloud, const fastsense::CommandQueuePtr q)
@@ -149,6 +149,7 @@ TEST_CASE("Eval_Median", "[eval_median][slow]")
 
     auto q2 = fastsense::hw::FPGAManager::create_command_queue();
     fastsense::buffer::InputBuffer<PointHW> kernel_points(q2, num_points);
+    fastsense::buffer::InputBuffer<PointHW> kernel_points_preprocessed(q2, num_points);
 
     Stamped<PointCloud::Ptr> cloud_stamped;
     cloud_stamped.data_ = std::make_shared<PointCloud>();
@@ -165,11 +166,15 @@ TEST_CASE("Eval_Median", "[eval_median][slow]")
             scan_points[count].y() = point.y() * SCALE;
             scan_points[count].z() = point.z() * SCALE;
 
-            cloud_stamped.data_->points_[count] = scan_points[count].cast<ScanPointType>();
-
             kernel_points[count].x = scan_points[count].x();
             kernel_points[count].y = scan_points[count].y();
             kernel_points[count].z = scan_points[count].z();
+
+            cloud_stamped.data_->points_[count] = scan_points[count].cast<ScanPointType>();            
+            kernel_points_preprocessed[count].x = cloud_stamped.data_->points_[count].x();
+            kernel_points_preprocessed[count].y = cloud_stamped.data_->points_[count].y();
+            kernel_points_preprocessed[count].z = cloud_stamped.data_->points_[count].z();
+
 
             ++count;
         }
@@ -191,8 +196,11 @@ TEST_CASE("Eval_Median", "[eval_median][slow]")
     ScanPoints_t points_pretransformed_rot_preprocessed(scan_points_preprocessed);
 
     std::shared_ptr<fastsense::map::GlobalMap> global_map_ptr(new fastsense::map::GlobalMap("test_global_map.h5", 0.0, 0.0));
-
     fastsense::map::LocalMap local_map(SIZE_Y, SIZE_Y, SIZE_Z, global_map_ptr, q);
+
+    std::shared_ptr<fastsense::map::GlobalMap> global_map_preprocessed_ptr(new fastsense::map::GlobalMap("test_global_map2.h5", 0.0, 0.0));
+    fastsense::map::LocalMap local_map_preprocessed(SIZE_Y, SIZE_Y, SIZE_Z, global_map_preprocessed_ptr, q);
+    
 
     // Initialize temporary testing variables
 
@@ -216,12 +224,17 @@ TEST_CASE("Eval_Median", "[eval_median][slow]")
     krnl.run(local_map, kernel_points, TAU, MAX_WEIGHT);
     krnl.waitComplete();
 
+    krnl.run(local_map_preprocessed, kernel_points_preprocessed, TAU, MAX_WEIGHT);
+    krnl.waitComplete();
+
     SECTION("Test Registration No Transform")
     {
         std::cout << "    Section 'Test Registration No Transform'" << std::endl;
         auto without = eval_registration(local_map, reg, points_pretransformed_trans, scan_points, q);
-        auto with = eval_registration(local_map, reg, points_pretransformed_trans_preprocessed, scan_points, q);
+        auto with = eval_registration(local_map_preprocessed, reg, points_pretransformed_trans_preprocessed, scan_points_preprocessed, q);
     
+        std::cout << "Average error without preprocessing: " << without.average << std::endl;
+        std::cout << "Average error with preprocessing: " << with.average << std::endl;
         REQUIRE(without.average > with.average);
     }
 
@@ -230,8 +243,10 @@ TEST_CASE("Eval_Median", "[eval_median][slow]")
         std::cout << "    Section 'Test Registration Translation'" << std::endl;
         reg.transform_point_cloud(points_pretransformed_trans, translation_mat);
         auto without = eval_registration(local_map, reg, points_pretransformed_trans, scan_points, q);
-        auto with = eval_registration(local_map, reg, points_pretransformed_trans_preprocessed, scan_points, q);
+        auto with = eval_registration(local_map_preprocessed, reg, points_pretransformed_trans_preprocessed, scan_points_preprocessed, q);
     
+        std::cout << "Average error without preprocessing: " << without.average << std::endl;
+        std::cout << "Average error with preprocessing: " << with.average << std::endl;
         REQUIRE(without.average > with.average);
     }
 
@@ -240,8 +255,10 @@ TEST_CASE("Eval_Median", "[eval_median][slow]")
         std::cout << "    Section 'Registration test Rotation'" << std::endl;
         reg.transform_point_cloud(points_pretransformed_rot, rotation_mat);
         auto without = eval_registration(local_map, reg, points_pretransformed_rot, scan_points, q); 
-        auto with = eval_registration(local_map, reg, points_pretransformed_rot_preprocessed, scan_points, q);
+        auto with = eval_registration(local_map_preprocessed, reg, points_pretransformed_rot_preprocessed, scan_points_preprocessed, q);
     
+        std::cout << "Average error without preprocessing: " << without.average << std::endl;
+        std::cout << "Average error with preprocessing: " << with.average << std::endl;
         REQUIRE(without.average > with.average);
     }
 }
