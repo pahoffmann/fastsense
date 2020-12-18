@@ -109,7 +109,7 @@ static std::shared_ptr<fastsense::buffer::InputBuffer<PointHW>> scan_points_to_i
     return buffer_ptr;
 }
 
-static EvalStats eval_registration(fastsense::map::LocalMap& local_map, fastsense::registration::Registration& reg, ScanPoints_t pretransformed, const ScanPoints_t original, fastsense::CommandQueuePtr& q)
+static EvalStats eval_registration(fastsense::map::LocalMap& local_map, fastsense::registration::Registration& reg, ScanPoints_t pretransformed, const ScanPoints_t& original, fastsense::CommandQueuePtr& q)
 {
     auto buffer_ptr = scan_points_to_input_buffer(pretransformed, q);
     auto& buffer = *buffer_ptr;
@@ -139,7 +139,7 @@ TEST_CASE("Eval_Median", "[eval_median][slow]")
     std::vector<std::vector<Vector3f>> float_points;
     unsigned int num_points;
 
-    fastsense::util::PCDFile file("sim_cloud.pcd");
+    fastsense::util::PCDFile file("robo_lab.pcd");
     file.readPoints(float_points, num_points);
 
     auto count = 0u;
@@ -171,10 +171,6 @@ TEST_CASE("Eval_Median", "[eval_median][slow]")
             kernel_points[count].z = scan_points[count].z();
 
             cloud_stamped.data_->points_[count] = scan_points[count].cast<ScanPointType>();            
-            kernel_points_preprocessed[count].x = cloud_stamped.data_->points_[count].x();
-            kernel_points_preprocessed[count].y = cloud_stamped.data_->points_[count].y();
-            kernel_points_preprocessed[count].z = cloud_stamped.data_->points_[count].z();
-
 
             ++count;
         }
@@ -186,9 +182,11 @@ TEST_CASE("Eval_Median", "[eval_median][slow]")
     for (auto index = 0u; index < num_points; ++index)
     {
         scan_points_preprocessed[index] = cloud_stamped.data_->points_[index].cast<int>();
+        kernel_points_preprocessed[index].x = cloud_stamped.data_->points_[index].x();
+        kernel_points_preprocessed[index].y = cloud_stamped.data_->points_[index].y();
+        kernel_points_preprocessed[index].z = cloud_stamped.data_->points_[index].z();
     }
 
-    ScanPoints_t scan_points_2(scan_points);
     ScanPoints_t points_pretransformed_trans(scan_points);
     ScanPoints_t points_pretransformed_rot(scan_points);
 
@@ -242,6 +240,7 @@ TEST_CASE("Eval_Median", "[eval_median][slow]")
     {
         std::cout << "    Section 'Test Registration Translation'" << std::endl;
         reg.transform_point_cloud(points_pretransformed_trans, translation_mat);
+        reg.transform_point_cloud(points_pretransformed_trans_preprocessed, translation_mat);
         auto without = eval_registration(local_map, reg, points_pretransformed_trans, scan_points, q);
         auto with = eval_registration(local_map_preprocessed, reg, points_pretransformed_trans_preprocessed, scan_points_preprocessed, q);
     
@@ -254,6 +253,7 @@ TEST_CASE("Eval_Median", "[eval_median][slow]")
     {
         std::cout << "    Section 'Registration test Rotation'" << std::endl;
         reg.transform_point_cloud(points_pretransformed_rot, rotation_mat);
+        reg.transform_point_cloud(points_pretransformed_rot_preprocessed, rotation_mat);
         auto without = eval_registration(local_map, reg, points_pretransformed_rot, scan_points, q); 
         auto with = eval_registration(local_map_preprocessed, reg, points_pretransformed_rot_preprocessed, scan_points_preprocessed, q);
     
