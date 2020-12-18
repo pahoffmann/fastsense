@@ -1,5 +1,5 @@
 /**
- * @author Marc Eisoldt
+ * @author Pascal Buschermöhle Marc Eisoldt
  *
  * Tests the combination of the TSDF Kernel with the registartion kernel
  * with a real point cloud and a simulated translation and rotation
@@ -111,9 +111,9 @@ static const std::string error_message =
     "Error: Result mismatch:\n"
     "i = %d CPU result = %d Device result = %d\n";
 
-TEST_CASE("Kernel", "[kernel][slow]")
+TEST_CASE("Eval_Median", "[eval_median][slow]")
 {
-    std::cout << "Testing 'Kernel'" << std::endl;
+    std::cout << "Testing 'Eval Median'" << std::endl;
 
 
     fastsense::CommandQueuePtr q = fastsense::hw::FPGAManager::create_command_queue();
