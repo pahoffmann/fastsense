@@ -7,6 +7,7 @@
 #include <iomanip>
 #include <ros/ros.h>
 #include <sensor_msgs/Imu.h>
+#include <sensor_msgs/PointCloud.h>
 #include <sensor_msgs/PointCloud2.h>
 #include <sensor_msgs/point_cloud2_iterator.h>
 
@@ -48,15 +49,17 @@ public:
      */
     Bridge()
         : nh_{}
-        , spinner_{2}
+        , spinner_{3}
         , imu_sub_{}
-        , pcl_sub_{}
+        , pcl1_sub_{}
+        , pcl2_sub_{}
         , imu_sender_{4444}
         , pcl_sender_{3333}
     {
         spinner_.start();
         imu_sub_ = nh_.subscribe<sensor_msgs::Imu>("/imu/data_raw", 1000, &Bridge::imu_callback, this);
-        pcl_sub_ = nh_.subscribe<sensor_msgs::PointCloud2>("/velodyne_points", 1000, &Bridge::pcl_callback, this);
+        pcl1_sub_ = nh_.subscribe<sensor_msgs::PointCloud>("/velodyne_legacy", 1, &Bridge::pcl1_callback, this);
+        pcl2_sub_ = nh_.subscribe<sensor_msgs::PointCloud2>("/velodyne_points", 1, &Bridge::pcl2_callback, this);
         ROS_INFO("to_trenz bridge initiated");
     }
 
@@ -94,12 +97,12 @@ public:
     }
 
     /**
-     * @brief pcl_callback waits for sensor_msgs/PointCloud2, converts it to fastsense/msg/PointCloud
+     * @brief pcl2_callback waits for sensor_msgs/PointCloud2, converts it to fastsense/msg/PointCloud
      * and sends it via zeromq
      * 
-     * @param pcl sensor_msgs::PointCloud
+     * @param pcl sensor_msgs::PointCloud2
      */
-    void pcl_callback(const sensor_msgs::PointCloud2ConstPtr &pcl)
+    void pcl2_callback(const sensor_msgs::PointCloud2ConstPtr &pcl)
     {
         auto tp = fs::util::HighResTimePoint{std::chrono::nanoseconds{pcl->header.stamp.toNSec()}};
 
@@ -129,7 +132,43 @@ public:
 
         pcl_sender_.send(fs::msg::PointCloudStamped{std::move(trenz_pcl), tp});
 
-        ROS_INFO("Sent pcl\n");
+        ROS_INFO("Sent pcl2\n");
+    }
+
+    /**
+     * @brief pcl1_callback waits for sensor_msgs/PointCloud, converts it to fastsense/msg/PointCloud
+     * and sends it via zeromq
+     * 
+     * @param pcl sensor_msgs::PointCloud
+     */
+    void pcl1_callback(const sensor_msgs::PointCloudConstPtr &pcl)
+    {
+        auto tp = fs::util::HighResTimePoint{std::chrono::nanoseconds{pcl->header.stamp.toNSec()}};
+
+        fastsense::msg::PointCloud trenz_pcl;
+        auto& trenz_points = trenz_pcl.points_;
+
+        size_t n_points = pcl->points.size();
+
+        if (pcl->points.empty())
+        {
+            ROS_WARN_STREAM("Received empty pointcloud");
+        }
+        else
+        {
+            trenz_points.resize(n_points);
+
+            #pragma omp parallel for schedule(static)
+            for (size_t i = 0; i < n_points; ++i)
+            {
+                const auto point = pcl->points[i];
+                trenz_points[i] = fs::ScanPoint(point.x * 1000.f, point.y * 1000.f, point.z * 1000.f);
+            }
+        }
+
+        pcl_sender_.send(fs::msg::PointCloudStamped{std::move(trenz_pcl), tp});
+
+        ROS_INFO("Sent pcl1\n");
     }
 
 private:
@@ -142,8 +181,11 @@ private:
     /// Imu Subscriber
     ros::Subscriber imu_sub_;
 
+    /// PointCloud Subscriber
+    ros::Subscriber pcl1_sub_;
+
     /// PointCloud2 Subscriber
-    ros::Subscriber pcl_sub_;
+    ros::Subscriber pcl2_sub_;
 
     /// fastsense::msg::ImuStamped sender
     fs::comm::Sender<fs::msg::ImuStamped> imu_sender_;
