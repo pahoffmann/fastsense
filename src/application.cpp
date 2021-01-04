@@ -49,7 +49,7 @@ Application::Application()
 }
 
 std::unique_ptr<util::ProcessThread> Application::init_imu(msg::ImuStampedBuffer::Ptr imu_buffer)
-{   
+{
     util::ProcessThread::UPtr imu_driver;
     if (config.bridge.use_from())
     {
@@ -78,7 +78,7 @@ std::unique_ptr<util::ProcessThread> Application::init_lidar(msg::PointCloudPtrS
     else
     {
         Logger::info("Launching Velodyne Driver");
-        lidar_driver.reset(new driver::VelodyneDriver{config.lidar.port(), pcl_buffer}); 
+        lidar_driver.reset(new driver::VelodyneDriver{config.lidar.port(), pcl_buffer});
     }
 
     return lidar_driver;
@@ -87,7 +87,7 @@ std::unique_ptr<util::ProcessThread> Application::init_lidar(msg::PointCloudPtrS
 int Application::run()
 {
     Logger::info("Application setup...");
-   
+
     auto imu_buffer = std::make_shared<msg::ImuStampedBuffer>(config.imu.bufferSize());
     auto imu_bridge_buffer = std::make_shared<msg::ImuStampedBuffer>(config.imu.bufferSize());
     auto pointcloud_buffer = std::make_shared<msg::PointCloudPtrStampedBuffer>(config.lidar.bufferSize());
@@ -98,7 +98,11 @@ int Application::run()
 
     if (config.bridge.use_from())
     {
-        Logger::info("Launching BufferedReceivers");
+        Logger::info("\n\n>>>>>>>>>> WARNING <<<<<<<<<<\n"
+                     "Using Bridge as Input\n"
+                     "Listening to Messages from ", config.bridge.host_from(), "\n"
+                     "THIS HAS TO MATCH THE ADDRESS OF THE BRIDGE PC!\n"
+                     ">>>>>>>>>> WARNING <<<<<<<<<<\n");
         imu_driver.reset(new comm::BufferedImuStampedReceiver{config.bridge.host_from(), config.bridge.imu_port_from(), imu_buffer});
         lidar_driver.reset(new comm::BufferedPclStampedReceiver{config.bridge.host_from(), config.bridge.pcl_port_from(), pointcloud_buffer});
     }
@@ -170,6 +174,11 @@ int Application::run()
     }
 
     Logger::info("Stopping Application...");
+
+    // ensure that last Scan has finished processing
+    cloud_callback.stop();
+    // save Map to Disk
+    local_map->write_back();
 
     return 0;
 }

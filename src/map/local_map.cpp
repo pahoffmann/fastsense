@@ -23,7 +23,7 @@ LocalMap::LocalMap(unsigned int sX, unsigned int sY, unsigned int sZ, const std:
       offset_{size_ / 2},
       map_{map}
 {
-    if (sX % 2 || sY % 2 || sZ % 2)
+    if (sX % 2 == 0 || sY % 2 == 0 || sZ % 2 == 0)
     {
         fastsense::util::logging::Logger::warning("Changed LocalMap size from even (", sX, ", ", sY, ", ", sZ, ") to odd (", size_.x(), ", ", size_.y(), ", ", size_.z(), ")");
     }

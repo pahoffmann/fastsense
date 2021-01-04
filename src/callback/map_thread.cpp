@@ -62,7 +62,6 @@ void MapThread::thread_run()
         start_mutex_.lock();
         if (!running)
         {
-            std::cout << "BREAK" << std::endl;
             break;
         }
         Logger::info("Starting SUV");
