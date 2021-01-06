@@ -31,7 +31,6 @@ struct LinearAcceleration : public Vector3f
         (*this)[1] = -acceleration[1] * fastsense::util::params::G;
         (*this)[2] = -acceleration[2] * fastsense::util::params::G;
     }
-
 };
 
 } // namespace fastsense::msg

@@ -8,6 +8,7 @@
 #include <msg/imu.h>
 #include <util/process_thread.h>
 #include "api/phidget.h"
+#include "filter.h"
 
 namespace fastsense::driver
 {
@@ -99,6 +100,9 @@ public:
 private:
     /// buffer, in which imu readings are saved
     fastsense::msg::ImuStampedBuffer::Ptr data_buffer_;
+
+    /// Moving Average Filter
+    MovingAverageFilter<msg::Imu> filter_;
 
     /// whether or not imu is connected
     bool is_connected_;

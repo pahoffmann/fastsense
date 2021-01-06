@@ -68,12 +68,76 @@ struct Imu
     MagneticField mag;
 
     using Ptr = std::shared_ptr<Imu>;
+
+    void operator+=(const Imu& other)
+    {
+        acc += other.acc;
+        ang += other.ang;
+        mag += other.mag;
+    }
+
+    void operator-=(const Imu& other)
+    {
+        acc -= other.acc;
+        ang -= other.ang;
+        mag -= other.mag;
+    }
 };
 
 using ImuStamped = msg::Stamped<Imu>;
 using ImuStampedBuffer = util::ConcurrentRingBuffer<ImuStamped>;
 
 } // namespace fastsense::msg
+
+
+// TODO WHY OPERATOR/ NOT DEFINEDR VECTOR3f EIGEN
+template <typename T, std::enable_if_t<std::is_base_of_v<fastsense::Vector3f, T>, int> = 0>
+inline T operator/(const T& a, const T& b)
+{
+    return T{a[0]/b[0], a[1]/b[1], a[2]/b[2]};
+}
+
+// TODO WHY OPERATOR/ NOT DEFINEDR VECTOR3f EIGEN
+template <typename T, std::enable_if_t<std::is_base_of_v<fastsense::Vector3f, T>, int> = 0>
+inline T operator/(const T& a, double b)
+{
+    return T{a[0]/static_cast<float>(b), a[1]/static_cast<float>(b), a[2]/static_cast<float>(b)};
+}
+
+// TODO WHY OPERATOR- NOT DEFINEDR VECTOR3f EIGEN
+template <typename T, std::enable_if_t<std::is_base_of_v<fastsense::Vector3f, T>, int> = 0>
+inline T operator-(const T& a, const T& b)
+{
+    return T{a[0]-b[0], a[1]-b[1], a[2]-b[2]};
+}
+
+// TODO WHY OPERATOR+ NOT DEFINEDR VECTOR3f EIGEN
+template <typename T, std::enable_if_t<std::is_base_of_v<fastsense::Vector3f, T>, int> = 0>
+inline T operator+(const T& a, const T& b)
+{
+    return T{a[0]+b[0], a[1]+b[1], a[2]+b[2]};
+}
+
+
+inline fastsense::msg::Imu operator/(const fastsense::msg::Imu& a, const fastsense::msg::Imu& b)
+{
+    return fastsense::msg::Imu{a.acc / b.acc, a.ang / b.ang, a.mag / b.mag};
+}
+
+inline fastsense::msg::Imu operator/(const fastsense::msg::Imu& a, double b)
+{
+    return fastsense::msg::Imu{a.acc / b, a.ang / b, a.mag / b};
+}
+
+inline fastsense::msg::Imu operator+(const fastsense::msg::Imu& a, const fastsense::msg::Imu& b)
+{
+    return fastsense::msg::Imu{a.acc + b.acc, a.ang + b.ang, a.mag + b.mag};
+}
+
+inline fastsense::msg::Imu operator-(const fastsense::msg::Imu& a, const fastsense::msg::Imu& b)
+{
+    return fastsense::msg::Imu(a.acc - b.acc, a.ang - b.ang, a.mag - b.mag);
+}
 
 /**
  * @brief pretty print imu data
