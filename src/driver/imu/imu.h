@@ -101,8 +101,8 @@ private:
     /// buffer, in which imu readings are saved
     fastsense::msg::ImuStampedBuffer::Ptr data_buffer_;
 
-    /// Moving Average Filter
-    MovingAverageFilter<msg::Imu> filter_;
+    /// RecursiveAverageFilter
+    RecursiveAverageFilter<msg::Imu> filter_;
 
     /// whether or not imu is connected
     bool is_connected_;

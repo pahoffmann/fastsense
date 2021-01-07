@@ -50,6 +50,13 @@ struct MagneticField : public Vector3f
             (*this)[2] = nan;
         }
     }
+
+    void operator/=(const MagneticField& other)
+    {
+        (*this)[0] /= other[0];
+        (*this)[1] /= other[1];
+        (*this)[2] /= other[2];
+    }
 };
 
 } // namespace fastsense::msg

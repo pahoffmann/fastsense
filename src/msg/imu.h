@@ -82,6 +82,13 @@ struct Imu
         ang -= other.ang;
         mag -= other.mag;
     }
+
+    void operator/=(const Imu& other)
+    {
+        acc /= other.acc;
+        ang /= other.ang;
+        mag /= other.mag;
+    }
 };
 
 using ImuStamped = msg::Stamped<Imu>;

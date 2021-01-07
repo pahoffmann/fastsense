@@ -31,6 +31,13 @@ struct LinearAcceleration : public Vector3f
         (*this)[1] = -acceleration[1] * fastsense::util::params::G;
         (*this)[2] = -acceleration[2] * fastsense::util::params::G;
     }
+
+    void operator/=(const LinearAcceleration& other)
+    {
+        (*this)[0] /= other[0];
+        (*this)[1] /= other[1];
+        (*this)[2] /= other[2];
+    }
 };
 
 } // namespace fastsense::msg

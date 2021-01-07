@@ -33,6 +33,14 @@ struct AngularVelocity : public Vector3f
         (*this)[1] = angular_rate[1] * DEEGREES_TO_RADIANS;
         (*this)[2] = angular_rate[2] * DEEGREES_TO_RADIANS;
     }
+
+    void operator/=(const AngularVelocity& other)
+    {
+        (*this)[0] /= other[0];
+        (*this)[1] /= other[1];
+        (*this)[2] /= other[2];
+    }
+
 };
 
 } // namespace fastsense::msg
