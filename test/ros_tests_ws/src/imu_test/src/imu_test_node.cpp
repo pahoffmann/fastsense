@@ -21,7 +21,7 @@ int main(int argc, char** argv)
     ros::Publisher mag_pub = n.advertise<sensor_msgs::MagneticField>("imu/mag", 5);
 
     fs::msg::ImuStampedBuffer::Ptr imu_buffer = std::make_shared<fs::msg::ImuStampedBuffer>(100);
-    fs::driver::Imu imu(imu_buffer);
+    fs::driver::Imu imu(imu_buffer, 25);
     imu.start();
 
     auto last = fs::util::HighResTime::now();
