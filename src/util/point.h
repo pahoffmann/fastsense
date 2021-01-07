@@ -5,6 +5,7 @@
  * @author Malte Hillmann
  */
 
+#include <eigen3/Eigen/Core>
 #include <eigen3/Eigen/Dense>
 #include <vector>
 #include <iostream>
