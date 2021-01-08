@@ -41,3 +41,5 @@ add_subdirectory(src/to_trenz)
 
 add_rostest_gtest(to_trenz_test test/test.launch test/test.cpp)
 target_link_libraries(to_trenz_test ${catkin_LIBRARIES})
+
+install(PROGRAMS scripts/sync_time.sh DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
