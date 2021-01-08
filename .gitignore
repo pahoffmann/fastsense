@@ -2,6 +2,8 @@ build/
 docs/
 test/build/
 test/build-local/
+bagfiles/
+pcd_files/cloud_snapshots/
 
 qemu*
 
