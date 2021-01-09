@@ -10,11 +10,7 @@
 #include <registration/kernel/linear_solver.h>
 #include <iostream>
 
-struct IntTuple
-{
-    int first;
-    int second;
-};
+using IntTuple = std::pair<int, int>;
 
 using namespace fastsense::map;
 using namespace fastsense::registration;
@@ -27,6 +23,11 @@ extern "C"
 
     void xi_to_transform(const float xi[6], float transform[4][4])
     {
+        // Formula 3.9 on Page 40 of "Truncated Signed Distance Fields Applied To Robotics"
+
+        // Rotation around an Axis.
+        // Direction of axis (l) = Direction of angular_velocity
+        // Angle of Rotation (theta) = Length of angular_velocity
         float theta = hls_sqrt_float(xi[0] * xi[0] + xi[1] * xi[1] + xi[2] * xi[2]);
         float sin_theta, cos_theta;
         hls_sincos(theta, &sin_theta, &cos_theta);
@@ -127,7 +128,7 @@ extern "C"
             buf.z = point[2] / MAP_RESOLUTION;
 
             //get value of local map
-            const auto& current = map.get(mapData0, buf.x, buf.y, buf.z);
+            const auto& current = map.getRelative(mapData0, buf.x, buf.y, buf.z);
 
             if (current.second == 0)
             {
@@ -144,9 +145,9 @@ extern "C"
                 int index[3] = {buf.x, buf.y, buf.z};
 
                 index[axis] -= 1;
-                const auto last = map.get(mapData1, index[0], index[1], index[2]);
+                const auto last = map.getRelative(mapData1, index[0], index[1], index[2]);
                 index[axis] += 2;
-                const auto next = map.get(mapData2, index[0], index[1], index[2]);
+                const auto next = map.getRelative(mapData2, index[0], index[1], index[2]);
                 if (last.second != 0 && next.second != 0 && (next.first > 0) == (last.first > 0))
                 {
                     gradient[axis] = (next.first - last.first) / 2;
@@ -304,6 +305,10 @@ extern "C"
         }
         float epsilon = in_transform[16];
 
+        total_transform[0][3] -= posX;
+        total_transform[1][3] -= posY;
+        total_transform[2][3] -= posZ;
+
         int i;
     registration_loop:
         for (i = 0; i < max_iterations; i++)
@@ -393,6 +398,10 @@ extern "C"
 #ifndef __SYNTHESIS__
         std::cout << std::endl;
 #endif
+
+        total_transform[0][3] += posX;
+        total_transform[1][3] += posY;
+        total_transform[2][3] += posZ;
 
         // Pipeline to save ressources
     out_transform_loop:

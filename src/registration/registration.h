@@ -73,7 +73,10 @@ public:
      * @param cloud
      * @return Matrix4f
      */
-    Matrix4f register_cloud(fastsense::map::LocalMap& localmap, fastsense::buffer::InputBuffer<PointHW>& cloud, const util::HighResTimePoint& cloud_timestamp);
+    void register_cloud(fastsense::map::LocalMap& localmap,
+                        fastsense::buffer::InputBuffer<PointHW>& cloud,
+                        const util::HighResTimePoint& cloud_timestamp,
+                        Matrix4f& pose);
 
     /**
      * @brief Transforms a given pointcloud with the transform

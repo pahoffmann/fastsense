@@ -3,24 +3,18 @@
 using namespace fastsense::preprocessing;
 using fastsense::buffer::InputBuffer;
 
-void Preprocessing::preprocess_scan(const fastsense::msg::PointCloudPtrStamped& cloud, InputBuffer<PointHW>& scan_points, const Matrix4f& pose)
+void Preprocessing::preprocess_scan(const fastsense::msg::PointCloudPtrStamped& cloud, InputBuffer<PointHW>& scan_points)
 {
     const auto& cloud_points = cloud.data_->points_;
-    Eigen::Vector4f v;
 
-    int scan_points_index = 0;
+    #pragma omp parallel for schedule(static)
     for (unsigned int i = 0; i < cloud_points.size(); i++)
     {
-        v << cloud_points[i].cast<float>(), 1.0f;
+        PointHW point(cloud_points[i].x(),
+                      cloud_points[i].y(),
+                      cloud_points[i].z());
 
-        Vector3f pointf = (pose * v).block<3, 1>(0, 0);
-        PointHW point{static_cast<int>(std::floor(pointf.x())),
-                      static_cast<int>(std::floor(pointf.y())),
-                      static_cast<int>(std::floor(pointf.z()))};
-
-        scan_points[scan_points_index] = point;
-        scan_points_index++;
-
+        scan_points[i] = point;
     }
 }
 
