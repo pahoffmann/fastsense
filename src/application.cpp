@@ -59,7 +59,7 @@ std::unique_ptr<util::ProcessThread> Application::init_imu(msg::ImuStampedBuffer
     else
     {
         Logger::info("Launching Imu Driver");
-        imu_driver.reset(new driver::Imu{imu_buffer});
+        imu_driver.reset(new driver::Imu{imu_buffer, config.imu.filterSize()});
     }
 
     return imu_driver;
@@ -109,7 +109,7 @@ int Application::run()
     else
     {
         Logger::info("Starting Sensors");
-        imu_driver.reset(new driver::Imu{imu_buffer});
+        imu_driver.reset(new driver::Imu{imu_buffer, config.imu.filterSize()});
         lidar_driver.reset(new driver::VelodyneDriver{config.lidar.port(), pointcloud_buffer});
     }
 
@@ -148,8 +148,8 @@ int Application::run()
 
     CloudCallback cloud_callback{registration, pointcloud_bridge_buffer, local_map, global_map_ptr, pose, transform_buffer, command_queue, map_thread, map_mutex};
 
-    comm::QueueBridge<msg::TSDFBridgeMessage, true> tsdf_bridge{tsdf_buffer, nullptr, 6666};
-    comm::QueueBridge<msg::TransformStamped, true> transform_bridge{transform_buffer, nullptr, 8888};
+    comm::QueueBridge<msg::TSDFBridgeMessage, true> tsdf_bridge{tsdf_buffer, nullptr, config.bridge.tsdf_port_to()};
+    comm::QueueBridge<msg::TransformStamped, true> transform_bridge{transform_buffer, nullptr, config.bridge.transform_port_to()};
 
     Logger::info("Application starting...");
 

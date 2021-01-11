@@ -8,6 +8,7 @@
 #include <msg/imu.h>
 #include <util/process_thread.h>
 #include "api/phidget.h"
+#include "filter.h"
 
 namespace fastsense::driver
 {
@@ -24,9 +25,10 @@ public:
 
     /**
      * Creates Imu instance
-     * @param ringbuffer
+     * @param ringbuffer Buffer to write data into
+     * @param filter_size Sice of sliding window for filtering
      */
-    explicit Imu(const fastsense::msg::ImuStampedBuffer::Ptr& ringbuffer);
+    explicit Imu(const fastsense::msg::ImuStampedBuffer::Ptr& ringbuffer, size_t filter_size);
 
     ~Imu() override = default;
 
@@ -99,6 +101,9 @@ public:
 private:
     /// buffer, in which imu readings are saved
     fastsense::msg::ImuStampedBuffer::Ptr data_buffer_;
+
+    /// Sliding Window averaging Filter
+    SlidingWindowFilter<msg::Imu> filter_;
 
     /// whether or not imu is connected
     bool is_connected_;

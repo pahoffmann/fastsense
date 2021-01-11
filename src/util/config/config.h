@@ -15,6 +15,7 @@ struct ImuConfig : public ConfigGroup
     using ConfigGroup::ConfigGroup;
 
     DECLARE_CONFIG_ENTRY(size_t, bufferSize);
+    DECLARE_CONFIG_ENTRY(size_t, filterSize);
 };
 
 struct LidarConfig : public ConfigGroup
@@ -46,6 +47,9 @@ struct BridgeConfig : public ConfigGroup
 
     DECLARE_CONFIG_ENTRY(uint16_t, pcl_port_from);
     DECLARE_CONFIG_ENTRY(uint16_t, pcl_port_to);
+
+    DECLARE_CONFIG_ENTRY(uint16_t, transform_port_to);
+    DECLARE_CONFIG_ENTRY(uint16_t, tsdf_port_to);
 };
 
 
