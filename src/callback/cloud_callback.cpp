@@ -83,6 +83,8 @@ void CloudCallback::thread_run()
         }
         else
         {
+            Matrix4f old_pose = pose;
+
             map_mutex.lock();
             eval.start("reg");
             registration.register_cloud(*local_map, scan_point_buffer, point_cloud2.timestamp_, pose);
@@ -90,6 +92,12 @@ void CloudCallback::thread_run()
             map_mutex.unlock();
 
             // Logger::info("Pose:\n", std::fixed, std::setprecision(4), pose);
+
+            if (std::isnan(pose(0, 0)))
+            {
+                Logger::error("Registration gave NaN");
+                pose = old_pose;
+            }
         }
 
         Vector3i pos((int)std::floor(pose(0, 3) / MAP_RESOLUTION),

@@ -10,8 +10,6 @@
 #include <registration/kernel/linear_solver.h>
 #include <iostream>
 
-using IntTuple = std::pair<int, int>;
-
 using namespace fastsense::map;
 using namespace fastsense::registration;
 
@@ -21,7 +19,7 @@ constexpr int SPLIT_FACTOR = 3; // MARKER: SPLIT
 extern "C"
 {
 
-    void xi_to_transform(const float xi[6], float transform[4][4])
+    void xi_to_transform(const float xi[6], float transform[4][4], PointHW& center)
     {
         // Formula 3.9 on Page 40 of "Truncated Signed Distance Fields Applied To Robotics"
 
@@ -63,16 +61,29 @@ extern "C"
         transform[1][1] += 1;
         transform[2][2] += 1;
 
-        // translation
-        transform[0][3] = xi[3];
-        transform[1][3] = xi[4];
-        transform[2][3] = xi[5];
+        // translation (added later)
+        transform[0][3] = 0;
+        transform[1][3] = 0;
+        transform[2][3] = 0;
 
         // bottom row
         transform[3][0] = 0;
         transform[3][1] = 0;
         transform[3][2] = 0;
         transform[3][3] = 1;
+
+        float old_center[3];
+        old_center[0] = center.x;
+        old_center[1] = center.y;
+        old_center[2] = center.z;
+
+        float move_from_old_center[3];
+        transform_point(transform, old_center, move_from_old_center);
+
+        // translation: move old_center
+        transform[0][3] = center.x + xi[3] - move_from_old_center[0];
+        transform[1][3] = center.y + xi[4] - move_from_old_center[1];
+        transform[2][3] = center.z + xi[5] - move_from_old_center[2];
     }
 
     void registration_step(const PointHW* pointData,
@@ -80,6 +91,7 @@ extern "C"
                            IntTuple* mapData0, IntTuple* mapData1, IntTuple* mapData2,
                            const LocalMapHW& map,
                            const int transform_matrix[4][4],
+                           const PointHW& center,
                            long h[6][6],
                            long g[6],
                            long& error,
@@ -127,8 +139,12 @@ extern "C"
             buf.y = point[1] / MAP_RESOLUTION;
             buf.z = point[2] / MAP_RESOLUTION;
 
+            point[0] -= center.x;
+            point[1] -= center.y;
+            point[2] -= center.z;
+
             //get value of local map
-            const auto& current = map.getRelative(mapData0, buf.x, buf.y, buf.z);
+            const auto& current = map.get(mapData0, buf.x, buf.y, buf.z);
 
             if (current.second == 0)
             {
@@ -145,9 +161,9 @@ extern "C"
                 int index[3] = {buf.x, buf.y, buf.z};
 
                 index[axis] -= 1;
-                const auto last = map.getRelative(mapData1, index[0], index[1], index[2]);
+                const auto last = map.get(mapData1, index[0], index[1], index[2]);
                 index[axis] += 2;
-                const auto next = map.getRelative(mapData2, index[0], index[1], index[2]);
+                const auto next = map.get(mapData2, index[0], index[1], index[2]);
                 if (last.second != 0 && next.second != 0 && (next.first > 0) == (last.first > 0))
                 {
                     gradient[axis] = (next.first - last.first) / 2;
@@ -202,7 +218,8 @@ extern "C"
                       int step,
                       int last_step,
                       const LocalMapHW& map,
-                      const int transform_matrix[4][4]
+                      const int transform_matrix[4][4],
+                      const PointHW& center
                      )
     {
 #pragma HLS dataflow
@@ -211,7 +228,7 @@ extern "C"
         registration_step(pointData##n + n * step, STEP_SIZE, \
                           mapData##n##0, mapData##n##1, mapData##n##2, \
                           map, \
-                          transform_matrix, \
+                          transform_matrix, center, \
                           h##n, g##n, error##n, count##n);
 
         CALL_STEP(0, step); // MARKER: SPLIT
@@ -305,9 +322,9 @@ extern "C"
         }
         float epsilon = in_transform[16];
 
-        total_transform[0][3] -= posX;
-        total_transform[1][3] -= posY;
-        total_transform[2][3] -= posZ;
+        PointHW center(total_transform[0][3],
+                       total_transform[1][3],
+                       total_transform[2][3]);
 
         int i;
     registration_loop:
@@ -337,7 +354,8 @@ extern "C"
                          step,
                          last_step,
                          map,
-                         int_transform
+                         int_transform,
+                         center
                         );
 
             // MARKER: SPLIT
@@ -364,7 +382,7 @@ extern "C"
             lu_decomposition<float, 6>(h_float);
             lu_solve<float, 6>(h_float, g_float, xi);
 
-            xi_to_transform(xi, next_transform);
+            xi_to_transform(xi, next_transform, center);
             MatrixMul<float, 4, 4, 4>(next_transform, total_transform, temp_transform);
 
             // copy temp_transform to total_transform
@@ -378,6 +396,10 @@ extern "C"
                     total_transform[row][col] = temp_transform[row][col];
                 }
             }
+
+            center = PointHW(total_transform[0][3],
+                             total_transform[1][3],
+                             total_transform[2][3]);
 
             alpha += it_weight_gradient;
             float err = (float)error0 / count0;
@@ -398,10 +420,6 @@ extern "C"
 #ifndef __SYNTHESIS__
         std::cout << std::endl;
 #endif
-
-        total_transform[0][3] += posX;
-        total_transform[1][3] += posY;
-        total_transform[2][3] += posZ;
 
         // Pipeline to save ressources
     out_transform_loop:

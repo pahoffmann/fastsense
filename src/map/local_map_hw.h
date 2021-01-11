@@ -14,6 +14,8 @@ namespace fastsense
 namespace map
 {
 
+using IntTuple = std::pair<int, int>;
+
 template<typename T>
 T overflow(T val, T max)
 {
@@ -64,8 +66,7 @@ struct LocalMapHW
         return index;
     }
 
-    template<typename T>
-    T get(T* data, int x, int y, int z) const
+    IntTuple get(IntTuple* data, int x, int y, int z) const
     {
 #pragma HLS INLINE
         if (in_bounds(x, y, z))
@@ -73,38 +74,10 @@ struct LocalMapHW
             return data[getIndex(x, y, z)];
         }
 
-        return T();
+        return IntTuple(0, 0);
     }
 
-    bool in_relative_bounds(int x, int y, int z) const
-    {
-#pragma HLS INLINE
-        return hls_abs(x) <= sizeX / 2 && hls_abs(y) <= sizeY / 2 && hls_abs(z) <= sizeZ / 2;
-    }
-
-    int getRelativeIndex(int x, int y, int z) const
-    {
-#pragma HLS INLINE
-        int x_offset = overflow(x + offsetX + sizeX, sizeX) * sizeY * sizeZ;
-        int y_offset = overflow(y + offsetY + sizeY, sizeY) * sizeZ;
-        int z_offset = overflow(z + offsetZ + sizeZ, sizeZ);
-        int index = x_offset + y_offset + z_offset;
-        return index;
-    }
-
-    template<typename T>
-    T getRelative(T* data, int x, int y, int z) const
-    {
-#pragma HLS INLINE
-        if (in_relative_bounds(x, y, z))
-        {
-            return data[getRelativeIndex(x, y, z)];
-        }
-        return T();
-    }
-
-    template<typename T>
-    void set(T* data, int x, int y, int z, const T& val) const
+    void set(IntTuple* data, int x, int y, int z, const IntTuple& val) const
     {
 #pragma HLS INLINE
         if (in_bounds(x, y, z))

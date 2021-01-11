@@ -7,7 +7,6 @@ void Preprocessing::preprocess_scan(const fastsense::msg::PointCloudPtrStamped& 
 {
     const auto& cloud_points = cloud.data_->points_;
 
-    #pragma omp parallel for schedule(static)
     for (unsigned int i = 0; i < cloud_points.size(); i++)
     {
         PointHW point(cloud_points[i].x(),

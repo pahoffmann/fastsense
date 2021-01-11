@@ -62,11 +62,14 @@ void Registration::register_cloud(fastsense::map::LocalMap& localmap,
 {
     Matrix4f imu_rotation = imu_accumulator_.acc_transform(cloud_timestamp);
 
-    Matrix4f position = Matrix4f::Identity();
-    position.block<3, 1>(0, 3) = pose.block<3, 1>(0, 3);
+    Matrix4f move_back = Matrix4f::Identity();
+    Matrix4f move_there = Matrix4f::Identity();
+    move_back.block<3, 1>(0, 3) = -pose.block<3, 1>(0, 3);
+    move_there.block<3, 1>(0, 3) = pose.block<3, 1>(0, 3);
 
     // imu_rotation rotates around the current position => Translate pos to origin, rotate, translate back
-    pose = position * imu_rotation * (-position) * pose;
+    Matrix4f estimate = move_there * imu_rotation * move_back * pose;
+    pose = estimate;
 
     krnl.synchronized_run(localmap, cloud, max_iterations_, it_weight_gradient_, epsilon_, pose);
 

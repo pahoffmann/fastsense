@@ -18,7 +18,6 @@ using namespace fastsense::map;
 constexpr int NUM_POINTS = 6000;
 constexpr int SPLIT_FACTOR = 2;
 
-using IntTuple = std::pair<int, int>;
 struct QuadPoint
 {
     int data[4];
