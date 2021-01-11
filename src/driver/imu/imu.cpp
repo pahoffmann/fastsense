@@ -19,10 +19,11 @@ using fastsense::msg::ImuStampedBuffer;
 
 // TODO detach handler? How to handle connected/disconnectedness
 
-Imu::Imu(const ImuStampedBuffer::Ptr& ringbuffer)
+Imu::Imu(const ImuStampedBuffer::Ptr& ringbuffer, size_t filter_size)
     :   Phidget(),
         ProcessThread(),
         data_buffer_{ringbuffer},
+        filter_{filter_size},
         is_connected_{false},
         is_calibrated_{false},
         init_compass_{false},
@@ -114,8 +115,8 @@ void Imu::data_handler(const double* acceleration, const double* angularRate, co
         return;
     }
 
-    msg::Imu msg(acceleration, angularRate, magneticField);
-    data_buffer_->push_nb(msg::ImuStamped{std::move(msg), util::HighResTime::now()}, true);
+    const auto filtered_msg = filter_.update(msg::Imu{acceleration, angularRate, magneticField});
+    data_buffer_->push_nb(msg::ImuStamped{std::move(filtered_msg), util::HighResTime::now()}, true);
 }
 
 void Imu::attach_handler()

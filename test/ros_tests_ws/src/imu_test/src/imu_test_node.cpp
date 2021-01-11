@@ -2,17 +2,14 @@
 // Created by julian on 8/18/20.
 //
 
+#include <iostream>
 #include <imu.h>
-#include <data/sensor_sync.h>
 #include <msg/imu.h>
-#include <msg/msgs_stamped.h>
+#include <util/time.h>
 #include <util/concurrent_ring_buffer.h>
 #include <ros/ros.h>
 #include <sensor_msgs/Imu.h>
 #include <sensor_msgs/MagneticField.h>
-
-#include <util/time_stamp.h>
-#include <iostream>
 
 namespace fs = fastsense;
 
@@ -23,10 +20,11 @@ int main(int argc, char** argv)
     ros::Publisher imu_pub = n.advertise<sensor_msgs::Imu>("/imu/data_raw", 5);
     ros::Publisher mag_pub = n.advertise<sensor_msgs::MagneticField>("imu/mag", 5);
 
-    fs::msg::ImuStampedBufferPtr imu_buffer = std::make_shared<fs::msg::ImuStampedBuffer>(100);
-    fs::driver::Imu imu(imu_buffer);
+    fs::msg::ImuStampedBuffer::Ptr imu_buffer = std::make_shared<fs::msg::ImuStampedBuffer>(100);
+    fs::driver::Imu imu(imu_buffer, 25);
     imu.start();
-    auto timestamp = fs::util::TimeStamp();
+
+    auto last = fs::util::HighResTime::now();
 
     fs::msg::ImuStamped data_stamped;
     while (ros::ok())
@@ -35,14 +33,14 @@ int main(int argc, char** argv)
         {
             continue;
         }
-        std::cout << fs::util::TimeStamp() - timestamp << "\n";
-        timestamp = fs::util::TimeStamp();
 
         auto& [data, time] = data_stamped;
 
-        std::cout << data << "\n--\n";
+//        std::cout << data << "\n--\n";
 
-        auto time_now = ros::Time::now();
+        auto time_now = ros::Time();
+        std::cout << "Time since last msg: " << std::chrono::duration_cast<std::chrono::milliseconds>(time - last).count() << "\n";
+        last = time;
 
         sensor_msgs::Imu imu_msg;
         imu_msg.header.frame_id = "imu";

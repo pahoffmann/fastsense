@@ -10,6 +10,9 @@ find_package(catkin REQUIRED COMPONENTS
   tf
 )
 
+find_package(ZeroMQ 4.3.2 REQUIRED EXACT)
+find_package(cppzmq 4.4.1 REQUIRED EXACT)
+
 catkin_package()
 
 set(FASTSENSE_DIR ../../../../../fastsense)
@@ -22,15 +25,13 @@ include_directories(
 
 add_executable(${PROJECT_NAME}_node
   ${FASTSENSE_DIR}/src/driver/imu/api/phidget.cpp
-  ${FASTSENSE_DIR}/src/msg/magnetic_field.cpp
-  ${FASTSENSE_DIR}/src/msg/imu_msg.cpp
   ${FASTSENSE_DIR}/src/driver/imu/imu.cpp
-  ${FASTSENSE_DIR}/src/util/time_stamp.cpp
   src/${PROJECT_NAME}_node.cpp
 )
 
 target_link_libraries(${PROJECT_NAME}_node
   ${catkin_LIBRARIES}
   phidget21
+  libzmq
 )
 

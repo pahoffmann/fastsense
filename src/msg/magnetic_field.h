@@ -19,10 +19,17 @@ namespace fastsense::msg
  */
 struct MagneticField : public Vector3f
 {
+    /// Zero initalize MagneticField
     MagneticField()
     :   Vector3f{0.0f, 0.0f, 0.0f}
     {}
 
+    /**
+     * Magnetic Field in x, y and z directions
+     * @param x
+     * @param y
+     * @param z
+     */
     MagneticField(float x, float y, float z)
     :   Vector3f{0.0f, 0.0f, 0.0f}
     {
@@ -31,6 +38,10 @@ struct MagneticField : public Vector3f
         (*this)[2] = z;
     }
 
+    /**
+     * Phidgets driver specific constructor: accepts raw c style array
+     * @param magneticField magnetic field c style arrey
+     */
     explicit MagneticField(const double* magneticField)
     :   Vector3f{0.0f, 0.0f, 0.0f}
     {
@@ -49,6 +60,31 @@ struct MagneticField : public Vector3f
             (*this)[1] = nan;
             (*this)[2] = nan;
         }
+    }
+
+    /**
+     * Divide magnetic field by another one
+     * @param other magnetic field
+     */
+    void operator/=(const MagneticField& other)
+    {
+        (*this)[0] /= other[0];
+        (*this)[1] /= other[1];
+        (*this)[2] /= other[2];
+    }
+
+    /// This constructor allows you to construct MagneticField from Eigen expressions
+    template<typename OtherDerived>
+    MagneticField(const Eigen::MatrixBase<OtherDerived>& other)
+            : Eigen::Vector3f(other)
+    { }
+
+    /// This method allows you to assign Eigen expressions to MagneticField
+    template<typename OtherDerived>
+    MagneticField& operator=(const Eigen::MatrixBase <OtherDerived>& other)
+    {
+        this->Eigen::Vector3f::operator=(other);
+        return *this;
     }
 };
 

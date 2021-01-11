@@ -1,6 +1,7 @@
 {
     "imu": {
-        "bufferSize": 16
+        "bufferSize": 16,
+        "filterSize": 25
     },
 
     "lidar": {
@@ -28,7 +29,10 @@
         "imu_port_to": 5555,
 
         "pcl_port_from": 3333,
-        "pcl_port_to": 7777
+        "pcl_port_to": 7777,
+
+        "transform_port_to": 8888,
+        "tsdf_port_to": 6666
     },
 
     "slam": {

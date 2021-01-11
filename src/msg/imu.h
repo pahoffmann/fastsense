@@ -67,13 +67,175 @@ struct Imu
     /// magnetic field
     MagneticField mag;
 
+    /// shared pointer typedef
     using Ptr = std::shared_ptr<Imu>;
+
+    /**
+     * Add another Imu message to existing
+     * @param other Imu message
+     */
+    void operator+=(const Imu& other)
+    {
+        acc += other.acc;
+        ang += other.ang;
+        mag += other.mag;
+    }
+
+    /**
+     * Subtract another Imu message from existing
+     * @param other Imu message
+     */
+    void operator-=(const Imu& other)
+    {
+        acc -= other.acc;
+        ang -= other.ang;
+        mag -= other.mag;
+    }
+
+    /**
+     * Divide existing by another Imu message
+     * @param other Imu message
+     */
+    void operator/=(const Imu& other)
+    {
+        acc /= other.acc;
+        ang /= other.ang;
+        mag /= other.mag;
+    }
 };
 
+/// Imu Message with Timestamp
 using ImuStamped = msg::Stamped<Imu>;
+
+/// Buffer of Imu Messages with Timestamp
 using ImuStampedBuffer = util::ConcurrentRingBuffer<ImuStamped>;
 
 } // namespace fastsense::msg
+
+
+/**
+ * Using [this method](https://eigen.tuxfamily.org/dox/TopicCustomizing_InheritingMatrix.html) of inheriting
+ * from eigen constructs leaves some operators unimplemented, e.g. the one below
+ *
+ * This method is only compiled, if T inherits from Vector3f
+ *
+ * @tparam T type that inherits from Vector3f
+ * @param a type that inherits from Vector3f
+ * @param b type that inherits from Vector3f
+ * @return a / b
+ */
+template <typename T, std::enable_if_t<std::is_base_of_v<fastsense::Vector3f, T>, int> = 0>
+inline T operator/(const T& a, const T& b)
+{
+    return T{a[0] / b[0], a[1] / b[1], a[2] / b[2]};
+}
+
+/**
+ * Using [this method](https://eigen.tuxfamily.org/dox/TopicCustomizing_InheritingMatrix.html) of inheriting
+ * from eigen constructs leaves some operators unimplemented, e.g. the one below
+ *
+ * This method is only compiled, if T inherits from Vector3f
+ *
+ * @tparam T type that inherits from Vector3f
+ * @param a type that inherits from Vector3f
+ * @param b double
+ * @return a / b
+ */
+template <typename F, typename T, std::enable_if_t<std::is_base_of_v<fastsense::Vector3f, T>, int> = 0>
+inline T operator/(const T& a, double b)
+{
+    return T{a[0] / static_cast<float>(b), a[1] / static_cast<float>(b), a[2] / static_cast<float>(b)};
+}
+
+/**
+ * Using [this method](https://eigen.tuxfamily.org/dox/TopicCustomizing_InheritingMatrix.html) of inheriting
+ * from eigen constructs leaves some operators unimplemented, e.g. the one below
+ *
+ * This method is only compiled, if T inherits from Vector3f
+ *
+ * @tparam T type that inherits from Vector3f
+ * @param a type that inherits from Vector3f
+ * @param b type that inherits from Vector3f
+ * @return a - b
+ */
+template <typename T, std::enable_if_t<std::is_base_of_v<fastsense::Vector3f, T>, int> = 0>
+inline T operator-(const T& a, const T& b)
+{
+    return T{a[0] - b[0], a[1] - b[1], a[2] - b[2]};
+}
+
+/**
+ * Using [this method](https://eigen.tuxfamily.org/dox/TopicCustomizing_InheritingMatrix.html) of inheriting
+ * from eigen constructs leaves some operators unimplemented, e.g. the one below
+ *
+ * This method is only compiled, if T inherits from Vector3f
+ *
+ * @tparam T type that inherits from Vector3f
+ * @param a type that inherits from Vector3f
+ * @param b type that inherits from Vector3f
+ * @return a + b
+ */
+template <typename T, std::enable_if_t<std::is_base_of_v<fastsense::Vector3f, T>, int> = 0>
+inline T operator+(const T& a, const T& b)
+{
+    return T{a[0] + b[0], a[1] + b[1], a[2] + b[2]};
+}
+
+/**
+ * Divides two Imu messages
+ * @param a imu message
+ * @param b imu message
+ * @return a / b
+ */
+inline fastsense::msg::Imu operator/(const fastsense::msg::Imu& a, const fastsense::msg::Imu& b)
+{
+    return fastsense::msg::Imu{a.acc / b.acc, a.ang / b.ang, a.mag / b.mag};
+}
+
+/**
+ * Divides Imu message by factor
+ * @param a imu message
+ * @param b factor
+ * @return a / b
+ */
+inline fastsense::msg::Imu operator/(const fastsense::msg::Imu& a, double b)
+{
+    return fastsense::msg::Imu{a.acc / b, a.ang / b, a.mag / b};
+}
+
+/**
+ * Adds two Imu messages
+ * @param a imu message
+ * @param b imu message
+ * @return a + b
+ */
+inline fastsense::msg::Imu operator+(const fastsense::msg::Imu& a, const fastsense::msg::Imu& b)
+{
+    return fastsense::msg::Imu{a.acc + b.acc, a.ang + b.ang, a.mag + b.mag};
+}
+
+/**
+ * Subtract two Imu messages
+ * @param a imu message
+ * @param b imu message
+ * @return a - b
+ */
+inline fastsense::msg::Imu operator-(const fastsense::msg::Imu& a, const fastsense::msg::Imu& b)
+{
+    return fastsense::msg::Imu{a.acc - b.acc, a.ang - b.ang, a.mag - b.mag};
+}
+
+/**
+ * Compare two Imu messages
+ * @param a imu message
+ * @param b imu message
+ * @return a == b
+ */
+inline bool operator==(const fastsense::msg::Imu& a, const fastsense::msg::Imu& b)
+{
+    return a.acc == b.acc && a.ang == b.ang && a.mag == b.mag;
+}
+
 
 /**
  * @brief pretty print imu data
