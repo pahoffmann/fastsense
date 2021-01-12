@@ -130,6 +130,7 @@ extern "C"
         PointHW index, old_index{0, 0, 0};
         IntTuple bounds{0, 0};
         int z = 1;
+        int mid = 1;
 
     update_loop:
         while (true)
@@ -150,18 +151,27 @@ extern "C"
                 {
                     break;
                 }
+                
                 z = bounds.first;
+                mid = (bounds.second + bounds.first) / 2;
             }
 
             if (index.x != old_index.x || index.y != old_index.y)
             {
                 int map_index = map.getIndex(index.x, index.y, z);
                 IntTuple entry = new_entries[map_index];
+                IntTuple tmp_value = value;
 
                 if (entry.second == 0 || hls_abs(value.first) < hls_abs(entry.first))
                 {
-                    new_entries[map_index] = value;
+                    if (z == mid)
+                    {
+                        tmp_value.second *= -1;
+                    }
+
+                    new_entries[map_index] = tmp_value;
                 }
+
                 z++;
             }
             else
@@ -218,8 +228,8 @@ extern "C"
 
             int new_weight = map_entry.second + new_entry.second;
 
-            if (new_weight)
-            {
+            if (new_entry.second > 0 && map_entry.second > 0)
+            {   
                 map_entry.first = (map_entry.first * map_entry.second + new_entry.first * new_entry.second) / new_weight;
 
                 if (new_weight > max_weight)
@@ -228,9 +238,14 @@ extern "C"
                 }
 
                 map_entry.second = new_weight;
-
-                mapData[index] = map_entry;
             }
+            else if (new_entry.second != 0 && map_entry.second <= 0)
+            {
+                map_entry.first = new_entry.first;
+                map_entry.second = new_entry.second;
+            }
+
+            mapData[index] = map_entry;
         }
     }
 
