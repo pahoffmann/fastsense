@@ -37,7 +37,7 @@ MapThread::MapThread(const std::shared_ptr<fastsense::map::LocalMap>& local_map,
     start_mutex_.lock();
 }
 
-void MapThread::go(const Vector3i& pos, const fastsense::buffer::InputBuffer<PointHW>& points)
+void MapThread::go(const Vector3i& pos, const Eigen::Matrix4f& pose, const fastsense::buffer::InputBuffer<PointHW>& points)
 {
     reg_cnt_++;
     const Vector3i& old_pos = local_map_->get_pos();
@@ -48,6 +48,7 @@ void MapThread::go(const Vector3i& pos, const fastsense::buffer::InputBuffer<Poi
     if (!active_ && (position_condition || reg_cnt_condition))
     {
         pos_ = pos;
+        pose_ = pose;
         points_ptr_.reset(new fastsense::buffer::InputBuffer<PointHW>(points));
         active_ = true;
         start_mutex_.unlock(); // signal
@@ -71,9 +72,18 @@ void MapThread::thread_run()
         // shift
         tmp_map.shift(pos_.x(), pos_.y(), pos_.z());
 
+        Matrix4i rotation_mat = Matrix4i::Identity();
+        rotation_mat.block<3, 3>(0, 0) = ((pose_ * MATRIX_RESOLUTION).cast<int>()).block<3, 3>(0, 0);
+
+        Eigen::Vector4i v;
+        v << Vector3i(0, 0, MATRIX_RESOLUTION), 1;
+        Vector3i up = (rotation_mat * v).block<3, 1>(0, 0) / MATRIX_RESOLUTION;
+
+        PointHW up_hw(up.x(), up.y(), up.z());
+
         // tsdf update
         int tau = (int) ConfigManager::config().slam.max_distance();
-        tsdf_krnl_.run(tmp_map, *points_ptr_, tau, ConfigManager::config().slam.max_weight());
+        tsdf_krnl_.run(tmp_map, *points_ptr_, tau, ConfigManager::config().slam.max_weight(), up_hw);
         tsdf_krnl_.waitComplete();
 
         map_mutex_.lock();

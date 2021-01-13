@@ -77,7 +77,7 @@ void CloudCallback::thread_run()
         if (first_iteration)
         {
             first_iteration = false;
-
+        
             tsdf_krnl.run(*local_map, scan_point_buffer, ConfigManager::config().slam.max_distance(), ConfigManager::config().slam.max_weight());
             tsdf_krnl.waitComplete();
         }
@@ -96,7 +96,7 @@ void CloudCallback::thread_run()
         Vector3i pos((int)std::floor(pose(0, 3) / MAP_RESOLUTION),
                      (int)std::floor(pose(1, 3) / MAP_RESOLUTION),
                      (int)std::floor(pose(2, 3) / MAP_RESOLUTION));
-        map_thread.go(pos, scan_point_buffer);
+        map_thread.go(pos, pose, scan_point_buffer);
 
         Eigen::Quaternionf quat(pose.block<3, 3>(0, 0));
 

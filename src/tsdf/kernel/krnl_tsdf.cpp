@@ -313,7 +313,8 @@ extern "C"
                    IntTuple* new_entries0,
                    IntTuple* new_entries1,
                    int tau,
-                   int max_weight)
+                   int max_weight,
+                   PointHW up)
     {
 #pragma HLS INTERFACE m_axi port=scanPoints0  offset=slave bundle=scan0mem  latency=22 depth=360
 #pragma HLS INTERFACE m_axi port=scanPoints1  offset=slave bundle=scan1mem  latency=22 depth=360

@@ -36,7 +36,7 @@ public:
 
     ~TSDFKernel() override = default;
 
-    void run(map::LocalMap& map, const buffer::InputBuffer<PointHW>& scan_points, int tau, int max_weight)
+    void run(map::LocalMap& map, const buffer::InputBuffer<PointHW>& scan_points, int tau, int max_weight, PointHW up = PointHW(0, 0, MATRIX_RESOLUTION))
     {
         for (int i = 0; i < (int)new_entries.size(); ++i)
         {
@@ -72,6 +72,7 @@ public:
         }
         setArg(tau);
         setArg(max_weight);
+        setArg(up);
 
         // Write buffers
         cmd_q_->enqueueMigrateMemObjects({map.getBuffer().getBuffer(), scan_points.getBuffer(), new_entries.getBuffer()}, CL_MIGRATE_MEM_OBJECT_DEVICE, nullptr, &pre_events_[0]);
