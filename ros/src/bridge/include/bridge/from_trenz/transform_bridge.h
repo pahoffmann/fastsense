@@ -6,6 +6,8 @@
 
 #pragma once
 
+#include <nav_msgs/Path.h>
+#include <geometry_msgs/PoseStamped.h>
 #include <geometry_msgs/TransformStamped.h>
 #include <msg/transform.h>
 #include <tf2_ros/transform_broadcaster.h>
@@ -20,16 +22,17 @@ namespace fastsense::bridge
  * @brief TransformBridge converts transform data from the application to ROS messages
  * 
  */
-class TransformBridge :  public BridgeBase<msg::TransformStamped, geometry_msgs::Transform, 8888>,
+class TransformBridge :  public BridgeBase<msg::TransformStamped, nav_msgs::Path, 8888>,
     public util::ProcessThread
 {
 public:
     /**
      * @brief Construct a new Transform Bridge object
-     * 
+     *
+     * @param n ros::NodeHandle
      * @param board_addr ip addr of Trenz board
      */
-    TransformBridge(const std::string& board_addr);
+    TransformBridge(ros::NodeHandle& n, const std::string& board_addr);
 
     /**
      * @brief Destroy the Transform Bridge object
@@ -83,6 +86,15 @@ private:
 
     /// Local vector of lidar points that are published
     geometry_msgs::TransformStamped transform_data;
+
+    /// first message received: used to detect first timestamp
+    bool first_smg;
+
+    /// Path message
+    nav_msgs::Path pose_path;
+
+    /// Single PoseStamped to append to path
+    geometry_msgs::PoseStamped pose_stamped;
 };
 
 } // namespace fastsense::bridge
