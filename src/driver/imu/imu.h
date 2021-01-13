@@ -8,7 +8,7 @@
 #include <msg/imu.h>
 #include <util/process_thread.h>
 #include "api/phidget.h"
-#include "filter.h"
+#include <util/filter.h>
 
 namespace fastsense::driver
 {
@@ -103,7 +103,7 @@ private:
     fastsense::msg::ImuStampedBuffer::Ptr data_buffer_;
 
     /// Sliding Window averaging Filter
-    SlidingWindowFilter<msg::Imu> filter_;
+    util::SlidingWindowFilter<msg::Imu> filter_;
 
     /// whether or not imu is connected
     bool is_connected_;

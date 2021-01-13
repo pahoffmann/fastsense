@@ -117,7 +117,7 @@ void CloudCallback::thread_run()
 
         eval.stop("total");
 #ifdef TIME_MEASUREMENT
-        if (cnt == 10)
+        if (cnt == 20)
         {
             Logger::info(eval.to_string());
             cnt = 0;
