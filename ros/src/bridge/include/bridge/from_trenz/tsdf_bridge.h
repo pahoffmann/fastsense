@@ -53,15 +53,22 @@ private:
      */
     void run() override;
 
+    /// one "iteration" of thread
     void thread_run() override
     {
         run();
     }
 
+    /// returns true, if x y z is in bounds of map
     bool in_bounds(int x, int y, int z);
+
+    /// gets tsdf value at x y z
     std::pair<int, int> get_tsdf_value(int x, int y, int z);
 
+    /// TSDF Point vector
     std::vector<geometry_msgs::Point> points_;
+    
+    /// Color vector
     std::vector<std_msgs::ColorRGBA> colors_;
 };
 

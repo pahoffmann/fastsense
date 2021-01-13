@@ -63,15 +63,22 @@ private:
      */
     void run() override;
 
+    /// Run one "iteration" of thread
     void thread_run() override
     {
         run();
     }
 
+    /// Broadcast transformation
     void broadcast();
 
+    /// Transform broadcaster
     tf2_ros::TransformBroadcaster broadcaster;
+    
+    /// thread of broadcaster
     std::thread broadcaster_thread;
+
+    /// TODO mutex why though
     std::mutex mtx;
 
     /// Local vector of lidar points that are published
