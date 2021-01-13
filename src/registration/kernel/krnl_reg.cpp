@@ -72,18 +72,23 @@ extern "C"
         transform[3][2] = 0;
         transform[3][3] = 1;
 
+        // apply the rotation around the old center
+        // => rotate around Point = shift Point to origin -> rotate -> shift back to Point
+
+        // shift old_center to origin
         float old_center[3];
-        old_center[0] = center.x;
-        old_center[1] = center.y;
-        old_center[2] = center.z;
+        old_center[0] = -center.x;
+        old_center[1] = -center.y;
+        old_center[2] = -center.z;
 
-        float move_from_old_center[3];
-        transform_point(transform, old_center, move_from_old_center);
+        // rotate
+        float shift[3];
+        transform_point(transform, old_center, shift);
 
-        // translation: move old_center
-        transform[0][3] = center.x + xi[3] - move_from_old_center[0];
-        transform[1][3] = center.y + xi[4] - move_from_old_center[1];
-        transform[2][3] = center.z + xi[5] - move_from_old_center[2];
+        // shift back to center + new translation
+        transform[0][3] = shift[0] + center.x + xi[3];
+        transform[1][3] = shift[1] + center.y + xi[4];
+        transform[2][3] = shift[2] + center.z + xi[5];
     }
 
     void registration_step(const PointHW* pointData,
@@ -322,10 +327,6 @@ extern "C"
         }
         float epsilon = in_transform[16];
 
-        PointHW center(total_transform[0][3],
-                       total_transform[1][3],
-                       total_transform[2][3]);
-
         int i;
     registration_loop:
         for (i = 0; i < max_iterations; i++)
@@ -347,6 +348,11 @@ extern "C"
 #ifndef __SYNTHESIS__
             std::cout << "\r" << i << " / " << max_iterations << std::flush;
 #endif
+
+            // "center" of Scan == estimated Position of Scanner == translation in Pose
+            PointHW center(total_transform[0][3],
+                           total_transform[1][3],
+                           total_transform[2][3]);
 
             reg_dataflow(USE_PARAMS(0), // MARKER: SPLIT
                          USE_PARAMS(1),
@@ -396,10 +402,6 @@ extern "C"
                     total_transform[row][col] = temp_transform[row][col];
                 }
             }
-
-            center = PointHW(total_transform[0][3],
-                             total_transform[1][3],
-                             total_transform[2][3]);
 
             alpha += it_weight_gradient;
             float err = (float)error0 / count0;
