@@ -44,7 +44,7 @@ public:
             new_entries[i].second = 0;
         }
 
-        constexpr int SPLIT_FACTOR = 2;
+        constexpr int SPLIT_FACTOR = 4;
 
         resetNArg();
         for (int i = 0; i < SPLIT_FACTOR; i++)

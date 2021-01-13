@@ -16,17 +16,9 @@
 using namespace fastsense::map;
 
 constexpr int NUM_POINTS = 6000;
-constexpr int SPLIT_FACTOR = 2;
+constexpr int SPLIT_FACTOR = 4;
 
 using IntTuple = std::pair<int, int>;
-struct QuadPoint
-{
-    int data[4];
-    int& operator[](int index)
-    {
-        return data[index];
-    }
-};
 
 extern "C"
 {
@@ -171,34 +163,6 @@ extern "C"
         }
     }
 
-    void tsdf_dataflow(PointHW* scanPoints,
-                       int numPoints,
-                       const LocalMapHW& map,
-                       IntTuple* new_entries,
-                       int tau)
-    {
-#pragma HLS dataflow
-        hls::stream<IntTuple> value_fifo;
-        hls::stream<PointHW> index_fifo;
-        hls::stream<IntTuple> bounds_fifo;
-#pragma HLS stream depth=16 variable=value_fifo
-#pragma HLS stream depth=16 variable=index_fifo
-#pragma HLS stream depth=16 variable=bounds_fifo
-
-        read_points(scanPoints, numPoints,
-                    map,
-                    tau,
-                    value_fifo,
-                    index_fifo,
-                    bounds_fifo);
-
-        update_tsdf(map,
-                    new_entries,
-                    value_fifo,
-                    index_fifo,
-                    bounds_fifo);
-    }
-
     void sync_loop(
         IntTuple* mapData,
         int start,
@@ -236,33 +200,111 @@ extern "C"
 
     void tsdf_dataflower(PointHW* scanPoints0,
                          PointHW* scanPoints1,
+                         PointHW* scanPoints2,
+                         PointHW* scanPoints3,
                          int step,
                          int last_step,
                          IntTuple* new_entries0,
                          IntTuple* new_entries1,
+                         IntTuple* new_entries2,
+                         IntTuple* new_entries3,
                          const LocalMapHW& map,
                          int tau)
     {
 #pragma HLS dataflow
 
-        tsdf_dataflow(scanPoints0 + 0 * step, step,
-                      map, new_entries0, tau);
+        hls::stream<IntTuple> value_fifo0;
+        hls::stream<PointHW> index_fifo0;
+        hls::stream<IntTuple> bounds_fifo0;
+#pragma HLS stream depth=16 variable=value_fifo0
+#pragma HLS stream depth=16 variable=index_fifo0
+#pragma HLS stream depth=16 variable=bounds_fifo0
+        read_points(scanPoints0, step,
+                    map,
+                    tau,
+                    value_fifo0,
+                    index_fifo0,
+                    bounds_fifo0);
+        update_tsdf(map,
+                    new_entries0,
+                    value_fifo0,
+                    index_fifo0,
+                    bounds_fifo0);
 
-        tsdf_dataflow(scanPoints1 + 1 * step, last_step,
-                      map, new_entries1, tau);
+        hls::stream<IntTuple> value_fifo1;
+        hls::stream<PointHW> index_fifo1;
+        hls::stream<IntTuple> bounds_fifo1;
+#pragma HLS stream depth=16 variable=value_fifo1
+#pragma HLS stream depth=16 variable=index_fifo1
+#pragma HLS stream depth=16 variable=bounds_fifo1
+        read_points(scanPoints1, step,
+                    map,
+                    tau,
+                    value_fifo1,
+                    index_fifo1,
+                    bounds_fifo1);
+        update_tsdf(map,
+                    new_entries1,
+                    value_fifo1,
+                    index_fifo1,
+                    bounds_fifo1);
+
+        hls::stream<IntTuple> value_fifo2;
+        hls::stream<PointHW> index_fifo2;
+        hls::stream<IntTuple> bounds_fifo2;
+#pragma HLS stream depth=16 variable=value_fifo2
+#pragma HLS stream depth=16 variable=index_fifo2
+#pragma HLS stream depth=16 variable=bounds_fifo2
+        read_points(scanPoints2, step,
+                    map,
+                    tau,
+                    value_fifo2,
+                    index_fifo2,
+                    bounds_fifo2);
+        update_tsdf(map,
+                    new_entries2,
+                    value_fifo2,
+                    index_fifo2,
+                    bounds_fifo2);
+
+        hls::stream<IntTuple> value_fifo3;
+        hls::stream<PointHW> index_fifo3;
+        hls::stream<IntTuple> bounds_fifo3;
+#pragma HLS stream depth=16 variable=value_fifo3
+#pragma HLS stream depth=16 variable=index_fifo3
+#pragma HLS stream depth=16 variable=bounds_fifo3
+        read_points(scanPoints3, last_step,
+                    map,
+                    tau,
+                    value_fifo3,
+                    index_fifo3,
+                    bounds_fifo3);
+        update_tsdf(map,
+                    new_entries3,
+                    value_fifo3,
+                    index_fifo3,
+                    bounds_fifo3);
     }
 
     void sync_looper(IntTuple* mapData0,
                      IntTuple* mapData1,
-                     int step,
-                     int numPoints,
+                     IntTuple* mapData2,
+                     IntTuple* mapData3,
+                     int end0,
+                     int end1,
+                     int end2,
+                     int end3,
                      IntTuple* new_entries0,
                      IntTuple* new_entries1,
+                     IntTuple* new_entries2,
+                     IntTuple* new_entries3,
                      int max_weight)
     {
 #pragma HLS dataflow
-        sync_loop(mapData0, step * 0, step * (0 + 1), new_entries0, max_weight);
-        sync_loop(mapData1, step * 1, numPoints, new_entries1, max_weight);
+        sync_loop(mapData0, 0, end0, new_entries0, max_weight);
+        sync_loop(mapData1, end0, end1, new_entries1, max_weight);
+        sync_loop(mapData2, end1, end2, new_entries2, max_weight);
+        sync_loop(mapData3, end2, end3, new_entries3, max_weight);
     }
 
     /**
@@ -289,36 +331,52 @@ extern "C"
      */
     void krnl_tsdf(PointHW* scanPoints0,
                    PointHW* scanPoints1,
+                   PointHW* scanPoints2,
+                   PointHW* scanPoints3,
                    int numPoints,
                    IntTuple* mapData0,
                    IntTuple* mapData1,
+                   IntTuple* mapData2,
+                   IntTuple* mapData3,
                    int sizeX,   int sizeY,   int sizeZ,
                    int posX,    int posY,    int posZ,
                    int offsetX, int offsetY, int offsetZ,
                    IntTuple* new_entries0,
                    IntTuple* new_entries1,
+                   IntTuple* new_entries2,
+                   IntTuple* new_entries3,
                    int tau,
                    int max_weight)
     {
 #pragma HLS INTERFACE m_axi port=scanPoints0  offset=slave bundle=scan0mem  latency=22 depth=360
 #pragma HLS INTERFACE m_axi port=scanPoints1  offset=slave bundle=scan1mem  latency=22 depth=360
+#pragma HLS INTERFACE m_axi port=scanPoints2  offset=slave bundle=scan2mem  latency=22 depth=360
+#pragma HLS INTERFACE m_axi port=scanPoints3  offset=slave bundle=scan3mem  latency=22 depth=360
 #pragma HLS INTERFACE m_axi port=mapData0     offset=slave bundle=map0mem   latency=22 depth=18491
 #pragma HLS INTERFACE m_axi port=mapData1     offset=slave bundle=map1mem   latency=22 depth=18491
+#pragma HLS INTERFACE m_axi port=mapData2     offset=slave bundle=map2mem   latency=22 depth=18491
+#pragma HLS INTERFACE m_axi port=mapData3     offset=slave bundle=map3mem   latency=22 depth=18491
 #pragma HLS INTERFACE m_axi port=new_entries0 offset=slave bundle=entry0mem latency=22 depth=18491
 #pragma HLS INTERFACE m_axi port=new_entries1 offset=slave bundle=entry1mem latency=22 depth=18491
+#pragma HLS INTERFACE m_axi port=new_entries2 offset=slave bundle=entry2mem latency=22 depth=18491
+#pragma HLS INTERFACE m_axi port=new_entries3 offset=slave bundle=entry3mem latency=22 depth=18491
 
         LocalMapHW map{sizeX,   sizeY,   sizeZ,
                        posX,    posY,    posZ,
                        offsetX, offsetY, offsetZ};
 
-        int step = numPoints / SPLIT_FACTOR + 1;
+        int step = numPoints / SPLIT_FACTOR;
         int last_step = numPoints - (SPLIT_FACTOR - 1) * step;
         tsdf_dataflower(scanPoints0,
-                        scanPoints1,
+                        scanPoints1 + 1 * step,
+                        scanPoints2 + 2 * step,
+                        scanPoints3 + 3 * step,
                         step,
                         last_step,
                         new_entries0,
                         new_entries1,
+                        new_entries2,
+                        new_entries3,
                         map,
                         tau);
 
@@ -328,10 +386,16 @@ extern "C"
 
         sync_looper(mapData0,
                     mapData1,
-                    sync_step,
+                    mapData2,
+                    mapData3,
+                    1 * sync_step,
+                    2 * sync_step,
+                    3 * sync_step,
                     total_size,
                     new_entries0,
                     new_entries1,
+                    new_entries2,
+                    new_entries3,
                     max_weight);
     }
 }
