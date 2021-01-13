@@ -67,10 +67,10 @@ void CloudCallback::thread_run()
 
 
 
-        //preprocessor.median_filter(point_cloud2, 5);
+        // preprocessor.median_filter(point_cloud2, 5);
         preprocessor.reduction_filter(point_cloud2);
         InputBuffer<PointHW> scan_point_buffer{q, point_cloud2.data_->points_.size()};
-        preprocessor.preprocess_scan(point_cloud2, scan_point_buffer, pose);
+        preprocessor.preprocess_scan(point_cloud2, scan_point_buffer);
 
         eval.stop("prep");
 
@@ -83,14 +83,21 @@ void CloudCallback::thread_run()
         }
         else
         {
+            Matrix4f old_pose = pose;
+
             map_mutex.lock();
             eval.start("reg");
-            Matrix4f transform = registration.register_cloud(*local_map, scan_point_buffer, point_cloud2.timestamp_);
+            registration.register_cloud(*local_map, scan_point_buffer, point_cloud2.timestamp_, pose);
             eval.stop("reg");
             map_mutex.unlock();
 
-            pose = transform * pose;
             // Logger::info("Pose:\n", std::fixed, std::setprecision(4), pose);
+
+            if (std::isnan(pose(0, 0)))
+            {
+                Logger::error("Registration gave NaN");
+                pose = old_pose;
+            }
         }
 
         Vector3i pos((int)std::floor(pose(0, 3) / MAP_RESOLUTION),
@@ -110,7 +117,7 @@ void CloudCallback::thread_run()
 
         eval.stop("total");
 #ifdef TIME_MEASUREMENT
-        if (cnt == 10)
+        if (cnt == 20)
         {
             Logger::info(eval.to_string());
             cnt = 0;

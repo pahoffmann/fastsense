@@ -14,9 +14,9 @@
     },
 
     "registration": {
-        "max_iterations": 100,
+        "max_iterations": 200,
         "it_weight_gradient": 0.1,
-        "epsilon": 0.001
+        "epsilon": 0.01
     },
 
     "bridge": {
