@@ -35,10 +35,11 @@ void MatrixMul(
     }
 }
 
+template<typename T>
 void transform_point(
-    const int mat[4][4],
-    const int point[3],
-    int res[3])
+    const T mat[4][4],
+    const T point[3],
+    T res[3])
 {
 #pragma HLS INLINE
 

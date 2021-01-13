@@ -14,6 +14,8 @@ namespace fastsense
 namespace map
 {
 
+using IntTuple = std::pair<int, int>;
+
 template<typename T>
 T overflow(T val, T max)
 {
@@ -64,8 +66,7 @@ struct LocalMapHW
         return index;
     }
 
-    template<typename T>
-    T get(T* data, int x, int y, int z) const
+    IntTuple get(IntTuple* data, int x, int y, int z) const
     {
 #pragma HLS INLINE
         if (in_bounds(x, y, z))
@@ -73,11 +74,10 @@ struct LocalMapHW
             return data[getIndex(x, y, z)];
         }
 
-        return T();
+        return IntTuple(0, 0);
     }
 
-    template<typename T>
-    void set(T* data, int x, int y, int z, const T& val) const
+    void set(IntTuple* data, int x, int y, int z, const IntTuple& val) const
     {
 #pragma HLS INLINE
         if (in_bounds(x, y, z))
