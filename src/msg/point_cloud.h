@@ -12,6 +12,7 @@
 #include <util/time.h>
 #include <util/point.h>
 #include <msg/zmq_converter.h>
+#include <util/constants.h>
 
 #include <util/concurrent_ring_buffer.h>
 
@@ -32,7 +33,7 @@ public:
 
     PointCloud() 
     : points_{}
-    , rings_{}
+    , rings_{RINGS}
     {
     }
     
