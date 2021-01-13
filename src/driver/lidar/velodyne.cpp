@@ -243,7 +243,6 @@ void VelodyneDriver::decode_packet()
                 // TODO std::move()
                 scan_buffer_->push_nb(Stamped<PointCloud::Ptr>{current_scan_, util::HighResTime::now()}, true);
                 current_scan_ = std::make_shared<PointCloud>();
-                current_scan_->rings_ = 16;
             }
             az_last_ = az_block;
 

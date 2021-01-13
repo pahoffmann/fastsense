@@ -4,6 +4,8 @@ test/build/
 test/build-local/
 bagfiles/
 pcd_files/cloud_snapshots/
+RTL88x2BU-Linux-Driver/
+scripts/install/
 
 qemu*
 
