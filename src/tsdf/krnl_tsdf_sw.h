@@ -6,6 +6,7 @@
 
 #include <map/local_map_hw.h>
 #include <util/point_hw.h>
+#include <util/tsdf_hw.h>
 #include <hw/kernels/tsdf_kernel.h>
 
 #include <utility>
@@ -13,18 +14,6 @@
 
 namespace fastsense::tsdf
 {
-
-using ValueType = int16_t;
-using WeightType = uint16_t;
-struct TSDFValueHW
-{
-    //ap_fixed<VALUE_BITS, VALUE_BITS, AP_TRN, AP_SAT> value;
-    //ap_ufixed<WEIGHT_BITS, WEIGHT_BITS,  AP_TRN, AP_SAT> weight;
-ValueType value :
-    VALUE_BITS;
-WeightType weight :
-    WEIGHT_BITS;
-};
 
 /**
  * @brief Software equivalent of the kernel TSDF function
