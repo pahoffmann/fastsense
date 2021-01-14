@@ -4,7 +4,7 @@
  * @date 2020-09-06
  */
 
-
+#include <signal.h>
 #include <chrono>
 #include <ros/ros.h>
 #include <bridge/from_trenz/tsdf_bridge.h>
@@ -36,17 +36,15 @@ int main(int argc, char** argv)
     imu_bridge.start();
     velodyne_bridge.start();
     transform_bridge.start();
-
-    ros::Rate rate(1.0);
-    while(ros::ok())
-    {
-        rate.sleep();
-    }
+    
+    ROS_INFO_STREAM("from_trenz bridge started");
 
     tsdf_bridge.stop();
     imu_bridge.stop();
     velodyne_bridge.stop();
     transform_bridge.stop();
+
+    ROS_INFO_STREAM("from_trenz bridge stopped");
 
     return 0;
 }
