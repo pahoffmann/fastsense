@@ -60,6 +60,8 @@ private:
 
     /// Local vector of lidar points that are published
     std::vector<geometry_msgs::Point32> points_;
+
+    // local timestamp
     ros::Time timestamp_;
 };
 

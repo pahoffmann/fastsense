@@ -4,6 +4,7 @@
  * @date 2020-09-06
  */
 
+#include <signal.h>
 #include <chrono>
 #include <ros/ros.h>
 #include <bridge/from_trenz/tsdf_bridge.h>
@@ -29,22 +30,27 @@ int main(int argc, char** argv)
     fs::bridge::TSDFBridge tsdf_bridge{n, board_addr};
     fs::bridge::ImuBridge imu_bridge{n, board_addr};
     fs::bridge::VelodyneBridge velodyne_bridge{n, board_addr};
-    fs::bridge::TransformBridge transform_bridge{board_addr};
+    fs::bridge::TransformBridge transform_bridge{n, board_addr};
     
     tsdf_bridge.start();
     imu_bridge.start();
     velodyne_bridge.start();
     transform_bridge.start();
+    
+    ROS_INFO_STREAM("from_trenz bridge started");
 
+    ros::Rate rate(1.0);
     while(ros::ok())
     {
-        std::this_thread::sleep_for(1s);
+        rate.sleep();
     }
 
     tsdf_bridge.stop();
     imu_bridge.stop();
     velodyne_bridge.stop();
     transform_bridge.stop();
+
+    ROS_INFO_STREAM("from_trenz bridge stopped");
 
     return 0;
 }

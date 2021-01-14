@@ -37,13 +37,13 @@ void ImuBridge::run()
         try
         {
             receive();
-            // ROS_INFO_STREAM("Received imu msg\n");
+            ROS_INFO_STREAM("Received imu msg\n");
             convert();
             publish();
         }
         catch(const std::exception& e)
         {
-            std::cerr << "IMU "  << e.what() << '\n';
+            std::cerr << "imu bridge error: "  << e.what() << '\n';
         }
     }
 }

@@ -12,6 +12,7 @@ include(cmake/helpers.cmake)
 find_package(catkin REQUIRED COMPONENTS
   roscpp
   sensor_msgs
+  nav_msgs
   std_msgs
   visualization_msgs
   tf2
