@@ -11,6 +11,7 @@
 #include <algorithm>
 
 #include <util/point.h>
+#include <util/tsdf.h>
 
 namespace fastsense::msg
 {
@@ -24,7 +25,7 @@ struct TSDFBridgeMessage : public ZMQConverter
     Vector3i size_;
     Vector3i pos_;
     Vector3i offset_;
-    std::vector<std::pair<int, int>> tsdf_data_;
+    std::vector<TSDFValue> tsdf_data_;
 
     void from_zmq_msg(zmq::multipart_t& msg)
     {
@@ -34,10 +35,10 @@ struct TSDFBridgeMessage : public ZMQConverter
         offset_ = msg.poptyp<Vector3i>();
 
         zmq::message_t tsdf_data_msg = msg.pop();
-        size_t n_tsdf_values = tsdf_data_msg.size() / sizeof(std::pair<int, int>);
+        size_t n_tsdf_values = tsdf_data_msg.size() / sizeof(TSDFValue);
         tsdf_data_.clear();
         tsdf_data_.reserve(n_tsdf_values);
-        std::copy_n(static_cast<std::pair<int, int>*>(tsdf_data_msg.data()), n_tsdf_values, std::back_inserter(tsdf_data_));
+        std::copy_n(static_cast<TSDFValue*>(tsdf_data_msg.data()), n_tsdf_values, std::back_inserter(tsdf_data_));
     }
 
     zmq::multipart_t to_zmq_msg() const

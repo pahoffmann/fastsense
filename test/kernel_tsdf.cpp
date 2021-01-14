@@ -21,7 +21,7 @@ using fastsense::util::PCDFile;
 namespace fastsense::tsdf
 {
 
-static void check_tsdf(const fastsense::buffer::InputOutputBuffer<std::pair<int, int>>& tsdf_hw, const fastsense::buffer::InputOutputBuffer<std::pair<int, int>>& tsdf_sw)
+static void check_tsdf(const fastsense::buffer::InputOutputBuffer<TSDFValue>& tsdf_hw, const fastsense::buffer::InputOutputBuffer<TSDFValue>& tsdf_sw)
 {
     REQUIRE(tsdf_hw.size() == tsdf_sw.size());
 
@@ -29,7 +29,7 @@ static void check_tsdf(const fastsense::buffer::InputOutputBuffer<std::pair<int,
 
     for (size_t i = 0; i < tsdf_hw.size(); ++i)
     {
-        if (tsdf_hw[i].first != tsdf_sw[i].first)
+        if (tsdf_hw[i].value() != tsdf_sw[i].value())
         {
             ++err_count;
         }
@@ -56,8 +56,6 @@ TEST_CASE("Kernel_TSDF", "[kernel][slow]")
         constexpr int SIZE_Y = 50 * SCALE / MAP_RESOLUTION;
         constexpr int SIZE_Z = 10 * SCALE / MAP_RESOLUTION;
 
-        constexpr int WEIGHT_SCALE = SCALE / 8.0;
-
         SECTION("Generation")
         {
             std::cout << "        Section 'Generation'" << std::endl;
@@ -76,47 +74,47 @@ TEST_CASE("Kernel_TSDF", "[kernel][slow]")
             kernel_points[0].y = MAP_RESOLUTION / 2;
             kernel_points[0].z = MAP_RESOLUTION / 2;
 
-            krnl.run(localMap, kernel_points, TAU, 100);
+            krnl.run(localMap, kernel_points, TAU, 31);
             krnl.waitComplete();
 
             // Front values
-            CHECK(localMap.value(6, 0, 0).first == 0);
-            CHECK(localMap.value(5, 0, 0).first == 1 * SCALE);
-            CHECK(localMap.value(4, 0, 0).first == 2 * SCALE);
-            CHECK(localMap.value(3, 0, 0).first == TAU);
-            CHECK(localMap.value(2, 0, 0).first == TAU);
-            CHECK(localMap.value(1, 0, 0).first == TAU);
+            CHECK(localMap.value(6, 0, 0).value() == 0);
+            CHECK(localMap.value(5, 0, 0).value() == 1 * SCALE);
+            CHECK(localMap.value(4, 0, 0).value() == 2 * SCALE);
+            CHECK(localMap.value(3, 0, 0).value() == TAU);
+            CHECK(localMap.value(2, 0, 0).value() == TAU);
+            CHECK(localMap.value(1, 0, 0).value() == TAU);
 
             // Front weights
-            CHECK(localMap.value(6, 0, 0).second == 1 * WEIGHT_RESOLUTION);
-            CHECK(localMap.value(5, 0, 0).second == 1 * WEIGHT_RESOLUTION);
-            CHECK(localMap.value(4, 0, 0).second == 1 * WEIGHT_RESOLUTION);
-            CHECK(localMap.value(3, 0, 0).second == 1 * WEIGHT_RESOLUTION);
-            CHECK(localMap.value(2, 0, 0).second == 1 * WEIGHT_RESOLUTION);
-            CHECK(localMap.value(1, 0, 0).second == 1 * WEIGHT_RESOLUTION);
+            CHECK(localMap.value(6, 0, 0).weight() == 31);
+            CHECK(localMap.value(5, 0, 0).weight() == 31);
+            CHECK(localMap.value(4, 0, 0).weight() == 31);
+            CHECK(localMap.value(3, 0, 0).weight() == 31);
+            CHECK(localMap.value(2, 0, 0).weight() == 31);
+            CHECK(localMap.value(1, 0, 0).weight() == 31);
 
             // back values
-            CHECK(localMap.value( 7, 0, 0).first == -1 * SCALE);
-            CHECK(localMap.value( 8, 0, 0).first == -2 * SCALE);
-            CHECK(localMap.value( 9, 0, 0).first ==  0 * SCALE);
-            CHECK(localMap.value(10, 0, 0).first ==  0 * SCALE);
-            CHECK(localMap.value(11, 0, 0).first ==  0 * SCALE);
-            CHECK(localMap.value(12, 0, 0).first ==  0 * SCALE);
+            CHECK(localMap.value( 7, 0, 0).value() == -1 * SCALE);
+            CHECK(localMap.value( 8, 0, 0).value() == -2 * SCALE);
+            CHECK(localMap.value( 9, 0, 0).value() ==  0 * SCALE);
+            CHECK(localMap.value(10, 0, 0).value() ==  0 * SCALE);
+            CHECK(localMap.value(11, 0, 0).value() ==  0 * SCALE);
+            CHECK(localMap.value(12, 0, 0).value() ==  0 * SCALE);
 
             // back weights
-            CHECK((localMap.value( 7, 0, 0).second < 1 * WEIGHT_RESOLUTION && localMap.value( 7, 0, 0).second > 0));
-            CHECK((localMap.value( 8, 0, 0).second < 1 * WEIGHT_RESOLUTION && localMap.value( 8, 0, 0).second > 0));
-            CHECK(localMap.value( 9, 0, 0).second == 0);
-            CHECK(localMap.value(10, 0, 0).second == 0);
-            CHECK(localMap.value(11, 0, 0).second == 0);
-            CHECK(localMap.value(12, 0, 0).second == 0);
+            CHECK(localMap.value( 7, 0, 0).weight() < 31);
+            CHECK(localMap.value( 8, 0, 0).weight() < 31);
+            CHECK(localMap.value( 9, 0, 0).weight() == 0);
+            CHECK(localMap.value(10, 0, 0).weight() == 0);
+            CHECK(localMap.value(11, 0, 0).weight() == 0);
+            CHECK(localMap.value(12, 0, 0).weight() == 0);
         }
 
         SECTION("Update")
         {
             std::cout << "        Section 'Update'" << std::endl;
 
-            std::shared_ptr<fastsense::map::GlobalMap> gm_ptr = std::make_shared<fastsense::map::GlobalMap>("MapTest.h5", 0, 7 * WEIGHT_RESOLUTION);
+            std::shared_ptr<fastsense::map::GlobalMap> gm_ptr = std::make_shared<fastsense::map::GlobalMap>("MapTest.h5", 0, 8);
             fastsense::map::LocalMap localMap{SIZE_X, SIZE_Y, SIZE_Z, gm_ptr, q};
 
             fastsense::kernels::TSDFKernel krnl(q, localMap.getBuffer().size());
@@ -130,32 +128,29 @@ TEST_CASE("Kernel_TSDF", "[kernel][slow]")
             kernel_points[0].y = MAP_RESOLUTION / 2;
             kernel_points[0].z = MAP_RESOLUTION / 2;
 
-            krnl.run(localMap, kernel_points, TAU, 100 * WEIGHT_RESOLUTION);
+            krnl.run(localMap, kernel_points, TAU, 31);
             krnl.waitComplete();
 
             // Front values
-            CHECK(localMap.value(6, 0, 0).first == 0);
-            CHECK(localMap.value(5, 0, 0).first == 1 * WEIGHT_SCALE);
-            CHECK(localMap.value(4, 0, 0).first == 2 * WEIGHT_SCALE);
-            CHECK(localMap.value(3, 0, 0).first == 3 * WEIGHT_SCALE);
-            CHECK(localMap.value(2, 0, 0).first == 3 * WEIGHT_SCALE);
-            CHECK(localMap.value(1, 0, 0).first == 3 * WEIGHT_SCALE);
+            CHECK(localMap.value(6, 0, 0).value() == 0);
+            CHECK(localMap.value(5, 0, 0).value() == 1 * MAP_RESOLUTION * 31 / 39);
+            CHECK(localMap.value(4, 0, 0).value() == 2 * MAP_RESOLUTION * 31 / 39);
+            CHECK(localMap.value(3, 0, 0).value() == 3 * MAP_RESOLUTION * 31 / 39);
+            CHECK(localMap.value(2, 0, 0).value() == 3 * MAP_RESOLUTION * 31 / 39);
+            CHECK(localMap.value(1, 0, 0).value() == 3 * MAP_RESOLUTION * 31 / 39);
 
             // Front weights
-            CHECK(localMap.value(6, 0, 0).second == 8 * WEIGHT_RESOLUTION);
-            CHECK(localMap.value(5, 0, 0).second == 8 * WEIGHT_RESOLUTION);
-            CHECK(localMap.value(4, 0, 0).second == 8 * WEIGHT_RESOLUTION);
-            CHECK(localMap.value(3, 0, 0).second == 8 * WEIGHT_RESOLUTION);
-            CHECK(localMap.value(2, 0, 0).second == 8 * WEIGHT_RESOLUTION);
-            CHECK(localMap.value(1, 0, 0).second == 8 * WEIGHT_RESOLUTION);
+            CHECK(localMap.value(6, 0, 0).weight() == 31);
+            CHECK(localMap.value(5, 0, 0).weight() == 31);
+            CHECK(localMap.value(4, 0, 0).weight() == 31);
+            CHECK(localMap.value(3, 0, 0).weight() == 31);
+            CHECK(localMap.value(2, 0, 0).weight() == 31);
+            CHECK(localMap.value(1, 0, 0).weight() == 31);
 
-            SECTION("TSDF Max Weight")
-            {
-                krnl.run(localMap, kernel_points, TAU, WEIGHT_RESOLUTION);
-                krnl.waitComplete();
+            krnl.run(localMap, kernel_points, TAU, 24);
+            krnl.waitComplete();
 
-                CHECK(localMap.value(6, 0, 0).second == WEIGHT_RESOLUTION);
-            }
+            CHECK(localMap.value(6, 0, 0).weight() == 24);
         }
     }
 
@@ -165,7 +160,7 @@ TEST_CASE("Kernel_TSDF", "[kernel][slow]")
 
         constexpr unsigned int SCALE = 1000;
         constexpr float TAU = 1 * SCALE;
-        constexpr float MAX_WEIGHT = 10 * WEIGHT_RESOLUTION;
+        constexpr float MAX_WEIGHT = WEIGHT_RESOLUTION - 1;
 
         constexpr int SIZE_X = 20 * SCALE / MAP_RESOLUTION;
         constexpr int SIZE_Y = 20 * SCALE / MAP_RESOLUTION;
@@ -212,12 +207,12 @@ TEST_CASE("Kernel_TSDF", "[kernel][slow]")
         krnl.run(local_map, kernel_points, TAU, MAX_WEIGHT);
         krnl.waitComplete();
 
-        fastsense::buffer::InputOutputBuffer<std::pair<int, int>> new_entries(q, local_map_sw.get_size().x() * local_map_sw.get_size().y() * local_map_sw.get_size().z());
+        fastsense::buffer::InputOutputBuffer<TSDFValue> new_entries(q, local_map_sw.get_size().x() * local_map_sw.get_size().y() * local_map_sw.get_size().z());
 
         for (int i = 0; i < local_map.get_size().x() * local_map.get_size().y() * local_map.get_size().z(); ++i)
         {
-            new_entries[i].first = 0;
-            new_entries[i].second = 0;
+            new_entries[i].value(0);
+            new_entries[i].weight(0);
         }
 
         auto& size = local_map_sw.get_size();
@@ -229,17 +224,17 @@ TEST_CASE("Kernel_TSDF", "[kernel][slow]")
                                       kernel_points_sw.data(),
                                       kernel_points_sw.data(),
                                       num_points,
-                                      local_map_sw.getBuffer().getVirtualAddress(),
-                                      local_map_sw.getBuffer().getVirtualAddress(),
-                                      local_map_sw.getBuffer().getVirtualAddress(),
-                                      local_map_sw.getBuffer().getVirtualAddress(),
+                                      (TSDFValueHW*)local_map_sw.getBuffer().getVirtualAddress(),
+                                      (TSDFValueHW*)local_map_sw.getBuffer().getVirtualAddress(),
+                                      (TSDFValueHW*)local_map_sw.getBuffer().getVirtualAddress(),
+                                      (TSDFValueHW*)local_map_sw.getBuffer().getVirtualAddress(),
                                       size.x(), size.y(), size.z(),
                                       pos.x(), pos.y(), pos.z(),
                                       offset.x(), offset.y(), offset.z(),
-                                      new_entries.getVirtualAddress(),
-                                      new_entries.getVirtualAddress(),
-                                      new_entries.getVirtualAddress(),
-                                      new_entries.getVirtualAddress(),
+                                      (TSDFValueHW*)new_entries.getVirtualAddress(),
+                                      (TSDFValueHW*)new_entries.getVirtualAddress(),
+                                      (TSDFValueHW*)new_entries.getVirtualAddress(),
+                                      (TSDFValueHW*)new_entries.getVirtualAddress(),
                                       TAU,
                                       MAX_WEIGHT);
 

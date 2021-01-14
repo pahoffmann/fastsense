@@ -4,17 +4,24 @@
  */
 
 #include <map/local_map_hw.h>
+#include <util/constants.h>
 
-struct IntTuple
+using ValueType = int16_t;
+using WeightType = uint16_t;
+struct TSDFValueHW
 {
-    int first;
-    int second;
+    //ap_fixed<VALUE_BITS, VALUE_BITS, AP_TRN, AP_SAT> value;
+    //ap_ufixed<WEIGHT_BITS, WEIGHT_BITS,  AP_TRN, AP_SAT> weight;
+ValueType value :
+    VALUE_BITS;
+WeightType weight :
+    WEIGHT_BITS;
 };
 
 extern "C"
 {
 
-    void krnl_local_map_test(IntTuple* mapData,
+    void krnl_local_map_test(TSDFValueHW* mapData,
                              int sizeX,
                              int sizeY,
                              int sizeZ,
@@ -51,9 +58,9 @@ extern "C"
                 for (int k = map.posZ - map.sizeZ / 2; k <= map.posZ + map.sizeZ / 2; k++)
                 {
 #pragma HLS PIPELINE
-                    IntTuple tmp = map.get(mapData, i, j, k);
-                    tmp.first *= 2;
-                    tmp.second /= 2;
+                    TSDFValueHW tmp = map.get(mapData, i, j, k);
+                    tmp.value *= 2;
+                    tmp.weight /= 2;
                     map.set(mapData, i, j, k, tmp);
                 }
             }

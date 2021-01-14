@@ -24,7 +24,7 @@ void read_points(PointHW* scanPoints,
                  int numPoints,
                  const LocalMapHW& map,
                  int tau,
-                 hls::stream<IntTuple>& value_fifo,
+                 hls::stream<TSDFValueHW>& value_fifo,
                  hls::stream<PointHW>& index_fifo,
                  hls::stream<IntTuple>& bounds_fifo)
 {
@@ -61,26 +61,30 @@ void read_points(PointHW* scanPoints,
                 continue;
             }
 
-            IntTuple value;
-            value.first = (scan_point - index.to_mm()).norm();
-            if (value.first > tau)
+            TSDFValueHW tsdf;
+            auto value = (scan_point - index.to_mm()).norm();
+            if (value > tau)
             {
-                value.first = tau;
+                tsdf.value = tau;
+            }
+            else
+            {
+                tsdf.value = value;
             }
 
             if (len > distance)
             {
-                value.first = -value.first;
+                tsdf.value = -tsdf.value;
             }
 
-            value.second = WEIGHT_RESOLUTION;
+            tsdf.weight = WEIGHT_RESOLUTION - 1;
 
-            if (value.first < -weight_epsilon)
+            if (tsdf.value < -weight_epsilon)
             {
-                value.second = WEIGHT_RESOLUTION * (tau + value.first) / (tau - weight_epsilon);
+                tsdf.weight = WEIGHT_RESOLUTION * (tau + tsdf.value) / (tau - weight_epsilon);
             }
 
-            if (value.second == 0)
+            if (tsdf.weight == 0)
             {
                 continue;
             }
@@ -98,23 +102,23 @@ void read_points(PointHW* scanPoints,
                 bounds.second = map_pos.z + map.sizeZ / 2;
             }
 
-            value_fifo << value;
+            value_fifo << tsdf;
             index_fifo << index;
             bounds_fifo << bounds;
         }
     }
-    value_fifo << IntTuple{0, 0};
+    value_fifo << TSDFValueHW{0, 0};
     index_fifo << PointHW();
     bounds_fifo << IntTuple{0, 0};
 }
 
 void update_tsdf(const LocalMapHW& map,
-                 IntTuple* new_entries,
-                 hls::stream<IntTuple>& value_fifo,
+                 TSDFValueHW* new_entries,
+                 hls::stream<TSDFValueHW>& value_fifo,
                  hls::stream<PointHW>& index_fifo,
                  hls::stream<IntTuple>& bounds_fifo)
 {
-    IntTuple value;
+    TSDFValueHW value;
     PointHW index, old_index{0, 0, 0};
     IntTuple bounds{0, 0};
     int z = 1;
@@ -133,7 +137,7 @@ void update_tsdf(const LocalMapHW& map,
             index_fifo >> index;
             bounds_fifo >> bounds;
 
-            if (value.second == 0)
+            if (value.weight == 0)
             {
                 break;
             }
@@ -143,9 +147,9 @@ void update_tsdf(const LocalMapHW& map,
         if (index.x != old_index.x || index.y != old_index.y)
         {
             int map_index = map.getIndex(index.x, index.y, z);
-            IntTuple entry = new_entries[map_index];
+            TSDFValueHW entry = new_entries[map_index];
 
-            if (entry.second == 0 || hls_abs(value.first) < hls_abs(entry.first))
+            if (entry.weight == 0 || hls_abs(value.value) < hls_abs(entry.value))
             {
                 new_entries[map_index] = value;
             }
@@ -159,10 +163,10 @@ void update_tsdf(const LocalMapHW& map,
 }
 
 void sync_loop(
-    IntTuple* mapData,
+    TSDFValueHW* mapData,
     int start,
     int end,
-    IntTuple* new_entries,
+    TSDFValueHW* new_entries,
     int max_weight)
 {
     for (int index = start; index < end; index++)
@@ -172,21 +176,21 @@ void sync_loop(
 #pragma HLS dependence variable=mapData inter false
 #pragma HLS dependence variable=new_entries inter false
 
-        IntTuple map_entry = mapData[index];
-        IntTuple new_entry = new_entries[index];
+        TSDFValueHW map_entry = mapData[index];
+        TSDFValueHW new_entry = new_entries[index];
 
-        int new_weight = map_entry.second + new_entry.second;
+        auto new_weight = map_entry.weight + new_entry.weight;
 
         if (new_weight)
         {
-            map_entry.first = (map_entry.first * map_entry.second + new_entry.first * new_entry.second) / new_weight;
+            map_entry.value = (map_entry.value * map_entry.weight + new_entry.value * new_entry.weight) / new_weight;
 
             if (new_weight > max_weight)
             {
                 new_weight = max_weight;
             }
 
-            map_entry.second = new_weight;
+            map_entry.weight = new_weight;
 
             mapData[index] = map_entry;
         }
@@ -199,16 +203,16 @@ void tsdf_dataflower(PointHW* scanPoints0,
                      PointHW* scanPoints3,
                      int step,
                      int last_step,
-                     IntTuple* new_entries0,
-                     IntTuple* new_entries1,
-                     IntTuple* new_entries2,
-                     IntTuple* new_entries3,
+                     TSDFValueHW* new_entries0,
+                     TSDFValueHW* new_entries1,
+                     TSDFValueHW* new_entries2,
+                     TSDFValueHW* new_entries3,
                      const LocalMapHW& map,
                      int tau)
 {
 #pragma HLS dataflow
 
-    hls::stream<IntTuple> value_fifo0;
+    hls::stream<TSDFValueHW> value_fifo0;
     hls::stream<PointHW> index_fifo0;
     hls::stream<IntTuple> bounds_fifo0;
 #pragma HLS stream depth=16 variable=value_fifo0
@@ -226,7 +230,7 @@ void tsdf_dataflower(PointHW* scanPoints0,
                 index_fifo0,
                 bounds_fifo0);
 
-    hls::stream<IntTuple> value_fifo1;
+    hls::stream<TSDFValueHW> value_fifo1;
     hls::stream<PointHW> index_fifo1;
     hls::stream<IntTuple> bounds_fifo1;
 #pragma HLS stream depth=16 variable=value_fifo1
@@ -244,7 +248,7 @@ void tsdf_dataflower(PointHW* scanPoints0,
                 index_fifo1,
                 bounds_fifo1);
 
-    hls::stream<IntTuple> value_fifo2;
+    hls::stream<TSDFValueHW> value_fifo2;
     hls::stream<PointHW> index_fifo2;
     hls::stream<IntTuple> bounds_fifo2;
 #pragma HLS stream depth=16 variable=value_fifo2
@@ -262,7 +266,7 @@ void tsdf_dataflower(PointHW* scanPoints0,
                 index_fifo2,
                 bounds_fifo2);
 
-    hls::stream<IntTuple> value_fifo3;
+    hls::stream<TSDFValueHW> value_fifo3;
     hls::stream<PointHW> index_fifo3;
     hls::stream<IntTuple> bounds_fifo3;
 #pragma HLS stream depth=16 variable=value_fifo3
@@ -281,18 +285,18 @@ void tsdf_dataflower(PointHW* scanPoints0,
                 bounds_fifo3);
 }
 
-void sync_looper(IntTuple* mapData0,
-                 IntTuple* mapData1,
-                 IntTuple* mapData2,
-                 IntTuple* mapData3,
+void sync_looper(TSDFValueHW* mapData0,
+                 TSDFValueHW* mapData1,
+                 TSDFValueHW* mapData2,
+                 TSDFValueHW* mapData3,
                  int end0,
                  int end1,
                  int end2,
                  int end3,
-                 IntTuple* new_entries0,
-                 IntTuple* new_entries1,
-                 IntTuple* new_entries2,
-                 IntTuple* new_entries3,
+                 TSDFValueHW* new_entries0,
+                 TSDFValueHW* new_entries1,
+                 TSDFValueHW* new_entries2,
+                 TSDFValueHW* new_entries3,
                  int max_weight)
 {
 #pragma HLS dataflow
@@ -329,17 +333,17 @@ void krnl_tsdf_sw(PointHW* scanPoints0,
                PointHW* scanPoints2,
                PointHW* scanPoints3,
                int numPoints,
-               IntTuple* mapData0,
-               IntTuple* mapData1,
-               IntTuple* mapData2,
-               IntTuple* mapData3,
+                  TSDFValueHW* mapData0,
+                  TSDFValueHW* mapData1,
+                  TSDFValueHW* mapData2,
+                  TSDFValueHW* mapData3,
                int sizeX,   int sizeY,   int sizeZ,
                int posX,    int posY,    int posZ,
                int offsetX, int offsetY, int offsetZ,
-               IntTuple* new_entries0,
-               IntTuple* new_entries1,
-               IntTuple* new_entries2,
-               IntTuple* new_entries3,
+                  TSDFValueHW* new_entries0,
+                  TSDFValueHW* new_entries1,
+                  TSDFValueHW* new_entries2,
+                  TSDFValueHW* new_entries3,
                int tau,
                int max_weight)
 {

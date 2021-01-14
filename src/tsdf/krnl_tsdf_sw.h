@@ -14,6 +14,18 @@
 namespace fastsense::tsdf
 {
 
+using ValueType = int16_t;
+using WeightType = uint16_t;
+struct TSDFValueHW
+{
+    //ap_fixed<VALUE_BITS, VALUE_BITS, AP_TRN, AP_SAT> value;
+    //ap_ufixed<WEIGHT_BITS, WEIGHT_BITS,  AP_TRN, AP_SAT> weight;
+ValueType value :
+    VALUE_BITS;
+WeightType weight :
+    WEIGHT_BITS;
+};
+
 /**
  * @brief Software equivalent of the kernel TSDF function
  */
@@ -22,17 +34,17 @@ void krnl_tsdf_sw(PointHW* scanPoints0,
                   PointHW* scanPoints2,
                   PointHW* scanPoints3,
                   int numPoints,
-                  std::pair<int, int>* mapData0,
-                  std::pair<int, int>* mapData1,
-                  std::pair<int, int>* mapData2,
-                  std::pair<int, int>* mapData3,
+                  TSDFValueHW* mapData0,
+                  TSDFValueHW* mapData1,
+                  TSDFValueHW* mapData2,
+                  TSDFValueHW* mapData3,
                   int sizeX,   int sizeY,   int sizeZ,
                   int posX,    int posY,    int posZ,
                   int offsetX, int offsetY, int offsetZ,
-                  std::pair<int, int>* new_entries0,
-                  std::pair<int, int>* new_entries1,
-                  std::pair<int, int>* new_entries2,
-                  std::pair<int, int>* new_entries3,
+                  TSDFValueHW* new_entries0,
+                  TSDFValueHW* new_entries1,
+                  TSDFValueHW* new_entries2,
+                  TSDFValueHW* new_entries3,
                   int tau,
                   int max_weight);
 
