@@ -39,6 +39,12 @@ int main(int argc, char** argv)
     
     ROS_INFO_STREAM("from_trenz bridge started");
 
+    ros::Rate rate(1.0);
+    while(ros::ok())
+    {
+        rate.sleep();
+    }
+
     tsdf_bridge.stop();
     imu_bridge.stop();
     velodyne_bridge.stop();
