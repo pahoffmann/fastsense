@@ -5,11 +5,7 @@
 
 #include <map/local_map_hw.h>
 
-struct IntTuple
-{
-    int first;
-    int second;
-};
+using fastsense::map::IntTuple;
 
 extern "C"
 {

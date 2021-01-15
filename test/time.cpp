@@ -53,6 +53,19 @@ TEST_CASE("Time", "[Time]")
 
     std::cout << re << std::endl;
 
+    int test_1_duration = 21 * 1000;
+    int test_1_sum = test_1_duration * 10;
+
+    int test_2_min = 1 * 1000;
+    int test_2_max = 10 * 1000;
+    int test_2_sum = (10 * 11 / 2) * 1000;
+    int test_2_last = test_2_max;
+
+    int total_min = test_1_duration + test_2_min;
+    int total_max = test_1_duration + test_2_max;
+    int total_sum = test_1_sum + test_2_sum;
+    int total_last = test_1_duration + test_2_last;
+
     // Check results
     auto forms = re.get_forms();
     for (const auto& ef : forms)
@@ -61,53 +74,40 @@ TEST_CASE("Time", "[Time]")
         {
             CHECK(!ef.active);
             CHECK(ef.count == 1);
-            // 10 * 21 + \sum_{i = 1}^{10} i = 10 * 21 + 10 * 11 / 2 = 210 + 55 = 265
-            check_time(ef.last, 256000);
-            check_time(ef.sum, 256000);
-            check_time(ef.min, 256000);
-            check_time(ef.max, 256000);
-            CHECK(ef.min <= ef.max);
+            check_time(ef.last, total_sum);
+            check_time(ef.sum, total_sum);
+            check_time(ef.min, total_sum);
+            // max is not calculated the first time
+            check_time(ef.max, 0);
         }
         else if (ef.name == "inner total")
         {
             CHECK(!ef.active);
             CHECK(ef.count == 10);
-            // 21 + 10 = 31
-            check_time(ef.last, 31000);
-            // 10 * 21 + \sum_{i = 1}^{10} i = 10 * 21 + 10 * 11 / 2 = 210 + 55 = 265
-            check_time(ef.sum, 256000);
-            // 21 + 1 = 22
-            check_time(ef.min, 22000);
-            // 21 + 10 = 31
-            check_time(ef.max, 31000);
+            check_time(ef.last, total_last);
+            check_time(ef.sum, total_sum);
+            check_time(ef.min, total_min);
+            check_time(ef.max, total_max);
             CHECK(ef.min <= ef.max);
         }
         else if (ef.name == "test 1")
         {
             CHECK(!ef.active);
             CHECK(ef.count == 10);
-            // 21
-            check_time(ef.last, 21000);
-            // 10 * 21 = 210
-            check_time(ef.sum, 210000);
-            // 21
-            check_time(ef.min, 21000);
-            // 21
-            check_time(ef.max, 21000);
+            check_time(ef.last, test_1_duration);
+            check_time(ef.sum, test_1_sum);
+            check_time(ef.min, test_1_duration);
+            check_time(ef.max, test_1_duration);
             CHECK(ef.min <= ef.max);
         }
         else if (ef.name == "test 2")
         {
             CHECK(!ef.active);
             CHECK(ef.count == 10);
-            // 10
-            check_time(ef.last, 10000);
-            // \sum_{i = 1}^{10} i = 10 * 11 / 2 = 55
-            check_time(ef.sum, 55000);
-            // 1
-            check_time(ef.min, 1000);
-            // 10
-            check_time(ef.max, 10000);
+            check_time(ef.last, test_2_last);
+            check_time(ef.sum, test_2_sum);
+            check_time(ef.min, test_2_min);
+            check_time(ef.max, test_2_max);
             CHECK(ef.min <= ef.max);
         }
         else if (ef.name == "unstopped")
