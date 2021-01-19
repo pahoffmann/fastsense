@@ -9,6 +9,7 @@
 #include <map/local_map.h>
 #include <util/point_hw.h>
 #include <util/logging/logger.h>
+#include <util/filter.h>
 
 namespace fastsense::kernels
 {
@@ -70,10 +71,15 @@ public:
             }
         }
 
+        static util::SlidingWindowFilter<float> filter(100);
+        static int iter_count = 0;
+
         int i = out_transform[16];
-        if (i + 1 < max_iterations)
+        filter.update(i);
+        iter_count++;
+        if (iter_count > 100 && iter_count % 20 == 0)
         {
-            fastsense::util::logging::Logger::info("Stopped after ", i + 1, " / ", max_iterations, " Iterations");
+            fastsense::util::logging::Logger::info("Average Iterations: ", (int)filter.get_mean(), " / ", max_iterations);
         }
     }
 

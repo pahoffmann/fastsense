@@ -6,10 +6,12 @@
  */
 
 #include <vector> // for the vector of measurement variables
-#include <util/time.h> // for time
 #include <memory> // for singleton pointer
 #include <exception> // for custom exception
 #include <limits> // for maximum value
+
+#include "time.h"
+#include "filter.h"
 
 /**
  * Define this token to enable time measurements in the whole project.
@@ -36,7 +38,8 @@ struct EvaluationFormular
      */
     EvaluationFormular(const std::string& name) :
         name(name), active(false), accumulate(0),
-        count(0), last(0), sum(0), min(std::numeric_limits<unsigned long long>::max()), max(0) {}
+        count(0), last(0), sum(0), min(std::numeric_limits<unsigned long long>::max()), max(0),
+        filter(100) {}
     /// Name of the task that is used as an identifier for the measurement variables
     std::string name;
     /// Flag that indicates whether the task is currently being measured (i.e. it is between start and stop)
@@ -54,6 +57,8 @@ struct EvaluationFormular
     unsigned long long min;
     /// Maximum of all measured runtimes
     unsigned long long max;
+    /// Gives an Average of the last 100 measurements
+    SlidingWindowFilter<double> filter;
 };
 
 /**

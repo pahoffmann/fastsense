@@ -11,15 +11,24 @@
 
 using namespace fastsense::bridge;
 
-TransformBridge::TransformBridge(const std::string& board_addr)
-    :   BridgeBase{board_addr},
+TransformBridge::TransformBridge(ros::NodeHandle& n, const std::string& board_addr)
+    :   BridgeBase{n, "pose", board_addr},
         ProcessThread{},
         broadcaster{},
         broadcaster_thread{},
         mtx{},
-        transform_data{}
+        transform_data{},
+        first_smg{true},
+        pose_path{},
+        pose_stamped()
 {
     transform_data.transform.rotation.w = 1.0;
+
+    // set unchanging frames
+    pose_path.header.frame_id = "map";
+    pose_stamped.header.frame_id = "map";
+    transform_data.header.frame_id = "map";
+    transform_data.child_frame_id = "base_link";
 }
 
 void TransformBridge::start()
@@ -55,7 +64,7 @@ void TransformBridge::run()
         }
         catch(const std::exception& e)
         {
-            std::cerr << "VELO " << e.what() << '\n';
+            std::cerr << "transform bridge error: " << e.what() << '\n';
         }
     }
 }
@@ -63,6 +72,17 @@ void TransformBridge::run()
 void TransformBridge::convert()
 {
     std::lock_guard guard(mtx);
+
+    auto timestamp = timestamp_to_rostime(msg_.timestamp_);
+
+    // set pose_path header (once and only)
+    if (first_smg)
+    {
+        first_smg = false;
+        pose_path.header.stamp = timestamp;
+    }
+
+    transform_data.header.stamp = timestamp;
     transform_data.transform.rotation.x = msg_.data_.rotation.x();
     transform_data.transform.rotation.y = msg_.data_.rotation.y();
     transform_data.transform.rotation.z = msg_.data_.rotation.z();
@@ -70,17 +90,25 @@ void TransformBridge::convert()
     transform_data.transform.translation.x = msg_.data_.translation.x() * 0.001;
     transform_data.transform.translation.y = msg_.data_.translation.y() * 0.001;
     transform_data.transform.translation.z = msg_.data_.translation.z() * 0.001;
+
+    pose_stamped.header.stamp = timestamp;
+    pose_stamped.pose.orientation.x = msg_.data_.rotation.x();
+    pose_stamped.pose.orientation.y = msg_.data_.rotation.y();
+    pose_stamped.pose.orientation.z = msg_.data_.rotation.z();
+    pose_stamped.pose.orientation.w = msg_.data_.rotation.w();
+    pose_stamped.pose.position.x = msg_.data_.translation.x() * 0.001;
+    pose_stamped.pose.position.y = msg_.data_.translation.y() * 0.001;
+    pose_stamped.pose.position.z = msg_.data_.translation.z() * 0.001;
 }
 
 void TransformBridge::publish()
 {
     std::lock_guard guard(mtx);
-    transform_data.header.stamp = timestamp_to_rostime(msg_.timestamp_);
-    transform_data.header.frame_id = "map";
-    transform_data.child_frame_id = "base_link";
 
     broadcaster.sendTransform(transform_data);    
-    ROS_INFO_STREAM("Transform published\n");
+
+    pose_path.poses.push_back(pose_stamped);
+    pub().publish(pose_path);
 }
 
 void TransformBridge::broadcast()

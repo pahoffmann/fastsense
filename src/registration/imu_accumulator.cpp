@@ -53,5 +53,6 @@ void ImuAccumulator::apply_transform(Matrix4f& acc_transform, const msg::ImuStam
                     * Eigen::AngleAxisf(orientation.y(), Vector3f::UnitY())
                     * Eigen::AngleAxisf(orientation.z(), Vector3f::UnitZ());
 
-    acc_transform.block<3, 3>(0, 0) = rotation.toRotationMatrix() * acc_transform.block<3, 3>(0, 0); //combine/update transforms
+    Eigen::Matrix3f total = rotation.toRotationMatrix() * acc_transform.block<3, 3>(0, 0);
+    acc_transform.block<3, 3>(0, 0) = total; //combine/update transforms
 }

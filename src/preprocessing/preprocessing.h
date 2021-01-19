@@ -17,7 +17,7 @@ namespace fastsense::preprocessing
 class Preprocessing
 {
 public:
-    void preprocess_scan(const fastsense::msg::PointCloudPtrStamped& cloud, fastsense::buffer::InputBuffer<PointHW>& scan_points, const Matrix4f& pose);
+    void preprocess_scan(const fastsense::msg::PointCloudPtrStamped& cloud, fastsense::buffer::InputBuffer<PointHW>& scan_points);
 
     void reduction_filter(fastsense::msg::PointCloudPtrStamped& cloud);
 

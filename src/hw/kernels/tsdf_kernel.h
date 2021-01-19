@@ -13,11 +13,7 @@
 
 #include <iostream>
 
-struct IntTuple
-{
-    int first = 0;
-    int second = 0;
-};
+using fastsense::map::IntTuple;
 
 namespace fastsense::kernels
 {
