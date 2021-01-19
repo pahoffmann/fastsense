@@ -34,9 +34,11 @@ extern "C"
                      int numPoints,
                      const LocalMapHW& map,
                      int tau,
+                     const PointHW& up,
                      hls::stream<IntTuple>& value_fifo,
                      hls::stream<PointHW>& index_fifo,
-                     hls::stream<IntTuple>& bounds_fifo)
+                     hls::stream<std::pair<PointHW, PointHW>>& bounds_fifo,
+                     hls::stream<IntTuple>& iter_steps_fifo)
     {
         PointHW map_pos{map.posX, map.posY, map.posZ};
 
@@ -98,39 +100,51 @@ extern "C"
                 }
 
                 int delta_z = dz_per_distance * len / MATRIX_RESOLUTION;
-                IntTuple bounds;
-                bounds.first = (proj.z - delta_z) / MAP_RESOLUTION;
-                bounds.second = (proj.z + delta_z) / MAP_RESOLUTION;
-                if (bounds.first < map_pos.z - map.sizeZ / 2)
-                {
-                    bounds.first = map_pos.z - map.sizeZ / 2;
-                }
-                if (bounds.second > map_pos.z + map.sizeZ / 2)
-                {
-                    bounds.second = map_pos.z + map.sizeZ / 2;
-                }
+                std::pair<PointHW, PointHW> bounds;
+                IntTuple iter_steps;
+
+                iter_steps.first = (delta_z * 2) / MAP_RESOLUTION + 1;
+                iter_steps.second = delta_z / MAP_RESOLUTION;
+                
+                // bounds.first = (proj.z - delta_z) / MAP_RESOLUTION;
+                // bounds.second = (proj.z + delta_z) / MAP_RESOLUTION;
+                // if (bounds.first < map_pos.z - map.sizeZ / 2)
+                // {
+                //     bounds.first = map_pos.z - map.sizeZ / 2;
+                // }
+                // if (bounds.second > map_pos.z + map.sizeZ / 2)
+                // {
+                //     bounds.second = map_pos.z + map.sizeZ / 2;
+                // }
+
+                bounds.first = (proj - (up * delta_z) / MATRIX_RESOLUTION) / MAP_RESOLUTION;
+                bounds.second = (proj + (up * delta_z) / MATRIX_RESOLUTION) / MAP_RESOLUTION;
 
                 value_fifo << value;
                 index_fifo << index;
                 bounds_fifo << bounds;
+                iter_steps_fifo << iter_steps;
             }
         }
         value_fifo << IntTuple{0, 0};
         index_fifo << PointHW();
-        bounds_fifo << IntTuple{0, 0};
+        bounds_fifo << std::pair<PointHW, PointHW>{PointHW(), PointHW()};
     }
 
     void update_tsdf(const LocalMapHW& map,
                      IntTuple* new_entries,
+                     const PointHW& up,
                      hls::stream<IntTuple>& value_fifo,
                      hls::stream<PointHW>& index_fifo,
-                     hls::stream<IntTuple>& bounds_fifo)
+                     hls::stream<std::pair<PointHW, PointHW>>& bounds_fifo,
+                     hls::stream<IntTuple>& iter_steps_fifo)
     {
         IntTuple value;
         PointHW index, old_index{0, 0, 0};
-        IntTuple bounds{0, 0};
-        int z = 1;
-        int mid = 1;
+        std::pair<PointHW, PointHW> bounds{PointHW(), PointHW()};
+        IntTuple iter_steps{0, 0};
+        //PointHW z;
+        int step = 1;
 
     update_loop:
         while (true)
@@ -139,32 +153,36 @@ extern "C"
 #pragma HLS pipeline II=1
 #pragma HLS dependence variable=new_entries inter false
 
-            if (z > bounds.second)
+            if (step > iter_steps.first)
             {
                 old_index = index;
 
                 value_fifo >> value;
                 index_fifo >> index;
                 bounds_fifo >> bounds;
+                iter_steps_fifo >> iter_steps;
 
                 if (value.second == 0)
                 {
                     break;
                 }
                 
-                z = bounds.first;
-                mid = (bounds.second + bounds.first) / 2;
+                //z = bounds.first;
+                step = 0;
+                //mid = (bounds.second + bounds.first) / 2;
             }
 
             if (index.x != old_index.x || index.y != old_index.y)
             {
-                int map_index = map.getIndex(index.x, index.y, z);
+                index = bounds.first + ((up * step) / MATRIX_RESOLUTION);
+
+                int map_index = map.getIndex(index.x, index.y, index.z);
                 IntTuple entry = new_entries[map_index];
                 IntTuple tmp_value = value;
 
                 if (entry.second == 0 || hls_abs(value.first) < hls_abs(entry.first))
                 {
-                    if (z == mid)
+                    if (step != iter_steps.second)
                     {
                         tmp_value.second *= -1;
                     }
@@ -172,11 +190,11 @@ extern "C"
                     new_entries[map_index] = tmp_value;
                 }
 
-                z++;
+                step++;
             }
             else
             {
-                z = bounds.second + 1;
+                step = iter_steps.first + 1;
             }
         }
     }
@@ -185,28 +203,36 @@ extern "C"
                        int numPoints,
                        const LocalMapHW& map,
                        IntTuple* new_entries,
-                       int tau)
+                       int tau,
+                       const PointHW& up)
     {
 #pragma HLS dataflow
         hls::stream<IntTuple> value_fifo;
         hls::stream<PointHW> index_fifo;
-        hls::stream<IntTuple> bounds_fifo;
+        //hls::stream<IntTuple> bounds_fifo;
+        hls::stream<std::pair<PointHW, PointHW>> bounds_fifo;
+        hls::stream<IntTuple> iter_steps_fifo;
 #pragma HLS stream depth=16 variable=value_fifo
 #pragma HLS stream depth=16 variable=index_fifo
 #pragma HLS stream depth=16 variable=bounds_fifo
+#pragma HLS stream depth=16 variable=iter_steps_fifo
 
         read_points(scanPoints, numPoints,
                     map,
                     tau,
+                    up,
                     value_fifo,
                     index_fifo,
-                    bounds_fifo);
+                    bounds_fifo,
+                    iter_steps_fifo);
 
         update_tsdf(map,
                     new_entries,
+                    up,
                     value_fifo,
                     index_fifo,
-                    bounds_fifo);
+                    bounds_fifo,
+                    iter_steps_fifo);
     }
 
     void sync_loop(
@@ -256,15 +282,16 @@ extern "C"
                          IntTuple* new_entries0,
                          IntTuple* new_entries1,
                          const LocalMapHW& map,
-                         int tau)
+                         int tau,
+                         const PointHW& up)
     {
 #pragma HLS dataflow
 
         tsdf_dataflow(scanPoints0 + 0 * step, step,
-                      map, new_entries0, tau);
+                      map, new_entries0, tau, up);
 
         tsdf_dataflow(scanPoints1 + 1 * step, last_step,
-                      map, new_entries1, tau);
+                      map, new_entries1, tau, up);
     }
 
     void sync_looper(IntTuple* mapData0,
@@ -336,7 +363,8 @@ extern "C"
                         new_entries0,
                         new_entries1,
                         map,
-                        tau);
+                        tau,
+                        up);
 
 
         int total_size = sizeX * sizeY * sizeZ;
