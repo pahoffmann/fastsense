@@ -30,55 +30,10 @@ constexpr char MESH_TOPIC[] = "reconstructed_mesh";
  * Truncation or maximum distance of tsdf values.
  * This value is used to rescale the tsdf values that are stored as color values.
  */ 
-constexpr int TAU = 800; // Taken from int slam parameters
+constexpr int TAU = 600;
 
 /// ROS publisher that publishes the meshes
 ros::Publisher pub;
-
-mesh_msgs::MeshGeometryStamped test_mesh()
-{
-    geometry_msgs::Point v0;
-    v0.x = 10;
-    v0.y = 10;
-    v0.z = 10;
-    geometry_msgs::Point v1;
-    v1.x = 10;
-    v1.y = 0;
-    v1.z = 0;
-    geometry_msgs::Point v2;
-    v2.x = 0;
-    v2.y = 10;
-    v2.z = 0;
-    geometry_msgs::Point v3;
-    v3.x = 0;
-    v3.y = 0;
-    v3.z = 10;
-    std::vector<geometry_msgs::Point> vertices{v0, v1, v2, v3};
-
-    mesh_msgs::TriangleIndices f0;
-    f0.vertex_indices = boost::array<int, 3>{0, 1, 2};
-    mesh_msgs::TriangleIndices f1;
-    f1.vertex_indices = boost::array<int, 3>{0, 2, 3};
-    mesh_msgs::TriangleIndices f2;
-    f2.vertex_indices = boost::array<int, 3>{0, 3, 1};
-    mesh_msgs::TriangleIndices f3;
-    f3.vertex_indices = boost::array<int, 3>{1, 3, 2};
-    std::vector<mesh_msgs::TriangleIndices> faces{f0, f1, f2, f3};
-
-    mesh_msgs::MeshGeometry mesh;
-    mesh.vertices = vertices;
-    mesh.faces = faces;
-
-    std_msgs::Header header;
-    header.stamp = ros::Time::now();
-    header.frame_id = "map";
-
-    mesh_msgs::MeshGeometryStamped msg;
-    msg.header = header;
-    msg.uuid = "";
-    msg.mesh_geometry = mesh;
-    return msg;
-}
 
 /**
  * Callback function of the ROS subscriber that subscribes to the markers.
