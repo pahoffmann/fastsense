@@ -9,7 +9,7 @@
  * The visualization of the mesh in rviz can give clearer information than the raw tsdf values.
  */
 
-//#include <prototyping/int_slam/types.h>
+#include <util/constants.h>
 #include <ros/ros.h>
 #include <visualization_msgs/Marker.h>
 #include <mesh_msgs/MeshGeometryStamped.h>
@@ -21,9 +21,6 @@
 #include <lvr2/reconstruction/FastBox.hpp>
 #include <lvr2/reconstruction/FastReconstruction.hpp>
 #include <lvr2/geometry/HalfEdgeMesh.hpp>
-
-constexpr int MAP_SHIFT = 6;                            // bitshift for a faster way to apply MAP_RESOLUTION
-constexpr int MAP_RESOLUTION = 1 << MAP_SHIFT;  
 
 /// Marker topic that the node subscribes to
 constexpr char MARKER_TOPIC[] = "from_trenz/tsdf";
@@ -179,8 +176,6 @@ void callback(const visualization_msgs::Marker& marker)
     mesh_geometry_stamped.uuid = "";
     mesh_geometry_stamped.mesh_geometry = mesh_geometry;
     pub.publish(mesh_geometry_stamped);
-    //pub.publish(test_mesh());
-    std::cout << "TEST" << std::endl;
 
     std::cout << "Publish reconstructed mesh" << std::endl;
 }
