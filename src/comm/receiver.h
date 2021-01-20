@@ -66,6 +66,18 @@ public:
     virtual ~Receiver() = default;
 
     /**
+     * @brief Performs poll on socket
+     * 
+     * @return true if successfully polled
+     * @return false if poll took longer than timeout
+     */
+    bool poll_successful()
+    {
+        zmq::poll(pollitems_.data(), 1, timeout_);
+        return pollitems_[0].revents & ZMQ_POLLIN;
+    }
+
+    /**
      * @brief Receive a message of static size, by reference
      *
      * @tparam TT type used to compile only if T DOES NOT inherit from msg::ZMQConverter (therefore members of dynamic size)
@@ -75,11 +87,9 @@ public:
     template < typename TT = T, std::enable_if_t < !std::is_base_of_v<msg::ZMQConverter, TT>, int > = 0 >
     bool receive(T& target, zmq::recv_flags flags = zmq::recv_flags::none)
     {
-        zmq::message_t msg;
-        zmq::poll(pollitems_.data(), 1, timeout_);
-        
-        if (pollitems_[0].revents & ZMQ_POLLIN)
+        if (poll_successful())
         {
+            zmq::message_t msg;
             socket_.recv(msg, flags);
             target = *static_cast<T*>(msg.data());
             return true;
@@ -97,10 +107,9 @@ public:
     template <typename TT = T, std::enable_if_t<std::is_base_of_v<msg::ZMQConverter, TT>, int> = 0>
     bool receive(T& target)
     {
-        zmq::multipart_t multi;
-        zmq::poll(pollitems_.data(), 1, timeout_);
-        if (pollitems_[0].revents & ZMQ_POLLIN)
+        if (poll_successful())
         {
+            zmq::multipart_t multi;
             multi.recv(socket_);
             target.from_zmq_msg(multi);
             return true;
