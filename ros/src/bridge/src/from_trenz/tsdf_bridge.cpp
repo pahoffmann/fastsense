@@ -46,7 +46,7 @@ bool TSDFBridge::in_bounds(int x, int y, int z)
     return abs(x - msg().pos_[0] <= msg().size_[0] / 2 && abs(y - msg().pos_[1]) <= msg().size_[1] / 2 && abs(z - msg().pos_[2]) <= msg().size_[2] / 2);
 }
 
-std::pair<int, int> TSDFBridge::get_tsdf_value(int x, int y, int z)
+TSDFValue TSDFBridge::get_tsdf_value(int x, int y, int z)
 {
     if (!in_bounds(x, y, z))
     {
@@ -91,7 +91,7 @@ void TSDFBridge::convert()
                 for (int z = left[2]; z <= right[2]; z++)
                 {
                     auto val = get_tsdf_value(x, y, z);
-                    if (val.second == 0 || fabsf(val.first) >= msg().tau_)
+                    if (val.weight() == 0 || fabsf(val.value()) >= msg().tau_)
                     {
                         continue;
                     }
@@ -101,16 +101,16 @@ void TSDFBridge::convert()
                     point.y = y * MAP_RESOLUTION * 0.001;
                     point.z = z * MAP_RESOLUTION * 0.001;
 
-                    // color.a = std::min(val.second, 1.0f);
-                    if (val.first >= 0)
+                    // color.a = std::min(val.weight(), 1.0f);
+                    if (val.value() >= 0)
                     {
-                        color.r = val.first / msg().tau_;
+                        color.r = val.value() / msg().tau_;
                         color.g = 0;
                     }
                     else
                     {
                         color.r = 0;
-                        color.g = -val.first / msg().tau_;
+                        color.g = -val.value() / msg().tau_;
                     }
 
                     result.push_back(std::make_pair(point, color));

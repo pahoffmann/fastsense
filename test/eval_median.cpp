@@ -35,7 +35,7 @@ constexpr float TZ = 0.0 * SCALE;
 constexpr float RY = 5 * (M_PI / 180); //radiants
 
 constexpr float TAU = 1 * SCALE;
-constexpr float MAX_WEIGHT = 10 * WEIGHT_RESOLUTION;
+constexpr float MAX_WEIGHT = 10;// * WEIGHT_RESOLUTION;
 
 constexpr int MAX_ITERATIONS = 200;
 

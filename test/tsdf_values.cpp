@@ -40,46 +40,46 @@ TEST_CASE("TSDF_Values", "[tsdf_values]")
         ScanPoints_t points(1);
         points[0] = Vector3i(6, 0, 0) * SCALE + Vector3i::Constant(MAP_RESOLUTION / 2);
 
-        update_tsdf(points, scanner_pos, localMap, TAU, 100);
+        update_tsdf(points, scanner_pos, localMap, TAU, 31);
 
         // Front values
-        CHECK(localMap.value(6, 0, 0).first == 0);
-        CHECK(localMap.value(5, 0, 0).first == 1 * SCALE);
-        CHECK(localMap.value(4, 0, 0).first == 2 * SCALE);
-        CHECK(localMap.value(3, 0, 0).first == TAU);
-        CHECK(localMap.value(2, 0, 0).first == TAU);
-        CHECK(localMap.value(1, 0, 0).first == TAU);
+        CHECK(localMap.value(6, 0, 0).value() == 0);
+        CHECK(localMap.value(5, 0, 0).value() == 1 * SCALE);
+        CHECK(localMap.value(4, 0, 0).value() == 2 * SCALE);
+        CHECK(localMap.value(3, 0, 0).value() == TAU);
+        CHECK(localMap.value(2, 0, 0).value() == TAU);
+        CHECK(localMap.value(1, 0, 0).value() == TAU);
 
         // Front weights
-        CHECK(localMap.value(6, 0, 0).second == 1 * WEIGHT_RESOLUTION);
-        CHECK(localMap.value(5, 0, 0).second == 1 * WEIGHT_RESOLUTION);
-        CHECK(localMap.value(4, 0, 0).second == 1 * WEIGHT_RESOLUTION);
-        CHECK(localMap.value(3, 0, 0).second == 1 * WEIGHT_RESOLUTION);
-        CHECK(localMap.value(2, 0, 0).second == 1 * WEIGHT_RESOLUTION);
-        CHECK(localMap.value(1, 0, 0).second == 1 * WEIGHT_RESOLUTION);
+        CHECK(localMap.value(6, 0, 0).weight() == 31);
+        CHECK(localMap.value(5, 0, 0).weight() == 31);
+        CHECK(localMap.value(4, 0, 0).weight() == 31);
+        CHECK(localMap.value(3, 0, 0).weight() == 31);
+        CHECK(localMap.value(2, 0, 0).weight() == 31);
+        CHECK(localMap.value(1, 0, 0).weight() == 31);
 
         // back values
-        CHECK(localMap.value( 7, 0, 0).first == -1 * SCALE);
-        CHECK(localMap.value( 8, 0, 0).first == -2 * SCALE);
-        CHECK(localMap.value( 9, 0, 0).first ==  0 * SCALE);
-        CHECK(localMap.value(10, 0, 0).first ==  0 * SCALE);
-        CHECK(localMap.value(11, 0, 0).first ==  0 * SCALE);
-        CHECK(localMap.value(12, 0, 0).first ==  0 * SCALE);
+        CHECK(localMap.value( 7, 0, 0).value() == -1 * SCALE);
+        CHECK(localMap.value( 8, 0, 0).value() == -2 * SCALE);
+        CHECK(localMap.value( 9, 0, 0).value() ==  0 * SCALE);
+        CHECK(localMap.value(10, 0, 0).value() ==  0 * SCALE);
+        CHECK(localMap.value(11, 0, 0).value() ==  0 * SCALE);
+        CHECK(localMap.value(12, 0, 0).value() ==  0 * SCALE);
 
         // back weights
-        CHECK((localMap.value( 7, 0, 0).second < 1 * WEIGHT_RESOLUTION && localMap.value( 7, 0, 0).second > 0));
-        CHECK((localMap.value( 8, 0, 0).second < 1 * WEIGHT_RESOLUTION && localMap.value( 8, 0, 0).second > 0));
-        CHECK(localMap.value( 9, 0, 0).second == 0);
-        CHECK(localMap.value(10, 0, 0).second == 0);
-        CHECK(localMap.value(11, 0, 0).second == 0);
-        CHECK(localMap.value(12, 0, 0).second == 0);
+        CHECK(localMap.value( 7, 0, 0).weight() < 31);
+        CHECK(localMap.value( 8, 0, 0).weight() < 31);
+        CHECK(localMap.value( 9, 0, 0).weight() == 0);
+        CHECK(localMap.value(10, 0, 0).weight() == 0);
+        CHECK(localMap.value(11, 0, 0).weight() == 0);
+        CHECK(localMap.value(12, 0, 0).weight() == 0);
     }
 
     SECTION("TSDF Update")
     {
         std::cout << "    Section 'TSDF Update'" << std::endl;
 
-        std::shared_ptr<GlobalMap> gm_ptr = std::make_shared<GlobalMap>("MapTest.h5", 0, 7 * WEIGHT_RESOLUTION);
+        std::shared_ptr<GlobalMap> gm_ptr = std::make_shared<GlobalMap>("MapTest.h5", 0, 8);
         auto commandQueue = FPGAManager::create_command_queue();
         LocalMap localMap{SIZE_X, SIZE_Y, SIZE_Z, gm_ptr, commandQueue};
 
@@ -88,28 +88,25 @@ TEST_CASE("TSDF_Values", "[tsdf_values]")
         ScanPoints_t points(1);
         points[0] = Vector3i(6, 0, 0) * SCALE + Vector3i::Constant(MAP_RESOLUTION / 2);
 
-        update_tsdf(points, scanner_pos, localMap, TAU, 100 * WEIGHT_RESOLUTION);
+        update_tsdf(points, scanner_pos, localMap, TAU, 31);
 
         // Front values
-        CHECK(localMap.value(6, 0, 0).first == 0);
-        CHECK(localMap.value(5, 0, 0).first == 1 * WEIGHT_SCALE);
-        CHECK(localMap.value(4, 0, 0).first == 2 * WEIGHT_SCALE);
-        CHECK(localMap.value(3, 0, 0).first == 3 * WEIGHT_SCALE);
-        CHECK(localMap.value(2, 0, 0).first == 3 * WEIGHT_SCALE);
-        CHECK(localMap.value(1, 0, 0).first == 3 * WEIGHT_SCALE);
+        CHECK(localMap.value(6, 0, 0).value() == 0);
+        CHECK(localMap.value(5, 0, 0).value() == 1 * MAP_RESOLUTION * 31 / 39);
+        CHECK(localMap.value(4, 0, 0).value() == 2 * MAP_RESOLUTION * 31 / 39);
+        CHECK(localMap.value(3, 0, 0).value() == 3 * MAP_RESOLUTION * 31 / 39);
+        CHECK(localMap.value(2, 0, 0).value() == 3 * MAP_RESOLUTION * 31 / 39);
+        CHECK(localMap.value(1, 0, 0).value() == 3 * MAP_RESOLUTION * 31 / 39);
 
         // Front weights
-        CHECK(localMap.value(6, 0, 0).second == 8 * WEIGHT_RESOLUTION);
-        CHECK(localMap.value(5, 0, 0).second == 8 * WEIGHT_RESOLUTION);
-        CHECK(localMap.value(4, 0, 0).second == 8 * WEIGHT_RESOLUTION);
-        CHECK(localMap.value(3, 0, 0).second == 8 * WEIGHT_RESOLUTION);
-        CHECK(localMap.value(2, 0, 0).second == 8 * WEIGHT_RESOLUTION);
-        CHECK(localMap.value(1, 0, 0).second == 8 * WEIGHT_RESOLUTION);
+        CHECK(localMap.value(6, 0, 0).weight() == 31);
+        CHECK(localMap.value(5, 0, 0).weight() == 31);
+        CHECK(localMap.value(4, 0, 0).weight() == 31);
+        CHECK(localMap.value(3, 0, 0).weight() == 31);
+        CHECK(localMap.value(2, 0, 0).weight() == 31);
+        CHECK(localMap.value(1, 0, 0).weight() == 31);
 
-        SECTION("TSDF Max Weight")
-        {
-            update_tsdf(points, scanner_pos, localMap, TAU, WEIGHT_RESOLUTION);
-            CHECK(localMap.value(6, 0, 0).second == WEIGHT_RESOLUTION);
-        }
+        update_tsdf(points, scanner_pos, localMap, TAU, 24);
+        CHECK(localMap.value(6, 0, 0).weight() == 24);
     }
 }

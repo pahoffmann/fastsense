@@ -6,6 +6,7 @@
 
 #include <map/local_map_hw.h>
 #include <util/point_hw.h>
+#include <util/tsdf_hw.h>
 #include <registration/kernel/reg_hw.h>
 #include <registration/kernel/linear_solver.h>
 #include <iostream>
@@ -93,7 +94,7 @@ extern "C"
 
     void registration_step(const PointHW* pointData,
                            int numPoints,
-                           IntTuple* mapData0, IntTuple* mapData1, IntTuple* mapData2,
+                           TSDFValueHW* mapData0, TSDFValueHW* mapData1, TSDFValueHW* mapData2,
                            const LocalMapHW& map,
                            const int transform_matrix[4][4],
                            const PointHW& center,
@@ -151,7 +152,7 @@ extern "C"
             //get value of local map
             const auto& current = map.get(mapData0, buf.x, buf.y, buf.z);
 
-            if (current.second == 0)
+            if (current.weight == 0)
             {
                 continue;
             }
@@ -169,9 +170,9 @@ extern "C"
                 const auto last = map.get(mapData1, index[0], index[1], index[2]);
                 index[axis] += 2;
                 const auto next = map.get(mapData2, index[0], index[1], index[2]);
-                if (last.second != 0 && next.second != 0 && (next.first > 0) == (last.first > 0))
+                if (last.weight != 0 && next.weight != 0 && (next.value > 0) == (last.value > 0))
                 {
-                    gradient[axis] = (next.first - last.first) / 2;
+                    gradient[axis] = (next.value - last.value) / 2;
                 }
             }
 
@@ -198,10 +199,10 @@ extern "C"
                     // transpose === swap row and column
                     h[row][col] += jacobi[row] * jacobi[col];
                 }
-                g[row] += jacobi[row] * current.first;
+                g[row] += jacobi[row] * current.value;
             }
 
-            error += hls_abs(current.first);
+            error += hls_abs(current.value);
             count++;
         }
     }
@@ -209,7 +210,7 @@ extern "C"
 // Declares the parameters for variables ending with 'n'. Macro Syntax: ## means concat variable name with the contents of 'n'
 #define DECLARE_PARAMS(n) \
     const PointHW* pointData##n, \
-    IntTuple* mapData##n##0, IntTuple* mapData##n##1, IntTuple* mapData##n##2, \
+    TSDFValueHW* mapData##n##0, TSDFValueHW* mapData##n##1, TSDFValueHW* mapData##n##2, \
     long h##n[6][6], long g##n[6], long& error##n, long& count##n
 
 #define USE_PARAMS(n) \
@@ -245,9 +246,9 @@ extern "C"
                   const PointHW* pointData1,
                   const PointHW* pointData2,
                   int numPoints,
-                  IntTuple* mapData00, IntTuple* mapData01, IntTuple* mapData02, // MARKER: SPLIT
-                  IntTuple* mapData10, IntTuple* mapData11, IntTuple* mapData12,
-                  IntTuple* mapData20, IntTuple* mapData21, IntTuple* mapData22,
+                  TSDFValueHW* mapData00, TSDFValueHW* mapData01, TSDFValueHW* mapData02, // MARKER: SPLIT
+                  TSDFValueHW* mapData10, TSDFValueHW* mapData11, TSDFValueHW* mapData12,
+                  TSDFValueHW* mapData20, TSDFValueHW* mapData21, TSDFValueHW* mapData22,
                   int sizeX,   int sizeY,   int sizeZ,
                   int posX,    int posY,    int posZ,
                   int offsetX, int offsetY, int offsetZ,

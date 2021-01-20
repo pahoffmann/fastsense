@@ -30,7 +30,7 @@ private:
     Vector3i size_;
 
     /// Actual data of the local map.
-    buffer::InputOutputBuffer<std::pair<int, int>> data_;
+    buffer::InputOutputBuffer<TSDFValue> data_;
 
     /// Position (x, y, z) of the center of the cuboid in global coordinates.
     Vector3i pos_;
@@ -106,7 +106,7 @@ public:
      * @param z z-coordinate of the index in global coordinates
      * @return Value of the local map
      */
-    std::pair<int, int>& value(int x, int y, int z);
+    TSDFValue& value(int x, int y, int z);
 
     /**
      * Returns a value from the local map per reference.
@@ -116,7 +116,7 @@ public:
      * @param z z-coordinate of the index in global coordinates
      * @return Value of the local map
      */
-    const std::pair<int, int>& value(int x, int y, int z) const;
+    const TSDFValue& value(int x, int y, int z) const;
 
     /**
      * Returns a value from the local map per reference.
@@ -124,7 +124,7 @@ public:
      * @param p position of the index in global coordinates
      * @return value of the local map
      */
-    std::pair<int, int>& value(Vector3i p);
+    TSDFValue& value(Vector3i p);
 
     /**
      * Returns a value from the local map per reference.
@@ -132,7 +132,7 @@ public:
      * @param p position of the index in global coordinates
      * @return value of the local map
      */
-    const std::pair<int, int>& value(Vector3i p) const;
+    const TSDFValue& value(Vector3i p) const;
 
     /**
      * Returns the size of the local map
@@ -185,7 +185,7 @@ public:
      * It can be used with hardware kernels.
      * @return data buffer
      */
-    buffer::InputOutputBuffer<std::pair<int, int>>& getBuffer();
+    buffer::InputOutputBuffer<TSDFValue>& getBuffer();
 
     LocalMapHW get_hardware_representation() const;
 
