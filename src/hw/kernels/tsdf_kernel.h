@@ -68,7 +68,11 @@ public:
         }
         setArg(tau);
         setArg(max_weight);
-        setArg(up);
+
+        //setArg(up);
+        setArg(up.x);
+        setArg(up.y);
+        setArg(up.z);
 
         // Write buffers
         cmd_q_->enqueueMigrateMemObjects({map.getBuffer().getBuffer(), scan_points.getBuffer(), new_entries.getBuffer()}, CL_MIGRATE_MEM_OBJECT_DEVICE, nullptr, &pre_events_[0]);

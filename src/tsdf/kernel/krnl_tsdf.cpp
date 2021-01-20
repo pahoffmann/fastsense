@@ -125,9 +125,11 @@ extern "C"
                 iter_steps_fifo << iter_steps;
             }
         }
+
         value_fifo << IntTuple{0, 0};
         index_fifo << PointHW();
         bounds_fifo << std::pair<PointHW, PointHW>{PointHW(), PointHW()};
+        iter_steps_fifo << IntTuple(0, 0);
     }
 
     void update_tsdf(const LocalMapHW& map,
@@ -340,7 +342,7 @@ extern "C"
                    IntTuple* new_entries1,
                    int tau,
                    int max_weight,
-                   PointHW up)
+                   int up_x, int up_y, int up_z)
     {
 #pragma HLS INTERFACE m_axi port=scanPoints0  offset=slave bundle=scan0mem  latency=22 depth=360
 #pragma HLS INTERFACE m_axi port=scanPoints1  offset=slave bundle=scan1mem  latency=22 depth=360
@@ -348,6 +350,9 @@ extern "C"
 #pragma HLS INTERFACE m_axi port=mapData1     offset=slave bundle=map1mem   latency=22 depth=18491
 #pragma HLS INTERFACE m_axi port=new_entries0 offset=slave bundle=entry0mem latency=22 depth=18491
 #pragma HLS INTERFACE m_axi port=new_entries1 offset=slave bundle=entry1mem latency=22 depth=18491
+
+        PointHW up(up_x, up_y, up_z);
+
 
         LocalMapHW map{sizeX,   sizeY,   sizeZ,
                        posX,    posY,    posZ,
@@ -364,7 +369,6 @@ extern "C"
                         map,
                         tau,
                         up);
-
 
         int total_size = sizeX * sizeY * sizeZ;
         int sync_step = total_size / SPLIT_FACTOR + 1;
