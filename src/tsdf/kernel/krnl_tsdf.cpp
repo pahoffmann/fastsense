@@ -181,7 +181,7 @@ extern "C"
                 IntTuple entry = new_entries[map_index];
                 IntTuple tmp_value = value;
 
-                if (entry.second == 0 || hls_abs(value.first) < hls_abs(entry.first))
+                if (entry.second <= 0 || hls_abs(value.first) < hls_abs(entry.first))
                 {
                     if (step != iter_steps.second)
                     {
