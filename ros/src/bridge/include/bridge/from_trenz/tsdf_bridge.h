@@ -12,6 +12,7 @@
 
 #include "bridge_base.h"
 #include <msg/tsdf_bridge_msg.h>
+#include <util/tsdf.h>
 
 namespace fastsense::bridge
 {
@@ -59,7 +60,7 @@ private:
     }
 
     bool in_bounds(int x, int y, int z);
-    std::pair<int, int> get_tsdf_value(int x, int y, int z);
+    TSDFValue get_tsdf_value(int x, int y, int z);
 
     std::vector<geometry_msgs::Point> points_;
     std::vector<std_msgs::ColorRGBA> colors_;
