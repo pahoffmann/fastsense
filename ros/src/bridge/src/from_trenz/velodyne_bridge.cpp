@@ -41,7 +41,7 @@ void VelodyneBridge::convert()
 {
     points_.clear();
 
-    timestamp_ = timestamp_to_rostime(msg_.timestamp_);
+    timestamp_ = ros::Time::now();//timestamp_to_rostime(msg_.timestamp_);
     const auto& msg_points = msg_.data_.points_;
 
     std::transform(msg_points.begin(), msg_points.end(), std::back_inserter(points_), [](const ScanPoint& p)

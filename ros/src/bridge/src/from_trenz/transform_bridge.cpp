@@ -73,7 +73,7 @@ void TransformBridge::convert()
 {
     std::lock_guard guard(mtx);
 
-    auto timestamp = timestamp_to_rostime(msg_.timestamp_);
+    auto timestamp = ros::Time::now();//timestamp_to_rostime(msg_.timestamp_);
 
     // set pose_path header (once and only)
     if (first_smg)
