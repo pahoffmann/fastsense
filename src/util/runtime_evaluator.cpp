@@ -109,11 +109,12 @@ void RuntimeEvaluator::stop(const std::string& task_name)
     forms_[index].count++;
     forms_[index].last = time;
     forms_[index].sum += time;
+    forms_[index].filter.update(time);
     if (time < forms_[index].min)
     {
         forms_[index].min = time;
     }
-    if (time > forms_[index].max)
+    if (time > forms_[index].max && forms_[index].count != 1) // ignore first
     {
         forms_[index].max = time;
     }
@@ -131,38 +132,47 @@ std::string RuntimeEvaluator::to_string()
 {
     pause();
 
-    size_t task_length = std::string("task").length();
+    constexpr int FIELD_COUNT = 7;
+    static std::string fields[FIELD_COUNT] = { "task", "count", "last", "min", "max", "avg", "run_avg" };
+
+    size_t width = 0;
     for (const auto& ef : forms_)
     {
-        task_length = std::max(task_length, ef.name.length());
+        width = std::max(width, ef.name.length());
+    }
+    for (int i = 0; i < FIELD_COUNT; i++)
+    {
+        width = std::max(width, fields[i].length());
     }
 
     std::stringstream ss;
-    ss << "\n " << std::setw(task_length) << "task" << " | "
-       << std::setw(6) << "count" << " | "
-       << std::setw(8) << "last(ms)" << " | "
-       //    << std::setw(10) << "sum(ms)" << " | "
-       << std::setw(8) << "min(ms)" << " | "
-       << std::setw(8) << "max(ms)" << " | "
-       << std::setw(8) << "avg(ms)" << "\n-" << std::setfill('-')
-       << std::setw(task_length) << "" << "-+-" // task
-       << std::setw(6) << "" << "-+-" // count
-       << std::setw(8) << "" << "-+-" // last
-       //    << std::setw(10) << "" << "-+-" // sum
-       << std::setw(8) << "" << "-+-" // min
-       << std::setw(8) << "" << "-+-" // max
-       << std::setw(8) << "" << "-\n" << std::setfill(' '); // avg
+    ss << std::setfill(' ') << "\n";
+    for (int i = 0; i < FIELD_COUNT; i++)
+    {
+        ss << std::setw(width) << fields[i] << (i == FIELD_COUNT - 1 ? "\n" : " | ");
+    }
+    ss << std::setfill('-');
+    for (int i = 0; i < FIELD_COUNT; i++)
+    {
+        ss << std::setw(width) << "" << (i == FIELD_COUNT - 1 ? "-\n" : "-+-");
+    }
+    ss << std::setfill(' ');
+
     for (const auto& ef : forms_)
     {
+        if (ef.active)
+        {
+            continue;
+        }
         unsigned long long avg = ef.sum / ef.count;
-        // the name is displayed red if the measurement of the task is still active
-        ss << " " << (ef.active ? "\033[31m" /* red */ : "") << std::setw(task_length) << ef.name << "\033[0m" /* reset */ << " | "
-           << std::setw(6) << ef.count << " | "
-           << std::setw(8) << ef.last / 1000 << " | "
-           //    << std::setw(10) << ef.sum / 1000 << " | "
-           << std::setw(8) << (ef.min == std::numeric_limits<unsigned long long>::max() ? "infinity" : std::to_string(ef.min / 1000)) << " | "
-           << std::setw(8) << ef.max / 1000 << " | "
-           << std::setw(8) << avg / 1000 << "\n";
+        unsigned long long run_avg = (int)ef.filter.get_mean();
+        unsigned long long values[] = { ef.last, ef.min, ef.max, avg, run_avg };
+        ss << std::setw(width) << ef.name << " | "
+           << std::setw(width) << ef.count << " | ";
+        for (int i = 0; i < FIELD_COUNT - 2; i++)
+        {
+            ss << std::setw(width) << values[i] / 1000 << (i == FIELD_COUNT - 3 ? "\n" : " | ");
+        }
     }
 
     resume();

@@ -1,9 +1,13 @@
 #pragma once
 
-#include <util/concurrent_ring_buffer.h>
+/**
+ * @file filter.h
+ * @author Julian Gaal
+ */
+
 #include <queue>
 
-namespace fastsense::driver
+namespace fastsense::util
 {
 
 /**

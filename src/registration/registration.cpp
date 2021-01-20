@@ -39,7 +39,6 @@ void Registration::transform_point_cloud(fastsense::ScanPoints_t& in_cloud, cons
 
 void Registration::transform_point_cloud(fastsense::buffer::InputBuffer<PointHW>& in_cloud, const Matrix4f& mat)
 {
-    // TODO: test if this is faster on HW
     #pragma omp parallel for schedule(static)
     for (auto index = 0u; index < in_cloud.size(); ++index)
     {
@@ -56,45 +55,20 @@ void Registration::transform_point_cloud(fastsense::buffer::InputBuffer<PointHW>
     }
 }
 
-
-Matrix4f Registration::xi_to_transform(Vector6f xi)
+void Registration::register_cloud(fastsense::map::LocalMap& localmap,
+                                  fastsense::buffer::InputBuffer<PointHW>& cloud,
+                                  const util::HighResTimePoint& cloud_timestamp,
+                                  Matrix4f& pose)
 {
-    // Formula 3.9 on Page 40 of "Truncated Signed Distance Fields Applied To Robotics"
+    Matrix4f imu_estimate = imu_accumulator_.acc_transform(cloud_timestamp);
 
-    // Rotation around an Axis.
-    // Direction of axis (l) = Direction of angular_velocity
-    // Angle of Rotation (theta) = Length of angular_velocity
-    auto angular_velocity = xi.block<3, 1>(0, 0);
-    auto theta = angular_velocity.norm();
-    auto l = angular_velocity / theta;
-    Eigen::Matrix3f L;
-    L <<
-      0, -l.z(), l.y(),
-      l.z(), 0, -l.x(),
-      -l.y(), l.x(), 0;
+    // apply rotation and possible transform separate because the rotation happens around the scanner, not the origin
+    Eigen::Matrix3f rotation = imu_estimate.block<3, 3>(0, 0) * pose.block<3, 3>(0, 0);
+    pose.block<3, 3>(0, 0) = rotation;
+    pose.block<3, 1>(0, 3) += imu_estimate.block<3, 1>(0, 3); 
 
-    Matrix4f transform = Matrix4f::Identity();
+    krnl.synchronized_run(localmap, cloud, max_iterations_, it_weight_gradient_, epsilon_, pose);
 
-    auto rotation = transform.block<3, 3>(0, 0);
-    rotation += sin(theta) * L + (1 - cos(theta)) * L * L;
-
-    transform.block<3, 1>(0, 3) = xi.block<3, 1>(3, 0);
-    return transform;
-}
-
-Matrix4f Registration::register_cloud(fastsense::map::LocalMap& localmap, fastsense::buffer::InputBuffer<PointHW>& cloud, const util::HighResTimePoint& cloud_timestamp)
-{
-    auto& eval = RuntimeEvaluator::get_instance();
-    eval.start("imu_acc");
-    Matrix4f total_transform = imu_accumulator_.acc_transform(cloud_timestamp); //transform used to register the pcl
-    eval.stop("imu_acc");
-
-
-    eval.start("reg_krnl");
-    krnl.synchronized_run(localmap, cloud, max_iterations_, it_weight_gradient_, epsilon_, total_transform);
     // apply final transformation
-    transform_point_cloud(cloud, total_transform);
-    eval.stop("reg_krnl");
-
-    return total_transform;
+    transform_point_cloud(cloud, pose);
 }

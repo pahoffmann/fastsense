@@ -43,6 +43,9 @@ constexpr int SIZE_X = 20 * SCALE / MAP_RESOLUTION;
 constexpr int SIZE_Y = 20 * SCALE / MAP_RESOLUTION;
 constexpr int SIZE_Z = 5 * SCALE / MAP_RESOLUTION;
 
+// max difference between errors with and without median
+constexpr int MAX_DIFFERENCE = 10;
+
 struct EvalStats
 {
     int minimum;
@@ -113,7 +116,8 @@ static EvalStats eval_registration(fastsense::map::LocalMap& local_map, fastsens
 {
     auto buffer_ptr = scan_points_to_input_buffer(pretransformed, q);
     auto& buffer = *buffer_ptr;
-    auto result_matrix = reg.register_cloud(local_map, buffer, util::HighResTime::now());
+    Matrix4f result_matrix = Matrix4f::Identity();
+    reg.register_cloud(local_map, buffer, util::HighResTime::now(), result_matrix);
 
     reg.transform_point_cloud(pretransformed, result_matrix);
     return get_transform_error(pretransformed, original);
@@ -233,7 +237,7 @@ TEST_CASE("Eval_Median", "[eval_median][slow]")
     
         std::cout << "Average error without preprocessing: " << without.average << std::endl;
         std::cout << "Average error with preprocessing: " << with.average << std::endl;
-        REQUIRE(without.average > with.average);
+        REQUIRE(with.average - without.average < MAX_DIFFERENCE);
     }
 
     SECTION("Test Registration Translation")
@@ -246,7 +250,7 @@ TEST_CASE("Eval_Median", "[eval_median][slow]")
     
         std::cout << "Average error without preprocessing: " << without.average << std::endl;
         std::cout << "Average error with preprocessing: " << with.average << std::endl;
-        REQUIRE(without.average > with.average);
+        REQUIRE(with.average - without.average < MAX_DIFFERENCE);
     }
 
     SECTION("Registration test Rotation")
@@ -259,7 +263,7 @@ TEST_CASE("Eval_Median", "[eval_median][slow]")
     
         std::cout << "Average error without preprocessing: " << without.average << std::endl;
         std::cout << "Average error with preprocessing: " << with.average << std::endl;
-        REQUIRE(without.average > with.average);
+        REQUIRE(with.average - without.average < MAX_DIFFERENCE);
     }
 }
 

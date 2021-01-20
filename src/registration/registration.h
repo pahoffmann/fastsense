@@ -59,7 +59,7 @@ public:
      * @param max_iterations max convergence iterations
      * @param it_weight_gradient learning rate weight gradient
      */
-    Registration(fastsense::CommandQueuePtr q, msg::ImuStampedBuffer::Ptr& buffer, unsigned int max_iterations = 50, float it_weight_gradient = 0.0, float epsilon = 0.0001);
+    Registration(fastsense::CommandQueuePtr q, msg::ImuStampedBuffer::Ptr& buffer, unsigned int max_iterations = 50, float it_weight_gradient = 0.0, float epsilon = 0.01);
 
     /**
      * Destructor of the registration.
@@ -73,7 +73,10 @@ public:
      * @param cloud
      * @return Matrix4f
      */
-    Matrix4f register_cloud(fastsense::map::LocalMap& localmap, fastsense::buffer::InputBuffer<PointHW>& cloud, const util::HighResTimePoint& cloud_timestamp);
+    void register_cloud(fastsense::map::LocalMap& localmap,
+                        fastsense::buffer::InputBuffer<PointHW>& cloud,
+                        const util::HighResTimePoint& cloud_timestamp,
+                        Matrix4f& pose);
 
     /**
      * @brief Transforms a given pointcloud with the transform

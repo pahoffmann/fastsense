@@ -1,9 +1,9 @@
 #include "catch2_config.h"
 #include <msg/imu.h>
-#include <driver/imu/filter.h>
+#include <util/filter.h>
 
 using namespace fastsense;
-using namespace fastsense::driver;
+using namespace fastsense::util;
 
 #define REQUIRE_IMU(msg, val) \
     REQUIRE(msg.acc(0) == Approx(val)); \

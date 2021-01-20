@@ -4,5 +4,7 @@
 
   <node pkg="bridge" type="sync_time.sh" name="sync_time" />
 
-  <node pkg="bridge" type="from_trenz" name="from_trenz_bridge" />
+  <node pkg="bridge" type="from_trenz" name="from_trenz_bridge" output="screen">
+    <param name="board_addr" type="str" value="192.168.1.123" />
+  </node>
 </launch>

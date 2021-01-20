@@ -6,6 +6,7 @@
  */
 
 #include <util/hls_functions.h>
+#include <util/tsdf_hw.h>
 #include <iostream>
 
 namespace fastsense
@@ -13,6 +14,8 @@ namespace fastsense
 
 namespace map
 {
+
+using IntTuple = std::pair<int, int>;
 
 template<typename T>
 T overflow(T val, T max)
@@ -64,8 +67,7 @@ struct LocalMapHW
         return index;
     }
 
-    template<typename T>
-    T get(T* data, int x, int y, int z) const
+    TSDFValueHW get(TSDFValueHW* data, int x, int y, int z) const
     {
 #pragma HLS INLINE
         if (in_bounds(x, y, z))
@@ -73,11 +75,10 @@ struct LocalMapHW
             return data[getIndex(x, y, z)];
         }
 
-        return T();
+        return TSDFValueHW{0, 0};
     }
 
-    template<typename T>
-    void set(T* data, int x, int y, int z, const T& val) const
+    void set(TSDFValueHW* data, int x, int y, int z, const TSDFValueHW& val) const
     {
 #pragma HLS INLINE
         if (in_bounds(x, y, z))

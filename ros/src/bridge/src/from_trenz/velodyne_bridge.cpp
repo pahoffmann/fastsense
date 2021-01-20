@@ -26,13 +26,13 @@ void VelodyneBridge::run()
         try
         {
             receive();
-            // ROS_INFO_STREAM("Received " << msg_.data_.points_.size() << " points\n");
+            ROS_INFO_STREAM("Received " << msg_.data_.points_.size() << " points\n");
             convert();
             publish();
         }
         catch(const std::exception& e)
         {
-            std::cerr << "VELO " << e.what() << '\n';
+            std::cerr << "velo bridge error: " << e.what() << '\n';
         }
     }
 }

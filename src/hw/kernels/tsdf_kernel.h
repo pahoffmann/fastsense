@@ -13,18 +13,12 @@
 
 #include <iostream>
 
-struct IntTuple
-{
-    int first = 0;
-    int second = 0;
-};
-
 namespace fastsense::kernels
 {
 
 class TSDFKernel : public BaseKernel
 {
-    buffer::InputOutputBuffer<IntTuple> new_entries;
+    buffer::InputOutputBuffer<TSDFValue> new_entries;
 
 public:
 
@@ -40,8 +34,7 @@ public:
     {
         for (int i = 0; i < (int)new_entries.size(); ++i)
         {
-            new_entries[i].first = 0;
-            new_entries[i].second = 0;
+            new_entries[i] = TSDFValue(0, 0);
         }
 
         constexpr int SPLIT_FACTOR = 4;

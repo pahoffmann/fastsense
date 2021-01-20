@@ -18,8 +18,6 @@ using namespace fastsense::map;
 constexpr int NUM_POINTS = 6000;
 constexpr int SPLIT_FACTOR = 4;
 
-using IntTuple = std::pair<int, int>;
-
 extern "C"
 {
     void read_points(PointHW* scanPoints,

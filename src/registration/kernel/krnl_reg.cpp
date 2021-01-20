@@ -11,7 +11,6 @@
 #include <registration/kernel/linear_solver.h>
 #include <iostream>
 
-
 using namespace fastsense::map;
 using namespace fastsense::registration;
 
@@ -21,8 +20,13 @@ constexpr int SPLIT_FACTOR = 3; // MARKER: SPLIT
 extern "C"
 {
 
-    void xi_to_transform(const float xi[6], float transform[4][4])
+    void xi_to_transform(const float xi[6], float transform[4][4], PointHW& center)
     {
+        // Formula 3.9 on Page 40 of "Truncated Signed Distance Fields Applied To Robotics"
+
+        // Rotation around an Axis.
+        // Direction of axis (l) = Direction of angular_velocity
+        // Angle of Rotation (theta) = Length of angular_velocity
         float theta = hls_sqrt_float(xi[0] * xi[0] + xi[1] * xi[1] + xi[2] * xi[2]);
         float sin_theta, cos_theta;
         hls_sincos(theta, &sin_theta, &cos_theta);
@@ -58,16 +62,34 @@ extern "C"
         transform[1][1] += 1;
         transform[2][2] += 1;
 
-        // translation
-        transform[0][3] = xi[3];
-        transform[1][3] = xi[4];
-        transform[2][3] = xi[5];
+        // translation (added later)
+        transform[0][3] = 0;
+        transform[1][3] = 0;
+        transform[2][3] = 0;
 
         // bottom row
         transform[3][0] = 0;
         transform[3][1] = 0;
         transform[3][2] = 0;
         transform[3][3] = 1;
+
+        // apply the rotation around the old center
+        // => rotate around Point = shift Point to origin -> rotate -> shift back to Point
+
+        // shift old_center to origin
+        float old_center[3];
+        old_center[0] = -center.x;
+        old_center[1] = -center.y;
+        old_center[2] = -center.z;
+
+        // rotate
+        float shift[3];
+        transform_point(transform, old_center, shift);
+
+        // shift back to center + new translation
+        transform[0][3] = shift[0] + center.x + xi[3];
+        transform[1][3] = shift[1] + center.y + xi[4];
+        transform[2][3] = shift[2] + center.z + xi[5];
     }
 
     void registration_step(const PointHW* pointData,
@@ -75,6 +97,7 @@ extern "C"
                            TSDFValueHW* mapData0, TSDFValueHW* mapData1, TSDFValueHW* mapData2,
                            const LocalMapHW& map,
                            const int transform_matrix[4][4],
+                           const PointHW& center,
                            long h[6][6],
                            long g[6],
                            long& error,
@@ -121,6 +144,10 @@ extern "C"
             buf.x = point[0] / MAP_RESOLUTION;
             buf.y = point[1] / MAP_RESOLUTION;
             buf.z = point[2] / MAP_RESOLUTION;
+
+            point[0] -= center.x;
+            point[1] -= center.y;
+            point[2] -= center.z;
 
             //get value of local map
             const auto& current = map.get(mapData0, buf.x, buf.y, buf.z);
@@ -197,7 +224,8 @@ extern "C"
                       int step,
                       int last_step,
                       const LocalMapHW& map,
-                      const int transform_matrix[4][4]
+                      const int transform_matrix[4][4],
+                      const PointHW& center
                      )
     {
 #pragma HLS dataflow
@@ -206,7 +234,7 @@ extern "C"
         registration_step(pointData##n + n * step, STEP_SIZE, \
                           mapData##n##0, mapData##n##1, mapData##n##2, \
                           map, \
-                          transform_matrix, \
+                          transform_matrix, center, \
                           h##n, g##n, error##n, count##n);
 
         CALL_STEP(0, step); // MARKER: SPLIT
@@ -322,13 +350,19 @@ extern "C"
             std::cout << "\r" << i << " / " << max_iterations << std::flush;
 #endif
 
+            // "center" of Scan == estimated Position of Scanner == translation in Pose
+            PointHW center(total_transform[0][3],
+                           total_transform[1][3],
+                           total_transform[2][3]);
+
             reg_dataflow(USE_PARAMS(0), // MARKER: SPLIT
                          USE_PARAMS(1),
                          USE_PARAMS(2),
                          step,
                          last_step,
                          map,
-                         int_transform
+                         int_transform,
+                         center
                         );
 
             // MARKER: SPLIT
@@ -355,7 +389,7 @@ extern "C"
             lu_decomposition<float, 6>(h_float);
             lu_solve<float, 6>(h_float, g_float, xi);
 
-            xi_to_transform(xi, next_transform);
+            xi_to_transform(xi, next_transform, center);
             MatrixMul<float, 4, 4, 4>(next_transform, total_transform, temp_transform);
 
             // copy temp_transform to total_transform
