@@ -58,10 +58,9 @@ public:
      * @brief thread_run receives until the end of time
      * 
      */
-    [[noreturn]]
     void thread_run() override
     {
-        for (;;)
+        while (running)
         {
             receive();
         }
@@ -73,10 +72,14 @@ protected:
      * 
      * @param addr address the receiver connects to
      * @param port port the receiver connects to 
+     * @param timeout timeout for receiver
      * @param buffer buffer to write the incoming messages
      */
-    BufferedReceiver(const std::string& addr, uint16_t port, std::shared_ptr<util::ConcurrentRingBuffer<BUFF_T>> buffer)
-    : receiver_{addr, port}
+    BufferedReceiver(   const std::string& addr, 
+                        uint16_t port, 
+                        std::chrono::milliseconds timeout, 
+                        std::shared_ptr<util::ConcurrentRingBuffer<BUFF_T>> buffer)
+    : receiver_{addr, port, timeout}
     , buffer_{buffer}
     {}
 
@@ -101,10 +104,14 @@ public:
      * 
      * @param addr address the receiver connects to
      * @param port port the receiver connects to 
+     * @param timeout timeout for receiver
      * @param buffer buffer to write the incoming messages
      */
-    BufferedImuStampedReceiver(const std::string& addr, uint16_t port, msg::ImuStampedBuffer::Ptr buffer)
-    : BufferedReceiver{addr, port, buffer}
+    BufferedImuStampedReceiver( const std::string& addr, 
+                                uint16_t port, 
+                                std::chrono::milliseconds timeout,
+                                msg::ImuStampedBuffer::Ptr buffer)
+    : BufferedReceiver{addr, port, timeout, buffer}
     {}
 
     /**
@@ -117,8 +124,10 @@ public:
      */
     void receive() override
     {
-        receiver_.receive(msg_);
-        buffer_->push_nb(std::move(msg_));
+        if (receiver_.receive(msg_))
+        {
+            buffer_->push_nb(std::move(msg_));
+        }
     }
 
     using UPtr = std::unique_ptr<BufferedImuStampedReceiver>;
@@ -136,10 +145,14 @@ public:
      * 
      * @param addr address the receiver connects to
      * @param port port the receiver connects to 
+     * @param timeout timeout for receiver
      * @param buffer buffer to write the incoming messages
      */
-    BufferedPclStampedReceiver(const std::string& addr, uint16_t port, msg::PointCloudPtrStampedBuffer::Ptr buffer)
-    : BufferedReceiver{addr, port, buffer}
+    BufferedPclStampedReceiver( const std::string& addr, 
+                                uint16_t port, 
+                                std::chrono::milliseconds timeout,
+                                msg::PointCloudPtrStampedBuffer::Ptr buffer)
+    : BufferedReceiver{addr, port, timeout, buffer}
     {}
 
     /**
@@ -152,9 +165,11 @@ public:
      */
     void receive() override
     {
-        receiver_.receive(msg_);
-        auto& [ pcl, ts ] = msg_;
-        buffer_->push_nb(msg::PointCloudPtrStamped{std::make_shared<msg::PointCloud>(std::move(pcl)), ts });
+        if (receiver_.receive(msg_))
+        {
+            auto& [ pcl, ts ] = msg_;
+            buffer_->push_nb(msg::PointCloudPtrStamped{std::make_shared<msg::PointCloud>(std::move(pcl)), ts });
+        }
     }
 
     using UPtr = std::unique_ptr<BufferedPclStampedReceiver>;

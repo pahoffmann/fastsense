@@ -27,8 +27,10 @@ public:
      * @param addr which address receiver should listen to
      * @param port which port receiver should listen to
      */
-    Receiver(std::string addr, uint16_t port)
-    :   socket_(ZMQContextManager::getContext(), zmq::socket_type::sub)
+    Receiver(std::string addr, uint16_t port, std::chrono::milliseconds timeout = std::chrono::milliseconds(100))
+    :   socket_{ZMQContextManager::getContext(), zmq::socket_type::sub}
+    ,   timeout_{timeout}
+    ,   pollitems_{{socket_, 0, ZMQ_POLLIN, 0}}
     {
         if (addr.empty())
         {
@@ -36,6 +38,8 @@ public:
         }
         
         socket_.connect("tcp://" + addr + ":" + std::to_string(port));
+
+        // no filters, subscribe to all
         socket_.setsockopt(ZMQ_SUBSCRIBE, "", 0);
     }
 
@@ -62,21 +66,6 @@ public:
     virtual ~Receiver() = default;
 
     /**
-     * @brief Receive a message of static size
-     *
-     * @tparam TT type used to compile only if T does NOT inherit from msg::ZMQConverter (therefore only static members)
-     * @param flags ZMQ receive flags, default 'none' -> blocking
-     * @return T data type of receiver
-     */
-    template < typename TT = T, std::enable_if_t < !std::is_base_of_v<msg::ZMQConverter, TT>, int > = 0 >
-    T receive(zmq::recv_flags flags = zmq::recv_flags::none)
-    {
-        T target;
-        receive(target, flags);
-        return target;
-    }
-
-    /**
      * @brief Receive a message of static size, by reference
      *
      * @tparam TT type used to compile only if T DOES NOT inherit from msg::ZMQConverter (therefore members of dynamic size)
@@ -84,25 +73,19 @@ public:
      * @param flags ZMQ receive flags, default 'none' -> blocking
      */
     template < typename TT = T, std::enable_if_t < !std::is_base_of_v<msg::ZMQConverter, TT>, int > = 0 >
-    void receive(T& target, zmq::recv_flags flags = zmq::recv_flags::none)
+    bool receive(T& target, zmq::recv_flags flags = zmq::recv_flags::none)
     {
         zmq::message_t msg;
-        socket_.recv(msg, flags);
-        target = *static_cast<T*>(msg.data());
-    }
-
-    /**
-     * @brief Receive a message with elements of dynamic size
-     *
-     * @tparam TT type used to compile ONLY IF T inherits from msg::ZMQConverter (therefore members of dynamic size)
-     * @return T data type of receiver
-     */
-    template <typename TT = T, std::enable_if_t<std::is_base_of_v<msg::ZMQConverter, TT>, int> = 0>
-    T receive()
-    {
-        T target;
-        receive(target);
-        return target;
+        zmq::poll(pollitems_.data(), 1, timeout_);
+        
+        if (pollitems_[0].revents & ZMQ_POLLIN)
+        {
+            socket_.recv(msg, flags);
+            target = *static_cast<T*>(msg.data());
+            return true;
+        } 
+        
+        return false;
     }
 
     /**
@@ -112,16 +95,29 @@ public:
      * @param target where message is copied to
      */
     template <typename TT = T, std::enable_if_t<std::is_base_of_v<msg::ZMQConverter, TT>, int> = 0>
-    void receive(T& target)
+    bool receive(T& target)
     {
         zmq::multipart_t multi;
-        multi.recv(socket_);
-        target.from_zmq_msg(multi);
+        zmq::poll(pollitems_.data(), 1, timeout_);
+        if (pollitems_[0].revents & ZMQ_POLLIN)
+        {
+            multi.recv(socket_);
+            target.from_zmq_msg(multi);
+            return true;
+        }
+
+        return false;
     }
 
 private:
     /// ZeroMQ socket
     zmq::socket_t socket_;
+
+    /// timeout
+    std::chrono::milliseconds timeout_;
+
+    /// poll items
+    std::vector<zmq::pollitem_t> pollitems_;
 };
 
 } // namespace fastsense::comm
