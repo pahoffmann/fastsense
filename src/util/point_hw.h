@@ -132,3 +132,134 @@ struct PointHW
         return p;
     }
 };
+
+struct PointArith
+{
+    long x;
+    long y;
+    long z;
+
+    PointArith() : x(0), y(0), z(0)
+    {}
+
+    PointArith(long x, long y, long z)
+        : x(x), y(y), z(z)
+    {}
+
+    PointArith(const PointArith& rhs)
+    {
+        *this = rhs;
+    }
+
+    PointArith operator+(const PointArith& rhs) const
+    {
+        PointArith p;
+        p.x = x + rhs.x;
+        p.y = y + rhs.y;
+        p.z = z + rhs.z;
+        return p;
+    }
+
+    PointArith operator-(const PointArith& rhs) const
+    {
+        PointArith p;
+        p.x = x - rhs.x;
+        p.y = y - rhs.y;
+        p.z = z - rhs.z;
+        return p;
+    }
+
+    PointArith operator*(int rhs) const
+    {
+        PointArith p;
+        p.x = x * rhs;
+        p.y = y * rhs;
+        p.z = z * rhs;
+        return p;
+    }
+
+    PointArith operator/(int rhs) const
+    {
+        PointArith p;
+        p.x = x / rhs;
+        p.y = y / rhs;
+        p.z = z / rhs;
+        return p;
+    }
+
+    PointArith& operator=(const PointArith& rhs)
+    {
+        x = rhs.x;
+        y = rhs.y;
+        z = rhs.z;
+        return *this;
+    }
+
+    PointArith& operator=(int rhs)
+    {
+        x = rhs;
+        y = rhs;
+        z = rhs;
+        return *this;
+    }
+
+    bool operator==(const PointArith& p) const
+    {
+        return x == p.x && y == p.y && z == p.z;
+    }
+
+    long norm2() const
+    {
+        return x * x + y * y + z * z;
+    }
+
+    long norm() const
+    {
+        return hls_sqrt_approx_arith(norm2());
+    }
+
+    PointArith cross(const PointArith& rhs) const 
+    {
+        PointArith p;
+        p.x = y * rhs.z - z * rhs.y;
+        p.y = z * rhs.x - x * rhs.z;
+        p.z = x * rhs.y - y * rhs.x;
+        return p;
+    }
+
+    PointArith abs() const
+    {
+        PointArith p;
+        p.x = hls_abs_arith(x);
+        p.y = hls_abs_arith(y);
+        p.z = hls_abs_arith(z);
+        return p;
+    }
+
+    PointArith sign() const
+    {
+        PointArith p;
+        p.x = x < 0 ? -1 : 1;
+        p.y = y < 0 ? -1 : 1;
+        p.z = z < 0 ? -1 : 1;
+        return p;
+    }
+
+    PointArith to_map() const
+    {
+        PointArith p;
+        p.x = x / MAP_RESOLUTION;
+        p.y = y / MAP_RESOLUTION;
+        p.z = z / MAP_RESOLUTION;
+        return p;
+    }
+
+    PointArith to_mm() const
+    {
+        PointArith p;
+        p.x = (x * MAP_RESOLUTION) + MAP_RESOLUTION / 2;
+        p.y = (y * MAP_RESOLUTION) + MAP_RESOLUTION / 2;
+        p.z = (z * MAP_RESOLUTION) + MAP_RESOLUTION / 2;
+        return p;
+    }
+};

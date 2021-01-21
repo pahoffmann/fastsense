@@ -36,7 +36,7 @@ extern "C"
                      const PointHW& up,
                      hls::stream<IntTuple>& value_fifo,
                      hls::stream<PointHW>& index_fifo,
-                     hls::stream<std::pair<PointHW, PointHW>>& bounds_fifo,
+                     hls::stream<std::pair<PointHW, PointArith>>& bounds_fifo,
                      hls::stream<IntTuple>& iter_steps_fifo)
     {
         PointHW map_pos{map.posX, map.posY, map.posZ};
@@ -55,6 +55,12 @@ extern "C"
 
             int distance = direction.norm();
             int distance_tau = distance + tau;
+
+            auto normed_direction_vector = (PointArith(direction.x, direction.y, direction.z) * MATRIX_RESOLUTION) / distance;
+            auto interpolation_vector = (normed_direction_vector.cross(normed_direction_vector.cross(PointArith(up.x, up.y, up.z)) / MATRIX_RESOLUTION));
+
+            auto normed_interpolation_vector = (interpolation_vector * MATRIX_RESOLUTION) / interpolation_vector.norm();
+
             if (distance_tau > max_distance)
             {
                 distance_tau = max_distance;
@@ -99,7 +105,7 @@ extern "C"
                 }
 
                 int delta_z = dz_per_distance * len / MATRIX_RESOLUTION;
-                std::pair<PointHW, PointHW> bounds;
+                std::pair<PointHW, PointArith> bounds;
                 IntTuple iter_steps;
 
                 iter_steps.first = (delta_z * 2) / MAP_RESOLUTION + 1;
@@ -116,8 +122,9 @@ extern "C"
                 //     bounds.second = map_pos.z + map.sizeZ / 2;
                 // }
 
-                bounds.first = (proj - (up * delta_z) / MATRIX_RESOLUTION) / MAP_RESOLUTION;
-                bounds.second = (proj + (up * delta_z) / MATRIX_RESOLUTION) / MAP_RESOLUTION;
+                auto lowest = PointArith(proj.x, proj.y, proj.z) - ((normed_interpolation_vector * delta_z) / MATRIX_RESOLUTION);
+                bounds.first = PointHW(lowest.x, lowest.y, lowest.z) / MAP_RESOLUTION;
+                bounds.second = normed_interpolation_vector;
 
                 value_fifo << value;
                 index_fifo << index;
@@ -128,7 +135,7 @@ extern "C"
 
         value_fifo << IntTuple{0, 0};
         index_fifo << PointHW();
-        bounds_fifo << std::pair<PointHW, PointHW>{PointHW(), PointHW()};
+        bounds_fifo << std::pair<PointHW, PointArith>{PointHW(), PointArith()};
         iter_steps_fifo << IntTuple(0, 0);
     }
 
@@ -137,12 +144,12 @@ extern "C"
                      const PointHW& up,
                      hls::stream<IntTuple>& value_fifo,
                      hls::stream<PointHW>& index_fifo,
-                     hls::stream<std::pair<PointHW, PointHW>>& bounds_fifo,
+                     hls::stream<std::pair<PointHW, PointArith>>& bounds_fifo,
                      hls::stream<IntTuple>& iter_steps_fifo)
     {
         IntTuple value;
         PointHW index, old_index{0, 0, 0};
-        std::pair<PointHW, PointHW> bounds{PointHW(), PointHW()};
+        std::pair<PointHW, PointArith> bounds{PointHW(), PointArith()};
         IntTuple iter_steps{0, 0};
         //PointHW z;
         int step = 1;
@@ -156,6 +163,8 @@ extern "C"
 
             if (step > iter_steps.first)
             {
+                //std::cout << __LINE__ << std::endl;
+
                 old_index = index;
 
                 value_fifo >> value;
@@ -167,17 +176,16 @@ extern "C"
                 {
                     break;
                 }
-                
-                //z = bounds.first;
                 step = 0;
-                //mid = (bounds.second + bounds.first) / 2;
             }
 
             if (index.x != old_index.x || index.y != old_index.y)
             {
-                index = bounds.first + ((up * step) / MATRIX_RESOLUTION);
+                auto index_arith = PointArith(bounds.first.x, bounds.first.y, bounds.first.z) + ((bounds.second * step) / MATRIX_RESOLUTION);
+                index = PointHW(index_arith.x, index_arith.y, index_arith.z);
 
                 int map_index = map.getIndex(index.x, index.y, index.z);
+                
                 IntTuple entry = new_entries[map_index];
                 IntTuple tmp_value = value;
 
@@ -210,8 +218,7 @@ extern "C"
 #pragma HLS dataflow
         hls::stream<IntTuple> value_fifo;
         hls::stream<PointHW> index_fifo;
-        //hls::stream<IntTuple> bounds_fifo;
-        hls::stream<std::pair<PointHW, PointHW>> bounds_fifo;
+        hls::stream<std::pair<PointHW, PointArith>> bounds_fifo;
         hls::stream<IntTuple> iter_steps_fifo;
 #pragma HLS stream depth=16 variable=value_fifo
 #pragma HLS stream depth=16 variable=index_fifo
