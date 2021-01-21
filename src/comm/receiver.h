@@ -36,6 +36,11 @@ public:
         {
             throw std::runtime_error("Can't connect to address ''");
         }
+
+        if (timeout.count() < 0)
+        {
+            throw std::runtime_error("Invalid timeout chosen");
+        }
         
         socket_.connect("tcp://" + addr + ":" + std::to_string(port));
 

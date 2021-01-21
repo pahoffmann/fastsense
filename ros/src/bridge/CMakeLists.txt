@@ -5,7 +5,10 @@
 cmake_minimum_required(VERSION 3.3)
 
 project(bridge CXX)
-set(CMAKE_CXX_STANDARD 17)
+
+# Can't use this because ROS, fuck, have to use the abomination below
+# set(CMAKE_CXX_STANDARD 17)
+add_compile_options(-std=c++17)
 
 include(cmake/helpers.cmake)
 
@@ -23,24 +26,19 @@ find_package(catkin REQUIRED COMPONENTS
 
 find_package(ZeroMQ 4.3.2 REQUIRED EXACT)
 find_package(cppzmq 4.4.1 REQUIRED EXACT)
-find_package(HDF5 1.10.0.1 REQUIRED COMPONENTS CXX C HL)
 find_package(OpenMP REQUIRED)
 find_package(Eigen3 REQUIRED)
 
 set_fastsense_root_dir(FASTSENSE_DIR)
 get_absolute(FASTSENSE_ROS_INCLUDE_PATH include)
+
 set(OpenMP_FLAGS ${OpenMP_CXX_FLAGS})
 set(OpenMP_LIBS gomp)
-set(HIGHFIVE_EXAMPLES FALSE CACHE INTERNAL "")
-set(HIGHFIVE_UNIT_TESTS FALSE CACHE INTERNAL "")
 
 catkin_package()
 
-add_subdirectory(${FASTSENSE_DIR}/ext/HighFive ${CMAKE_CURRENT_BINARY_DIR}/HighFive)
 add_subdirectory(src/from_trenz)
 add_subdirectory(src/to_trenz)
-
-add_rostest_gtest(to_trenz_test test/test.launch test/test.cpp)
-target_link_libraries(to_trenz_test ${catkin_LIBRARIES})
+add_subdirectory(src/test)
 
 install(PROGRAMS scripts/sync_time.sh DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})

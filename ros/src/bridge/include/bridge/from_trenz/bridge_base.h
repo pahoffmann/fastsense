@@ -11,6 +11,7 @@
 #include <ros/node_handle.h>
 #include <comm/receiver.h>
 #include <util/process_thread.h>
+#include <chrono>
 
 namespace fastsense::bridge
 {   
@@ -30,7 +31,10 @@ template <typename T, typename P, int PORT>
 class BridgeBase
 {
 private:
+    /// Receiver of data from board
     comm::Receiver<T> receiver_;
+
+    /// ros publisher of matching ROS message
     ros::Publisher pub_;
 
 public:
@@ -43,12 +47,7 @@ public:
     /**
      * @brief Perform on bridge "iteration": wait for data, convert it to a ROS message, publish
      */
-    virtual void run() 
-    {
-        receive();
-        convert();
-        publish();
-    }
+    virtual void run() = 0;
 
     /**
      * @brief Return received msg
@@ -78,9 +77,14 @@ protected:
      * @param topic ROS topic that will be published to
      * @param board_addr board addr that will be listened to by zeromq
      * @param msg_buffer_size ROS msg buffer size
+     * @param timeout (ms) length of time to wait for message before continuing
      */
-    inline BridgeBase(ros::NodeHandle& n, const std::string& topic, const std::string& board_addr, size_t msg_buffer_size = 1000) 
-    :   receiver_{board_addr, PORT},
+    inline BridgeBase(ros::NodeHandle& n,
+                      const std::string& topic,
+                      const std::string& board_addr,
+                      size_t msg_buffer_size = 1000,
+                      std::chrono::milliseconds timeout = 100)
+    :   receiver_{board_addr, PORT, timeout},
         pub_{n.advertise<P>(topic, msg_buffer_size)},
         msg_{}
     {
@@ -89,9 +93,14 @@ protected:
     /// msg of type T that is received via zeromq
     T msg_;
 
-    virtual void receive() final
+    /**
+     * Receive a message (non blocking)
+     * @return true if message was returned within timeout
+     * @return false if there was no message within timeout period
+     */
+    virtual bool receive() final
     {
-        receiver_.receive(msg_);
+        return receiver_.receive(msg_);
     }
 
     /**

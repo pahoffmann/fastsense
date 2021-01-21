@@ -12,8 +12,8 @@
 
 using namespace fastsense::bridge;
 
-TSDFBridge::TSDFBridge(ros::NodeHandle& n, const std::string& board_addr) 
-:   BridgeBase{n, "tsdf", board_addr}, 
+TSDFBridge::TSDFBridge(ros::NodeHandle& n, const std::string& board_addr, std::chrono::milliseconds timeout)
+:   BridgeBase{n, "tsdf", board_addr, 1000, timeout},
     ProcessThread{},
     points_{},
     colors_{}
@@ -28,10 +28,12 @@ void TSDFBridge::run()
     {
         try
         {
-            receive();
-            ROS_INFO_STREAM("Received " << msg_.tsdf_data_.size() << " tsdf values\n");
-            convert();
-            publish();
+            if (receive())
+            {
+                ROS_INFO_STREAM("Received " << msg_.tsdf_data_.size() << " tsdf values\n");
+                convert();
+                publish();
+            }
         }
         catch(const std::exception& e)
         {
@@ -41,12 +43,12 @@ void TSDFBridge::run()
 }
 
 // TODO in util, so steffen and my version match
-bool TSDFBridge::in_bounds(int x, int y, int z)
+bool TSDFBridge::in_bounds(int x, int y, int z) const
 {
     return abs(x - msg().pos_[0] <= msg().size_[0] / 2 && abs(y - msg().pos_[1]) <= msg().size_[1] / 2 && abs(z - msg().pos_[2]) <= msg().size_[2] / 2);
 }
 
-TSDFValue TSDFBridge::get_tsdf_value(int x, int y, int z)
+TSDFValue TSDFBridge::get_tsdf_value(int x, int y, int z) const
 {
     if (!in_bounds(x, y, z))
     {
@@ -146,7 +148,6 @@ void TSDFBridge::convert()
             colors_[i + offset] = p.second;
         }
     }
-    // ROS_INFO_STREAM("Converted tsdf values: " << msg_.tsdf_data_.size() << "/" << points_.size() << " points\n");
 }
 
 void TSDFBridge::publish()
@@ -163,8 +164,6 @@ void TSDFBridge::publish()
     marker.points = points_;
     marker.colors = colors_;
     pub().publish(marker);
-
-    // ROS_INFO_STREAM("Published " << points_.size() << " tsdf values\n");
 
     points_.clear();
     colors_.clear();
