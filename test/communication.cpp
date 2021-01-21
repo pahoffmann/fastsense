@@ -210,7 +210,7 @@ TEST_CASE("Stamped<PointCloud> Sender Receiver Test", "[communication]")
 }
 
 TEST_CASE("TSDFBridgeMessage Sender Receiver Test", "[communication]")
-{   
+{
     std::cout << "Testing 'TSDFBridgeMessage Sender Receiver Test'" << std::endl;
 
     for (size_t i = 0; i < iterations; ++i)
@@ -225,21 +225,21 @@ TEST_CASE("TSDFBridgeMessage Sender Receiver Test", "[communication]")
         tsdf_msg.tsdf_data_.resize(10 * 10 * 10);
         for (size_t i = 0; i < 10 * 10 * 10; ++i)
         {
-            tsdf_msg.tsdf_data_[i].first = 0;
-            tsdf_msg.tsdf_data_[i].second = 0;
+            tsdf_msg.tsdf_data_[i].value(0);
+            tsdf_msg.tsdf_data_[i].weight(0);
         }
 
-        tsdf_msg.tsdf_data_[4 + 5 * 10 + 5 * 10 * 10].first = 1;
-        tsdf_msg.tsdf_data_[4 + 5 * 10 + 5 * 10 * 10].second = 1;
+        tsdf_msg.tsdf_data_[4 + 5 * 10 + 5 * 10 * 10].value(1);
+        tsdf_msg.tsdf_data_[4 + 5 * 10 + 5 * 10 * 10].weight(1);
 
-        tsdf_msg.tsdf_data_[3 + 5 * 10 + 5 * 10 * 10].first = 2;
-        tsdf_msg.tsdf_data_[3 + 5 * 10 + 5 * 10 * 10].second = 1;
+        tsdf_msg.tsdf_data_[3 + 5 * 10 + 5 * 10 * 10].value(2);
+        tsdf_msg.tsdf_data_[3 + 5 * 10 + 5 * 10 * 10].weight(1);
 
-        tsdf_msg.tsdf_data_[6 + 5 * 10 + 5 * 10 * 10].first = -1;
-        tsdf_msg.tsdf_data_[6 + 5 * 10 + 5 * 10 * 10].second = 1;
+        tsdf_msg.tsdf_data_[6 + 5 * 10 + 5 * 10 * 10].value(-1);
+        tsdf_msg.tsdf_data_[6 + 5 * 10 + 5 * 10 * 10].weight(1);
 
-        tsdf_msg.tsdf_data_[7 + 5 * 10 + 5 * 10 * 10].first = -2;
-        tsdf_msg.tsdf_data_[7 + 5 * 10 + 5 * 10 * 10].second = 1;
+        tsdf_msg.tsdf_data_[7 + 5 * 10 + 5 * 10 * 10].value(-2);
+        tsdf_msg.tsdf_data_[7 + 5 * 10 + 5 * 10 * 10].weight(1);
 
         TSDFBridgeMessage tsdf_received;
 
@@ -503,7 +503,7 @@ TEST_CASE("Stamped<msg::Transform> Sender Receiver Test", "[communication]")
 
         receive_thread.join();
         send_thread.join();
-        
+
         REQUIRE(value_to_send.data_.rotation.x() == Approx(value_received.data_.rotation.x()).margin(0.00001));
         REQUIRE(value_to_send.data_.rotation.y() == Approx(value_received.data_.rotation.y()).margin(0.00001));
         REQUIRE(value_to_send.data_.rotation.z() == Approx(value_received.data_.rotation.z()).margin(0.00001));

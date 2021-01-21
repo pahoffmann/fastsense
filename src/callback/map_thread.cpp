@@ -6,6 +6,7 @@
 #include <callback/map_thread.h>
 #include <util/logging/logger.h>
 #include <util/config/config_manager.h>
+#include <util/runtime_evaluator.h>
 
 namespace fastsense::callback
 {
@@ -57,6 +58,8 @@ void MapThread::go(const Vector3i& pos, const fastsense::buffer::InputBuffer<Poi
 
 void MapThread::thread_run()
 {
+    util::RuntimeEvaluator eval;
+
     while (running)
     {
         start_mutex_.lock();
@@ -66,21 +69,28 @@ void MapThread::thread_run()
         }
         Logger::info("Starting SUV");
         
+        eval.start("copy");
         map::LocalMap tmp_map(*local_map_);
+        eval.stop("copy");
 
         // shift
+        eval.start("shift");
+        eval.stop("shift");
         tmp_map.shift(pos_.x(), pos_.y(), pos_.z());
 
         // tsdf update
+        eval.start("tsdf");
         int tau = (int) ConfigManager::config().slam.max_distance();
         tsdf_krnl_.run(tmp_map, *points_ptr_, tau, ConfigManager::config().slam.max_weight());
         tsdf_krnl_.waitComplete();
+        eval.stop("tsdf");
 
         map_mutex_.lock();
         *local_map_ = std::move(tmp_map);
         map_mutex_.unlock();
 
         // visualize
+        eval.start("vis");
         msg::TSDFBridgeMessage tsdf_msg;
         tsdf_msg.tau_ = tau;
         tsdf_msg.size_ = local_map_->get_size();
@@ -89,8 +99,9 @@ void MapThread::thread_run()
         tsdf_msg.tsdf_data_.reserve(local_map_->getBuffer().size());
         std::copy(local_map_->getBuffer().cbegin(), local_map_->getBuffer().cend(), std::back_inserter(tsdf_msg.tsdf_data_));
         tsdf_buffer_->push_nb(tsdf_msg, true);
+        eval.stop("vis");
 
-        Logger::info("Stopping SUV");
+        Logger::info("Map Thread:\n", eval.to_string(), "\nStopping SUV");
         active_ = false;
     }
 }

@@ -13,14 +13,12 @@
 
 #include <iostream>
 
-using fastsense::map::IntTuple;
-
 namespace fastsense::kernels
 {
 
 class TSDFKernel : public BaseKernel
 {
-    buffer::InputOutputBuffer<IntTuple> new_entries;
+    buffer::InputOutputBuffer<TSDFValue> new_entries;
 
 public:
 
@@ -36,11 +34,10 @@ public:
     {
         for (int i = 0; i < (int)new_entries.size(); ++i)
         {
-            new_entries[i].first = 0;
-            new_entries[i].second = 0;
+            new_entries[i] = TSDFValue(0, 0);
         }
 
-        constexpr int SPLIT_FACTOR = 2;
+        constexpr int SPLIT_FACTOR = 4;
 
         resetNArg();
         for (int i = 0; i < SPLIT_FACTOR; i++)

@@ -4,13 +4,12 @@
  */
 
 #include <map/local_map_hw.h>
-
-using fastsense::map::IntTuple;
+#include <util/tsdf_hw.h>
 
 extern "C"
 {
 
-    void krnl_local_map_test(IntTuple* mapData,
+    void krnl_local_map_test(TSDFValueHW* mapData,
                              int sizeX,
                              int sizeY,
                              int sizeZ,
@@ -47,9 +46,9 @@ extern "C"
                 for (int k = map.posZ - map.sizeZ / 2; k <= map.posZ + map.sizeZ / 2; k++)
                 {
 #pragma HLS PIPELINE
-                    IntTuple tmp = map.get(mapData, i, j, k);
-                    tmp.first *= 2;
-                    tmp.second /= 2;
+                    TSDFValueHW tmp = map.get(mapData, i, j, k);
+                    tmp.value *= 2;
+                    tmp.weight /= 2;
                     map.set(mapData, i, j, k, tmp);
                 }
             }

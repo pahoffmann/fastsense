@@ -34,17 +34,17 @@ LocalMap::LocalMap(unsigned int sX, unsigned int sY, unsigned int sZ, const std:
     }
 }
 
-std::pair<int, int>& LocalMap::value(int x, int y, int z)
+TSDFValue& LocalMap::value(int x, int y, int z)
 {
     return value(Vector3i(x, y, z));
 }
 
-const std::pair<int, int>& LocalMap::value(int x, int y, int z) const
+const TSDFValue& LocalMap::value(int x, int y, int z) const
 {
     return value(Vector3i(x, y, z));
 }
 
-std::pair<int, int>& LocalMap::value(Vector3i p)
+TSDFValue& LocalMap::value(Vector3i p)
 {
     if (!in_bounds(p))
     {
@@ -56,7 +56,7 @@ std::pair<int, int>& LocalMap::value(Vector3i p)
                         p.z() % size_.z()];
 }
 
-const std::pair<int, int>& LocalMap::value(Vector3i p) const
+const TSDFValue& LocalMap::value(Vector3i p) const
 {
     if (!in_bounds(p))
     {
@@ -108,14 +108,14 @@ void LocalMap::shift(int x, int y, int z)
                 if (diffX > 0)
                 {
                     // step forward
-                    std::pair<int, int>& inout = value(pos_.x() - size_.x() / 2, j, k);
+                    TSDFValue& inout = value(pos_.x() - size_.x() / 2, j, k);
                     map_->set_value(Vector3i(pos_.x() - size_.x() / 2, j, k), inout);
                     inout = map_->get_value(Vector3i(pos_.x() + size_.x() / 2 + 1, j, k));
                 }
                 else
                 {
                     // step backwards
-                    std::pair<int, int>& inout = value(pos_.x() + size_.x() / 2, j, k);
+                    TSDFValue& inout = value(pos_.x() + size_.x() / 2, j, k);
                     map_->set_value(Vector3i(pos_.x() + size_.x() / 2, j, k), inout);
                     inout = map_->get_value(Vector3i(pos_.x() - size_.x() / 2 - 1, j, k));
                 }
@@ -137,14 +137,14 @@ void LocalMap::shift(int x, int y, int z)
                 if (diffY > 0)
                 {
                     // step forward
-                    std::pair<int, int>& inout = value(j, pos_.y() - size_.y() / 2, k);
+                    TSDFValue& inout = value(j, pos_.y() - size_.y() / 2, k);
                     map_->set_value(Vector3i(j, pos_.y() - size_.y() / 2, k), inout);
                     inout = map_->get_value(Vector3i(j, pos_.y() + size_.y() / 2 + 1, k));
                 }
                 else
                 {
                     // step backwards
-                    std::pair<int, int>& inout = value(j, pos_.y() + size_.y() / 2, k);
+                    TSDFValue& inout = value(j, pos_.y() + size_.y() / 2, k);
                     map_->set_value(Vector3i(j, pos_.y() + size_.y() / 2, k), inout);
                     inout = map_->get_value(Vector3i(j, pos_.y() - size_.y() / 2 - 1, k));
                 }
@@ -166,14 +166,14 @@ void LocalMap::shift(int x, int y, int z)
                 if (diffZ > 0)
                 {
                     // step forward
-                    std::pair<int, int>& inout = value(j, k, pos_.z() - size_.z() / 2);
+                    TSDFValue& inout = value(j, k, pos_.z() - size_.z() / 2);
                     map_->set_value(Vector3i(j, k, pos_.z() - size_.z() / 2), inout);
                     inout = map_->get_value(Vector3i(j, k, pos_.z() + size_.z() / 2 + 1));
                 }
                 else
                 {
                     // step backwards
-                    std::pair<int, int>& inout = value(j, k, pos_.z() + size_.z() / 2);
+                    TSDFValue& inout = value(j, k, pos_.z() + size_.z() / 2);
                     map_->set_value(Vector3i(j, k, pos_.z() + size_.z() / 2), inout);
                     inout = map_->get_value(Vector3i(j, k, pos_.z() - size_.z() / 2 - 1));
                 }
@@ -184,7 +184,7 @@ void LocalMap::shift(int x, int y, int z)
     }
 }
 
-buffer::InputOutputBuffer<std::pair<int, int>>& LocalMap::getBuffer()
+buffer::InputOutputBuffer<TSDFValue>& LocalMap::getBuffer()
 {
     return data_;
 }
@@ -210,7 +210,7 @@ void LocalMap::write_back()
         {
             for (int k = pos_.z() - size_.z() / 2; k <= pos_.z() + size_.z() / 2; k++)
             {
-                std::pair<int, int>& out = value(i, j, k);
+                TSDFValue& out = value(i, j, k);
                 map_->set_value(Vector3i(i, j, k), out);
             }
         }

@@ -12,6 +12,7 @@
 #include <string>
 #include <utility>
 #include <util/point.h>
+#include <util/tsdf.h>
 
 // TODO: (maybe) handle existing/missing folder, where hdf5 will write
 
@@ -20,7 +21,7 @@ namespace fastsense::map
 
 struct ActiveChunk
 {
-    std::vector<int> data;
+    std::vector<TSDFValue::RawType> data;
     Vector3i pos;
     int age;
 };
@@ -59,10 +60,7 @@ private:
     HighFive::File file_;
 
     /// Initial default tsdf value.
-    int initial_tsdf_value_;
-
-    /// Initial default weight.
-    int initial_weight_;
+    TSDFValue initial_tsdf_value_;
 
     /**
      * Vector of active chunks.
@@ -98,7 +96,7 @@ private:
      * @param chunk position of the chunk that gets activated
      * @return reference to the activated chunk
      */
-    std::vector<int>& activate_chunk(const Vector3i& chunk);
+    std::vector<TSDFValue::RawType>& activate_chunk(const Vector3i& chunk);
 
 public:
 
@@ -112,13 +110,7 @@ public:
     static constexpr int CHUNK_SIZE = 1 << CHUNK_SHIFT;
 
     /// Number of voxels in one chunk (CHUNK_SIZE^3).
-    static constexpr int SINGLE_SIZE = 1 << (3 * CHUNK_SHIFT); // = CHUNK_SIZE * CHUNK_SIZE * CHUNK_SIZE
-
-    /**
-     * Number of entries in one chunk (SINGLE_SIZE * 2).
-     * Per voxel a tsdf value and a weight is stored.
-     */
-    static constexpr int TOTAL_SIZE = SINGLE_SIZE * 2;
+    static constexpr int TOTAL_CHUNK_SIZE = 1 << (3 * CHUNK_SHIFT); // = CHUNK_SIZE * CHUNK_SIZE * CHUNK_SIZE
 
     /// Maximum number of active chunks.
     static constexpr int NUM_CHUNKS = 64;
@@ -131,21 +123,21 @@ public:
      * @param initialTsdfValue initial default tsdf value
      * @param initialWeight initial default weight
      */
-    GlobalMap(std::string name, int initial_tsdf_value, int initial_weight);
+    GlobalMap(std::string name, TSDFValue::ValueType initial_tsdf_value, TSDFValue::WeightType initial_weight);
 
     /**
      * Returns a value pair consisting of a tsdf value and a weight from the map.
      * @param pos the position
      * @return value pair from the map
      */
-    std::pair<int, int> get_value(const Vector3i& pos);
+    TSDFValue get_value(const Vector3i& pos);
 
     /**
      * Sets a value pair consisting of a tsdf value and a weight on the map.
      * @param pos the position
      * @param value value pair that is set
      */
-    void set_value(const Vector3i& pos, const std::pair<int, int>& value);
+    void set_value(const Vector3i& pos, const TSDFValue& value);
 
     /**
      * Saves a pose in the HDF5 file.

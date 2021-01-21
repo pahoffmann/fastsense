@@ -12,9 +12,10 @@
 #include <math.h>
 #endif
 
-inline int hls_abs(int x)
+template<typename T>
+inline T hls_abs(T x)
 {
-    return x < 0 ? -x : x;
+    return x < 0 ? T(-x) : T(x);
 }
 
 inline int hls_sqrt_approx(int x)

@@ -70,7 +70,7 @@ void update_tsdf(const ScanPoints_t& scan_points,
                 value = -value;
             }
             // Calculate the corresponding weight for every TSDF value
-            int weight = WEIGHT_RESOLUTION;
+            int weight = WEIGHT_RESOLUTION-1;
             if (value < -weight_epsilon)
             {
                 weight = WEIGHT_RESOLUTION * (tau + value) / (tau - weight_epsilon);
@@ -112,8 +112,8 @@ void update_tsdf(const ScanPoints_t& scan_points,
         int weight = map_entry.second.second;
 
         auto& entry = buffer.value(index);
-        entry.first = (entry.first * entry.second + value * weight) / (entry.second + weight);
-        entry.second = std::min(max_weight, entry.second + weight);
+        entry.value((entry.value() * entry.weight() + value * weight) / (entry.weight() + weight));
+        entry.weight(std::min(max_weight, entry.weight() + weight));
     }
 }
 

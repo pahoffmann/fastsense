@@ -6,6 +6,7 @@
  */
 
 #include <util/hls_functions.h>
+#include <util/tsdf_hw.h>
 #include <iostream>
 
 namespace fastsense
@@ -66,7 +67,7 @@ struct LocalMapHW
         return index;
     }
 
-    IntTuple get(IntTuple* data, int x, int y, int z) const
+    TSDFValueHW get(TSDFValueHW* data, int x, int y, int z) const
     {
 #pragma HLS INLINE
         if (in_bounds(x, y, z))
@@ -74,10 +75,10 @@ struct LocalMapHW
             return data[getIndex(x, y, z)];
         }
 
-        return IntTuple(0, 0);
+        return TSDFValueHW{0, 0};
     }
 
-    void set(IntTuple* data, int x, int y, int z, const IntTuple& val) const
+    void set(TSDFValueHW* data, int x, int y, int z, const TSDFValueHW& val) const
     {
 #pragma HLS INLINE
         if (in_bounds(x, y, z))

@@ -12,10 +12,9 @@
 using namespace fastsense::map;
 using fastsense::util::logging::Logger;
 
-GlobalMap::GlobalMap(std::string name, int initial_tsdf_value, int initial_weight)
+GlobalMap::GlobalMap(std::string name, TSDFValue::ValueType initial_tsdf_value, TSDFValue::WeightType initial_weight)
     : file_{name, HighFive::File::OpenOrCreate | HighFive::File::Truncate}, // Truncate clears already existing file
-      initial_tsdf_value_{initial_tsdf_value},
-      initial_weight_{initial_weight},
+      initial_tsdf_value_{initial_tsdf_value, initial_weight},
       active_chunks_{},
       num_poses_{0}
 {
@@ -39,10 +38,10 @@ std::string GlobalMap::tag_from_chunk_pos(const Vector3i& pos)
 int GlobalMap::index_from_pos(Vector3i pos, const Vector3i& chunkPos)
 {
     pos -= chunkPos * CHUNK_SIZE;
-    return (pos.x() * CHUNK_SIZE * CHUNK_SIZE + pos.y() * CHUNK_SIZE + pos.z()) * 2;
+    return (pos.x() * CHUNK_SIZE * CHUNK_SIZE + pos.y() * CHUNK_SIZE + pos.z());
 }
 
-std::vector<int>& GlobalMap::activate_chunk(const Vector3i& chunkPos)
+std::vector<TSDFValue::RawType>& GlobalMap::activate_chunk(const Vector3i& chunkPos)
 {
     int index = -1;
     int n = active_chunks_.size();
@@ -72,12 +71,7 @@ std::vector<int>& GlobalMap::activate_chunk(const Vector3i& chunkPos)
         else
         {
             // create new chunk
-            newChunk.data = std::vector<int>(TOTAL_SIZE);
-            for (int i = 0; i < SINGLE_SIZE; i++)
-            {
-                newChunk.data[2 * i] = initial_tsdf_value_;
-                newChunk.data[2 * i + 1] = initial_weight_;
-            }
+            newChunk.data = std::vector<TSDFValue::RawType>(TOTAL_CHUNK_SIZE, initial_tsdf_value_.raw());
         }
         // put new chunk into active_chunks_
         if (n < NUM_CHUNKS)
@@ -127,21 +121,20 @@ std::vector<int>& GlobalMap::activate_chunk(const Vector3i& chunkPos)
     return active_chunks_[index].data;
 }
 
-std::pair<int, int> GlobalMap::get_value(const Vector3i& pos)
+TSDFValue GlobalMap::get_value(const Vector3i& pos)
 {
     Vector3i chunkPos = floor_shift(pos, CHUNK_SHIFT);
     const auto& chunk = activate_chunk(chunkPos);
     int index = index_from_pos(pos, chunkPos);
-    return std::make_pair(chunk[index], chunk[index + 1]);
+    return TSDFValue(chunk[index]);
 }
 
-void GlobalMap::set_value(const Vector3i& pos, const std::pair<int, int>& value)
+void GlobalMap::set_value(const Vector3i& pos, const TSDFValue& value)
 {
     Vector3i chunkPos = floor_shift(pos, CHUNK_SHIFT);
     auto& chunk = activate_chunk(chunkPos);
     int index = index_from_pos(pos, chunkPos);
-    chunk[index] = value.first;
-    chunk[index + 1] = value.second;
+    chunk[index] = value.raw();
 }
 
 void GlobalMap::save_pose(float t_x, float t_y, float t_z, float quat_x, float quat_y, float quat_z, float quat_w)
