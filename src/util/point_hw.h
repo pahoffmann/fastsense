@@ -169,7 +169,7 @@ struct PointArith
         return p;
     }
 
-    PointArith operator*(int rhs) const
+    PointArith operator*(long rhs) const
     {
         PointArith p;
         p.x = x * rhs;
@@ -178,7 +178,7 @@ struct PointArith
         return p;
     }
 
-    PointArith operator/(int rhs) const
+    PointArith operator/(long rhs) const
     {
         PointArith p;
         p.x = x / rhs;
@@ -195,7 +195,7 @@ struct PointArith
         return *this;
     }
 
-    PointArith& operator=(int rhs)
+    PointArith& operator=(long rhs)
     {
         x = rhs;
         y = rhs;
@@ -257,9 +257,9 @@ struct PointArith
     PointArith to_mm() const
     {
         PointArith p;
-        p.x = (x * MAP_RESOLUTION) + MAP_RESOLUTION / 2;
-        p.y = (y * MAP_RESOLUTION) + MAP_RESOLUTION / 2;
-        p.z = (z * MAP_RESOLUTION) + MAP_RESOLUTION / 2;
+        p.x = (x * MAP_RESOLUTION); //+ MAP_RESOLUTION / 2;
+        p.y = (y * MAP_RESOLUTION); //+ MAP_RESOLUTION / 2;
+        p.z = (z * MAP_RESOLUTION); //+ MAP_RESOLUTION / 2;
         return p;
     }
 };
