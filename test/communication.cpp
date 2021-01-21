@@ -39,7 +39,7 @@ TEST_CASE("Simple Sender Receiver Test", "[communication]")
 
         std::thread receive_thread{[&]()
         {
-            Receiver<int> receiver{"127.0.0.1", 1234, 20ms};
+            Receiver<int> receiver{"127.0.0.1", 1200, 20ms};
 
             while (!stop) {
                 if (receiver.receive(value_received))
@@ -51,7 +51,7 @@ TEST_CASE("Simple Sender Receiver Test", "[communication]")
 
         std::thread send_thread{[&]()
         {
-            Sender<int> sender{1234};
+            Sender<int> sender{1200};
             SLEEP(500ms);
             sender.send(value_to_send);
             SLEEP(500ms);
@@ -334,106 +334,154 @@ TEST_CASE("ImuStamped Sender Receiver Test", "[communication]")
     }
 }
 
-// TEST_CASE("BufferedImuStampedReceiver Test", "[communication]")
-// {
-//     std::cout << "Testing 'BufferedImuStampedReceiver Test'" << std::endl;
+ TEST_CASE("BufferedImuStampedReceiver Test", "[communication]")
+ {
+     std::cout << "Testing 'BufferedImuStampedReceiver Test'" << std::endl;
 
-//     auto tp = util::HighResTimePoint{std::chrono::nanoseconds{1000}};
-//     bool stop = false;
+     auto tp = util::HighResTimePoint{std::chrono::nanoseconds{1000}};
 
-//     LinearAcceleration acc{1, 2, 3};
-//     AngularVelocity ang{4, 5, 6};
-//     MagneticField mag{7, 8, 9};
-//     Imu imu{acc, ang, mag};
+     LinearAcceleration acc{1, 2, 3};
+     AngularVelocity ang{4, 5, 6};
+     MagneticField mag{7, 8, 9};
+     Imu imu{acc, ang, mag};
 
-//     ImuStamped imu_stamped{imu, tp};
-//     ImuStamped value_received{};
+     ImuStamped imu_stamped{imu, tp};
+     ImuStamped value_received{};
 
-//     auto buffer = std::make_shared<msg::ImuStampedBuffer>(5);
+     size_t n_msgs = 2;
+     auto buffer = std::make_shared<msg::ImuStampedBuffer>(n_msgs);
+     REQUIRE(buffer->empty());
 
-//     std::thread receive_thread{[&]()
-//     {
-//         BufferedImuStampedReceiver receiver{"127.0.0.1", 1244, 5ms, buffer};
+     std::thread receive_thread{[&]()
+     {
+         BufferedImuStampedReceiver receiver{"127.0.0.1", 1244, 20ms, buffer};
 
-//         while (!stop)
-//         {
-//             if(receiver.receive(value_received))
-//             {
-//                 break;
-//             }
-//         }
-//     }};
+         while (n_msgs != buffer->size())
+         {
+             receiver.receive();
+         }
+     }};
 
-//     std::thread send_thread{[&]()
-//     {
-//         Sender<ImuStamped> sender{1244};
-//         SLEEP(500ms);
-//         sender.send(imu_stamped);
-//         SLEEP(500ms);
-//         stop = true;
-//     }};
+     std::thread send_thread{[&]()
+     {
+         Sender<ImuStamped> sender{1244};
+         SLEEP(500ms);
+         sender.send(imu_stamped);
+         SLEEP(500ms);
+         sender.send(imu_stamped);
+         SLEEP(500ms);
+     }};
 
-//     receive_thread.join();
-//     send_thread.join();
+     receive_thread.join();
+     send_thread.join();
 
-//     buffer->pop(&value_received);
-//     auto& [ imu_received, tp_received ] = value_received;
+     REQUIRE(buffer->size() == 2);
 
-//     REQUIRE(imu_received.acc.x() == 1);
-//     REQUIRE(imu_received.acc.y() == 2);
-//     REQUIRE(imu_received.acc.z() == 3);
-//     REQUIRE(imu_received.ang.x() == 4);
-//     REQUIRE(imu_received.ang.y() == 5);
-//     REQUIRE(imu_received.ang.z() == 6);
-//     REQUIRE(imu_received.mag.x() == 7);
-//     REQUIRE(imu_received.mag.y() == 8);
-//     REQUIRE(imu_received.mag.z() == 9);
-//     REQUIRE(tp_received == tp);
-// }
+     buffer->pop(&value_received);
+     {
+         auto& [imu_received, tp_received ] = value_received;
 
-// // TEST_CASE("BufferedPclStampedReceiver Test", "[communication]")
-// // {
-// //     std::cout << "Testing 'BufferedPclStampedReceiver Test'" << std::endl;
+         REQUIRE(buffer->size() == 1);
 
-// //     PointCloud pcl;
-// //     pcl.rings_ = 2;
-// //     pcl.points_.push_back({1, 2, 3});
-// //     pcl.points_.push_back({2, 3, 4});
-// //     pcl.points_.push_back({3, 4, 5});
+         REQUIRE(imu_received.acc.x() == 1);
+         REQUIRE(imu_received.acc.y() == 2);
+         REQUIRE(imu_received.acc.z() == 3);
+         REQUIRE(imu_received.ang.x() == 4);
+         REQUIRE(imu_received.ang.y() == 5);
+         REQUIRE(imu_received.ang.z() == 6);
+         REQUIRE(imu_received.mag.x() == 7);
+         REQUIRE(imu_received.mag.y() == 8);
+         REQUIRE(imu_received.mag.z() == 9);
+         REQUIRE(tp_received == tp);
+    }
 
-// //     auto tp_to_send = util::HighResTime::now();
 
-// //     PointCloudStamped pcl_stamped_to_send{std::move(pcl), tp_to_send};
+     buffer->pop(&value_received);
+     {
+         auto& [imu_received, tp_received ] = value_received;
 
-// //     auto buffer = std::make_shared<msg::PointCloudPtrStampedBuffer>(5);
+         REQUIRE(buffer->empty());
 
-// //     PointCloudPtrStamped data_recv;
+         REQUIRE(imu_received.acc.x() == 1);
+         REQUIRE(imu_received.acc.y() == 2);
+         REQUIRE(imu_received.acc.z() == 3);
+         REQUIRE(imu_received.ang.x() == 4);
+         REQUIRE(imu_received.ang.y() == 5);
+         REQUIRE(imu_received.ang.z() == 6);
+         REQUIRE(imu_received.mag.x() == 7);
+         REQUIRE(imu_received.mag.y() == 8);
+         REQUIRE(imu_received.mag.z() == 9);
+         REQUIRE(tp_received == tp);
+     }
+ }
 
-// //     std::thread receive_thread{[&]()
-// //     {
-// //         BufferedPclStampedReceiver receiver{"127.0.0.1", 1254, buffer};
-// //         std::this_thread::sleep_for(std::chrono::milliseconds(200));
-// //         receiver.receive();
-// //     }};
+  TEST_CASE("BufferedPclStampedReceiver Test", "[communication]")
+  {
+      std::cout << "Testing 'BufferedPclStampedReceiver Test'" << std::endl;
 
-// //     std::thread send_thread{[&]()
-// //     {
-// //         std::this_thread::sleep_for(std::chrono::milliseconds(100));
-// //         Sender<PointCloudStamped> sender{1254};
-// //         std::this_thread::sleep_for(std::chrono::milliseconds(200));
-// //         sender.send(pcl_stamped_to_send);
-// //     }};
+      PointCloud pcl;
+      pcl.rings_ = 2;
+      pcl.points_.push_back({1, 2, 3});
+      pcl.points_.push_back({2, 3, 4});
+      pcl.points_.push_back({3, 4, 5});
 
-// //     receive_thread.join();
-// //     send_thread.join();
+      PointCloudPtrStamped data_recv;
 
-// //     buffer->pop(&data_recv);
-// //     auto& [ pcl_ptr_stamped_recv, tp_received ] = data_recv;
+      auto tp_to_send = util::HighResTime::now();
 
-// //     REQUIRE(pcl_stamped_to_send.data_.rings_ == pcl_ptr_stamped_recv->rings_);
-// //     REQUIRE(pcl_stamped_to_send.data_.points_ == pcl_ptr_stamped_recv->points_);
-// //     REQUIRE(pcl_stamped_to_send.timestamp_ == tp_received);
-// // }
+      PointCloudStamped pcl_stamped{std::move(pcl), tp_to_send};
+
+      size_t n_msgs = 2;
+      auto buffer = std::make_shared<msg::PointCloudPtrStampedBuffer>(n_msgs);
+      REQUIRE(buffer->empty());
+
+      std::thread receive_thread{[&]()
+      {
+          BufferedPclStampedReceiver receiver{"127.0.0.1", 1254, 20ms, buffer};
+
+          while (n_msgs != buffer->size())
+          {
+              receiver.receive();
+          }
+      }};
+
+      std::thread send_thread{[&]()
+      {
+          Sender<PointCloudStamped> sender{1254};
+          SLEEP(500ms);
+          sender.send(pcl_stamped);
+          SLEEP(500ms);
+          sender.send(pcl_stamped);
+          SLEEP(500ms);
+      }};
+
+      receive_thread.join();
+      send_thread.join();
+
+      REQUIRE(buffer->size() == 2);
+
+      buffer->pop(&data_recv);
+      {
+        auto&[pcl_ptr_stamped_recv, tp_received] = data_recv;
+
+        REQUIRE(buffer->size() == 1);
+
+        REQUIRE(pcl_stamped.data_.rings_ == pcl_ptr_stamped_recv->rings_);
+        REQUIRE(pcl_stamped.data_.points_ == pcl_ptr_stamped_recv->points_);
+        REQUIRE(pcl_stamped.timestamp_ == tp_received);
+      }
+
+      buffer->pop(&data_recv);
+      {
+        auto&[pcl_ptr_stamped_recv, tp_received] = data_recv;
+
+        REQUIRE(buffer->empty());
+
+        REQUIRE(pcl_stamped.data_.rings_ == pcl_ptr_stamped_recv->rings_);
+        REQUIRE(pcl_stamped.data_.points_ == pcl_ptr_stamped_recv->points_);
+        REQUIRE(pcl_stamped.timestamp_ == tp_received);
+      }
+  }
 
 TEST_CASE("Stamped<int> Sender Receiver Test", "[communication]")
 {

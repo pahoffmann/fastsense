@@ -46,16 +46,16 @@ public:
     /**
      * @brief Destroy the Buffered Receiver object
      */
-    virtual ~BufferedReceiver() = default;
+    virtual ~BufferedReceiver() override = default;
 
     /**
      * @brief 'receive' receives one message
      * and is called from an endless loop in thread_run
      */
-    virtual void receive() = 0;
+    virtual bool receive() = 0;
 
     /**
-     * @brief thread_run receives until the end of time
+     * @brief thread_run receives until the thread is stopped by calling .stop()
      * 
      */
     void thread_run() override
@@ -78,7 +78,7 @@ protected:
     BufferedReceiver(   const std::string& addr, 
                         uint16_t port, 
                         std::chrono::milliseconds timeout, 
-                        std::shared_ptr<util::ConcurrentRingBuffer<BUFF_T>> buffer)
+                        typename util::ConcurrentRingBuffer<BUFF_T>::Ptr buffer)
     : receiver_{addr, port, timeout}
     , buffer_{buffer}
     {}
@@ -87,7 +87,7 @@ protected:
     Receiver<RECV_T> receiver_;
 
     /// Received data is written into buffer
-    std::shared_ptr<util::ConcurrentRingBuffer<BUFF_T>> buffer_;
+    typename util::ConcurrentRingBuffer<BUFF_T>::Ptr buffer_;
     
     /// individual message that is received
     RECV_T msg_;
@@ -117,17 +117,22 @@ public:
     /**
      * @brief Destroy the Buffered Imu Stamped Receiver object
      */
-    virtual ~BufferedImuStampedReceiver() = default;
+    ~BufferedImuStampedReceiver() final = default;
 
     /**
-     * @brief Receive ImuStamped and write into buffer
+     * @brief Receive ImuStamped (non blocking) and write into buffer, if received
+     *
+     * @return
      */
-    void receive() override
+    bool receive() final
     {
         if (receiver_.receive(msg_))
         {
             buffer_->push_nb(std::move(msg_));
+            return true;
         }
+
+        return false;
     }
 
     using UPtr = std::unique_ptr<BufferedImuStampedReceiver>;
@@ -158,18 +163,24 @@ public:
     /**
      * @brief Destroy the Buffered Pcl Stamped Receiver object
      */
-    ~BufferedPclStampedReceiver() override = default;
+    ~BufferedPclStampedReceiver() final = default;
 
     /**
-     * @brief Receive PointCloudStamped, convert to PointCloud*Ptr*Stamped
+     * @brief Receive PointCloudStamped (non blocking), convert to PointCloud*Ptr*Stamped if received, and save
+     *
+     * @return true if message received and converted and saved
+     * @return false if no message received
      */
-    void receive() override
+    bool receive() final
     {
         if (receiver_.receive(msg_))
         {
             auto& [ pcl, ts ] = msg_;
-            buffer_->push_nb(msg::PointCloudPtrStamped{std::make_shared<msg::PointCloud>(std::move(pcl)), ts });
+            buffer_->push_nb(std::move(msg::PointCloudPtrStamped{std::make_shared<msg::PointCloud>(std::move(pcl)), ts }));
+            return true;
         }
+
+        return false;
     }
 
     using UPtr = std::unique_ptr<BufferedPclStampedReceiver>;
