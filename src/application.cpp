@@ -126,10 +126,21 @@ int Application::run()
                               ConfigManager::config().registration.it_weight_gradient(),
                               ConfigManager::config().registration.epsilon()};
 
-    auto global_map_ptr = std::make_shared<GlobalMap>(
-                              "GlobalMap.h5",
-                              config.slam.max_distance() / config.slam.map_resolution(),
-                              config.slam.initial_map_weight());
+    int tau = ConfigManager::config().slam.max_distance();
+    int max_weight = ConfigManager::config().slam.max_weight() * WEIGHT_RESOLUTION;
+    int initial_weight = ConfigManager::config().slam.initial_map_weight() * WEIGHT_RESOLUTION;
+    assert(tau >= std::numeric_limits<TSDFValue::ValueType>::min());
+    assert(tau <= std::numeric_limits<TSDFValue::ValueType>::max());
+    assert(max_weight >= 0);
+    assert(max_weight <= std::numeric_limits<TSDFValue::WeightType>::max());
+    assert(initial_weight >= 0);
+    assert(initial_weight <= std::numeric_limits<TSDFValue::WeightType>::max());
+
+    std::cout << "tau: " << tau << std::endl;
+    std::cout << "max_weight: " << max_weight << std::endl;
+    std::cout << "initial_weight: " << initial_weight << std::endl;
+
+    auto global_map_ptr = std::make_shared<GlobalMap>("GlobalMap.h5", tau, initial_weight);
 
     auto local_map = std::make_shared<LocalMap>(
                          config.slam.map_size_x(),

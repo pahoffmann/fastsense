@@ -76,7 +76,9 @@ void CloudCallback::thread_run()
         {
             first_iteration = false;
 
-            tsdf_krnl.run(*local_map, scan_point_buffer, ConfigManager::config().slam.max_distance(), ConfigManager::config().slam.max_weight());
+            int tau = ConfigManager::config().slam.max_distance();
+            int max_weight = ConfigManager::config().slam.max_weight() * WEIGHT_RESOLUTION;
+            tsdf_krnl.run(*local_map, scan_point_buffer, tau, max_weight);
             tsdf_krnl.waitComplete();
         }
         else

@@ -68,20 +68,21 @@ void MapThread::thread_run()
             break;
         }
         Logger::info("Starting SUV");
-        
+
         eval.start("copy");
         map::LocalMap tmp_map(*local_map_);
         eval.stop("copy");
 
         // shift
         eval.start("shift");
-        eval.stop("shift");
         tmp_map.shift(pos_.x(), pos_.y(), pos_.z());
+        eval.stop("shift");
 
         // tsdf update
         eval.start("tsdf");
-        int tau = (int) ConfigManager::config().slam.max_distance();
-        tsdf_krnl_.run(tmp_map, *points_ptr_, tau, ConfigManager::config().slam.max_weight());
+        int tau = ConfigManager::config().slam.max_distance();
+        int max_weight = ConfigManager::config().slam.max_weight() * WEIGHT_RESOLUTION;
+        tsdf_krnl_.run(tmp_map, *points_ptr_, tau, max_weight);
         tsdf_krnl_.waitComplete();
         eval.stop("tsdf");
 

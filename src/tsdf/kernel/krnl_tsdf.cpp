@@ -23,14 +23,14 @@ extern "C"
     void read_points(PointHW* scanPoints,
                      int numPoints,
                      const LocalMapHW& map,
-                     int tau,
+                     TSDFValueHW::ValueType tau,
                      hls::stream<TSDFValueHW>& value_fifo,
                      hls::stream<PointHW>& index_fifo,
                      hls::stream<IntTuple>& bounds_fifo)
     {
         PointHW map_pos{map.posX, map.posY, map.posZ};
 
-        int weight_epsilon = tau / 10;
+        TSDFValueHW::ValueType weight_epsilon = tau / 10;
         int max_distance = (map.sizeX / 2 + map.sizeY / 2 + map.sizeZ / 2) * MAP_RESOLUTION;
 
     points_loop:
@@ -79,7 +79,7 @@ extern "C"
                     tsdf.value = -tsdf.value;
                 }
 
-                tsdf.weight = WEIGHT_RESOLUTION - 1;
+                tsdf.weight = WEIGHT_RESOLUTION;
 
                 if (tsdf.value < -weight_epsilon)
                 {
@@ -170,7 +170,7 @@ extern "C"
         int start,
         int end,
         TSDFValueHW* new_entries,
-        int max_weight)
+        TSDFValueHW::WeightType max_weight)
     {
         for (int index = start; index < end; index++)
         {
@@ -182,7 +182,9 @@ extern "C"
             TSDFValueHW map_entry = mapData[index];
             TSDFValueHW new_entry = new_entries[index];
 
-            auto new_weight = map_entry.weight + new_entry.weight;
+            // type is bigger than WeightType to avoid overflow
+            // type is signed to allow dividing value with new_weight
+            int new_weight = (int)map_entry.weight + (int)new_entry.weight;
 
             if (new_weight)
             {
@@ -211,7 +213,7 @@ extern "C"
                          TSDFValueHW* new_entries2,
                          TSDFValueHW* new_entries3,
                          const LocalMapHW& map,
-                         int tau)
+                         TSDFValueHW::ValueType tau)
     {
 #pragma HLS dataflow
 
@@ -300,7 +302,7 @@ extern "C"
                      TSDFValueHW* new_entries1,
                      TSDFValueHW* new_entries2,
                      TSDFValueHW* new_entries3,
-                     int max_weight)
+                     TSDFValueHW::WeightType max_weight)
     {
 #pragma HLS dataflow
         sync_loop(mapData0, 0, end0, new_entries0, max_weight);
@@ -347,8 +349,8 @@ extern "C"
                    TSDFValueHW* new_entries1,
                    TSDFValueHW* new_entries2,
                    TSDFValueHW* new_entries3,
-                   int tau,
-                   int max_weight)
+                   TSDFValueHW::ValueType tau,
+                   TSDFValueHW::WeightType max_weight)
     {
 #pragma HLS INTERFACE m_axi port=scanPoints0  offset=slave bundle=scan0mem  latency=22 depth=360
 #pragma HLS INTERFACE m_axi port=scanPoints1  offset=slave bundle=scan1mem  latency=22 depth=360
