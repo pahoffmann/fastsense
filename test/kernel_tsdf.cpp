@@ -74,7 +74,7 @@ TEST_CASE("Kernel_TSDF", "[kernel][slow]")
             kernel_points[0].y = MAP_RESOLUTION / 2;
             kernel_points[0].z = MAP_RESOLUTION / 2;
 
-            krnl.run(localMap, kernel_points, TAU, 31);
+            krnl.run(localMap, kernel_points, TAU, 5 * WEIGHT_RESOLUTION);
             krnl.waitComplete();
 
             // Front values
@@ -86,12 +86,12 @@ TEST_CASE("Kernel_TSDF", "[kernel][slow]")
             CHECK(localMap.value(1, 0, 0).value() == TAU);
 
             // Front weights
-            CHECK(localMap.value(6, 0, 0).weight() == 31);
-            CHECK(localMap.value(5, 0, 0).weight() == 31);
-            CHECK(localMap.value(4, 0, 0).weight() == 31);
-            CHECK(localMap.value(3, 0, 0).weight() == 31);
-            CHECK(localMap.value(2, 0, 0).weight() == 31);
-            CHECK(localMap.value(1, 0, 0).weight() == 31);
+            CHECK(localMap.value(6, 0, 0).weight() == WEIGHT_RESOLUTION);
+            CHECK(localMap.value(5, 0, 0).weight() == WEIGHT_RESOLUTION);
+            CHECK(localMap.value(4, 0, 0).weight() == WEIGHT_RESOLUTION);
+            CHECK(localMap.value(3, 0, 0).weight() == WEIGHT_RESOLUTION);
+            CHECK(localMap.value(2, 0, 0).weight() == WEIGHT_RESOLUTION);
+            CHECK(localMap.value(1, 0, 0).weight() == WEIGHT_RESOLUTION);
 
             // back values
             CHECK(localMap.value( 7, 0, 0).value() == -1 * SCALE);
@@ -102,8 +102,8 @@ TEST_CASE("Kernel_TSDF", "[kernel][slow]")
             CHECK(localMap.value(12, 0, 0).value() ==  0 * SCALE);
 
             // back weights
-            CHECK(localMap.value( 7, 0, 0).weight() < 31);
-            CHECK(localMap.value( 8, 0, 0).weight() < 31);
+            CHECK(localMap.value( 7, 0, 0).weight() < WEIGHT_RESOLUTION);
+            CHECK(localMap.value( 8, 0, 0).weight() < WEIGHT_RESOLUTION);
             CHECK(localMap.value( 9, 0, 0).weight() == 0);
             CHECK(localMap.value(10, 0, 0).weight() == 0);
             CHECK(localMap.value(11, 0, 0).weight() == 0);
@@ -114,7 +114,9 @@ TEST_CASE("Kernel_TSDF", "[kernel][slow]")
         {
             std::cout << "        Section 'Update'" << std::endl;
 
-            std::shared_ptr<fastsense::map::GlobalMap> gm_ptr = std::make_shared<fastsense::map::GlobalMap>("MapTest.h5", 0, 8);
+            constexpr int DEFAULT_WEIGHT = 8;
+
+            std::shared_ptr<fastsense::map::GlobalMap> gm_ptr = std::make_shared<fastsense::map::GlobalMap>("MapTest.h5", 0, DEFAULT_WEIGHT);
             fastsense::map::LocalMap localMap{SIZE_X, SIZE_Y, SIZE_Z, gm_ptr, q};
 
             fastsense::kernels::TSDFKernel krnl(q, localMap.getBuffer().size());
@@ -128,24 +130,26 @@ TEST_CASE("Kernel_TSDF", "[kernel][slow]")
             kernel_points[0].y = MAP_RESOLUTION / 2;
             kernel_points[0].z = MAP_RESOLUTION / 2;
 
-            krnl.run(localMap, kernel_points, TAU, 31);
+            krnl.run(localMap, kernel_points, TAU, 5 * WEIGHT_RESOLUTION);
             krnl.waitComplete();
+
+            int new_weight = WEIGHT_RESOLUTION + DEFAULT_WEIGHT;
 
             // Front values
             CHECK(localMap.value(6, 0, 0).value() == 0);
-            CHECK(localMap.value(5, 0, 0).value() == 1 * MAP_RESOLUTION * 31 / 39);
-            CHECK(localMap.value(4, 0, 0).value() == 2 * MAP_RESOLUTION * 31 / 39);
-            CHECK(localMap.value(3, 0, 0).value() == 3 * MAP_RESOLUTION * 31 / 39);
-            CHECK(localMap.value(2, 0, 0).value() == 3 * MAP_RESOLUTION * 31 / 39);
-            CHECK(localMap.value(1, 0, 0).value() == 3 * MAP_RESOLUTION * 31 / 39);
+            CHECK(localMap.value(5, 0, 0).value() == 1 * MAP_RESOLUTION * WEIGHT_RESOLUTION / new_weight);
+            CHECK(localMap.value(4, 0, 0).value() == 2 * MAP_RESOLUTION * WEIGHT_RESOLUTION / new_weight);
+            CHECK(localMap.value(3, 0, 0).value() == 3 * MAP_RESOLUTION * WEIGHT_RESOLUTION / new_weight);
+            CHECK(localMap.value(2, 0, 0).value() == 3 * MAP_RESOLUTION * WEIGHT_RESOLUTION / new_weight);
+            CHECK(localMap.value(1, 0, 0).value() == 3 * MAP_RESOLUTION * WEIGHT_RESOLUTION / new_weight);
 
             // Front weights
-            CHECK(localMap.value(6, 0, 0).weight() == 31);
-            CHECK(localMap.value(5, 0, 0).weight() == 31);
-            CHECK(localMap.value(4, 0, 0).weight() == 31);
-            CHECK(localMap.value(3, 0, 0).weight() == 31);
-            CHECK(localMap.value(2, 0, 0).weight() == 31);
-            CHECK(localMap.value(1, 0, 0).weight() == 31);
+            CHECK(localMap.value(6, 0, 0).weight() == new_weight);
+            CHECK(localMap.value(5, 0, 0).weight() == new_weight);
+            CHECK(localMap.value(4, 0, 0).weight() == new_weight);
+            CHECK(localMap.value(3, 0, 0).weight() == new_weight);
+            CHECK(localMap.value(2, 0, 0).weight() == new_weight);
+            CHECK(localMap.value(1, 0, 0).weight() == new_weight);
 
             krnl.run(localMap, kernel_points, TAU, 24);
             krnl.waitComplete();

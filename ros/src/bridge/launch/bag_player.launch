@@ -1,5 +1,6 @@
 <launch>
   <arg name="bag" />
+  <arg name="args" default="" />
 
   <node pkg="bridge" type="from_trenz" name="from_trenz_bridge"/>
 
@@ -8,6 +9,6 @@
     <remap from="/imu/data_raw" to="/from_trenz/imu/raw" />
   </node>
 
-  <node pkg="rosbag" type="play" name="fastsense_player" output="screen" args="$(arg bag) --topics /from_trenz/velodyne/points /from_trenz/imu/raw"/>
+  <node pkg="rosbag" type="play" name="fastsense_player" output="screen" args="$(arg bag) $(arg args) --topics /from_trenz/velodyne/points /from_trenz/imu/raw"/>
 
 </launch>
