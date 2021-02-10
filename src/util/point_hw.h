@@ -132,3 +132,80 @@ struct PointHW
         return p;
     }
 };
+
+struct PointArith
+{
+    long x;
+    long y;
+    long z;
+
+    PointArith() : x(0), y(0), z(0)
+    {}
+
+    PointArith(long x, long y, long z)
+        : x(x), y(y), z(z)
+    {}
+
+    PointArith operator+(const PointArith& rhs) const
+    {
+        PointArith p;
+        p.x = x + rhs.x;
+        p.y = y + rhs.y;
+        p.z = z + rhs.z;
+        return p;
+    }
+
+    PointArith operator-(const PointArith& rhs) const
+    {
+        PointArith p;
+        p.x = x - rhs.x;
+        p.y = y - rhs.y;
+        p.z = z - rhs.z;
+        return p;
+    }
+
+    PointArith operator*(long rhs) const
+    {
+        PointArith p;
+        p.x = x * rhs;
+        p.y = y * rhs;
+        p.z = z * rhs;
+        return p;
+    }
+
+    PointArith operator/(long rhs) const
+    {
+        PointArith p;
+        p.x = x / rhs;
+        p.y = y / rhs;
+        p.z = z / rhs;
+        return p;
+    }
+
+    PointArith& operator=(long rhs)
+    {
+        x = rhs;
+        y = rhs;
+        z = rhs;
+        return *this;
+    }
+
+    long norm2() const
+    {
+        return x * x + y * y + z * z;
+    }
+
+    long norm() const
+    {
+        return hls_sqrt_approx_arith(norm2());
+    }
+
+    PointArith cross(const PointArith& rhs) const 
+    {
+        PointArith p;
+        p.x = y * rhs.z - z * rhs.y;
+        p.y = z * rhs.x - x * rhs.z;
+        p.z = x * rhs.y - y * rhs.x;
+        return p;
+    }
+};

@@ -103,7 +103,7 @@ void CloudCallback::thread_run()
         Vector3i pos((int)std::floor(pose(0, 3) / MAP_RESOLUTION),
                      (int)std::floor(pose(1, 3) / MAP_RESOLUTION),
                      (int)std::floor(pose(2, 3) / MAP_RESOLUTION));
-        map_thread.go(pos, scan_point_buffer);
+        map_thread.go(pos, pose, scan_point_buffer);
 
         Eigen::Quaternionf quat(pose.block<3, 3>(0, 0));
 

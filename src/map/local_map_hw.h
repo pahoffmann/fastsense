@@ -15,8 +15,6 @@ namespace fastsense
 namespace map
 {
 
-using IntTuple = std::pair<int, int>;
-
 template<typename T>
 T overflow(T val, T max)
 {

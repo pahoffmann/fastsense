@@ -34,7 +34,8 @@ void krnl_tsdf_sw(PointHW* scanPoints0,
                   TSDFValueHW* new_entries1,
                   TSDFValueHW* new_entries2,
                   TSDFValueHW* new_entries3,
-                  int tau,
-                  int max_weight);
+                  TSDFValueHW::ValueType tau,
+                  TSDFValueHW::WeightType max_weight,
+                  int up_x, int up_y, int up_z);
 
 } // namespace fastsense::tsdf

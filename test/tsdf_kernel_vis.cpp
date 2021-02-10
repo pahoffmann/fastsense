@@ -82,9 +82,6 @@ TEST_CASE("TSDF_Kernel_Vis", "[tsdf_kernel_vis]")
 
         tsdf_bridge.start();
 
-        // krnl.run(local_map, kernel_points, TAU, MAX_WEIGHT);
-        // krnl.waitComplete();
-
         fastsense::buffer::InputOutputBuffer<TSDFValue> new_entries(q, local_map.getBuffer().size());
 
         for (auto& entry : new_entries)
@@ -93,24 +90,30 @@ TEST_CASE("TSDF_Kernel_Vis", "[tsdf_kernel_vis]")
             entry.weight(0);
         }
 
-        fastsense::tsdf::krnl_tsdf_sw(kernel_points_sw.data(),
-                                      kernel_points_sw.data(),
-                                      kernel_points_sw.data(),
-                                      kernel_points_sw.data(),
-                                      num_points,
-                                      (TSDFValueHW*)local_map.getBuffer().getVirtualAddress(),
-                                      (TSDFValueHW*)local_map.getBuffer().getVirtualAddress(),
-                                      (TSDFValueHW*)local_map.getBuffer().getVirtualAddress(),
-                                      (TSDFValueHW*)local_map.getBuffer().getVirtualAddress(),
-                                      size.x(), size.y(), size.z(),
-                                      pos.x(), pos.y(), pos.z(),
-                                      offset.x(), offset.y(), offset.z(),
-                                      (TSDFValueHW*)new_entries.getVirtualAddress(),
-                                      (TSDFValueHW*)new_entries.getVirtualAddress(),
-                                      (TSDFValueHW*)new_entries.getVirtualAddress(),
-                                      (TSDFValueHW*)new_entries.getVirtualAddress(),
-                                      TAU,
-                                      MAX_WEIGHT);
+        auto q3 = fastsense::hw::FPGAManager::create_command_queue();
+        fastsense::kernels::TSDFKernel krnl(q3, local_map.getBuffer().size());
+
+        krnl.run(local_map, kernel_points, TAU, MAX_WEIGHT);
+        krnl.waitComplete();
+
+        // fastsense::tsdf::krnl_tsdf_sw(kernel_points_sw.data(),
+        //                               kernel_points_sw.data(),
+        //                               kernel_points_sw.data(),
+        //                               kernel_points_sw.data(),
+        //                               num_points,
+        //                               (TSDFValueHW*)local_map.getBuffer().getVirtualAddress(),
+        //                               (TSDFValueHW*)local_map.getBuffer().getVirtualAddress(),
+        //                               (TSDFValueHW*)local_map.getBuffer().getVirtualAddress(),
+        //                               (TSDFValueHW*)local_map.getBuffer().getVirtualAddress(),
+        //                               size.x(), size.y(), size.z(),
+        //                               pos.x(), pos.y(), pos.z(),
+        //                               offset.x(), offset.y(), offset.z(),
+        //                               (TSDFValueHW*)new_entries.getVirtualAddress(),
+        //                               (TSDFValueHW*)new_entries.getVirtualAddress(),
+        //                               (TSDFValueHW*)new_entries.getVirtualAddress(),
+        //                               (TSDFValueHW*)new_entries.getVirtualAddress(),
+        //                               TAU,
+        //                               MAX_WEIGHT);
 
         fastsense::msg::TSDFBridgeMessage tsdf_msg;
 

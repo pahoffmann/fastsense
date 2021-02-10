@@ -222,6 +222,7 @@ TEST_CASE("Kernel_TSDF", "[kernel][slow]")
         auto& size = local_map_sw.get_size();
         auto& pos = local_map_sw.get_pos();
         auto& offset = local_map_sw.get_offset();
+        PointHW up = PointHW(0, 0, MATRIX_RESOLUTION);
 
         fastsense::tsdf::krnl_tsdf_sw(kernel_points_sw.data(),
                                       kernel_points_sw.data(),
@@ -240,7 +241,8 @@ TEST_CASE("Kernel_TSDF", "[kernel][slow]")
                                       (TSDFValueHW*)new_entries.getVirtualAddress(),
                                       (TSDFValueHW*)new_entries.getVirtualAddress(),
                                       TAU,
-                                      MAX_WEIGHT);
+                                      MAX_WEIGHT,
+                                      up.x, up.y, up.z);
 
 
         check_tsdf(local_map.getBuffer(), local_map_sw.getBuffer());

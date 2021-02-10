@@ -24,9 +24,11 @@ extern "C"
                      int numPoints,
                      const LocalMapHW& map,
                      TSDFValueHW::ValueType tau,
+                     const PointHW& up,
                      hls::stream<TSDFValueHW>& value_fifo,
                      hls::stream<PointHW>& index_fifo,
-                     hls::stream<IntTuple>& bounds_fifo)
+                     hls::stream<std::pair<PointHW, PointArith>>& bounds_fifo,
+                     hls::stream<std::pair<int, int>>& iter_steps_fifo)
     {
         PointHW map_pos{map.posX, map.posY, map.posZ};
 
@@ -44,6 +46,12 @@ extern "C"
 
             int distance = direction.norm();
             int distance_tau = distance + tau;
+
+            auto normed_direction_vector = (PointArith(direction.x, direction.y, direction.z) * MATRIX_RESOLUTION) / distance;
+            auto interpolation_vector = (normed_direction_vector.cross(normed_direction_vector.cross(PointArith(up.x, up.y, up.z)) / MATRIX_RESOLUTION));
+
+            auto normed_interpolation_vector = (interpolation_vector * MATRIX_RESOLUTION) / interpolation_vector.norm();
+
             if (distance_tau > max_distance)
             {
                 distance_tau = max_distance;
@@ -92,38 +100,40 @@ extern "C"
                 }
 
                 int delta_z = dz_per_distance * len / MATRIX_RESOLUTION;
-                IntTuple bounds;
-                bounds.first = (proj.z - delta_z) / MAP_RESOLUTION;
-                bounds.second = (proj.z + delta_z) / MAP_RESOLUTION;
-                if (bounds.first < map_pos.z - map.sizeZ / 2)
-                {
-                    bounds.first = map_pos.z - map.sizeZ / 2;
-                }
-                if (bounds.second > map_pos.z + map.sizeZ / 2)
-                {
-                    bounds.second = map_pos.z + map.sizeZ / 2;
-                }
+                std::pair<PointHW, PointArith> bounds;
+                std::pair<int, int> iter_steps;
+
+                iter_steps.first = (delta_z * 2) / MAP_RESOLUTION + 1;
+                iter_steps.second = delta_z / MAP_RESOLUTION;
+
+                auto lowest = PointArith(proj.x, proj.y, proj.z) - ((normed_interpolation_vector * delta_z) / MATRIX_RESOLUTION);
+                bounds.first = PointHW(lowest.x, lowest.y, lowest.z) / MAP_RESOLUTION;
+                bounds.second = normed_interpolation_vector;
 
                 value_fifo << tsdf;
                 index_fifo << index;
                 bounds_fifo << bounds;
+                iter_steps_fifo << iter_steps;
             }
         }
         value_fifo << TSDFValueHW{0, 0};
         index_fifo << PointHW();
-        bounds_fifo << IntTuple{0, 0};
+        bounds_fifo << std::pair<PointHW, PointArith> {PointHW(), PointArith()};
+        iter_steps_fifo << std::pair<int, int>(0, 0);
     }
 
     void update_tsdf(const LocalMapHW& map,
                      TSDFValueHW* new_entries,
                      hls::stream<TSDFValueHW>& value_fifo,
                      hls::stream<PointHW>& index_fifo,
-                     hls::stream<IntTuple>& bounds_fifo)
+                     hls::stream<std::pair<PointHW, PointArith>>& bounds_fifo,
+                     hls::stream<std::pair<int, int>>& iter_steps_fifo)
     {
         TSDFValueHW value;
         PointHW index, old_index{0, 0, 0};
-        IntTuple bounds{0, 0};
-        int z = 1;
+        std::pair<PointHW, PointArith> bounds{PointHW(), PointArith()};
+        std::pair<int, int> iter_steps{0, 0};
+        int step = 1;
 
     update_loop:
         while (true)
@@ -132,35 +142,47 @@ extern "C"
 #pragma HLS pipeline II=1
 #pragma HLS dependence variable=new_entries inter false
 
-            if (z > bounds.second)
+            if (step > iter_steps.first)
             {
                 old_index = index;
 
                 value_fifo >> value;
                 index_fifo >> index;
                 bounds_fifo >> bounds;
+                iter_steps_fifo >> iter_steps;
 
                 if (value.weight == 0)
                 {
                     break;
                 }
-                z = bounds.first;
+                step = 0;
             }
 
-            if (index.x != old_index.x || index.y != old_index.y)
+            if (index.x != old_index.x || index.y != old_index.y || index.z != old_index.z)
             {
-                int map_index = map.getIndex(index.x, index.y, z);
-                TSDFValueHW entry = new_entries[map_index];
+                auto index_arith = PointArith(bounds.first.x, bounds.first.y, bounds.first.z) + ((bounds.second * step) / MATRIX_RESOLUTION);
+                index = PointHW(index_arith.x, index_arith.y, index_arith.z);
 
-                if (entry.weight == 0 || hls_abs(value.value) < hls_abs(entry.value))
+                int map_index = map.getIndex(index.x, index.y, index.z);
+
+                TSDFValueHW entry = new_entries[map_index];
+                TSDFValueHW tmp_value = value;
+
+                if (entry.weight <= 0 || hls_abs(value.value) < hls_abs(entry.value))
                 {
-                    new_entries[map_index] = value;
+                    if (step != iter_steps.second)
+                    {
+                        tmp_value.weight *= -1;
+                    }
+
+                    new_entries[map_index] = tmp_value;
                 }
-                z++;
+
+                step++;
             }
             else
             {
-                z = bounds.second + 1;
+                step = iter_steps.first + 1;
             }
         }
     }
@@ -184,7 +206,7 @@ extern "C"
 
             int new_weight = map_entry.weight + new_entry.weight;
 
-            if (new_weight)
+            if (new_entry.weight > 0 && map_entry.weight > 0)
             {
                 map_entry.value = (map_entry.value * map_entry.weight + new_entry.value * new_entry.weight) / new_weight;
 
@@ -194,9 +216,14 @@ extern "C"
                 }
 
                 map_entry.weight = new_weight;
-
-                mapData[index] = map_entry;
             }
+            else if (new_entry.weight != 0 && map_entry.weight <= 0)
+            {
+                map_entry.value = new_entry.value;
+                map_entry.weight = new_entry.weight;
+            }
+
+            mapData[index] = map_entry;
         }
     }
 
@@ -211,81 +238,90 @@ extern "C"
                          TSDFValueHW* new_entries2,
                          TSDFValueHW* new_entries3,
                          const LocalMapHW& map,
-                         TSDFValueHW::ValueType tau)
+                         TSDFValueHW::ValueType tau,
+                         const PointHW& up)
     {
 #pragma HLS dataflow
 
         hls::stream<TSDFValueHW> value_fifo0;
         hls::stream<PointHW> index_fifo0;
-        hls::stream<IntTuple> bounds_fifo0;
+        hls::stream<std::pair<PointHW, PointArith>> bounds_fifo0;
+        hls::stream<std::pair<int, int>> iter_steps_fifo0;
 #pragma HLS stream depth=16 variable=value_fifo0
 #pragma HLS stream depth=16 variable=index_fifo0
 #pragma HLS stream depth=16 variable=bounds_fifo0
         read_points(scanPoints0, step,
-                    map,
-                    tau,
+                    map, tau, up,
                     value_fifo0,
                     index_fifo0,
-                    bounds_fifo0);
+                    bounds_fifo0,
+                    iter_steps_fifo0);
         update_tsdf(map,
                     new_entries0,
                     value_fifo0,
                     index_fifo0,
-                    bounds_fifo0);
+                    bounds_fifo0,
+                    iter_steps_fifo0);
 
         hls::stream<TSDFValueHW> value_fifo1;
         hls::stream<PointHW> index_fifo1;
-        hls::stream<IntTuple> bounds_fifo1;
+        hls::stream<std::pair<PointHW, PointArith>> bounds_fifo1;
+        hls::stream<std::pair<int, int>> iter_steps_fifo1;
 #pragma HLS stream depth=16 variable=value_fifo1
 #pragma HLS stream depth=16 variable=index_fifo1
 #pragma HLS stream depth=16 variable=bounds_fifo1
         read_points(scanPoints1, step,
-                    map,
-                    tau,
+                    map, tau, up,
                     value_fifo1,
                     index_fifo1,
-                    bounds_fifo1);
+                    bounds_fifo1,
+                    iter_steps_fifo1);
         update_tsdf(map,
                     new_entries1,
                     value_fifo1,
                     index_fifo1,
-                    bounds_fifo1);
+                    bounds_fifo1,
+                    iter_steps_fifo1);
 
         hls::stream<TSDFValueHW> value_fifo2;
         hls::stream<PointHW> index_fifo2;
-        hls::stream<IntTuple> bounds_fifo2;
+        hls::stream<std::pair<PointHW, PointArith>> bounds_fifo2;
+        hls::stream<std::pair<int, int>> iter_steps_fifo2;
 #pragma HLS stream depth=16 variable=value_fifo2
 #pragma HLS stream depth=16 variable=index_fifo2
 #pragma HLS stream depth=16 variable=bounds_fifo2
         read_points(scanPoints2, step,
-                    map,
-                    tau,
+                    map, tau, up,
                     value_fifo2,
                     index_fifo2,
-                    bounds_fifo2);
+                    bounds_fifo2,
+                    iter_steps_fifo2);
         update_tsdf(map,
                     new_entries2,
                     value_fifo2,
                     index_fifo2,
-                    bounds_fifo2);
+                    bounds_fifo2,
+                    iter_steps_fifo2);
 
         hls::stream<TSDFValueHW> value_fifo3;
         hls::stream<PointHW> index_fifo3;
-        hls::stream<IntTuple> bounds_fifo3;
+        hls::stream<std::pair<PointHW, PointArith>> bounds_fifo3;
+        hls::stream<std::pair<int, int>> iter_steps_fifo3;
 #pragma HLS stream depth=16 variable=value_fifo3
 #pragma HLS stream depth=16 variable=index_fifo3
 #pragma HLS stream depth=16 variable=bounds_fifo3
         read_points(scanPoints3, last_step,
-                    map,
-                    tau,
+                    map, tau, up,
                     value_fifo3,
                     index_fifo3,
-                    bounds_fifo3);
+                    bounds_fifo3,
+                    iter_steps_fifo3);
         update_tsdf(map,
                     new_entries3,
                     value_fifo3,
                     index_fifo3,
-                    bounds_fifo3);
+                    bounds_fifo3,
+                    iter_steps_fifo3);
     }
 
     void sync_looper(TSDFValueHW* mapData0,
@@ -348,7 +384,8 @@ extern "C"
                    TSDFValueHW* new_entries2,
                    TSDFValueHW* new_entries3,
                    TSDFValueHW::ValueType tau,
-                   TSDFValueHW::WeightType max_weight)
+                   TSDFValueHW::WeightType max_weight,
+                   int up_x, int up_y, int up_z)
     {
 #pragma HLS INTERFACE m_axi port=scanPoints0  offset=slave bundle=scan0mem  latency=22 depth=360
 #pragma HLS INTERFACE m_axi port=scanPoints1  offset=slave bundle=scan1mem  latency=22 depth=360
@@ -362,6 +399,9 @@ extern "C"
 #pragma HLS INTERFACE m_axi port=new_entries1 offset=slave bundle=entry1mem latency=22 depth=18491
 #pragma HLS INTERFACE m_axi port=new_entries2 offset=slave bundle=entry2mem latency=22 depth=18491
 #pragma HLS INTERFACE m_axi port=new_entries3 offset=slave bundle=entry3mem latency=22 depth=18491
+
+        PointHW up(up_x, up_y, up_z);
+
 
         LocalMapHW map{sizeX,   sizeY,   sizeZ,
                        posX,    posY,    posZ,
@@ -380,8 +420,8 @@ extern "C"
                         new_entries2,
                         new_entries3,
                         map,
-                        tau);
-
+                        tau,
+                        up);
 
         int total_size = sizeX * sizeY * sizeZ;
         int sync_step = total_size / SPLIT_FACTOR + 1;

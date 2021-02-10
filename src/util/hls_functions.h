@@ -18,6 +18,11 @@ inline T hls_abs(T x)
     return x < 0 ? T(-x) : T(x);
 }
 
+inline long hls_abs_arith(long x)
+{
+    return x < 0 ? -x : x;
+}
+
 inline int hls_sqrt_approx(int x)
 {
 #ifdef __SYNTHESIS__
@@ -25,6 +30,11 @@ inline int hls_sqrt_approx(int x)
 #else
     return std::round(std::sqrt(x));
 #endif
+}
+
+inline long hls_sqrt_approx_arith(long x)
+{
+    return std::round(std::sqrt(x));
 }
 
 inline float hls_sqrt_float(float x)
