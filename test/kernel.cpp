@@ -30,7 +30,7 @@ constexpr float TX = 0.3 * SCALE;
 constexpr float TY = 0.3 * SCALE;
 constexpr float TZ = 0.0 * SCALE;
 // Test Rotation
-constexpr float RY = 5 * (M_PI / 180); //radiants
+constexpr float RY = 10 * (M_PI / 180); //radiants
 
 constexpr float TAU = 1 * SCALE;
 constexpr float MAX_WEIGHT = 10;// * WEIGHT_RESOLUTION;
@@ -120,7 +120,7 @@ TEST_CASE("Kernel", "[kernel][slow]")
 
     auto buffer = std::make_shared<msg::ImuStampedBuffer>(0);
     //test registration
-    fastsense::registration::Registration reg(q, buffer, MAX_ITERATIONS);
+    fastsense::registration::Registration reg(q, buffer, MAX_ITERATIONS, 0.0, 0.2);
 
     std::vector<std::vector<Vector3f>> float_points;
     unsigned int num_points;

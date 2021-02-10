@@ -409,6 +409,8 @@ extern "C"
             float d1 = err - previous_errors[2];
             float d2 = err - previous_errors[0];
 
+            //std::cout << d1 << " " << d2 << std::endl;
+
             if (d1 >= -epsilon && d1 <= epsilon && d2 >= -epsilon && d2 <= epsilon)
             {
                 break;
