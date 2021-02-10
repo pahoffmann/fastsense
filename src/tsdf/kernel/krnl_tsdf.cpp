@@ -158,32 +158,25 @@ extern "C"
                 step = 0;
             }
 
-            if (index.x != old_index.x || index.y != old_index.y || index.z != old_index.z)
+            auto index_arith = PointArith(bounds.first.x, bounds.first.y, bounds.first.z) + ((bounds.second * step) / MATRIX_RESOLUTION);
+            index = PointHW(index_arith.x, index_arith.y, index_arith.z);
+
+            int map_index = map.getIndex(index.x, index.y, index.z);
+
+            TSDFValueHW entry = new_entries[map_index];
+            TSDFValueHW tmp_value = value;
+
+            if (entry.weight <= 0 || hls_abs(value.value) < hls_abs(entry.value))
             {
-                auto index_arith = PointArith(bounds.first.x, bounds.first.y, bounds.first.z) + ((bounds.second * step) / MATRIX_RESOLUTION);
-                index = PointHW(index_arith.x, index_arith.y, index_arith.z);
-
-                int map_index = map.getIndex(index.x, index.y, index.z);
-
-                TSDFValueHW entry = new_entries[map_index];
-                TSDFValueHW tmp_value = value;
-
-                if (entry.weight <= 0 || hls_abs(value.value) < hls_abs(entry.value))
+                if (step != iter_steps.second && entry.weight <= 0)
                 {
-                    if (step != iter_steps.second)
-                    {
-                        tmp_value.weight *= -1;
-                    }
-
-                    new_entries[map_index] = tmp_value;
+                    tmp_value.weight *= -1;
                 }
 
-                step++;
+                new_entries[map_index] = tmp_value;
             }
-            else
-            {
-                step = iter_steps.first + 1;
-            }
+
+            step++;
         }
     }
 
