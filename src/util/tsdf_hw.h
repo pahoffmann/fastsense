@@ -12,7 +12,7 @@
 struct TSDFValueHW
 {
     using ValueType = int16_t;
-    using WeightType = uint16_t;
+    using WeightType = int16_t;
 
     ValueType value;
     WeightType weight;

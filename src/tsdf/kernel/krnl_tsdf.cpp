@@ -182,9 +182,7 @@ extern "C"
             TSDFValueHW map_entry = mapData[index];
             TSDFValueHW new_entry = new_entries[index];
 
-            // type is bigger than WeightType to avoid overflow
-            // type is signed to allow dividing value with new_weight
-            int new_weight = (int)map_entry.weight + (int)new_entry.weight;
+            int new_weight = map_entry.weight + new_entry.weight;
 
             if (new_weight)
             {
