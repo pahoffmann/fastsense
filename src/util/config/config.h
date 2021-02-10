@@ -53,6 +53,16 @@ struct BridgeConfig : public ConfigGroup
     DECLARE_CONFIG_ENTRY(uint16_t, tsdf_port_to);
 };
 
+struct GPIOConfig : public ConfigGroup
+{
+    using ConfigGroup::ConfigGroup;
+
+    DECLARE_CONFIG_ENTRY(std::string, button_chip);
+    DECLARE_CONFIG_ENTRY(std::string, led_chip);
+    DECLARE_CONFIG_ENTRY(unsigned int, button_line);
+    DECLARE_CONFIG_ENTRY(unsigned int, led_line);
+};
+
 
 struct RegistrationConfig : public ConfigGroup
 {
@@ -88,8 +98,9 @@ struct Config : public ConfigGroup
     DECLARE_CONFIG_GROUP(LidarConfig, lidar);
     DECLARE_CONFIG_GROUP(SensorSyncConfig, sensorSync);
     DECLARE_CONFIG_GROUP(RegistrationConfig, registration);
-    DECLARE_CONFIG_GROUP(SlamConfig, slam);
+    DECLARE_CONFIG_GROUP(GPIOConfig, gpio);
     DECLARE_CONFIG_GROUP(BridgeConfig, bridge);
+    DECLARE_CONFIG_GROUP(SlamConfig, slam);
 };
 
 } // namespace fastsense::util::config

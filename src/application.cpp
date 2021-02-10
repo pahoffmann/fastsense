@@ -8,6 +8,7 @@
 #include <cstring>
 #include <algorithm>
 #include <iostream>
+#include <gpiod.hpp>
 
 #include "application.h"
 #include <msg/imu.h>
@@ -29,15 +30,14 @@ using namespace fastsense::util::config;
 using namespace fastsense::util::logging;
 using namespace std::chrono_literals;
 
-using fastsense::registration::Registration;
-using fastsense::map::LocalMap;
-using fastsense::map::GlobalMap;
 using fastsense::callback::CloudCallback;
 using fastsense::callback::MapThread;
+using fastsense::map::GlobalMap;
+using fastsense::map::LocalMap;
+using fastsense::registration::Registration;
 
 Application::Application()
-    : signal_set{}
-    , config{ConfigManager::config()}
+    : signal_set{}, config{ConfigManager::config()}
 {
     // block signals
     sigemptyset(&signal_set);
@@ -57,17 +57,17 @@ std::unique_ptr<util::ProcessThread> Application::init_imu(msg::ImuStampedBuffer
     {
         Logger::info("Launching BufferedImuReceiver");
         Logger::info("\n\n>>>>>>>>>> WARNING <<<<<<<<<<\n"
-                "Using Bridge as Input\n"
-                "Listening to Messages from ", config.bridge.host_from(), "\n"
-                "THIS HAS TO MATCH THE ADDRESS OF THE BRIDGE PC!\n"
-                ">>>>>>>>>> WARNING <<<<<<<<<<\n");
+                     "Using Bridge as Input\n"
+                     "Listening to Messages from ",
+                     config.bridge.host_from(), "\n"
+                                                "THIS HAS TO MATCH THE ADDRESS OF THE BRIDGE PC!\n"
+                                                ">>>>>>>>>> WARNING <<<<<<<<<<\n");
         imu_driver.reset(
             new comm::BufferedImuStampedReceiver{
-                config.bridge.host_from(), 
-                config.bridge.imu_port_from(), 
-                recv_timeout, 
-                imu_buffer}
-        );
+                config.bridge.host_from(),
+                config.bridge.imu_port_from(),
+                recv_timeout,
+                imu_buffer});
     }
     else
     {
@@ -77,7 +77,6 @@ std::unique_ptr<util::ProcessThread> Application::init_imu(msg::ImuStampedBuffer
 
     return imu_driver;
 }
-
 
 std::unique_ptr<util::ProcessThread> Application::init_lidar(msg::PointCloudPtrStampedBuffer::Ptr pcl_buffer)
 {
@@ -89,11 +88,10 @@ std::unique_ptr<util::ProcessThread> Application::init_lidar(msg::PointCloudPtrS
         Logger::info("Launching BufferedPCLReceiver");
         lidar_driver.reset(
             new comm::BufferedPclStampedReceiver{
-                config.bridge.host_from(), 
-                config.bridge.pcl_port_from(),  
+                config.bridge.host_from(),
+                config.bridge.pcl_port_from(),
                 recv_timeout,
-                pcl_buffer}
-        );
+                pcl_buffer});
     }
     else
     {
@@ -129,15 +127,15 @@ int Application::run()
                               ConfigManager::config().registration.epsilon()};
 
     auto global_map_ptr = std::make_shared<GlobalMap>(
-                              "GlobalMap.h5",
-                              config.slam.max_distance() / config.slam.map_resolution(),
-                              config.slam.initial_map_weight());
+        "GlobalMap.h5",
+        config.slam.max_distance() / config.slam.map_resolution(),
+        config.slam.initial_map_weight());
 
     auto local_map = std::make_shared<LocalMap>(
-                         config.slam.map_size_x(),
-                         config.slam.map_size_y(),
-                         config.slam.map_size_z(),
-                         global_map_ptr, command_queue);
+        config.slam.map_size_x(),
+        config.slam.map_size_y(),
+        config.slam.map_size_z(),
+        global_map_ptr, command_queue);
 
     Matrix4f pose = Matrix4f::Identity();
     auto tsdf_buffer = std::make_shared<util::ConcurrentRingBuffer<msg::TSDFBridgeMessage>>(2);
@@ -157,7 +155,7 @@ int Application::run()
 
     Runner run_lidar_driver(*lidar_driver);
     Runner run_lidar_bridge(lidar_bridge);
-    Runner run_imu_driver(*imu_driver);
+    
     Runner run_imu_bridge(imu_bridge);
     Runner run_cloud_callback{cloud_callback};
     Runner run_tsdf_bridge(tsdf_bridge);
@@ -165,6 +163,31 @@ int Application::run()
     Runner run_map_thread(map_thread);
 
     Logger::info("Application started!");
+
+    // libgpiod
+    // https://ostconf.com/system/attachments/files/000/001/532/original/Linux_Piter_2018_-_New_GPIO_interface_for_linux_userspace.pdf?1541021776
+    std::thread buttonThread([&]() {
+        gpiod::chip chip(config.gpio.button_chip());
+        auto line = chip.get_line(config.gpio.button_line());
+
+        line.request({"fastsense", gpiod::line_request::EVENT_FALLING_EDGE, 0});
+
+        if(line.event_wait(std::chrono::nanoseconds(1000000000)))
+        {
+            Runner run_imu_driver(*imu_driver);
+            std::this_thread::sleep_for(std::chrono::seconds(2)); // TODO access to _is_calibrated
+        }
+
+        while(true)
+        {
+            auto event = line.event_wait(std::chrono::nanoseconds(1000000000));
+            if (event)
+            {
+                // Runner run_imu_driver(*imu_driver);
+                // while (not imu_driver->)
+            }
+        }
+    });
 
     int sig;
     int ret = sigwait(&signal_set, &sig);
