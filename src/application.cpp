@@ -24,6 +24,8 @@
 #include <map/global_map.h>
 #include <comm/queue_bridge.h>
 #include <comm/buffered_receiver.h>
+#include <ui/button.h>
+#include <ui/led.h>
 
 using namespace fastsense;
 using namespace fastsense::util::config;
@@ -37,15 +39,8 @@ using fastsense::map::LocalMap;
 using fastsense::registration::Registration;
 
 Application::Application()
-    : signal_set{}, config{ConfigManager::config()}
+    : config{ConfigManager::config()}, signal_thread(&Application::wait_for_signal, this), running(true)
 {
-    // block signals
-    sigemptyset(&signal_set);
-    sigaddset(&signal_set, SIGINT);
-    sigaddset(&signal_set, SIGTERM);
-    sigprocmask(SIG_BLOCK, &signal_set, nullptr);
-
-    Logger::info("Application initialized");
 }
 
 std::unique_ptr<util::ProcessThread> Application::init_imu(msg::ImuStampedBuffer::Ptr imu_buffer)
@@ -102,9 +97,35 @@ std::unique_ptr<util::ProcessThread> Application::init_lidar(msg::PointCloudPtrS
     return lidar_driver;
 }
 
+void Application::wait_for_signal()
+{
+    // block signals
+    sigset_t signal_set;
+    sigemptyset(&signal_set);
+    sigaddset(&signal_set, SIGINT);
+    sigaddset(&signal_set, SIGTERM);
+    sigprocmask(SIG_BLOCK, &signal_set, nullptr);
+
+    timespec ts;
+    ts.tv_sec = 1;
+    ts.tv_nsec = 0;
+    siginfo_t sig;
+    while (running)
+    {
+        int ret = sigtimedwait(&signal_set, &sig, &ts);
+        if (ret > 0)
+        {
+            Logger::info("Stopping Application...");
+            running = false;
+        }
+    }
+}
+
 int Application::run()
 {
-    Logger::info("Application setup...");
+    try
+    {
+        Logger::info("Initialize Application...");
 
     auto imu_buffer = std::make_shared<msg::ImuStampedBuffer>(config.imu.bufferSize());
     auto imu_bridge_buffer = std::make_shared<msg::ImuStampedBuffer>(config.imu.bufferSize());
@@ -151,59 +172,82 @@ int Application::run()
     comm::QueueBridge<msg::TSDFBridgeMessage, true> tsdf_bridge{tsdf_buffer, nullptr, config.bridge.tsdf_port_to()};
     comm::QueueBridge<msg::TransformStamped, true> transform_bridge{transform_buffer, nullptr, config.bridge.transform_port_to()};
 
-    Logger::info("Application starting...");
+        gpiod::chip button_chip(config.gpio.button_chip());
+        ui::Button button{button_chip.get_line(config.gpio.button_line())};
 
-    Runner run_lidar_driver(*lidar_driver);
-    Runner run_lidar_bridge(lidar_bridge);
+        gpiod::chip led_chip(config.gpio.led_chip());
+        ui::Led led{led_chip.get_line(config.gpio.led_line())};
     
-    Runner run_imu_bridge(imu_bridge);
-    Runner run_cloud_callback{cloud_callback};
-    Runner run_tsdf_bridge(tsdf_bridge);
-    Runner run_transform_bridge(transform_bridge);
-    Runner run_map_thread(map_thread);
+        Logger::info("Application initialized!");
+        Logger::info("Wait for calibration...");
 
-    Logger::info("Application started!");
-
-    // libgpiod
-    // https://ostconf.com/system/attachments/files/000/001/532/original/Linux_Piter_2018_-_New_GPIO_interface_for_linux_userspace.pdf?1541021776
-    std::thread buttonThread([&]() {
-        gpiod::chip chip(config.gpio.button_chip());
-        auto line = chip.get_line(config.gpio.button_line());
-
-        line.request({"fastsense", gpiod::line_request::EVENT_FALLING_EDGE, 0});
-
-        if(line.event_wait(std::chrono::nanoseconds(1000000000)))
+        auto running_condition = [&]()
         {
-            Runner run_imu_driver(*imu_driver);
-            std::this_thread::sleep_for(std::chrono::seconds(2)); // TODO access to _is_calibrated
+            return !running;
+        };
+
+        led.setFrequency(1.0);
+        if (!button.wait_for_press_or_condition(running_condition))
+        {
+            return 0;
         }
+        led.setFrequency(5.0);
 
-        while(true)
+        Logger::info("Calibrating IMU...");
+        imu_driver->start();
+        imu_driver->stop();
+        Logger::info("IMU calibrated!");
+
+        while (true)
         {
-            auto event = line.event_wait(std::chrono::nanoseconds(1000000000));
-            if (event)
+            Logger::info("Wait for SLAM start...");
+            led.setOn();
+            if (!button.wait_for_press_or_condition(running_condition))
             {
-                // Runner run_imu_driver(*imu_driver);
-                // while (not imu_driver->)
+                return 0;
             }
-        }
-    });
+            led.setFrequency(2.0);
+            Logger::info("Starting SLAM...");
+            {
+                std::ostringstream filename;
 
-    int sig;
-    int ret = sigwait(&signal_set, &sig);
-    if (ret == -1)
+                auto now = std::chrono::system_clock::now();
+                auto t = std::chrono::system_clock::to_time_t(now);
+                filename << "GlobalMap_" << std::put_time(std::localtime(&t), "%Y-%m-%d-%H-%M-%S") << ".h5";
+
+                *global_map_ptr = GlobalMap{filename.str(),
+                                            config.slam.max_distance() / config.slam.map_resolution(),
+                                            config.slam.initial_map_weight()};
+                *local_map = LocalMap{config.slam.map_size_x(),
+                                      config.slam.map_size_y(),
+                                      config.slam.map_size_z(),
+                                      global_map_ptr, command_queue};
+
+                Runner run_lidar_driver(*lidar_driver);
+                Runner run_lidar_bridge(lidar_bridge);
+                Runner run_imu_driver(*imu_driver);
+                Runner run_imu_bridge(imu_bridge);
+                Runner run_cloud_callback{cloud_callback};
+                Runner run_tsdf_bridge(tsdf_bridge);
+                Runner run_transform_bridge(transform_bridge);
+                Runner run_map_thread(map_thread);
+                Logger::info("SLAM started! Running...");
+                if (!button.wait_for_press_or_condition(running_condition))
     {
-        auto err = errno;
-        Logger::fatal("Wait for signal failed (", std::strerror(err), ")! Stopping Application...");
-        return -1;
+                    return 0;
     }
-
-    Logger::info("Stopping Application...");
-
-    // ensure that last Scan has finished processing
-    cloud_callback.stop();
+            }
+            Logger::info("SLAM stopped!");
+            Logger::info("Write local and global map...");
     // save Map to Disk
     local_map->write_back();
-
-    return 0;
+            global_map_ptr->write_back();
+            Logger::info("Lacel/global map saved!");
+        }
+    }
+    catch (...)
+    {
+        running = false;
+        throw;
+    }
 }

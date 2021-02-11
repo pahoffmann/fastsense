@@ -12,6 +12,10 @@
 namespace fastsense::ui
 {
 
+/**
+ * @brief Represents a button an a GPIO line
+ * 
+ */
 class Button
 {
 private:
@@ -26,6 +30,8 @@ public:
  */
     Button(const gpiod::line& line, std::chrono::nanoseconds timeout = std::chrono::nanoseconds{100'000'000});
     ~Button() = default;
+    Button(const Button&) = delete;
+    Button& operator=(const Button&) = delete;
 
     /**
      * @brief Wait for button press or until a condition is true
