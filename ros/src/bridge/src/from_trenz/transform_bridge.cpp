@@ -11,8 +11,8 @@
 
 using namespace fastsense::bridge;
 
-TransformBridge::TransformBridge(ros::NodeHandle& n, const std::string& board_addr)
-    :   BridgeBase{n, "pose", board_addr},
+TransformBridge::TransformBridge(ros::NodeHandle& n, const std::string& board_addr, std::chrono::milliseconds timeout)
+    :   BridgeBase{n, "pose", board_addr, 1000, timeout},
         ProcessThread{},
         broadcaster{},
         broadcaster_thread{},
@@ -57,10 +57,12 @@ void TransformBridge::run()
     {   
         try
         {
-            receive();
-            ROS_INFO_STREAM("Received transform\n");
-            convert();
-            publish();
+            if (receive())
+            {
+                ROS_INFO_STREAM("Received transform\n");
+                convert();
+                publish();
+            }
         }
         catch(const std::exception& e)
         {

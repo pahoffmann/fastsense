@@ -51,10 +51,23 @@ Application::Application()
 std::unique_ptr<util::ProcessThread> Application::init_imu(msg::ImuStampedBuffer::Ptr imu_buffer)
 {
     util::ProcessThread::UPtr imu_driver;
+    std::chrono::milliseconds recv_timeout(config.bridge.recv_timeout());
+
     if (config.bridge.use_from())
     {
         Logger::info("Launching BufferedImuReceiver");
-        imu_driver.reset(new comm::BufferedImuStampedReceiver{config.bridge.host_from(), config.bridge.imu_port_from(), imu_buffer});
+        Logger::info("\n\n>>>>>>>>>> WARNING <<<<<<<<<<\n"
+                "Using Bridge as Input\n"
+                "Listening to Messages from ", config.bridge.host_from(), "\n"
+                "THIS HAS TO MATCH THE ADDRESS OF THE BRIDGE PC!\n"
+                ">>>>>>>>>> WARNING <<<<<<<<<<\n");
+        imu_driver.reset(
+            new comm::BufferedImuStampedReceiver{
+                config.bridge.host_from(), 
+                config.bridge.imu_port_from(), 
+                recv_timeout, 
+                imu_buffer}
+        );
     }
     else
     {
@@ -69,11 +82,18 @@ std::unique_ptr<util::ProcessThread> Application::init_imu(msg::ImuStampedBuffer
 std::unique_ptr<util::ProcessThread> Application::init_lidar(msg::PointCloudPtrStampedBuffer::Ptr pcl_buffer)
 {
     util::ProcessThread::UPtr lidar_driver;
+    std::chrono::milliseconds recv_timeout(config.bridge.recv_timeout());
 
     if (config.bridge.use_from())
     {
         Logger::info("Launching BufferedPCLReceiver");
-        lidar_driver.reset(new comm::BufferedPclStampedReceiver{config.bridge.host_from(), config.bridge.pcl_port_from(), pcl_buffer});
+        lidar_driver.reset(
+            new comm::BufferedPclStampedReceiver{
+                config.bridge.host_from(), 
+                config.bridge.pcl_port_from(),  
+                recv_timeout,
+                pcl_buffer}
+        );
     }
     else
     {
@@ -93,28 +113,10 @@ int Application::run()
     auto pointcloud_buffer = std::make_shared<msg::PointCloudPtrStampedBuffer>(config.lidar.bufferSize());
     auto pointcloud_bridge_buffer = std::make_shared<msg::PointCloudPtrStampedBuffer>(config.lidar.bufferSize());
 
-    util::ProcessThread::UPtr imu_driver;
-    util::ProcessThread::UPtr lidar_driver;
-
-    if (config.bridge.use_from())
-    {
-        Logger::info("\n\n>>>>>>>>>> WARNING <<<<<<<<<<\n"
-                     "Using Bridge as Input\n"
-                     "Listening to Messages from ", config.bridge.host_from(), "\n"
-                     "THIS HAS TO MATCH THE ADDRESS OF THE BRIDGE PC!\n"
-                     ">>>>>>>>>> WARNING <<<<<<<<<<\n");
-        imu_driver.reset(new comm::BufferedImuStampedReceiver{config.bridge.host_from(), config.bridge.imu_port_from(), imu_buffer});
-        lidar_driver.reset(new comm::BufferedPclStampedReceiver{config.bridge.host_from(), config.bridge.pcl_port_from(), pointcloud_buffer});
-    }
-    else
-    {
-        Logger::info("Starting Sensors");
-        imu_driver.reset(new driver::Imu{imu_buffer, config.imu.filterSize()});
-        lidar_driver.reset(new driver::VelodyneDriver{config.lidar.port(), pointcloud_buffer});
-    }
+    util::ProcessThread::UPtr imu_driver = init_imu(imu_buffer);
+    util::ProcessThread::UPtr lidar_driver = init_lidar(pointcloud_buffer);
 
     bool send = config.bridge.use_to();
-
     comm::QueueBridge<msg::ImuStamped, true> imu_bridge{imu_buffer, imu_bridge_buffer, config.bridge.imu_port_to(), send};
     comm::QueueBridge<msg::PointCloudPtrStamped, true> lidar_bridge{pointcloud_buffer, pointcloud_bridge_buffer, config.bridge.pcl_port_to(), send};
 

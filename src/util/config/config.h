@@ -34,6 +34,7 @@ struct BridgeConfig : public ConfigGroup
     DECLARE_CONFIG_ENTRY(bool, use_to, "true: send output to PC");
 
     DECLARE_CONFIG_ENTRY(std::string, host_from, "IP Address of the PC when 'use_from' is true");
+    DECLARE_CONFIG_ENTRY(uint16_t, recv_timeout, "Timeout for the receiver");
 
     DECLARE_CONFIG_ENTRY(uint16_t, imu_port_from, "Port of the from bridge for imu");
     DECLARE_CONFIG_ENTRY(uint16_t, imu_port_to, "Port of the to bridge for imu");

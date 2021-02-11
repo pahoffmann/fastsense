@@ -16,8 +16,8 @@ using namespace fastsense::bridge;
 // TODO init covariance static?
 // TODO params
 
-ImuBridge::ImuBridge(ros::NodeHandle& n, const std::string& board_addr) 
-:   BridgeBase{n, "imu/raw", board_addr}, 
+ImuBridge::ImuBridge(ros::NodeHandle& n, const std::string& board_addr, std::chrono::milliseconds timeout)
+:   BridgeBase{n, "imu/raw", board_addr, 1000, timeout},
     ProcessThread{},
     imu_ros_{},
     mag_ros_{},
@@ -36,10 +36,12 @@ void ImuBridge::run()
     {   
         try
         {
-            receive();
-            ROS_INFO_STREAM("Received imu msg\n");
-            convert();
-            publish();
+            if (receive())
+            {
+                ROS_INFO_STREAM("Received imu msg\n");
+                convert();
+                publish();
+            }
         }
         catch(const std::exception& e)
         {
@@ -131,13 +133,10 @@ void ImuBridge::convert()
     std::copy(  magnetic_field_covariance_.begin(), 
                 magnetic_field_covariance_.end(), 
                 mag_ros_.magnetic_field_covariance.begin());
-
-    // ROS_INFO_STREAM("Converted imu values\n");
 }
 
 void ImuBridge::publish()
 {
     pub().publish(imu_ros_);
     mag_pub_.publish(mag_ros_);
-    // ROS_INFO_STREAM("published imu values\n");
 }

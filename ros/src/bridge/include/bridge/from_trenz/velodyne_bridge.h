@@ -28,8 +28,9 @@ public:
      * 
      * @param n nodehandle
      * @param board_addr ip addr of Trenz board
+     * @param how long to wait for message before trying again
      */
-    VelodyneBridge(ros::NodeHandle& n, const std::string& board_addr);
+    VelodyneBridge(ros::NodeHandle& n, const std::string& board_addr, std::chrono::milliseconds timeout);
 
     /**
      * @brief Destroy the Velodyne Bridge object
@@ -40,20 +41,20 @@ private:
     /**
      * @brief Publishes a sensor_msgs::PointCloud (convert() FIRST for newest data)
      */
-    void publish() override;
+    void publish() final;
 
     /**
      * @brief Converts msg::PointCloud into std::vector<geometry_msgs::Point32>>
      */
-    void convert() override;
+    void convert() final;
    
     /**
      * @brief Run listens for lidar data, converts it to ROS PointCloud message
      * and publishes in an endless loop (running in its own thread)
      */
-    void run() override;
+    void run() final;
 
-    void thread_run() override
+    void thread_run() final
     {
         run();
     }
