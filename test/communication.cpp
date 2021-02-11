@@ -39,7 +39,7 @@ TEST_CASE("Simple Sender Receiver Test", "[communication]")
 
         std::thread receive_thread{[&]()
         {
-            Receiver<int> receiver{"127.0.0.1", 1200, 20ms};
+            Receiver<int> receiver{"127.0.0.1", 2200, 20ms};
 
             while (!stop) {
                 if (receiver.receive(value_received))
@@ -51,7 +51,7 @@ TEST_CASE("Simple Sender Receiver Test", "[communication]")
 
         std::thread send_thread{[&]()
         {
-            Sender<int> sender{1200};
+            Sender<int> sender{2200};
             SLEEP(500ms);
             sender.send(value_to_send);
             SLEEP(500ms);
@@ -81,7 +81,7 @@ TEST_CASE("PointCloud Sender Receiver Test", "[communication]")
 
         std::thread receive_thread{[&]()
         {
-            Receiver<PointCloud> receiver{"127.0.0.1", 1235, 20ms};
+            Receiver<PointCloud> receiver{"127.0.0.1", 3235, 20ms};
             
             while (!stop)
             {
@@ -94,7 +94,7 @@ TEST_CASE("PointCloud Sender Receiver Test", "[communication]")
 
         std::thread send_thread{[&]()
         {
-            Sender<PointCloud> sender{1235};
+            Sender<PointCloud> sender{3235};
             SLEEP(500ms);
             sender.send(pc_to_send);
             SLEEP(500ms);
@@ -131,7 +131,7 @@ TEST_CASE("PointCloudStamped Sender Receiver Test", "[communication]")
 
         std::thread receive_thread{[&]()
         {
-            Receiver<PointCloudStamped> receiver{"127.0.0.1", 1236, 20ms};
+            Receiver<PointCloudStamped> receiver{"127.0.0.1", 1536, 20ms};
 
             while (!stop)
             {
@@ -144,7 +144,7 @@ TEST_CASE("PointCloudStamped Sender Receiver Test", "[communication]")
 
         std::thread send_thread{[&]()
         {
-            Sender<PointCloudStamped> sender{1236};
+            Sender<PointCloudStamped> sender{1536};
             SLEEP(500ms);
             sender.send(pcl_stamped);
             SLEEP(500ms);
@@ -180,7 +180,7 @@ TEST_CASE("Stamped<PointCloud> Sender Receiver Test", "[communication]")
 
         std::thread receive_thread{[&]()
         {
-            Receiver<Stamped<PointCloud>> receiver{"127.0.0.1", 1237, 20ms};
+            Receiver<Stamped<PointCloud>> receiver{"127.0.0.1", 1737, 20ms};
 
             while (!stop)
             {
@@ -193,7 +193,7 @@ TEST_CASE("Stamped<PointCloud> Sender Receiver Test", "[communication]")
 
         std::thread send_thread{[&]()
         {
-            Sender<Stamped<PointCloud>> sender{1237};
+            Sender<Stamped<PointCloud>> sender{1737};
             SLEEP(500ms);
             sender.send(pcl_stamped);
             SLEEP(500ms);
@@ -245,7 +245,7 @@ TEST_CASE("TSDFBridgeMessage Sender Receiver Test", "[communication]")
 
         std::thread receive_thread{[&]()
         {
-            Receiver<TSDFBridgeMessage> receiver{"127.0.0.1", 1238, 5ms};
+            Receiver<TSDFBridgeMessage> receiver{"127.0.0.1", 1288, 5ms};
 
             while (!received)
             {
@@ -255,7 +255,7 @@ TEST_CASE("TSDFBridgeMessage Sender Receiver Test", "[communication]")
 
         std::thread send_thread{[&]()
         {
-            Sender<TSDFBridgeMessage> sender{1238};
+            Sender<TSDFBridgeMessage> sender{1288};
             SLEEP(500ms);
             sender.send(tsdf_msg);
             SLEEP(500ms);
@@ -300,7 +300,7 @@ TEST_CASE("ImuStamped Sender Receiver Test", "[communication]")
 
         std::thread receive_thread{[&]()
         {
-            Receiver<ImuStamped> receiver{"127.0.0.1", 1239, 5ms};
+            Receiver<ImuStamped> receiver{"127.0.0.1", 1339, 5ms};
 
             while (!received)
             {
@@ -310,7 +310,7 @@ TEST_CASE("ImuStamped Sender Receiver Test", "[communication]")
 
         std::thread send_thread{[&]()
         {
-            Sender<ImuStamped> sender{1239};
+            Sender<ImuStamped> sender{1339};
             SLEEP(500ms);
             sender.send(imu_stamped);
             SLEEP(500ms);
@@ -354,7 +354,7 @@ TEST_CASE("ImuStamped Sender Receiver Test", "[communication]")
 
      std::thread receive_thread{[&]()
      {
-         BufferedImuStampedReceiver receiver{"127.0.0.1", 1244, 20ms, buffer};
+         BufferedImuStampedReceiver receiver{"127.0.0.1", 1544, 20ms, buffer};
 
          while (n_msgs != buffer->size())
          {
@@ -364,7 +364,7 @@ TEST_CASE("ImuStamped Sender Receiver Test", "[communication]")
 
      std::thread send_thread{[&]()
      {
-         Sender<ImuStamped> sender{1244};
+         Sender<ImuStamped> sender{1544};
          SLEEP(500ms);
          sender.send(imu_stamped);
          SLEEP(500ms);
@@ -437,7 +437,7 @@ TEST_CASE("ImuStamped Sender Receiver Test", "[communication]")
 
       std::thread receive_thread{[&]()
       {
-          BufferedPclStampedReceiver receiver{"127.0.0.1", 1254, 20ms, buffer};
+          BufferedPclStampedReceiver receiver{"127.0.0.1", 1257, 20ms, buffer};
 
           while (n_msgs != buffer->size())
           {
@@ -447,7 +447,7 @@ TEST_CASE("ImuStamped Sender Receiver Test", "[communication]")
 
       std::thread send_thread{[&]()
       {
-          Sender<PointCloudStamped> sender{1254};
+          Sender<PointCloudStamped> sender{1257};
           SLEEP(500ms);
           sender.send(pcl_stamped);
           SLEEP(500ms);
@@ -533,7 +533,7 @@ TEST_CASE("Stamped<msg::Transform> Sender Receiver Test", "[communication]")
 
         std::thread receive_thread{[&]()
         {
-            Receiver<msg::Stamped<msg::Transform>> receiver{"127.0.0.1", 1274, 20ms};
+            Receiver<msg::Stamped<msg::Transform>> receiver{"127.0.0.1", 2274, 20ms};
 
             while (!received)
             {
@@ -543,7 +543,7 @@ TEST_CASE("Stamped<msg::Transform> Sender Receiver Test", "[communication]")
 
         std::thread send_thread{[&]()
         {
-            Sender<msg::Stamped<msg::Transform>> sender{1274};
+            Sender<msg::Stamped<msg::Transform>> sender{2274};
             SLEEP(500ms);
             sender.send(value_to_send);
             SLEEP(500ms);
