@@ -25,7 +25,7 @@ int main()
     comm::Sender<msg::PointCloudStamped> pcl_sender{7777};
     comm::Sender<msg::TSDFBridgeMessage> tsdf_sender{6666};
 
-    N_TIMES(10)
+    for(;;)
     {
         std::this_thread::sleep_for(500ms);
         auto tp = util::HighResTime::now();
