@@ -84,7 +84,7 @@ void MapThread::thread_run()
 
         Eigen::Vector4i v;
         v << Vector3i(0, 0, MATRIX_RESOLUTION), 1;
-        Vector3i up = (rotation_mat * v).block<3, 1>(0, 0);
+        Vector3i up = (rotation_mat * v).block<3, 1>(0, 0) / MATRIX_RESOLUTION;
 
         PointHW up_hw(up.x(), up.y(), up.z());
 

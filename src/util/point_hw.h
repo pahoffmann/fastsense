@@ -85,6 +85,10 @@ struct PointHW
     {
         return x == p.x && y == p.y && z == p.z;
     }
+    bool operator!=(const PointHW& p) const
+    {
+        return !(*this == p);
+    }
 
     int norm2() const
     {

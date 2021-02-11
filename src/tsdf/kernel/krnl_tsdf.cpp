@@ -116,6 +116,7 @@ extern "C"
                 iter_steps_fifo << iter_steps;
             }
         }
+        // send a final dummy message to terminate the update_loop
         value_fifo << TSDFValueHW{0, 0};
         index_fifo << PointHW();
         bounds_fifo << std::pair<PointHW, PointArith> {PointHW(), PointArith()};
@@ -130,7 +131,7 @@ extern "C"
                      hls::stream<std::pair<int, int>>& iter_steps_fifo)
     {
         TSDFValueHW value;
-        PointHW index, old_index{0, 0, 0};
+        PointHW index{0, 0, 0}, old_index{0, 0, 0};
         std::pair<PointHW, PointArith> bounds{PointHW(), PointArith()};
         std::pair<int, int> iter_steps{0, 0};
         int step = 1;
@@ -151,6 +152,7 @@ extern "C"
                 bounds_fifo >> bounds;
                 iter_steps_fifo >> iter_steps;
 
+                // the weight is only 0 in the dummy message
                 if (value.weight == 0)
                 {
                     break;
@@ -158,25 +160,49 @@ extern "C"
                 step = 0;
             }
 
-            auto index_arith = PointArith(bounds.first.x, bounds.first.y, bounds.first.z) + ((bounds.second * step) / MATRIX_RESOLUTION);
-            index = PointHW(index_arith.x, index_arith.y, index_arith.z);
-
-            int map_index = map.getIndex(index.x, index.y, index.z);
-
-            TSDFValueHW entry = new_entries[map_index];
-            TSDFValueHW tmp_value = value;
-
-            if (entry.weight <= 0 || hls_abs(value.value) < hls_abs(entry.value))
+            // tsdf_loop iterates in half-MAP_RESOLUTION steps => might visit the same cell twice
+            // this check used to be done at the beginning of the tsdf_loop, but that leads to timing violations
+            if (index != old_index)
             {
-                if (step != iter_steps.second && entry.weight <= 0)
+                auto index_arith = PointArith(bounds.first.x, bounds.first.y, bounds.first.z) + ((bounds.second * step) / MATRIX_RESOLUTION);
+                index = PointHW(index_arith.x, index_arith.y, index_arith.z);
+
+                int map_index = map.getIndex(index.x, index.y, index.z);
+
+                TSDFValueHW old_entry = new_entries[map_index];
+
+                bool old_is_interpolated = old_entry.weight <= 0;
+                bool current_is_interpolated = step != iter_steps.second;
+                bool current_is_better = hls_abs(value.value) < hls_abs(old_entry.value);
+
+                if (current_is_interpolated)
                 {
-                    tmp_value.weight *= -1;
+                    // negated weight
+                    TSDFValueHW tmp_value{value.value, -value.weight};
+
+                    // replace only interpolated values and only if they are better
+                    if (old_is_interpolated && current_is_better)
+                    {
+                        new_entries[map_index] = tmp_value;
+                    }
+                }
+                else
+                {
+                    // non-interpolated is always better than interpolated
+                    if (old_is_interpolated || current_is_better)
+                    {
+                        new_entries[map_index] = value;
+                    }
                 }
 
-                new_entries[map_index] = tmp_value;
+                step++;
             }
-
-            step++;
+            else
+            {
+                // The current Point has already been processed
+                // => skip interpolation and take next Point from fifo
+                step = iter_steps.first + 1;
+            }
         }
     }
 
