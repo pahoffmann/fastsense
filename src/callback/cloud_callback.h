@@ -42,6 +42,20 @@ public:
                   MapThread& map_thread,
                   std::mutex& map_mutex);
 
+    /**
+     * @brief Set the global map
+     * 
+     * @param global_map the new global map
+     */
+    void set_global_map(const std::shared_ptr<GlobalMap>& global_map);
+
+    /**
+     * @brief Set the local map
+     * 
+     * @param local_map the new local map
+     */
+    void set_local_map(const std::shared_ptr<LocalMap>& local_map);
+
 protected:
     void thread_run() override;
 

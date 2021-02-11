@@ -80,6 +80,13 @@ public:
      */
     virtual void stop() override;
 
+    /**
+     * @brief Sets the local map
+     * 
+     * @param local_map the new local map
+     */
+    void set_local_map(const std::shared_ptr<fastsense::map::LocalMap>& local_map);
+
 protected:
 
     /**
@@ -93,7 +100,7 @@ protected:
 private:
 
     /// Pointer to the local map
-    const std::shared_ptr<fastsense::map::LocalMap> local_map_;
+    std::shared_ptr<fastsense::map::LocalMap> local_map_;
     /// Kernel object to perform an map update on hardware
     fastsense::kernels::TSDFKernel tsdf_krnl_;
     /// Mutex for synchronisation between the map thread and the cloud callback for access to the local map
