@@ -31,8 +31,9 @@ public:
      *
      * @param n ros::NodeHandle
      * @param board_addr ip addr of Trenz board
+     * @param timeout how long to wait for new messages before trying again
      */
-    TransformBridge(ros::NodeHandle& n, const std::string& board_addr);
+    TransformBridge(ros::NodeHandle& n, const std::string& board_addr, std::chrono::milliseconds timeout);
 
     /**
      * @brief Destroy the Transform Bridge object

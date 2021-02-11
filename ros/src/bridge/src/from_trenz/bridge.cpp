@@ -4,7 +4,6 @@
  * @date 2020-09-06
  */
 
-#include <signal.h>
 #include <chrono>
 #include <ros/ros.h>
 #include <bridge/from_trenz/tsdf_bridge.h>
@@ -27,10 +26,17 @@ int main(int argc, char** argv)
     }
     ROS_INFO_STREAM("Board address is " << board_addr);
 
-    fs::bridge::TSDFBridge tsdf_bridge{n, board_addr};
-    fs::bridge::ImuBridge imu_bridge{n, board_addr};
-    fs::bridge::VelodyneBridge velodyne_bridge{n, board_addr};
-    fs::bridge::TransformBridge transform_bridge{n, board_addr};
+    std::chrono::milliseconds timeout;
+    int timeout_ros;
+    if(!ros::param::get("~timeout", timeout_ros))
+    {
+        timeout = std::chrono::milliseconds(static_cast<size_t>(timeout_ros)); // default timeout for receiver
+    }
+
+    fs::bridge::TSDFBridge tsdf_bridge{n, board_addr, timeout};
+    fs::bridge::ImuBridge imu_bridge{n, board_addr, timeout};
+    fs::bridge::VelodyneBridge velodyne_bridge{n, board_addr, timeout};
+    fs::bridge::TransformBridge transform_bridge{n, board_addr, timeout};
     
     tsdf_bridge.start();
     imu_bridge.start();

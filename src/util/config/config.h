@@ -41,6 +41,7 @@ struct BridgeConfig : public ConfigGroup
     DECLARE_CONFIG_ENTRY(size_t, use_to);
 
     DECLARE_CONFIG_ENTRY(std::string, host_from);
+    DECLARE_CONFIG_ENTRY(uint16_t, recv_timeout);
 
     DECLARE_CONFIG_ENTRY(uint16_t, imu_port_from);
     DECLARE_CONFIG_ENTRY(uint16_t, imu_port_to);
