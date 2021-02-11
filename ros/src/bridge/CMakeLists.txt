@@ -1,14 +1,12 @@
-#if (DEFINED ENV{XILINX_VITIS})
-#  message(FATAL_ERROR "Can't compile in bash session in which Vitis Tools have been sourced!\nCompile from a clean bash environment")
-#endif()
+if (DEFINED ENV{XILINX_VITIS})
+ message(FATAL_ERROR "Can't compile in bash session in which Vitis Tools have been sourced!\nCompile from a clean bash environment")
+endif()
 
 cmake_minimum_required(VERSION 3.3)
 
 project(bridge CXX)
 
-# Can't use this because ROS, fuck, have to use the abomination below
-# set(CMAKE_CXX_STANDARD 17)
-add_compile_options(-std=c++17)
+set(CMAKE_CXX_STANDARD 17)
 
 include(cmake/helpers.cmake)
 
