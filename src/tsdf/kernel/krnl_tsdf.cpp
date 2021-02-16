@@ -130,7 +130,7 @@ extern "C"
                      hls::stream<std::pair<PointHW, PointArith>>& bounds_fifo,
                      hls::stream<std::pair<int, int>>& iter_steps_fifo)
     {
-        TSDFValueHW value;
+        TSDFValueHW new_value;
         PointHW index{0, 0, 0}, old_index{0, 0, 0};
         std::pair<PointHW, PointArith> bounds{PointHW(), PointArith()};
         std::pair<int, int> iter_steps{0, 0};
@@ -147,13 +147,13 @@ extern "C"
             {
                 old_index = index;
 
-                value_fifo >> value;
+                value_fifo >> new_value;
                 index_fifo >> index;
                 bounds_fifo >> bounds;
                 iter_steps_fifo >> iter_steps;
 
                 // the weight is only 0 in the dummy message
-                if (value.weight == 0)
+                if (new_value.weight == 0)
                 {
                     break;
                 }
@@ -173,26 +173,22 @@ extern "C"
 
                 bool old_is_interpolated = old_entry.weight <= 0;
                 bool current_is_interpolated = step != iter_steps.second;
-                bool current_is_better = hls_abs(value.value) < hls_abs(old_entry.value);
+                bool current_is_better = hls_abs(new_value.value) < hls_abs(old_entry.value);
 
-                if (current_is_interpolated)
+                if (current_is_better || old_is_interpolated)
                 {
-                    // negated weight
-                    TSDFValueHW tmp_value{value.value, -value.weight};
+                    TSDFValueHW tmp_value = old_entry;
+                    if (current_is_better || old_entry.weight == 0)
+                    {
+                        tmp_value.value = new_value.value;
+                    }
 
-                    // replace only interpolated values and only if they are better
-                    if (old_is_interpolated && current_is_better)
+                    if (old_is_interpolated)
                     {
-                        new_entries[map_index] = tmp_value;
+                        tmp_value.weight = new_value.weight * (current_is_interpolated ? -1 : 1);
                     }
-                }
-                else
-                {
-                    // non-interpolated is always better than interpolated
-                    if (old_is_interpolated || current_is_better)
-                    {
-                        new_entries[map_index] = value;
-                    }
+
+                    new_entries[map_index] = tmp_value;
                 }
 
                 step++;
