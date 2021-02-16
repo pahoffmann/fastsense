@@ -209,6 +209,7 @@ extern "C"
         TSDFValueHW* new_entries,
         TSDFValueHW::WeightType max_weight)
     {
+        // Update the current map based on the new generated entries
         for (int index = start; index < end; index++)
         {
 #pragma HLS loop_tripcount min=8000000/SPLIT_FACTOR max=8000000/SPLIT_FACTOR
@@ -221,10 +222,12 @@ extern "C"
 
             int new_weight = map_entry.weight + new_entry.weight;
 
+            // Averaging is only performed based on real measured entries and not on interpolated ones
             if (new_entry.weight > 0 && map_entry.weight > 0)
             {
                 map_entry.value = (map_entry.value * map_entry.weight + new_entry.value * new_entry.weight) / new_weight;
 
+                // Upper bound for the total weight. Ensures, that later updates have still an impact. 
                 if (new_weight > max_weight)
                 {
                     new_weight = max_weight;
@@ -232,6 +235,7 @@ extern "C"
 
                 map_entry.weight = new_weight;
             }
+            // An interpolated value will always be overwritten by a new one. Real values are always preferred
             else if (new_entry.weight != 0 && map_entry.weight <= 0)
             {
                 map_entry.value = new_entry.value;
