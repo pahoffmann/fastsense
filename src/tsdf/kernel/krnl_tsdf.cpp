@@ -20,6 +20,22 @@ constexpr int SPLIT_FACTOR = 4;
 
 extern "C"
 {
+    /**
+     * @brief generates data for update_tsdf
+     *
+     * executes raymarching from the Scanner to the Point, calculates the TSDF Value for each Cell
+     * and sends that data to update_tsdf for interpolation
+     *
+     * @param scanPoints an array of Points
+     * @param numPoints length of scanPoints
+     * @param map metadata of the LocalMap. Needed for Scanner position and Map size
+     * @param tau the truncation distance for tsdf values
+     * @param up up-vector for the orientation of the Scanner
+     * @param value_fifo fifo to send the calculated tsdf value to update_tsdf
+     * @param index_fifo fifo to send the current cell to update_tsdf
+     * @param bounds_fifo fifo to send (starting point, interpolation vector) to update_tsdf
+     * @param iter_steps_fifo fifo to send (number of interpolation steps, index of current cell) to update_tsdf
+     */
     void read_points(PointHW* scanPoints,
                      int numPoints,
                      const LocalMapHW& map,
@@ -30,9 +46,13 @@ extern "C"
                      hls::stream<std::pair<PointHW, PointArith>>& bounds_fifo,
                      hls::stream<std::pair<int, int>>& iter_steps_fifo)
     {
+        // Position of the Scanner
         PointHW map_pos{map.posX, map.posY, map.posZ};
 
+        // grace period around the Point before the weight of a Point decreases
         TSDFValueHW::ValueType weight_epsilon = tau / 10;
+
+        // rough estimate for the maximum raymarching distance
         int max_distance = (map.sizeX / 2 + map.sizeY / 2 + map.sizeZ / 2) * MAP_RESOLUTION;
 
     points_loop:
@@ -45,9 +65,13 @@ extern "C"
             PointHW direction = scan_point - map_pos.to_mm();
 
             int distance = direction.norm();
+            // end of raymarching: truncation distance behind the Point
             int distance_tau = distance + tau;
 
             auto normed_direction_vector = (PointArith(direction.x, direction.y, direction.z) * MATRIX_RESOLUTION) / distance;
+
+            // interpolation vector should be perpendicular to the direction vector and should be on the same Plane as the up-vector
+            // => calculate adjusted-up-vector = direction X right, with right-vector = direction X original-up-vector
             auto interpolation_vector = (normed_direction_vector.cross(normed_direction_vector.cross(PointArith(up.x, up.y, up.z)) / MATRIX_RESOLUTION));
 
             auto normed_interpolation_vector = (interpolation_vector * MATRIX_RESOLUTION) / interpolation_vector.norm();
@@ -57,6 +81,12 @@ extern "C"
                 distance_tau = max_distance;
             }
 
+            // the main Raymarching Loop
+            // start at MAP_RESOLUTION to avoid problems with the Scanner pos
+            // step in half-cell-size steps to possibly catch multiple cells on a slope
+            //     this would lead to some cells being visited twice, which is filtered by update_tsdf
+            //     the filter used to be inside this function, but that would prevent pipelining with II=1,
+            //     because the rest of the loop would then depend on that calculation and Vitis says no
         tsdf_loop:
             for (int len = MAP_RESOLUTION; len <= distance_tau; len += MAP_RESOLUTION / 2)
             {
@@ -84,11 +114,15 @@ extern "C"
 
                 if (len > distance)
                 {
+                    // tsdf is negative behind the Point
                     tsdf.value = -tsdf.value;
                 }
 
                 tsdf.weight = WEIGHT_RESOLUTION;
 
+                // weighting function:
+                // weight = 1 (aka WEIGHT_RESOLUTION) from Scanner to Point
+                // linear descent to 0 after the Point, starting at Point + weight_epsilon
                 if (tsdf.value < -weight_epsilon)
                 {
                     tsdf.weight = WEIGHT_RESOLUTION * (tau + tsdf.value) / (tau - weight_epsilon);
@@ -99,6 +133,7 @@ extern "C"
                     continue;
                 }
 
+                // delta_z == how many cells should be interpolated to fill the area between rings
                 int delta_z = dz_per_distance * len / MATRIX_RESOLUTION;
                 std::pair<PointHW, PointArith> bounds;
                 std::pair<int, int> iter_steps;
@@ -123,6 +158,16 @@ extern "C"
         iter_steps_fifo << std::pair<int, int>(0, 0);
     }
 
+    /**
+     * @brief interpolates a tsdf-value along a path to fill the area between rings
+     * 
+     * @param map metadata of the LocalMap
+     * @param new_entries temporary local map for newly generated values
+     * @param value_fifo fifo to receive the calculated tsdf value from read_points
+     * @param index_fifo fifo to receive the current cell from read_points
+     * @param bounds_fifo fifo to receive (starting point, interpolation vector) from read_points
+     * @param iter_steps_fifo fifo to receive (number of interpolation steps, index of current cell) from read_points
+     */
     void update_tsdf(const LocalMapHW& map,
                      TSDFValueHW* new_entries,
                      hls::stream<TSDFValueHW>& value_fifo,
@@ -171,20 +216,23 @@ extern "C"
 
                 TSDFValueHW old_entry = new_entries[map_index];
 
+                // interpolated values have a negative weight
                 bool old_is_interpolated = old_entry.weight <= 0;
                 bool current_is_interpolated = step != iter_steps.second;
-                bool current_is_better = hls_abs(new_value.value) < hls_abs(old_entry.value);
+                bool current_is_better = hls_abs(new_value.value) < hls_abs(old_entry.value) || old_entry.weight == 0;
 
                 if (current_is_better || old_is_interpolated)
                 {
                     TSDFValueHW tmp_value = old_entry;
-                    if (current_is_better || old_entry.weight == 0)
+                    // we always want the smallest tsdf value in each cell, even from interpolated values
+                    if (current_is_better)
                     {
                         tmp_value.value = new_value.value;
                     }
 
                     if (old_is_interpolated)
                     {
+                        // weight is only negative when old an new are both interpolated
                         tmp_value.weight = new_value.weight * (current_is_interpolated ? -1 : 1);
                     }
 
@@ -202,6 +250,17 @@ extern "C"
         }
     }
 
+    /**
+     * @brief update the local map with the new values using floating average
+     * 
+     * this function is called multiple times in parallel with different start and end indices
+     * 
+     * @param mapData the local map
+     * @param start the starting index of the range of this instance
+     * @param end the end index of the range of this instance
+     * @param new_entries the temporary map with the new values
+     * @param max_weight the maximum weight for the floating average
+     */
     void sync_loop(
         TSDFValueHW* mapData,
         int start,
