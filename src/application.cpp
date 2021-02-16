@@ -126,16 +126,11 @@ int Application::run()
 
     std::mutex map_mutex;
 
-    MapThread map_thread{std::shared_ptr<LocalMap>(nullptr), map_mutex, tsdf_buffer, ConfigManager::config().slam.map_update_period(), ConfigManager::config().slam.map_update_position_threshold(), command_queue};
-
-    CloudCallback cloud_callback{registration, pointcloud_bridge_buffer, std::shared_ptr<LocalMap>(nullptr), std::shared_ptr<GlobalMap>(nullptr), pose, transform_buffer, command_queue, map_thread, map_mutex};
-
     comm::QueueBridge<msg::TSDFBridgeMessage, true> tsdf_bridge{tsdf_buffer, nullptr, config.bridge.tsdf_port_to()};
     comm::QueueBridge<msg::TransformStamped, true> transform_bridge{transform_buffer, nullptr, config.bridge.transform_port_to()};
 
     gpiod::chip button_chip(config.gpio.button_chip());
     ui::Button button{button_chip.get_line(config.gpio.button_line())};
-
     gpiod::chip led_chip(config.gpio.led_chip());
     ui::Led led{led_chip.get_line(config.gpio.led_line())};
 
@@ -157,7 +152,10 @@ int Application::run()
         else
         {
             auto err = errno;
-            Logger::error("Wait for signal failed (", std::strerror(err), ")! Stopping Application...");
+            if (err != EAGAIN)
+            {
+                Logger::error("Wait for signal failed (", std::strerror(err), ")! Stopping Application...");
+            }
         }
         return false;
     };
@@ -186,6 +184,14 @@ int Application::run()
 
         Logger::info("Starting SLAM...");
 
+        imu_buffer->clear();
+        imu_bridge_buffer->clear();
+        pointcloud_buffer->clear();
+        pointcloud_bridge_buffer->clear();
+        tsdf_buffer->clear();
+        transform_buffer->clear();
+        vis_buffer->clear();
+
         std::ostringstream filename;
         auto now = std::chrono::system_clock::now();
         auto t = std::chrono::system_clock::to_time_t(now);
@@ -201,9 +207,9 @@ int Application::run()
                              config.slam.map_size_z(),
                              global_map, command_queue);
 
-        map_thread.set_local_map(local_map);
-        cloud_callback.set_local_map(local_map);
-        cloud_callback.set_global_map(global_map);
+        MapThread map_thread{local_map, map_mutex, tsdf_buffer, ConfigManager::config().slam.map_update_period(), ConfigManager::config().slam.map_update_position_threshold(), command_queue};
+        CloudCallback cloud_callback{registration, pointcloud_bridge_buffer, local_map, global_map, pose, transform_buffer, command_queue, map_thread, map_mutex};
+
         {
             Runner run_lidar_driver(*lidar_driver);
             Runner run_lidar_bridge(lidar_bridge);
@@ -214,6 +220,7 @@ int Application::run()
             Runner run_transform_bridge(transform_bridge);
             Runner run_map_thread(map_thread);
             Logger::info("SLAM started! Running...");
+            std::this_thread::sleep_for(2s);
             if (!button.wait_for_press_or_condition(running_condition))
             {
                 return 0;

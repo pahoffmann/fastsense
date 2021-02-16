@@ -19,6 +19,13 @@
         "epsilon": 0.01
     },
 
+    "gpio": {
+        "button_chip": "gpiochip0",
+        "button_line": 0,
+        "led_chip": "gpiochip1",
+        "led_line": 0
+    },
+
     "bridge": {
         "use_from" : 0,
         "use_to" : 1,
