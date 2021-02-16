@@ -25,6 +25,10 @@ private:
     std::thread blink_thread_;
     bool running_;
 
+    /**
+     * @brief Contains the blinking logic
+     * 
+     */
     void blink();
 public:
     /**

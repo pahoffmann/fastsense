@@ -13,7 +13,7 @@ namespace fastsense::ui
 {
 
 /**
- * @brief Represents a button an a GPIO line
+ * @brief Represents a button on a GPIO line
  * 
  */
 class Button

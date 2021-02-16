@@ -40,7 +40,7 @@ void Led::blink()
         else
         {
             line_.set_value(1);
-            std::this_thread::sleep_for(std::chrono::duration<double>(1 / freq / 2));
+            std::this_thread::sleep_for(std::chrono::duration<double>(1 / freq / 2)); // 50% duty cycle
             line_.set_value(0);
             std::this_thread::sleep_for(std::chrono::duration<double>(1 / freq / 2));
         }

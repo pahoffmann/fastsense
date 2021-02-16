@@ -18,11 +18,9 @@ Button::Button(const gpiod::line& line, std::chrono::nanoseconds timeout) :
 
 bool Button::wait_for_press_or_condition(std::function<bool()> condition)
 {
-    // empty event queue
-    // while (line_.event_wait(0ns))
-    // {
-    //     line_.event_read();
-    // }
+    // Workaround:
+    // Interrupts (gpiod events) causes the system to freeze.
+    // So we just get the value of the line and explicitly sleep.
 
     // wait for press...
     while (!line_.get_value())
@@ -34,7 +32,6 @@ bool Button::wait_for_press_or_condition(std::function<bool()> condition)
         }
         std::this_thread::sleep_for(timeout_);
     }
-    // clear event
-    //line_.event_read();
+
     return true;
 }
