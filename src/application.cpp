@@ -130,7 +130,6 @@ int Application::run()
     assert(initial_weight >= 0);
     assert(initial_weight <= std::numeric_limits<TSDFValue::WeightType>::max());
 
-    Matrix4f pose = Matrix4f::Identity();
     auto tsdf_buffer = std::make_shared<util::ConcurrentRingBuffer<msg::TSDFBridgeMessage>>(2);
     auto transform_buffer = std::make_shared<util::ConcurrentRingBuffer<msg::TransformStamped>>(16);
     auto vis_buffer = std::make_shared<util::ConcurrentRingBuffer<Matrix4f>>(2);
@@ -218,17 +217,29 @@ int Application::run()
                              global_map, command_queue);
 
         MapThread map_thread{local_map, map_mutex, tsdf_buffer, ConfigManager::config().slam.map_update_period(), ConfigManager::config().slam.map_update_position_threshold(), command_queue};
-        CloudCallback cloud_callback{registration, pointcloud_bridge_buffer, local_map, global_map, pose, transform_buffer, command_queue, map_thread, map_mutex};
+        CloudCallback cloud_callback{registration, pointcloud_bridge_buffer, local_map, global_map, transform_buffer, command_queue, map_thread, map_mutex};
 
         {
             Runner run_lidar_driver(*lidar_driver);
             Runner run_lidar_bridge(lidar_bridge);
             Runner run_imu_driver(*imu_driver);
             Runner run_imu_bridge(imu_bridge);
-            Runner run_cloud_callback{cloud_callback};
             Runner run_tsdf_bridge(tsdf_bridge);
             Runner run_transform_bridge(transform_bridge);
             Runner run_map_thread(map_thread);
+
+            // clear any remaining messages FIXME: WHY IS THIS NECESSARY???
+            std::this_thread::sleep_for(1s);
+            imu_buffer->clear();
+            imu_bridge_buffer->clear();
+            pointcloud_buffer->clear();
+            pointcloud_bridge_buffer->clear();
+            tsdf_buffer->clear();
+            transform_buffer->clear();
+            vis_buffer->clear();
+
+            Runner run_cloud_callback{cloud_callback};
+
             Logger::info("SLAM started! Running...");
             std::this_thread::sleep_for(2s);
             if (!button.wait_for_press_or_condition(running_condition))
@@ -242,5 +253,8 @@ int Application::run()
         local_map->write_back();
         global_map->write_back();
         Logger::info("Local and global map saved!");
+        local_map.reset();
+        global_map.reset();
+        Logger::info("Clear local and global map!");
     }
 }

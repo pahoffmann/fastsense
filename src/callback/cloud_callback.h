@@ -36,7 +36,6 @@ public:
                   const std::shared_ptr<PointCloudBuffer>& cloud_buffer,
                   const std::shared_ptr<LocalMap>& local_map,
                   const std::shared_ptr<GlobalMap>& global_map,
-                  Matrix4f& pose,
                   const msg::TransformStampedBuffer::Ptr& transform_buffer,
                   const fastsense::CommandQueuePtr& q,
                   MapThread& map_thread,
@@ -64,7 +63,7 @@ private:
     std::shared_ptr<PointCloudBuffer> cloud_buffer;
     std::shared_ptr<LocalMap> local_map;
     std::shared_ptr<GlobalMap> global_map;
-    Matrix4f& pose;
+    Matrix4f pose;
     msg::TransformStampedBuffer::Ptr transform_buffer;
     bool first_iteration;
     fastsense::CommandQueuePtr q;
