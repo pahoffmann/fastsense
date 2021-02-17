@@ -23,7 +23,7 @@
 #include <lvr2/geometry/HalfEdgeMesh.hpp>
 
 /// Marker topic that the node subscribes to
-constexpr char MARKER_TOPIC[] = "from_trenz/tsdf";
+constexpr char MARKER_TOPIC[] = "from_trenz_bridge/tsdf";
 /// Mesh topic that the node publishes to
 constexpr char MESH_TOPIC[] = "reconstructed_mesh";
 /**
