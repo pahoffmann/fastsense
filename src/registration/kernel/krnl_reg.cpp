@@ -347,7 +347,7 @@ extern "C"
             }
 
 #ifndef __SYNTHESIS__
-            std::cout << "\r" << i << " / " << max_iterations << std::flush;
+            std::cout << "\r" << i + 1 << " / " << max_iterations << std::flush;
 #endif
 
             // "center" of Scan == estimated Position of Scanner == translation in Pose
@@ -408,6 +408,8 @@ extern "C"
             float err = (float)error0 / count0;
             float d1 = err - previous_errors[2];
             float d2 = err - previous_errors[0];
+
+            //std::cout << d1 << " " << d2 << std::endl;
 
             if (d1 >= -epsilon && d1 <= epsilon && d2 >= -epsilon && d2 <= epsilon)
             {

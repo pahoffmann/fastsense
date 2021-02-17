@@ -24,6 +24,7 @@ namespace fastsense::registration
 constexpr unsigned int SCALE = 1000;
 
 constexpr float MAX_OFFSET = 100; // TODO: this is too much
+constexpr float DRIFT_OFFSET = 10;
 
 // Test Translation
 constexpr float TX = 0.3 * SCALE;
@@ -47,22 +48,22 @@ constexpr int SIZE_Z = 5 * SCALE / MAP_RESOLUTION;
  * @param points_posttransform Transformed point cloud
  * @param points_pretransform Original point cloud
  */
-static void check_computed_transform(const ScanPoints_t& points_posttransform, ScanPoints_t& points_pretransform)
+float check_computed_transform(const ScanPoints_t& points_posttransform, ScanPoints_t& points_pretransform, bool print = true)
 {
-    int minimum = std::numeric_limits<int>::infinity();
-    int maximum = -std::numeric_limits<int>::infinity();
-    int average = 0;
+    float minimum = std::numeric_limits<float>::infinity();
+    float maximum = -std::numeric_limits<float>::infinity();
+    float average = 0;
 
-    int average_x = 0;
-    int average_y = 0;
-    int average_z = 0;
+    float average_x = 0;
+    float average_y = 0;
+    float average_z = 0;
 
-    std::vector<int> dists(points_pretransform.size());
+    std::vector<float> dists(points_pretransform.size());
 
     for (size_t i = 0; i < points_pretransform.size(); i++)
     {
         Eigen::Vector3i sub = points_pretransform[i] - points_posttransform[i];
-        auto norm = sub.norm();
+        auto norm = sub.cast<float>().norm();
 
         if (norm < minimum)
         {
@@ -84,15 +85,24 @@ static void check_computed_transform(const ScanPoints_t& points_posttransform, S
 
     std::sort(dists.begin(), dists.end());
 
-    std::cout << "minimum distance: " << minimum << std::endl;
-    std::cout << "maximum distance: " << maximum << std::endl;
-    std::cout << "average distance: " << average / points_pretransform.size() << std::endl;
-    std::cout << "average distance x: " << average_x / points_pretransform.size() << std::endl;
-    std::cout << "average distance y: " << average_y / points_pretransform.size() << std::endl;
-    std::cout << "average distance z: " << average_z / points_pretransform.size() << std::endl;
-    std::cout << "median distance: " << dists[dists.size() / 2 + 1] << std::endl;
+    average /= points_pretransform.size();
+    average_x /= points_pretransform.size();
+    average_y /= points_pretransform.size();
+    average_z /= points_pretransform.size();
 
-    REQUIRE((average / points_pretransform.size()) < MAX_OFFSET);
+    if (print)
+    {
+        std::cout << std::fixed << std::setprecision(2)
+                  << "minimum distance: " << minimum << "\n"
+                  << "maximum distance: " << maximum << "\n"
+                  << "average distance: " << average
+                  << ",  (" << (int)average_x << ", " << (int)average_y << ", " << (int)average_z << ")\n"
+                  << "median  distance: " << dists[dists.size() / 2 + 1] << std::endl;
+    }
+
+    CHECK(average < MAX_OFFSET);
+
+    return average;
 }
 
 static std::shared_ptr<fastsense::buffer::InputBuffer<PointHW>> scan_points_to_input_buffer(ScanPoints_t& cloud, const fastsense::CommandQueuePtr q)
@@ -130,7 +140,7 @@ TEST_CASE("Kernel", "[kernel][slow]")
 
     auto count = 0u;
 
-    ScanPoints_t scan_points(num_points);
+    ScanPoints_t points_original(num_points);
 
     auto q2 = fastsense::hw::FPGAManager::create_command_queue();
     fastsense::buffer::InputBuffer<PointHW> kernel_points(q2, num_points);
@@ -139,21 +149,17 @@ TEST_CASE("Kernel", "[kernel][slow]")
     {
         for (const auto& point : ring)
         {
-            scan_points[count].x() = point.x() * SCALE;
-            scan_points[count].y() = point.y() * SCALE;
-            scan_points[count].z() = point.z() * SCALE;
+            points_original[count].x() = point.x() * SCALE;
+            points_original[count].y() = point.y() * SCALE;
+            points_original[count].z() = point.z() * SCALE;
 
-            kernel_points[count].x = scan_points[count].x();
-            kernel_points[count].y = scan_points[count].y();
-            kernel_points[count].z = scan_points[count].z();
+            kernel_points[count].x = points_original[count].x();
+            kernel_points[count].y = points_original[count].y();
+            kernel_points[count].z = points_original[count].z();
 
             ++count;
         }
     }
-
-    ScanPoints_t scan_points_2(scan_points);
-    ScanPoints_t points_pretransformed_trans(scan_points);
-    ScanPoints_t points_pretransformed_rot(scan_points);
 
     std::shared_ptr<fastsense::map::GlobalMap> global_map_ptr(new fastsense::map::GlobalMap("test_global_map.h5", 0.0, 0.0));
 
@@ -173,6 +179,12 @@ TEST_CASE("Kernel", "[kernel][slow]")
                  0,             0,       1, 0,
                  0,             0,       0, 1;
 
+    Eigen::Matrix4f rotation_mat2;
+    rotation_mat2 <<  cos(-RY), -sin(-RY),      0, 0,
+                  sin(-RY),  cos(-RY),      0, 0,
+                  0,             0,       1, 0,
+                  0,             0,       0, 1;
+
     //calc tsdf values for the points from the pcd and store them in the local map
 
     auto q3 = fastsense::hw::FPGAManager::create_command_queue();
@@ -183,49 +195,75 @@ TEST_CASE("Kernel", "[kernel][slow]")
 
     //fastsense::tsdf::update_tsdf(scan_points, Vector3i::Zero(), local_map, TAU, MAX_WEIGHT);
 
-    SECTION("Test Registration No Transform")
     {
         std::cout << "    Section 'Test Registration No Transform'" << std::endl;
 
         //copy from scanpoints to  inputbuffer
-        auto buffer_ptr = scan_points_to_input_buffer(points_pretransformed_trans, q);
+        ScanPoints_t points_transformed(points_original);
+        auto buffer_ptr = scan_points_to_input_buffer(points_transformed, q);
         auto& buffer = *buffer_ptr;
         Matrix4f result_matrix = Matrix4f::Identity();
         reg.register_cloud(local_map, buffer, util::HighResTime::now(), result_matrix);
 
-        reg.transform_point_cloud(points_pretransformed_trans, result_matrix);
-        check_computed_transform(points_pretransformed_trans, scan_points);
+        reg.transform_point_cloud(points_transformed, result_matrix);
+        check_computed_transform(points_transformed, points_original);
 
     }
 
-    SECTION("Test Registration Translation")
     {
         std::cout << "    Section 'Test Registration Translation'" << std::endl;
 
-        reg.transform_point_cloud(points_pretransformed_trans, translation_mat);
+        ScanPoints_t points_transformed(points_original);
+        reg.transform_point_cloud(points_transformed, translation_mat);
 
         //copy from scanpoints to  inputbuffer
-        auto buffer_ptr = scan_points_to_input_buffer(points_pretransformed_trans, q);
+        auto buffer_ptr = scan_points_to_input_buffer(points_transformed, q);
         auto& buffer = *buffer_ptr;
         Matrix4f result_matrix = Matrix4f::Identity();
         reg.register_cloud(local_map, buffer, util::HighResTime::now(), result_matrix);
 
-        reg.transform_point_cloud(points_pretransformed_trans, result_matrix);
-        check_computed_transform(points_pretransformed_trans, scan_points);
+        reg.transform_point_cloud(points_transformed, result_matrix);
+        check_computed_transform(points_transformed, points_original);
 
     }
 
-    SECTION("Registration test Rotation")
     {
         std::cout << "    Section 'Registration test Rotation'" << std::endl;
-        reg.transform_point_cloud(points_pretransformed_rot, rotation_mat);
-        auto buffer_ptr = scan_points_to_input_buffer(points_pretransformed_rot, q);
+        ScanPoints_t points_transformed(points_original);
+        reg.transform_point_cloud(points_transformed, rotation_mat);
+        auto buffer_ptr = scan_points_to_input_buffer(points_transformed, q);
         auto& buffer = *buffer_ptr;
         Matrix4f result_matrix = Matrix4f::Identity();
         reg.register_cloud(local_map, buffer, util::HighResTime::now(), result_matrix);
 
-        reg.transform_point_cloud(points_pretransformed_rot, result_matrix);
-        check_computed_transform(points_pretransformed_rot, scan_points_2);
+        reg.transform_point_cloud(points_transformed, result_matrix);
+        check_computed_transform(points_transformed, points_original);
+    }
+
+    {
+        std::cout << "    Section 'Registration test Rotation Drift'" << std::endl;
+
+        ScanPoints_t points_transformed(points_original);
+        reg.transform_point_cloud(points_transformed, rotation_mat);
+        auto buffer_ptr = scan_points_to_input_buffer(points_transformed, q);
+        auto& buffer = *buffer_ptr;
+        Matrix4f result_matrix = Matrix4f::Identity();
+        reg.register_cloud(local_map, buffer, util::HighResTime::now(), result_matrix);
+
+        reg.transform_point_cloud(points_transformed, result_matrix);
+        float result1 = check_computed_transform(points_transformed, points_original, false);
+
+        ScanPoints_t points_transformed2(points_original);
+        reg.transform_point_cloud(points_transformed2, rotation_mat2);
+        auto buffer_ptr2 = scan_points_to_input_buffer(points_transformed2, q);
+        auto& buffer2 = *buffer_ptr2;
+        Matrix4f result_matrix2 = Matrix4f::Identity();
+        reg.register_cloud(local_map, buffer2, util::HighResTime::now(), result_matrix2);
+
+        reg.transform_point_cloud(points_transformed2, result_matrix2);
+        float result2 = check_computed_transform(points_transformed2, points_original);
+
+        CHECK(fabsf(result1 - result2) < DRIFT_OFFSET);
     }
 }
 

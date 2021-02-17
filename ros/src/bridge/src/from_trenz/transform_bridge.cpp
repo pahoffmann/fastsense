@@ -5,6 +5,7 @@
  */
 
 #include <iterator>
+#include <random>
 #include <ros/ros.h>
 #include <bridge/util.h>
 #include <bridge/from_trenz/transform_bridge.h>
@@ -101,6 +102,20 @@ void TransformBridge::convert()
     pose_stamped.pose.position.x = msg_.data_.translation.x() * 0.001;
     pose_stamped.pose.position.y = msg_.data_.translation.y() * 0.001;
     pose_stamped.pose.position.z = msg_.data_.translation.z() * 0.001;
+
+    pose_path.poses.push_back(pose_stamped);
+
+    // RViz crashes if path is longer than 16384 (~13 minutes at 20 Scans/sec)
+    // see https://github.com/ros-visualization/rviz/issues/1107
+    if (pose_path.poses.size() >= 16380)
+    {
+        static std::default_random_engine rng((std::random_device())());
+
+        // remove a random pose, but not the start nor a recent pose
+        std::uniform_int_distribution dist(1, (int)pose_path.poses.size() - 1000);
+        int index = dist(rng);
+        pose_path.poses.erase(pose_path.poses.begin() + index);
+    }
 }
 
 void TransformBridge::publish()
@@ -109,7 +124,6 @@ void TransformBridge::publish()
 
     broadcaster.sendTransform(transform_data);    
 
-    pose_path.poses.push_back(pose_stamped);
     pub().publish(pose_path);
 }
 

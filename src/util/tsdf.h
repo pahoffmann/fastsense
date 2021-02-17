@@ -6,30 +6,22 @@
  * @date 2021-01-13
  */
 
-#include <cinttypes>
-#include <util/constants.h>
+#include "tsdf_hw.h"
 
 class TSDFValue
 {
 public:
-    using RawType = uint16_t;
-    using ValueType = int16_t;
-    using WeightType = uint16_t;
+    using RawType = uint32_t;
+    using ValueType = TSDFValueHW::ValueType;
+    using WeightType = TSDFValueHW::WeightType;
 
 private:
     union
     {
         RawType raw;
-        struct
-        {
-            // *INDENT-OFF*
-            ValueType value : VALUE_BITS;
-            WeightType weight : WEIGHT_BITS;
-            // *INDENT-ON*
-        } tsdf;
+        TSDFValueHW tsdf;
     } data;
-    static_assert(sizeof(data.tsdf) == sizeof(data.raw));            // raw and TSDF types must be of the same size
-    static_assert((sizeof(data) * 8) == (VALUE_BITS + WEIGHT_BITS)); // data size must be the same as specified size in bits
+    static_assert(sizeof(RawType) == sizeof(TSDFValueHW));            // raw and TSDF types must be of the same size
 
 public:
 
@@ -84,3 +76,6 @@ public:
         data.tsdf.weight = val;
     }
 };
+
+static_assert(sizeof(TSDFValue) == sizeof(TSDFValueHW));          // HW and SW types must be of the same size
+
