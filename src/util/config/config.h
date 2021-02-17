@@ -88,6 +88,7 @@ struct SlamConfig : public ConfigGroup
     DECLARE_CONFIG_ENTRY(unsigned int, map_update_period);
     DECLARE_CONFIG_ENTRY(float, map_update_position_threshold);
 
+    DECLARE_CONFIG_ENTRY(std::string, map_path);
 };
 
 struct Config : public ConfigGroup

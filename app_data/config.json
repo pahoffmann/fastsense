@@ -50,6 +50,7 @@
         "max_weight": 10,
         "initial_map_weight": 0.0,
         "map_update_period": 50,
-        "map_update_position_threshold": 500
+        "map_update_position_threshold": 500,
+        "map_path": "/data"
     }
 }

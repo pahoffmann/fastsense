@@ -8,6 +8,7 @@
 #include <cstring>
 #include <algorithm>
 #include <iostream>
+#include <filesystem>
 #include <gpiod.hpp>
 
 #include "application.h"
@@ -197,7 +198,7 @@ int Application::run()
         auto t = std::chrono::system_clock::to_time_t(now);
         filename << "GlobalMap_" << std::put_time(std::localtime(&t), "%Y-%m-%d-%H-%M-%S") << ".h5";
         auto global_map = std::make_shared<GlobalMap>(
-                              filename.str(),
+                              std::filesystem::path(ConfigManager::config().slam.map_path()) / filename.str(),
                               config.slam.max_distance() / config.slam.map_resolution(),
                               config.slam.initial_map_weight());
 
