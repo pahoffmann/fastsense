@@ -144,12 +144,12 @@ public:
      */
     std::string to_string();
 
-private:
-
     /**
      * Private constructor to ensure singleton property.
      */
     RuntimeEvaluator();
+
+private:
 
     /**
      * Pauses the time measurements. The time that has past since the last resume is accumulated for every currently measured task.

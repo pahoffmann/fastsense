@@ -31,7 +31,7 @@ void update_tsdf_hw(const fastsense::buffer::InputBuffer<PointHW>& scan_points,
 {
     int weight_epsilon = tau / 10;
 
-    std::unordered_map<PointHW, std::pair<int, int>> values;
+    std::unordered_map<PointHW, TSDFValue> values;
 
     PointHW scanner_pos(buffer.get_pos().x(), buffer.get_pos().y(), buffer.get_pos().z());
 
@@ -80,7 +80,7 @@ void update_tsdf_hw(const fastsense::buffer::InputBuffer<PointHW>& scan_points,
                 continue;
             }
 
-            auto object = std::make_pair(value, weight);
+            TSDFValue object(value, weight);
 
             int delta_z = dz_per_distance * len / MATRIX_RESOLUTION;
 
@@ -95,7 +95,7 @@ void update_tsdf_hw(const fastsense::buffer::InputBuffer<PointHW>& scan_points,
                 }
 
                 auto existing = values.try_emplace(index, object);
-                if (!existing.second && abs(value) < abs(existing.first->second.first))
+                if (!existing.second && abs(value) < abs(existing.first->second.value()))
                 {
                     existing.first->second = object;
                 }
@@ -108,12 +108,12 @@ void update_tsdf_hw(const fastsense::buffer::InputBuffer<PointHW>& scan_points,
     for (auto& map_entry : values)
     {
         auto& index = map_entry.first;
-        int value = map_entry.second.first;
-        int weight = map_entry.second.second;
+        int value = map_entry.second.value();
+        int weight = map_entry.second.weight();
 
         auto& entry = buffer.value(index.x, index.y, index.z);
-        entry.first = (entry.first * entry.second + value * weight) / (entry.second + weight);
-        entry.second = std::min(max_weight, entry.second + weight);
+        entry.value((entry.value() * entry.weight() + value * weight) / (entry.weight() + weight));
+        entry.weight(std::min(max_weight, entry.weight() + weight));
     }
 }
 

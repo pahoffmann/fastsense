@@ -12,6 +12,7 @@
 
 #include "bridge_base.h"
 #include <msg/tsdf_bridge_msg.h>
+#include <util/tsdf.h>
 
 namespace fastsense::bridge
 {
@@ -28,8 +29,9 @@ public:
      * 
      * @param n nodehandle
      * @param board_addr ip addr of Trenz board
+     * @param timeout how long to wait for message before trying again
      */
-    TSDFBridge(ros::NodeHandle& n, const std::string& board_addr);
+    TSDFBridge(ros::NodeHandle& n, const std::string& board_addr, std::chrono::milliseconds timeout);
 
     /**
      * @brief Destroy the TSDFBridge object
@@ -40,18 +42,18 @@ private:
     /**
      * @brief Publishes a visualization_msgs::Marker with TSDF values (convert() FIRST for newest data)
      */
-    void publish() override;
+    void publish() final;
 
     /**
      * @brief Converts msg::TSDFBridgeMessage to visualization_msgs::Marker
      */
-    void convert() override;
+    void convert() final;
 
     /**
      * @brief Run listens for TSDFBridgeMessages, converts it to ROS Marker
      * and publishes in an endless loop (running in its own thread)
      */
-    void run() override;
+    void run() final;
 
     /// one "iteration" of thread
     void thread_run() override
@@ -60,14 +62,14 @@ private:
     }
 
     /// returns true, if x y z is in bounds of map
-    bool in_bounds(int x, int y, int z);
+    bool in_bounds(int x, int y, int z) const;
 
     /// gets tsdf value at x y z
-    std::pair<int, int> get_tsdf_value(int x, int y, int z);
+    TSDFValue get_tsdf_value(int x, int y, int z) const;
 
     /// TSDF Point vector
     std::vector<geometry_msgs::Point> points_;
-    
+
     /// Color vector
     std::vector<std_msgs::ColorRGBA> colors_;
 };

@@ -3,6 +3,8 @@
 /**
  * @file concurrent_ring_buffer.h
  * @author Marcel Flottmann
+ * @author Julian Gaal
+ * @author Pascal Buschermoeller
  */
 
 #include <mutex>
@@ -65,17 +67,39 @@ public:
      */
     void pop(T* val);
 
+    /**
+     * Pop non blocking if function evaluates to true
+     * @param val object to pop
+     * @param func function to evaluate
+     * @param timeout_ms timeout to wait before returning, if no data present
+     * @return true if popped
+     * @return false if !popped: timeout or function didn't evaluate to true
+     */
     bool pop_nb_if(T* val, std::function<bool(T&)> func, uint32_t timeout_ms = 0);
 
+    /**
+     * Pop (wait until data available) if function evaluates to true
+     * @param val object to pop
+     * @param func Function to evaluate
+     * @return true if popped
+     * @return false if function didn't evaluate to true
+     */
     bool pop_if(T* val, std::function<bool(T&)> func);
 
+
     /**
-     * 
-     *
-     *  
+     * Peek a value (non blocking): aka don't pop from buffer, but provide a copy to look at
+     * @param val saves copied object into val
+     * @param timeout_ms timeout to wait for data
+     * @return true if successfully peeked
+     * @return false timeout passed
      */
     bool peek_nb(T* val, uint32_t timeout_ms = 0);
 
+    /**
+     * Peek a value: aka don't pop from buffer, but provide a copy to look at
+     * @param val value to save copy in
+     */
     void peek(T* val);
 
     /**
@@ -95,7 +119,7 @@ public:
 
     /**
      * @brief return total capacity of concurrent ring buffer
-     * @return buffer size
+     * @return buffer capacity
      */
     inline size_t capacity() const
     {

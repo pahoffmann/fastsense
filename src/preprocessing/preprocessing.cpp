@@ -80,22 +80,6 @@ void Preprocessing::median_filter(fastsense::msg::PointCloudPtrStamped& cloud, u
     std::vector<ScanPoint> result(cloud.data_->points_.size());
     
     int half_window_size = window_size/2;
-    //NON Parallel version
-    /*
-    for(uint32_t i = 0; i < cloud.data_->points_.size(); i++)
-    {   
-        int first_element = (i - (half_window_size * cloud.data_->rings_));
-        for(uint8_t j = 0; j < window_size; j++)
-        { 
-            int index = ((first_element + (j * cloud.data_->rings_)) + cloud.data_->points_.size()) % cloud.data_->points_.size();
-            window[j] = (ScanPoint*)&cloud.data_->points_[index];
-        }        
-        
-        result[i] = *window[median_from_array(window)];
-    }
-
-    cloud.data_->points_ = result;
-    */
 
     #pragma omp parallel for schedule(static) shared(result)
     for(uint8_t ring = 0; ring < cloud.data_->rings_; ring++)

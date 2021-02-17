@@ -14,8 +14,8 @@ struct TestConfigSubGroup : public ConfigGroup
 {
     using ConfigGroup::ConfigGroup;
 
-    DECLARE_CONFIG_ENTRY(int, myInt);
-    DECLARE_CONFIG_ENTRY(std::string, myString);
+    DECLARE_CONFIG_ENTRY(int, myInt, "");
+    DECLARE_CONFIG_ENTRY(std::string, myString, "");
 };
 
 struct TestConfig : public ConfigGroup
@@ -23,7 +23,7 @@ struct TestConfig : public ConfigGroup
     using ConfigGroup::ConfigGroup;
 
     DECLARE_CONFIG_GROUP(TestConfigSubGroup, subGroup);
-    DECLARE_CONFIG_ENTRY(float, myFloat);
+    DECLARE_CONFIG_ENTRY(float, myFloat, "");
 };
 
 using TestConfigManager = ConfigManagerImpl<TestConfig>;

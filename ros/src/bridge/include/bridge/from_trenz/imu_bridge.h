@@ -29,8 +29,9 @@ public:
      * 
      * @param n nodehandle
      * @param board_addr ip addr of Trenz board
+     * @param timeout how long to wait for message before trying again
      */
-    ImuBridge(ros::NodeHandle& n, const std::string& board_addr);
+    ImuBridge(ros::NodeHandle& n, const std::string& board_addr, std::chrono::milliseconds timeout);
 
     /**
      * @brief Destroy the Imu Bridge object
@@ -40,18 +41,18 @@ private:
     /**
      * @brief Publishes an sensor_msgs::Imu (convert() FIRST for newest data)
      */
-    void publish() override;
+    void publish() final;
 
     /**
      * @brief Convert msg::ImuMsg into sensor_msgs::Imu
      */
-    void convert() override;
+    void convert() final;
     
     /**
      * @brief Run listens for data, converts into sensor_msgs::Imu
      * and publishes in an endless loop (running in its own thread)
      */
-    void run() override;
+    void run() final;
 
     void thread_run() override
     {

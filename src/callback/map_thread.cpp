@@ -6,6 +6,7 @@
 #include <callback/map_thread.h>
 #include <util/logging/logger.h>
 #include <util/config/config_manager.h>
+#include <util/runtime_evaluator.h>
 
 namespace fastsense::callback
 {
@@ -37,7 +38,7 @@ MapThread::MapThread(const std::shared_ptr<fastsense::map::LocalMap>& local_map,
     start_mutex_.lock();
 }
 
-void MapThread::go(const Vector3i& pos, const fastsense::buffer::InputBuffer<PointHW>& points)
+void MapThread::go(const Vector3i& pos, const Eigen::Matrix4f& pose, const fastsense::buffer::InputBuffer<PointHW>& points)
 {
     reg_cnt_++;
     const Vector3i& old_pos = local_map_->get_pos();
@@ -48,6 +49,7 @@ void MapThread::go(const Vector3i& pos, const fastsense::buffer::InputBuffer<Poi
     if (!active_ && (position_condition || reg_cnt_condition))
     {
         pos_ = pos;
+        pose_ = pose;
         points_ptr_.reset(new fastsense::buffer::InputBuffer<PointHW>(points));
         active_ = true;
         start_mutex_.unlock(); // signal
@@ -57,6 +59,8 @@ void MapThread::go(const Vector3i& pos, const fastsense::buffer::InputBuffer<Poi
 
 void MapThread::thread_run()
 {
+    util::RuntimeEvaluator eval;
+
     while (running)
     {
         start_mutex_.lock();
@@ -65,22 +69,39 @@ void MapThread::thread_run()
             break;
         }
         Logger::info("Starting SUV");
-        
+
+        eval.start("copy");
         map::LocalMap tmp_map(*local_map_);
+        eval.stop("copy");
 
         // shift
+        eval.start("shift");
         tmp_map.shift(pos_.x(), pos_.y(), pos_.z());
+        eval.stop("shift");
+
+        Matrix4i rotation_mat = Matrix4i::Identity();
+        rotation_mat.block<3, 3>(0, 0) = ((pose_ * MATRIX_RESOLUTION).cast<int>()).block<3, 3>(0, 0);
+
+        Eigen::Vector4i v;
+        v << Vector3i(0, 0, MATRIX_RESOLUTION), 1;
+        Vector3i up = (rotation_mat * v).block<3, 1>(0, 0) / MATRIX_RESOLUTION;
+
+        PointHW up_hw(up.x(), up.y(), up.z());
 
         // tsdf update
-        int tau = (int) ConfigManager::config().slam.max_distance();
-        tsdf_krnl_.run(tmp_map, *points_ptr_, tau, ConfigManager::config().slam.max_weight());
+        eval.start("tsdf");
+        int tau = ConfigManager::config().slam.max_distance();
+        int max_weight = ConfigManager::config().slam.max_weight() * WEIGHT_RESOLUTION;
+        tsdf_krnl_.run(tmp_map, *points_ptr_, tau, max_weight, up_hw);
         tsdf_krnl_.waitComplete();
+        eval.stop("tsdf");
 
         map_mutex_.lock();
         *local_map_ = std::move(tmp_map);
         map_mutex_.unlock();
 
         // visualize
+        eval.start("vis");
         msg::TSDFBridgeMessage tsdf_msg;
         tsdf_msg.tau_ = tau;
         tsdf_msg.size_ = local_map_->get_size();
@@ -89,8 +110,9 @@ void MapThread::thread_run()
         tsdf_msg.tsdf_data_.reserve(local_map_->getBuffer().size());
         std::copy(local_map_->getBuffer().cbegin(), local_map_->getBuffer().cend(), std::back_inserter(tsdf_msg.tsdf_data_));
         tsdf_buffer_->push_nb(tsdf_msg, true);
+        eval.stop("vis");
 
-        Logger::info("Stopping SUV");
+        Logger::info("Map Thread:\n", eval.to_string(), "\nStopping SUV");
         active_ = false;
     }
 }
@@ -103,6 +125,11 @@ void MapThread::stop()
         start_mutex_.unlock();
         worker.join();
     }
+}
+
+void MapThread::set_local_map(const std::shared_ptr<fastsense::map::LocalMap>& local_map)
+{
+    local_map_ = local_map;
 }
 
 } // namespace fastsense::callback

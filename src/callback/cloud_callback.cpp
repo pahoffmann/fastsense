@@ -43,6 +43,16 @@ CloudCallback::CloudCallback(Registration& registration,
 
 }
 
+void CloudCallback::set_global_map(const std::shared_ptr<GlobalMap>& global_map)
+{
+    this->global_map = global_map;
+}
+
+void CloudCallback::set_local_map(const std::shared_ptr<LocalMap>& local_map)
+{
+    this->local_map = local_map;
+}
+
 void CloudCallback::thread_run()
 {
     fastsense::msg::PointCloudPtrStamped point_cloud;
@@ -76,7 +86,9 @@ void CloudCallback::thread_run()
         {
             first_iteration = false;
 
-            tsdf_krnl.run(*local_map, scan_point_buffer, ConfigManager::config().slam.max_distance(), ConfigManager::config().slam.max_weight());
+            int tau = ConfigManager::config().slam.max_distance();
+            int max_weight = ConfigManager::config().slam.max_weight() * WEIGHT_RESOLUTION;
+            tsdf_krnl.run(*local_map, scan_point_buffer, tau, max_weight);
             tsdf_krnl.waitComplete();
         }
         else
@@ -101,7 +113,7 @@ void CloudCallback::thread_run()
         Vector3i pos((int)std::floor(pose(0, 3) / MAP_RESOLUTION),
                      (int)std::floor(pose(1, 3) / MAP_RESOLUTION),
                      (int)std::floor(pose(2, 3) / MAP_RESOLUTION));
-        map_thread.go(pos, scan_point_buffer);
+        map_thread.go(pos, pose, scan_point_buffer);
 
         Eigen::Quaternionf quat(pose.block<3, 3>(0, 0));
 

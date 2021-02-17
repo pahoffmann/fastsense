@@ -73,12 +73,19 @@ public:
      * @param pos Current position
      * @param points Current scan points
      */
-    void go(const Vector3i& pos, const fastsense::buffer::InputBuffer<PointHW>& points);
+    void go(const Vector3i& pos, const Eigen::Matrix4f& pose, const fastsense::buffer::InputBuffer<PointHW>& points);
 
     /**
      * @brief Stop the map thread safely.
      */
     virtual void stop() override;
+
+    /**
+     * @brief Sets the local map
+     * 
+     * @param local_map the new local map
+     */
+    void set_local_map(const std::shared_ptr<fastsense::map::LocalMap>& local_map);
 
 protected:
 
@@ -93,7 +100,7 @@ protected:
 private:
 
     /// Pointer to the local map
-    const std::shared_ptr<fastsense::map::LocalMap> local_map_;
+    std::shared_ptr<fastsense::map::LocalMap> local_map_;
     /// Kernel object to perform an map update on hardware
     fastsense::kernels::TSDFKernel tsdf_krnl_;
     /// Mutex for synchronisation between the map thread and the cloud callback for access to the local map
@@ -104,6 +111,9 @@ private:
     std::atomic<bool> active_;
     /// Position that is used for shifting, updating and visualization
     Vector3i pos_;
+
+    Eigen::Matrix4f pose_;
+
     /// Scan points that are used for shifting, updating and visualization
     std::unique_ptr<fastsense::buffer::InputBuffer<PointHW>> points_ptr_;
     /// Maximum number of registration periods without a map shift and update. Ignored if lower than 1

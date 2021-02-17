@@ -1,5 +1,5 @@
 /**
- * @file communication.cpp
+ * @file queue_bridge.cpp
  * @author Marcel Flottmann
  * @date 2020-10-6
  */
@@ -15,8 +15,11 @@
 using namespace fastsense::comm;
 using namespace fastsense::msg;
 using namespace fastsense::util;
+using namespace std::chrono_literals;
 
-TEST_CASE("QueueBridge", "[communication]")
+#define SLEEP(x) std::this_thread::sleep_for(x)
+
+TEST_CASE("QueueBridge", "[communication_queue_bridge]")
 {
     std::cout << "Testing 'QueueBridge'" << std::endl;
     int value_received = 0;
@@ -31,10 +34,15 @@ TEST_CASE("QueueBridge", "[communication]")
 
     std::thread receive_thread{[&]()
     {
-        Receiver<int> receiver{"127.0.0.1", 5234};
-        std::this_thread::sleep_for(std::chrono::milliseconds(200));
-        value_received = receiver.receive();
-        received = true;
+        Receiver<int> receiver{"127.0.0.1", 5234, 20ms};
+        
+        while (!received)
+        {
+            if (receiver.receive(value_received))
+            {
+                received = true;
+            }
+        }
     }};
 
     std::thread send_thread{[&]()
@@ -42,7 +50,7 @@ TEST_CASE("QueueBridge", "[communication]")
         while (sending)
         {
             in->push(value_to_send);
-            std::this_thread::sleep_for(std::chrono::milliseconds(100));
+            SLEEP(100ms);
         }
     }};
 
@@ -61,7 +69,7 @@ TEST_CASE("QueueBridge", "[communication]")
     REQUIRE(out->size() != 0);
 }
 
-TEST_CASE("QueueBridge shared_ptr", "[communication]")
+TEST_CASE("QueueBridge shared_ptr", "[communication_queue_bridge]")
 {
     std::cout << "Testing 'QueueBridge shared_ptr'" << std::endl;
     int value_received = 0;
@@ -76,10 +84,16 @@ TEST_CASE("QueueBridge shared_ptr", "[communication]")
 
     std::thread receive_thread{[&]()
     {
-        Receiver<int> receiver{"127.0.0.1", 4234};
-        std::this_thread::sleep_for(std::chrono::milliseconds(200));
-        value_received = receiver.receive();
-        received = true;
+        Receiver<int> receiver{"127.0.0.1", 4234, 20ms};
+
+        while (!received)
+        {
+            if (receiver.receive(value_received))
+            {
+                received = true;
+            }
+        }
+
     }};
 
     std::thread send_thread{[&]()
@@ -106,7 +120,7 @@ TEST_CASE("QueueBridge shared_ptr", "[communication]")
     REQUIRE(out->size() != 0);
 }
 
-TEST_CASE("QueueBridge Stamped<Imu>", "[communication]")
+TEST_CASE("QueueBridge Stamped<Imu>", "[communication_queue_bridge]")
 {
     std::cout << "Testing 'QueueBridge Stamped<Imu>'" << std::endl;
     Imu imu{{1, 2, 3}, {4, 5, 6}, {7, 8, 9}};
@@ -123,10 +137,15 @@ TEST_CASE("QueueBridge Stamped<Imu>", "[communication]")
 
     std::thread receive_thread{[&]()
     {
-        Receiver<ImuStamped> receiver{"127.0.0.1", 3234};
-        std::this_thread::sleep_for(std::chrono::milliseconds(200));
-        receiver.receive(value_received);
-        received = true;
+        Receiver<ImuStamped> receiver{"127.0.0.1", 3234, 20ms};
+
+        while (!received)
+        {
+            if (receiver.receive(value_received))
+            {
+                received = true;
+            }
+        }
     }};
 
     std::thread send_thread{[&]()
@@ -164,7 +183,7 @@ TEST_CASE("QueueBridge Stamped<Imu>", "[communication]")
     REQUIRE(out->size() != 0);
 }
 
-TEST_CASE("QueueBridge Stamped<PointCloud>", "[communication]")
+TEST_CASE("QueueBridge Stamped<PointCloud>", "[communication_queue_bridge]")
 {
     std::cout << "Testing 'QueueBridge Stamped<PointCloud>'" << std::endl;
     Imu imu{{1, 2, 3}, {4, 5, 6}, {7, 8, 9}};
@@ -187,16 +206,14 @@ TEST_CASE("QueueBridge Stamped<PointCloud>", "[communication]")
 
     std::thread receive_thread{[&]()
     {
-        Receiver<Stamped<PointCloud>> receiver{"127.0.0.1", 2234};
-        std::this_thread::sleep_for(std::chrono::milliseconds(200));
-        receiver.receive(pcl_received);
-
-        const auto& [ pcl_data, ts ] = pcl_received;
-        REQUIRE(pcl_data.points_ == pcl_sent.data_.points_);
-        
-        std::this_thread::sleep_for(std::chrono::milliseconds(200));
-        receiver.receive(pcl_received);
-        received = true;
+        Receiver<Stamped<PointCloud>> receiver{"127.0.0.1", 2234, 20ms};
+        while (!received)
+        {
+            if (receiver.receive(pcl_received))
+            {
+                received = true;
+            }
+        }
     }};
 
     std::thread send_thread{[&]()

@@ -10,10 +10,8 @@ target_compile_options(from_trenz PRIVATE ${OpenMP_FLAGS} -Wall -Wextra -Wpedant
 
 target_include_directories(from_trenz PRIVATE
   ${FASTSENSE_DIR}/src
-  ${FASTSENSE_DIR}/ext/HighFive/include 
   ${FASTSENSE_ROS_INCLUDE_PATH}
   ${catkin_INCLUDE_DIRS}
-  ${HDF5_INCLUDE_DIRS}
   ${Eigen3_INCLUDE_DIRS}
 )
 

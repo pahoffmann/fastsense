@@ -9,19 +9,22 @@
         "port": 2368
     },
 
-    "sensorSync": {
-        "bufferSize": 16
-    },
-
     "registration": {
         "max_iterations": 200,
         "it_weight_gradient": 0.1,
         "epsilon": 0.01
     },
 
+    "gpio": {
+        "button_chip": "gpiochip0",
+        "button_line": 0,
+        "led_chip": "gpiochip1",
+        "led_line": 0
+    },
+
     "bridge": {
-        "use_from" : 0,
-        "use_to" : 1,
+        "use_from" : false,
+        "use_to" : true,
 
         "host_from": "192.168.1.2",
 
@@ -42,7 +45,8 @@
         "map_size_z": 95,
         "max_weight": 10,
         "initial_map_weight": 0.0,
-        "map_update_period": 50,
-        "map_update_position_threshold": 500
+        "map_update_period": 100,
+        "map_update_position_threshold": 500,
+        "map_path": "/data"
     }
 }

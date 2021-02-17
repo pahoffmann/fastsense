@@ -18,7 +18,6 @@ namespace fastsense
 class Application
 {
 private:
-    sigset_t signal_set;
     util::config::Config& config;
 
     util::ProcessThread::UPtr init_imu(msg::ImuStampedBuffer::Ptr imu_buffer);

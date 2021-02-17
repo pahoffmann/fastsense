@@ -13,14 +13,12 @@
 
 #include <iostream>
 
-using fastsense::map::IntTuple;
-
 namespace fastsense::kernels
 {
 
 class TSDFKernel : public BaseKernel
 {
-    buffer::InputOutputBuffer<IntTuple> new_entries;
+    buffer::InputOutputBuffer<TSDFValue> new_entries;
 
 public:
 
@@ -32,15 +30,14 @@ public:
 
     ~TSDFKernel() override = default;
 
-    void run(map::LocalMap& map, const buffer::InputBuffer<PointHW>& scan_points, int tau, int max_weight)
+    void run(map::LocalMap& map, const buffer::InputBuffer<PointHW>& scan_points, TSDFValue::ValueType tau, TSDFValue::WeightType max_weight, PointHW up = PointHW(0, 0, MATRIX_RESOLUTION))
     {
         for (int i = 0; i < (int)new_entries.size(); ++i)
         {
-            new_entries[i].first = 0;
-            new_entries[i].second = 0;
+            new_entries[i] = TSDFValue(0, 0);
         }
 
-        constexpr int SPLIT_FACTOR = 2;
+        constexpr int SPLIT_FACTOR = 4;
 
         resetNArg();
         for (int i = 0; i < SPLIT_FACTOR; i++)
@@ -68,6 +65,11 @@ public:
         }
         setArg(tau);
         setArg(max_weight);
+
+        //setArg(up);
+        setArg(up.x);
+        setArg(up.y);
+        setArg(up.z);
 
         // Write buffers
         cmd_q_->enqueueMigrateMemObjects({map.getBuffer().getBuffer(), scan_points.getBuffer(), new_entries.getBuffer()}, CL_MIGRATE_MEM_OBJECT_DEVICE, nullptr, &pre_events_[0]);
