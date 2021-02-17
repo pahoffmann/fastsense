@@ -38,7 +38,7 @@ void fastsense::driver::Imu::start()
     if (not running)
     {
         running = true;
-        init();
+        if (not is_calibrated_) init();
     }
 }
 
@@ -110,7 +110,7 @@ void Imu::data_handler(const double* acceleration, const double* angularRate, co
 {
     // Even during calibration, the device reports back zeroes, so force driver to wait until
     // after calibration
-    if (not is_calibrated_)
+    if (not is_calibrated_ || not running)
     {
         return;
     }

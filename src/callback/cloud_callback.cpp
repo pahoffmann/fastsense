@@ -43,6 +43,16 @@ CloudCallback::CloudCallback(Registration& registration,
 
 }
 
+void CloudCallback::set_global_map(const std::shared_ptr<GlobalMap>& global_map)
+{
+    this->global_map = global_map;
+}
+
+void CloudCallback::set_local_map(const std::shared_ptr<LocalMap>& local_map)
+{
+    this->local_map = local_map;
+}
+
 void CloudCallback::thread_run()
 {
     fastsense::msg::PointCloudPtrStamped point_cloud;

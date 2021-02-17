@@ -54,7 +54,8 @@ SW_SRCS = src/application.cpp \
 	$(wildcard src/util/config/*.cpp) \
 	$(wildcard src/hw/*.cpp) \
 	$(wildcard src/util/logging/*.cpp) \
-	$(wildcard src/driver/imu/api/*.cpp) 
+	$(wildcard src/driver/imu/api/*.cpp) \
+	$(wildcard src/ui/*.cpp) \
 
 SW_OBJS = $(SW_SRCS:%.cpp=$(BUILD_DIR)/%.o)
 SW_DEPS = $(SW_OBJS:.o=.d)

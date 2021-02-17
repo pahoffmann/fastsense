@@ -46,6 +46,16 @@ struct BridgeConfig : public ConfigGroup
     DECLARE_CONFIG_ENTRY(uint16_t, tsdf_port_to, "Port of the to bridge for tsdf");
 };
 
+struct GPIOConfig : public ConfigGroup
+{
+    using ConfigGroup::ConfigGroup;
+
+    DECLARE_CONFIG_ENTRY(std::string, button_chip, "GPIO chip of the button, e.g. gpiochip0");
+    DECLARE_CONFIG_ENTRY(std::string, led_chip, "GPIO chip of the LED, e.g. gpiochip0");
+    DECLARE_CONFIG_ENTRY(unsigned int, button_line, "GPIO line (pin) of the button");
+    DECLARE_CONFIG_ENTRY(unsigned int, led_line, "GPIO line (pin) of the LED");
+};
+
 
 struct RegistrationConfig : public ConfigGroup
 {
@@ -71,6 +81,7 @@ struct SlamConfig : public ConfigGroup
     DECLARE_CONFIG_ENTRY(unsigned int, map_update_period, "Number of Scans before a TSDF Update happens");
     DECLARE_CONFIG_ENTRY(float, map_update_position_threshold, "Distance since the last TSDF Update before a new one happens");
 
+    DECLARE_CONFIG_ENTRY(std::string, map_path, "Path where the global map should be saved");
 };
 
 struct Config : public ConfigGroup
@@ -80,8 +91,9 @@ struct Config : public ConfigGroup
     DECLARE_CONFIG_GROUP(ImuConfig, imu);
     DECLARE_CONFIG_GROUP(LidarConfig, lidar);
     DECLARE_CONFIG_GROUP(RegistrationConfig, registration);
-    DECLARE_CONFIG_GROUP(SlamConfig, slam);
+    DECLARE_CONFIG_GROUP(GPIOConfig, gpio);
     DECLARE_CONFIG_GROUP(BridgeConfig, bridge);
+    DECLARE_CONFIG_GROUP(SlamConfig, slam);
 };
 
 } // namespace fastsense::util::config

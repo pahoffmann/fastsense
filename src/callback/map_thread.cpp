@@ -127,4 +127,9 @@ void MapThread::stop()
     }
 }
 
+void MapThread::set_local_map(const std::shared_ptr<fastsense::map::LocalMap>& local_map)
+{
+    local_map_ = local_map;
+}
+
 } // namespace fastsense::callback
