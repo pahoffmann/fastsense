@@ -1,3 +1,8 @@
+/**
+ * @file preprocessing.cpp
+ * @author Pascal Buschermöhle
+ */
+
 #include "preprocessing.h"
 
 using namespace fastsense::preprocessing;
@@ -17,7 +22,7 @@ void Preprocessing::preprocess_scan(const fastsense::msg::PointCloudPtrStamped& 
     }
 }
 
-void Preprocessing::reduction_filter(fastsense::msg::PointCloudPtrStamped& cloud)
+void Preprocessing::reduction_filter_average(fastsense::msg::PointCloudPtrStamped& cloud)
 {
     auto& cloud_points = cloud.data_->points_;
 
@@ -48,6 +53,54 @@ void Preprocessing::reduction_filter(fastsense::msg::PointCloudPtrStamped& cloud
     for (auto& avg_point : point_map)
     {
         cloud_points[counter] = (avg_point.second.first / avg_point.second.second).cast<ScanPointType>();
+        counter++;
+    }
+}
+
+void Preprocessing::reduction_filter_voxel_center(fastsense::msg::PointCloudPtrStamped& cloud)
+{
+    auto& cloud_points = cloud.data_->points_;
+
+    std::unordered_map<uint64_t, Vector3i> point_map;
+
+    std::cout <<  cloud_points.size() << std::endl;
+
+    for (uint32_t i = 0; i < cloud_points.size(); i++)
+    {
+        if (cloud_points[i].x() == 0 && cloud_points[i].y() == 0 && cloud_points[i].z() == 0)
+        {
+            continue;
+        }
+
+        int x_sign = (cloud_points[i].x() >= 0) ? 1 : -1;
+        int y_sign = (cloud_points[i].y() >= 0) ? 1 : -1;
+        int z_sign = (cloud_points[i].z() >= 0) ? 1 : -1;
+
+        int16_t x_voxel = std::ceil(((float)abs(cloud_points[i].x())) / (float)MAP_RESOLUTION) * x_sign;
+        int16_t y_voxel = std::ceil(((float)abs(cloud_points[i].y())) / (float)MAP_RESOLUTION) * y_sign;
+        int16_t z_voxel = std::ceil(((float)abs(cloud_points[i].z())) / (float)MAP_RESOLUTION) * z_sign;
+
+        uint64_t key = 0;
+        int16_t* key_ptr = (int16_t*)&key;
+        key_ptr[0] = x_voxel;
+        key_ptr[1] = y_voxel;
+        key_ptr[2] = z_voxel;
+
+        Vector3i center_point = {x_sign*(abs(x_voxel) * MAP_RESOLUTION - MAP_RESOLUTION/2), y_sign*(abs(y_voxel) * MAP_RESOLUTION - MAP_RESOLUTION/2), z_sign*(abs(z_voxel) * MAP_RESOLUTION - MAP_RESOLUTION/2)};
+
+        // std::cout << "point_x: " << cloud_points[i].x() << " sign_x: " << x_sign << " voxel_x: " << x_voxel <<  " center_x: " << center_point.x() << std::endl;
+        // std::cout << "point_y: " << cloud_points[i].y() << " sign_x: " << y_sign << " voxel_x: " << y_voxel <<  " center_x: " << center_point.y() << std::endl;
+        // std::cout << "point_z: " << cloud_points[i].z() << " sign_x: " << z_sign << " voxel_x: " << z_voxel <<  " center_x: " << center_point.z() << std::endl;
+        // std::cout << "--------------------------" << std::endl;
+
+        point_map.try_emplace(key, center_point);  
+    }
+
+    cloud_points.resize(point_map.size());
+    int counter = 0;
+    for (auto& c_point : point_map)
+    {
+        cloud_points[counter] = c_point.second.cast<ScanPointType>();
         counter++;
     }
 }

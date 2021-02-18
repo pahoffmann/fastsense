@@ -76,7 +76,7 @@ void CloudCallback::thread_run()
         point_cloud2.timestamp_ = point_cloud.timestamp_;
 
         preprocessor.median_filter(point_cloud2, 5);
-        preprocessor.reduction_filter(point_cloud2);
+        preprocessor.reduction_filter_average(point_cloud2);
         InputBuffer<PointHW> scan_point_buffer{q, point_cloud2.data_->points_.size()};
         preprocessor.preprocess_scan(point_cloud2, scan_point_buffer);
 

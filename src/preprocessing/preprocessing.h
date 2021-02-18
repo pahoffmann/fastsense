@@ -9,6 +9,7 @@
 #include <msg/point_cloud.h>
 #include <hw/buffer/buffer.h>
 #include <util/point.h>
+#include <stdlib.h>
 
 
 namespace fastsense::preprocessing
@@ -36,7 +37,11 @@ public:
      * 
      * @param cloud point cloud message that contains data points from the lidar
      */
-    void reduction_filter(fastsense::msg::PointCloudPtrStamped& cloud);
+    void reduction_filter_average(fastsense::msg::PointCloudPtrStamped& cloud);
+
+    void reduction_filter_voxel_center(fastsense::msg::PointCloudPtrStamped& cloud);
+
+    void reduction_filter_random_point(fastsense::msg::PointCloudPtrStamped& cloud);
 
     /**
      * @brief This function applies a median filter to the input point cloud. The median filter will be applied ring-wise. So every point in the point cloud
