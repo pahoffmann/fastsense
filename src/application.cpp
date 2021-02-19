@@ -170,15 +170,15 @@ int Application::run()
         return false;
     };
 
-    led.setFrequency(1.0);
-    if (!button.wait_for_press_or_condition(running_condition))
-    {
-        return 0;
-    }
-    led.setFrequency(5.0);
-
     if (!config.bridge.use_from())
     {
+        led.setFrequency(1.0);
+        if (!button.wait_for_press_or_condition(running_condition))
+        {
+            return 0;
+        }
+        led.setFrequency(5.0);
+
         Logger::info("Calibrating IMU...");
         imu_driver->start();
         imu_driver->stop();
