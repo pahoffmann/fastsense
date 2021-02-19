@@ -82,7 +82,7 @@ struct RuntimeEvaluationException : public std::exception
  * The evaluation is transparent in the runtime measurement, i.e. the runtime of the evaluator itself is not measured.
  * This is achieved by measuring the time only in between every call of the functions and
  * updating the measurements of those tasks, whose measurements are currently active, accordingly.
- * The evaluator is implemented as a singleton.
+ * The evaluator is implemented as a singleton (except for the public constructor for measurements in a different thread).
  */
 class RuntimeEvaluator
 {
@@ -145,7 +145,8 @@ public:
     std::string to_string();
 
     /**
-     * Private constructor to ensure singleton property.
+     * Do not use this constructor except in a different thread!
+     * This was previously private to ensure singleton property.
      */
     RuntimeEvaluator();
 

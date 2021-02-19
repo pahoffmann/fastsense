@@ -14,8 +14,6 @@
 #include <util/point.h>
 #include <util/tsdf.h>
 
-// TODO: (maybe) handle existing/missing folder, where hdf5 will write
-
 namespace fastsense::map
 {
 
@@ -50,12 +48,6 @@ private:
      * | |-0_1_0    chunk datasets named after their tag
      * | |-0_1_1  /
      * | |-1_0_0 /
-     * |
-     * |-/poses
-     * | |
-     * | |-0 \
-     * | |-1   pose datasets named in ascending order containing 6 values each
-     * | |-2 /
      */
     HighFive::File file_;
 
@@ -138,18 +130,6 @@ public:
      * @param value value pair that is set
      */
     void set_value(const Vector3i& pos, const TSDFValue& value);
-
-    /**
-     * Saves a pose in the HDF5 file.
-     * @param t_x x-coordinate of the position of the pose
-     * @param t_y y-coordinate of the position of the pose
-     * @param t_z z-coordinate of the position of the pose
-     * @param quat_x x-value of the rotation quaternion of the pose
-     * @param quat_y y-value of the rotation quaternion of the pose
-     * @param quat_z z-value of the rotation quaternion of the pose
-     * @param quat_w w-value of the rotation quaternion of the pose
-     */
-    void save_pose(float t_x, float t_y, float t_z, float quat_x, float quat_y, float quat_z, float quat_w);
 
     /**
      * Writes all active chunks into the HDF5 file.

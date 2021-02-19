@@ -137,14 +137,6 @@ void GlobalMap::set_value(const Vector3i& pos, const TSDFValue& value)
     chunk[index] = value.raw();
 }
 
-void GlobalMap::save_pose(float t_x, float t_y, float t_z, float quat_x, float quat_y, float quat_z, float quat_w)
-{
-    HighFive::Group g = file_.getGroup("/poses");
-    std::vector<float> pose {t_x, t_y, t_z, quat_x, quat_y, quat_z, quat_w};
-    g.createDataSet(std::to_string(num_poses_), pose);
-    num_poses_++;
-}
-
 void GlobalMap::write_back()
 {
     Logger::info("GlobalMap: Writing Chunks");

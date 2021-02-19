@@ -59,6 +59,7 @@ void MapThread::go(const Vector3i& pos, const Eigen::Matrix4f& pose, const fasts
 
 void MapThread::thread_run()
 {
+    // Second runtime evaluator for measurements in this thread
     util::RuntimeEvaluator eval;
 
     while (running)
@@ -79,17 +80,14 @@ void MapThread::thread_run()
         tmp_map.shift(pos_.x(), pos_.y(), pos_.z());
         eval.stop("shift");
 
+        // tsdf update
+        eval.start("tsdf");
         Matrix4i rotation_mat = Matrix4i::Identity();
         rotation_mat.block<3, 3>(0, 0) = ((pose_ * MATRIX_RESOLUTION).cast<int>()).block<3, 3>(0, 0);
-
         Eigen::Vector4i v;
         v << Vector3i(0, 0, MATRIX_RESOLUTION), 1;
         Vector3i up = (rotation_mat * v).block<3, 1>(0, 0) / MATRIX_RESOLUTION;
-
         PointHW up_hw(up.x(), up.y(), up.z());
-
-        // tsdf update
-        eval.start("tsdf");
         int tau = ConfigManager::config().slam.max_distance();
         int max_weight = ConfigManager::config().slam.max_weight() * WEIGHT_RESOLUTION;
         tsdf_krnl_.run(tmp_map, *points_ptr_, tau, max_weight, up_hw);

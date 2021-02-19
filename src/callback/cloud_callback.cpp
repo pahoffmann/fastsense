@@ -113,9 +113,6 @@ void CloudCallback::thread_run()
 
         Eigen::Quaternionf quat(pose.block<3, 3>(0, 0));
 
-        // global_map->save_pose(pose(0, 3), pose(1, 3), pose(2, 3),
-        //                       quat.x(), quat.y(), quat.z(), quat.w());
-
         msg::TransformStamped transform;
         transform.data_.translation = pose.block<3, 1>(0, 3);
         transform.data_.rotation = quat;
