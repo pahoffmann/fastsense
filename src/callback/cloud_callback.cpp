@@ -69,15 +69,12 @@ void CloudCallback::thread_run()
         eval.start("total");
         eval.start("prep");
 
-        //DO NOT TOUCH THE ORIGINAL POINT CLOUD, USE COPY INSTEAD
-        fastsense::msg::PointCloudPtrStamped point_cloud2;
-        point_cloud2.data_ = point_cloud.data_;
-        point_cloud2.timestamp_ = point_cloud.timestamp_;
-
-        preprocessor.median_filter(point_cloud2, 5);
-        preprocessor.reduction_filter(point_cloud2);
-        InputBuffer<PointHW> scan_point_buffer{q, point_cloud2.data_->points_.size()};
-        preprocessor.preprocess_scan(point_cloud2, scan_point_buffer);
+        InputBuffer<PointHW> scan_point_buffer{q, point_cloud.data_->points_.size()};
+        for (size_t i = 0; i < point_cloud.data_->points_.size(); i++)
+        {
+            auto& point = point_cloud.data_->points_[i];
+            scan_point_buffer[i] = PointHW(point.x(), point.y(), point.z());
+        }
 
         eval.stop("prep");
 
@@ -96,7 +93,7 @@ void CloudCallback::thread_run()
 
             map_mutex.lock();
             eval.start("reg");
-            registration.register_cloud(*local_map, scan_point_buffer, point_cloud2.timestamp_, pose);
+            registration.register_cloud(*local_map, scan_point_buffer, point_cloud.timestamp_, pose);
             eval.stop("reg");
             map_mutex.unlock();
 
