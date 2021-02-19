@@ -177,10 +177,17 @@ int Application::run()
     }
     led.setFrequency(5.0);
 
-    Logger::info("Calibrating IMU...");
-    imu_driver->start();
-    imu_driver->stop();
-    Logger::info("IMU calibrated!");
+    if (!config.bridge.use_from())
+    {
+        Logger::info("Calibrating IMU...");
+        imu_driver->start();
+        imu_driver->stop();
+        Logger::info("IMU calibrated!");
+    }
+    else
+    {
+        Logger::info("No need to calibrate IMU: Using bridge");
+    }
 
     while (true)
     {
