@@ -27,6 +27,8 @@ public:
      */
     virtual T operator()(const T d) const = 0;
 
+    WeightingBase() = delete;
+
     virtual ~WeightingBase() = default;
 };
 

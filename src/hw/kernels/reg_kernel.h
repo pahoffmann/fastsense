@@ -23,6 +23,18 @@ public:
 
     ~RegistrationKernel() override = default;
 
+    /// delete copy assignment operator
+    RegistrationKernel& operator=(const RegistrationKernel& other) = delete;
+
+    /// delete move assignment operator
+    RegistrationKernel& operator=(RegistrationKernel&&) noexcept = delete;
+
+    /// delete copy constructor
+    RegistrationKernel(const RegistrationKernel&) = delete;
+
+    /// delete move constructor
+    RegistrationKernel(RegistrationKernel&&) = delete;
+
     /**
      * @brief interface between the software and the hw, calls the run method of the kernel, writes all the data coming from the kernel
      *        into the datatypes used by the software

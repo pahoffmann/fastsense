@@ -101,14 +101,23 @@ public:
     ~RuntimeEvaluator() = default;
 
     /**
+     * Don't allow copies of the instance by copy constructor to ensure singleton property.
+     */
+    RuntimeEvaluator(RuntimeEvaluator&) = delete;
+
+    /// delete copy constructor
+    RuntimeEvaluator(const RuntimeEvaluator&) = delete;
+
+    /// delete move constructor
+    RuntimeEvaluator(RuntimeEvaluator&&) = delete;
+
+    /**
      * Don't allow copies of the instance by assignment operator to ensure singleton property.
      */
     RuntimeEvaluator& operator=(RuntimeEvaluator&) = delete;
 
-    /**
-     * Don't allow copies of the instance by copy constructor to ensure singleton property.
-     */
-    RuntimeEvaluator(RuntimeEvaluator&) = delete;
+    /// delete move assignment operator
+    RuntimeEvaluator& operator=(RuntimeEvaluator&&) = delete;
 
     /**
      * @brief Clear all running time measurements

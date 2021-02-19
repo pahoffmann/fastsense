@@ -81,6 +81,18 @@ public:
      */
     ~VelodyneDriver() override;
 
+    /// delete copy assignment operator
+    VelodyneDriver& operator=(const VelodyneDriver& other) = delete;
+
+    /// delete move assignment operator
+    VelodyneDriver& operator=(VelodyneDriver&&) noexcept = delete;
+
+    /// delete copy constructor
+    VelodyneDriver(const VelodyneDriver&) = delete;
+
+    /// delete move constructor
+    VelodyneDriver(VelodyneDriver&&) = delete;
+
     /**
      * @brief Start receiver thread. The buffer will be cleared.
      *

@@ -13,13 +13,13 @@ EventHandlerHandle<T>::EventHandlerHandle(typename std::list<std::function<T>>::
 {}
 
 template<typename T>
-EventHandlerHandle<T>::EventHandlerHandle(EventHandlerHandle&& rhs) :  iterator(rhs.iterator)
+EventHandlerHandle<T>::EventHandlerHandle(EventHandlerHandle&& rhs) noexcept :  iterator(rhs.iterator)
 {
     rhs.iterator = std::list<std::function<T>>::iterator();
 }
 
 template<typename T>
-EventHandlerHandle<T>& EventHandlerHandle<T>::operator=(EventHandlerHandle&& rhs)
+EventHandlerHandle<T>& EventHandlerHandle<T>::operator=(EventHandlerHandle&& rhs) noexcept
 {
     iterator = rhs.iterator;
     rhs.iterator = std::list<std::function<T>>::iterator();

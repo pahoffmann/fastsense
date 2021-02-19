@@ -84,7 +84,7 @@ public:
     LocalMap& operator=(const LocalMap&) = delete;
 
     /**
-     * Deleted move copy constructor of the local map.
+     * Deleted move constructor of the local map.
      */
     LocalMap(LocalMap&&) = delete;
 

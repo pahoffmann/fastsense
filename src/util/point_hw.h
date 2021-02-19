@@ -29,6 +29,31 @@ struct PointHW
         *this = rhs;
     }
 
+    /// default destructor
+    ~PointHW() = default;
+
+    PointHW& operator=(const PointHW& rhs)
+    {
+        x = rhs.x;
+        y = rhs.y;
+        z = rhs.z;
+        return *this;
+    }
+
+    PointHW& operator=(int rhs)
+    {
+        x = rhs;
+        y = rhs;
+        z = rhs;
+        return *this;
+    }
+
+    /// delete move assignment operator
+    PointHW& operator=(PointHW&&) = default;
+
+    /// delete move constructor
+    PointHW(PointHW&&) = default;
+
     PointHW operator+(const PointHW& rhs) const
     {
         PointHW p;
@@ -63,22 +88,6 @@ struct PointHW
         p.y = y / rhs;
         p.z = z / rhs;
         return p;
-    }
-
-    PointHW& operator=(const PointHW& rhs)
-    {
-        x = rhs.x;
-        y = rhs.y;
-        z = rhs.z;
-        return *this;
-    }
-
-    PointHW& operator=(int rhs)
-    {
-        x = rhs;
-        y = rhs;
-        z = rhs;
-        return *this;
     }
 
     bool operator==(const PointHW& p) const
