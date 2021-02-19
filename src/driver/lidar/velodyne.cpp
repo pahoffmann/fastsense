@@ -172,8 +172,18 @@ void VelodyneDriver::thread_run()
     fds[0].fd = sockfd_;
     fds[0].events = POLLIN;
 
-    sockaddr_in sender;
-    socklen_t senderLength = sizeof(sender);
+    // clear kernel buffer
+    while(true)
+    {
+        ssize_t size = recv(sockfd_, &packet_, sizeof(VelodynePacket), MSG_DONTWAIT);
+        if(size < 0)
+        {
+            if(errno == EAGAIN || errno == EWOULDBLOCK)
+            {
+                break;
+            }
+        }
+    }
 
     while (running)
     {
@@ -203,7 +213,7 @@ void VelodyneDriver::thread_run()
         while (!(fds[0].revents & POLLIN));
 
         // receive packet
-        ssize_t size = recvfrom(sockfd_, &packet_, sizeof(VelodynePacket), 0, (sockaddr*)&sender, &senderLength);
+        ssize_t size = recv(sockfd_, &packet_, sizeof(VelodynePacket), 0);
 
         if (size < 0)
         {
