@@ -17,8 +17,29 @@ TEST_CASE("Map", "[Map]")
     auto commandQueue = FPGAManager::create_command_queue();
     LocalMap localMap{5, 5, 5, gm_ptr, commandQueue};
 
-    // write some tsdf values and weights into one corner of the ring buffer,
-    // that will be written to the file as one chunk
+    /*
+     * Write some tsdf values and weights into the local map,
+     * that will be written to the file as one chunk (-1_0_0)
+     *
+     *    y
+     *    ^
+     *  4 | .   .   .   . | .   .
+     *    | Chunk -1_0_0  | Chunk 0_0_0
+     *  3 | .   .   .   . | .   .
+     *    |               |
+     *  2 | .   .  p0  p1 | .   .
+     *    |               |
+     *  1 | .   .  p2  p3 | .   .
+     *    |               |
+     *  0 | .   .  p4  p5 | .   .
+     *    | --------------+------
+     * -1 | .   .   .   . | .   .
+     *    | Chunk -1_-1_0 | Chunk 0_-1_0
+     * -2 | .   .   .   . | .   .
+     *    +-----------------------> x
+     *   / -4  -3  -2  -1   0   1
+     * z=0
+     */
     TSDFValue p0(0, 0);
     TSDFValue p1(1, 1);
     TSDFValue p2(2, 1);
@@ -32,68 +53,51 @@ TEST_CASE("Map", "[Map]")
     localMap.value(-2, 0, 0) = p4;
     localMap.value(-1, 0, 0) = p5;
 
-    auto& pos = localMap.get_pos();
-    auto& size = localMap.get_size();
-
-    // test getter
-    CHECK(pos[0] == 0);
-    CHECK(pos[1] == 0);
-    CHECK(pos[2] == 0);
-    CHECK(size[0] == 5);
-    CHECK(size[1] == 5);
-    CHECK(size[2] == 5);
-    // test in_bounds
+    // Test unmanipulated map
+    auto pos0 = localMap.get_pos();
+    auto size0 = localMap.get_size();
+    CHECK(pos0[0] == 0);
+    CHECK(pos0[1] == 0);
+    CHECK(pos0[2] == 0);
+    CHECK(size0[0] == 5);
+    CHECK(size0[1] == 5);
+    CHECK(size0[2] == 5);
     CHECK(localMap.in_bounds(0, 2, -2));
     CHECK(!localMap.in_bounds(22, 0, 0));
-    // test default values
     CHECK(localMap.value(0, 0, 0).value() == 4);
     CHECK(localMap.value(0, 0, 0).weight() == 6);
-    // test value access
     CHECK(localMap.value(-1, 2, 0).value() == 1);
     CHECK(localMap.value(-1, 2, 0).weight() == 1);
 
+    // Manipulate the map by applying a kernel that doubles the tsdf values and halfes the weights and shifting
     auto q = FPGAManager::create_command_queue();
     LocalMapTestKernel krnl{q};
     krnl.run(localMap);
     krnl.waitComplete();
-
-    // shift so that the chunk gets unloaded
     localMap.shift(24, 0, 0);
 
+    // Test manipulated map
     auto pos1 = localMap.get_pos();
     auto size1 = localMap.get_size();
-
-    // test getter
     CHECK(pos1[0] == 24);
     CHECK(pos1[1] == 0);
     CHECK(pos1[2] == 0);
     CHECK(size1[0] == 5);
     CHECK(size1[1] == 5);
     CHECK(size1[2] == 5);
-    // test in_bounds
     CHECK(!localMap.in_bounds(0, 2, -2));
     CHECK(localMap.in_bounds(22, 0, 0));
-    // test values
     CHECK(localMap.value(24, 0, 0).value() == 4);
     CHECK(localMap.value(24, 0, 0).weight() == 6);
 
+    // Test persistent storage in HDF5 file
     localMap.write_back();
 
-    // check file for the numbers
     HighFive::File f("MapTest.h5", HighFive::File::OpenOrCreate);
     HighFive::Group g = f.getGroup("/map");
     HighFive::DataSet d = g.getDataSet("-1_0_0");
     std::vector<TSDFValue::RawType> chunk;
     d.read(chunk);
-
-    // test pose
-    gm_ptr->save_pose(8, 13, 21, 34, 55, 89, 1);
-    gm_ptr->save_pose(144, 233, 377, 610, 987, 1597, 1);
-    g = f.getGroup("/poses");
-    d = g.getDataSet("1");
-
-    std::vector<float> pose;
-    d.read(pose);
 
     CHECK(TSDFValue(chunk[(GlobalMap::CHUNK_SIZE * GlobalMap::CHUNK_SIZE * (GlobalMap::CHUNK_SIZE - 2) + GlobalMap::CHUNK_SIZE * 2)]).value() == 0 * 2);
     CHECK(TSDFValue(chunk[(GlobalMap::CHUNK_SIZE * GlobalMap::CHUNK_SIZE * (GlobalMap::CHUNK_SIZE - 1) + GlobalMap::CHUNK_SIZE * 2)]).value() == 1 * 2);
@@ -108,12 +112,4 @@ TEST_CASE("Map", "[Map]")
     CHECK(TSDFValue(chunk[(GlobalMap::CHUNK_SIZE * GlobalMap::CHUNK_SIZE * (GlobalMap::CHUNK_SIZE - 1) + GlobalMap::CHUNK_SIZE * 1)]).weight() == 2 / 2);
     CHECK(TSDFValue(chunk[(GlobalMap::CHUNK_SIZE * GlobalMap::CHUNK_SIZE * (GlobalMap::CHUNK_SIZE - 2) + GlobalMap::CHUNK_SIZE * 0)]).weight() == 3 / 2);
     CHECK(TSDFValue(chunk[(GlobalMap::CHUNK_SIZE * GlobalMap::CHUNK_SIZE * (GlobalMap::CHUNK_SIZE - 1) + GlobalMap::CHUNK_SIZE * 0)]).weight() == 5 / 2);
-
-    int i = 0;
-    CHECK(pose[i++] == 144);
-    CHECK(pose[i++] == 233);
-    CHECK(pose[i++] == 377);
-    CHECK(pose[i++] == 610);
-    CHECK(pose[i++] == 987);
-    CHECK(pose[i++] == 1597);
 }
