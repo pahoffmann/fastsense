@@ -120,8 +120,8 @@ void CloudCallback::thread_run()
 
         eval.stop("total");
 #ifdef TIME_MEASUREMENT
-        static std::vector<double> values(10000);
-        static double overhang = 0;
+        static double sum = 0.0, sum_of_squares = 0.0;
+        static double overhang = 0.0;
         static unsigned int dropped_scans = 0;
         static unsigned int over_count = 0;
 
@@ -131,8 +131,8 @@ void CloudCallback::thread_run()
             return f.name == "total";
         });
         double val = form.last / 1000.0;
-        values.push_back(val);
-        assert(values.size() == form.count);
+        sum += val;
+        sum_of_squares += val * val;
 
         if (val > 50.0)
         {
@@ -154,13 +154,7 @@ void CloudCallback::thread_run()
         {
             Logger::info(eval.to_string());
 
-            double avg = (double)form.sum / form.count;
-            double variance = 0;
-            for (auto& v : values)
-            {
-                variance += std::pow(v - avg, 2);
-            }
-            variance /= form.count;
+            double variance = (sum_of_squares - sum * sum / form.count) / form.count;
             Logger::info("Variance : ", std::fixed, std::setprecision(4), variance);
             Logger::info("Sigma    : ", std::fixed, std::setprecision(4), std::sqrt(variance));
             Logger::info("Over 50ms: ", over_count, " / ", form.count, " = ", 100 * over_count / form.count, "%");
