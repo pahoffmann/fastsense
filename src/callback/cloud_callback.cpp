@@ -67,7 +67,6 @@ void CloudCallback::thread_run()
         }
 
         eval.start("total");
-        eval.start("prep");
 
         InputBuffer<PointHW> scan_point_buffer{q, point_cloud.data_->points_.size()};
         for (size_t i = 0; i < point_cloud.data_->points_.size(); i++)
@@ -75,8 +74,6 @@ void CloudCallback::thread_run()
             auto& point = point_cloud.data_->points_[i];
             scan_point_buffer[i] = PointHW(point.x(), point.y(), point.z());
         }
-
-        eval.stop("prep");
 
         if (first_iteration)
         {
@@ -123,9 +120,52 @@ void CloudCallback::thread_run()
 
         eval.stop("total");
 #ifdef TIME_MEASUREMENT
+        static std::vector<double> values(10000);
+        static double overhang = 0;
+        static unsigned int dropped_scans = 0;
+        static unsigned int over_count = 0;
+
+        auto& forms = eval.get_forms();
+        auto& form = *std::find_if(forms.begin(), forms.end(), [](const EvaluationFormular & f)
+        {
+            return f.name == "total";
+        });
+        double val = form.last / 1000.0;
+        values.push_back(val);
+        assert(values.size() == form.count);
+
+        if (val > 50.0)
+        {
+            over_count++;
+        }
+
+        overhang += val - 50.0;
+        if (overhang < 0.0)
+        {
+            overhang = 0.0;
+        }
+        if (overhang >= 50.0)
+        {
+            dropped_scans++;
+            overhang -= 50.0;
+        }
+
         if (cnt == 20)
         {
             Logger::info(eval.to_string());
+
+            double avg = (double)form.sum / form.count;
+            double variance = 0;
+            for (auto& v : values)
+            {
+                variance += std::pow(v - avg, 2);
+            }
+            variance /= form.count;
+            Logger::info("Variance : ", std::fixed, std::setprecision(4), variance);
+            Logger::info("Sigma    : ", std::fixed, std::setprecision(4), std::sqrt(variance));
+            Logger::info("Over 50ms: ", over_count, " / ", form.count, " = ", 100 * over_count / form.count, "%");
+            Logger::info("Dropped  : ", dropped_scans, " / ", form.count, " = ", 100 * dropped_scans / form.count, "%");
+
             cnt = 0;
         }
         cnt++;
