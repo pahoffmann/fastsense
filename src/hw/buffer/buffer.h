@@ -212,6 +212,16 @@ public:
     }
 
     /**
+     * @brief Get the Queue object
+     * 
+     * @return const CommandQueuePtr 
+     */
+    const CommandQueuePtr getQueue() const
+    {
+        return queue_;
+    }
+
+    /**
      * @brief Return the size of the buffer in bytes
      *
      * @return size_t size in bytes

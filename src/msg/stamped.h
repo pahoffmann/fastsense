@@ -45,16 +45,16 @@ struct Stamped : public ZMQConverter
           static_assert(!std::is_pointer<DATA_T>::value, "The data type of Stamped<T> must not be a pointer.");
     }
 
-    /// delete copy assignment operator
+    /// default copy assignment operator
     Stamped& operator=(const Stamped& other) = default;
 
-    /// delete move assignment operator
+    /// dedault move assignment operator
     Stamped& operator=(Stamped&&) noexcept = default;
 
-    /// delete copy constructor
+    /// dedault copy constructor
     Stamped(const Stamped&) = default;
 
-    /// delete move constructor
+    /// dedault move constructor
     Stamped(Stamped&&) noexcept = default;
 
     /**

@@ -34,7 +34,7 @@ protected:
     // default copy constructor
     Filter(const Filter&) = default;
 
-    /// delete move constructor
+    /// default move constructor
     Filter(Filter&&) = default;
 
     /**

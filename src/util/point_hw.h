@@ -48,10 +48,10 @@ struct PointHW
         return *this;
     }
 
-    /// delete move assignment operator
+    /// default move assignment operator
     PointHW& operator=(PointHW&&) = default;
 
-    /// delete move constructor
+    /// default move constructor
     PointHW(PointHW&&) = default;
 
     PointHW operator+(const PointHW& rhs) const

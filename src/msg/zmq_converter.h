@@ -17,16 +17,16 @@ struct ZMQConverter
     ZMQConverter() = default;
     virtual ~ZMQConverter() = default;
     
-    /// delete copy assignment operator
+    /// default copy assignment operator
     ZMQConverter& operator=(const ZMQConverter& other) = default;
 
-    /// delete move assignment operator
+    /// default move assignment operator
     ZMQConverter& operator=(ZMQConverter&&) = default;
 
-    /// delete copy constructor
+    /// default copy constructor
     ZMQConverter(const ZMQConverter&) = default;
 
-    /// delete move constructor
+    /// default move constructor
     ZMQConverter(ZMQConverter&&) = default;
 
     /**

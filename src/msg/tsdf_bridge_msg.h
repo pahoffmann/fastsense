@@ -32,13 +32,13 @@ struct TSDFBridgeMessage : public ZMQConverter
     /// copy assignment operator
     TSDFBridgeMessage& operator=(const TSDFBridgeMessage& other) = default;
 
-    /// delete move assignment operator
+    /// default move assignment operator
     TSDFBridgeMessage& operator=(TSDFBridgeMessage&&) noexcept = default;
 
-    /// delete copy constructor
+    /// default copy constructor
     TSDFBridgeMessage(const TSDFBridgeMessage&) = default;
 
-    /// delete move constructor
+    /// default move constructor
     TSDFBridgeMessage(TSDFBridgeMessage&&) noexcept = default;
 
     /// truncation distance
