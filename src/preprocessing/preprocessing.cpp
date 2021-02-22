@@ -80,6 +80,7 @@ void Preprocessing::reduction_filter_average(fastsense::msg::PointCloudPtrStampe
         key_ptr[0] = std::floor(((float)cloud_points[i].x()) / (float)MAP_RESOLUTION);
         key_ptr[1] = std::floor(((float)cloud_points[i].y()) / (float)MAP_RESOLUTION);
         key_ptr[2] = std::floor(((float)cloud_points[i].z()) / (float)MAP_RESOLUTION);
+        
         auto& avg_point = point_map.try_emplace(key, default_value).first->second;
         avg_point.first += cloud_points[i].cast<int>();
         avg_point.second++;
@@ -121,7 +122,9 @@ void Preprocessing::reduction_filter_voxel_center(fastsense::msg::PointCloudPtrS
         key_ptr[1] = y_voxel;
         key_ptr[2] = z_voxel;
 
-        Vector3i center_point = {x_sign*(abs(x_voxel) * MAP_RESOLUTION - MAP_RESOLUTION/2), y_sign*(abs(y_voxel) * MAP_RESOLUTION - MAP_RESOLUTION/2), z_sign*(abs(z_voxel) * MAP_RESOLUTION - MAP_RESOLUTION/2)};
+        Vector3i center_point = {x_sign * (abs(x_voxel) * MAP_RESOLUTION - MAP_RESOLUTION / 2), 
+                                 y_sign * (abs(y_voxel) * MAP_RESOLUTION - MAP_RESOLUTION / 2), 
+                                 z_sign * (abs(z_voxel) * MAP_RESOLUTION - MAP_RESOLUTION / 2)};
 
 
         point_map.try_emplace(key, center_point);  
