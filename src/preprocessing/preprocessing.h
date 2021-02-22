@@ -10,6 +10,7 @@
 #include <hw/buffer/buffer.h>
 #include <util/point.h>
 #include <stdlib.h>
+#include <algorithm>
 
 
 namespace fastsense::preprocessing

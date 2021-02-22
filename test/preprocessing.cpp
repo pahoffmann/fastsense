@@ -243,4 +243,33 @@ TEST_CASE("Preprocessing", "[Preprocessing]")
         }
     }
 
+
+    SECTION("Test reduction filter voxel center"){
+
+        points.resize(8);
+
+        points[0] = {50, 50, 50};
+        points[1] = {30, 30, 30};
+        points[2] = {20, 20, 20};
+
+        points[3] = {-4, 40, 63};
+        points[4] = {-60, 60, 60};
+
+        points[5] = {70, 70, -70};
+
+        points[6] = {120, 78, 45};
+
+        points[7] = {140, 1, -1};
+
+        cloud_stamped.data_->points_ = points;
+        cloud_stamped.data_->rings_ = 2;
+
+        preprocessor.reduction_filter_random_point(cloud_stamped);
+
+        for(auto& point : cloud_stamped.data_->points_){
+            std::cout << "x: " << point.x() << " y: " << point.y() << "z: " << point.z() << std::endl;
+        }
+
+    }
+
 }
