@@ -1,9 +1,6 @@
 <launch>
-
-  <node pkg="bridge" type="sync_time.sh" name="sync_time" />
-
-  #### Bridge ###########################################################
-  <node pkg="bridge" type="from_trenz" name="from_trenz" />
+  #### Bridge 
+  <include file="$(find bridge)/launch/bridge.launch"/>
 
   #### Recorder
   <node pkg="rosbag" type="record" name="fastsense_recorder" output="screen" args="--all -o ../bridge"/>   

@@ -1,5 +1,3 @@
-<!-- Phidgets IMU launch file -->
-
 <launch>
 
   <node pkg="bridge" type="sync_time.sh" name="sync_time" />
