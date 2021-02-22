@@ -17,21 +17,20 @@ inline bool readStdIn()
 
     std::string line;
     int ret = 0;
-    while(ret == 0)
+    
+    // timeout of 0 ms to be in line with line.get
+    ret = poll(&pfd, 1, 0);
+    if(ret == 1) 
     {
-        // timeout of 0 ms to be in line with line.get
-        ret = poll(&pfd, 1, 0);
-        if(ret == 1) 
-        {
-            std::getline(std::cin, line);
-        }
-        else if(ret == -1)
-        {
-            std::cout << "Error: " << strerror(errno) << std::endl;
-        }
+        std::getline(std::cin, line);
+        return true;
+    }
+    else if(ret == -1)
+    {
+        std::cout << "Error: " << strerror(errno) << std::endl;
     }
 
-    return line.empty();
+    return false;
 }
 
 } // namespace fastsense
