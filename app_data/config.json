@@ -6,7 +6,8 @@
 
     "lidar": {
         "bufferSize": 1,
-        "port": 2368
+        "port": 2368,
+        "pointScale": 1.0
     },
 
     "registration": {
@@ -25,6 +26,7 @@
     "bridge": {
         "use_from" : false,
         "use_to" : true,
+        "send_preprocessed" : true,
 
         "host_from": "192.168.1.2",
 

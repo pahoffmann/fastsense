@@ -1,6 +1,7 @@
 /**
  * @file preprocessing.cpp
  * @author Pascal Buschermöhle
+ * @author Malte Hillmann
  */
 
 #include "preprocessing.h"
@@ -8,17 +9,53 @@
 using namespace fastsense::preprocessing;
 using fastsense::buffer::InputBuffer;
 
-void Preprocessing::preprocess_scan(const fastsense::msg::PointCloudPtrStamped& cloud, InputBuffer<PointHW>& scan_points)
+Preprocessing::Preprocessing(const std::shared_ptr<PointCloudBuffer>& in_buffer,
+                             const std::shared_ptr<PointCloudBuffer>& out_buffer,
+                             uint16_t port,
+                             bool send,
+                             bool send_preprocessed,
+                             float scale)
+    : QueueBridge{in_buffer, out_buffer, port, send}, send_preprocessed(send_preprocessed), scale(scale)
 {
-    const auto& cloud_points = cloud.data_->points_;
 
-    for (unsigned int i = 0; i < cloud_points.size(); i++)
+}
+
+void Preprocessing::thread_run()
+{
+    fastsense::msg::PointCloudPtrStamped in_cloud;
+    while (this->running)
     {
-        PointHW point(cloud_points[i].x(),
-                      cloud_points[i].y(),
-                      cloud_points[i].z());
+        if (!this->in_->pop_nb(&in_cloud, DEFAULT_POP_TIMEOUT))
+        {
+            continue;
+        }
 
-        scan_points[i] = point;
+        if (this->send_ && !send_preprocessed)
+        {
+            this->send(in_cloud);
+        }
+
+        fastsense::msg::PointCloudPtrStamped out_cloud;
+        out_cloud.data_ = in_cloud.data_;
+        out_cloud.timestamp_ = in_cloud.timestamp_;
+
+        median_filter(out_cloud, 5);
+        reduction_filter_average(out_cloud);
+
+        if (scale != 1.0f)
+        {
+            for (auto& point : out_cloud.data_->points_)
+            {
+                point = (point.cast<float>() * scale).cast<ScanPointType>();
+            }
+        }
+
+        this->out_->push_nb(out_cloud, true);
+
+        if (this->send_ && send_preprocessed)
+        {
+            this->send(out_cloud);
+        }
     }
 }
 
@@ -155,12 +192,12 @@ uint8_t Preprocessing::median_from_array(std::vector<ScanPoint*> medians)
         distances[i].second = medians[i]->norm();
     }
 
-    std::nth_element(distances.begin(), distances.begin() + distances.size()/2, distances.end(), [](auto & left, auto & right)
+    std::nth_element(distances.begin(), distances.begin() + distances.size() / 2, distances.end(), [](auto & left, auto & right)
     {
         return left.second < right.second;
     });
 
-    return distances[distances.size()/2].first;
+    return distances[distances.size() / 2].first;
 }
 
 void Preprocessing::median_filter(fastsense::msg::PointCloudPtrStamped& cloud, uint8_t window_size)
@@ -171,25 +208,25 @@ void Preprocessing::median_filter(fastsense::msg::PointCloudPtrStamped& cloud, u
     }
 
     std::vector<ScanPoint> result(cloud.data_->points_.size());
-    
-    int half_window_size = window_size/2;
+
+    int half_window_size = window_size / 2;
 
     #pragma omp parallel for schedule(static) shared(result)
-    for(uint8_t ring = 0; ring < cloud.data_->rings_; ring++)
+    for (uint8_t ring = 0; ring < cloud.data_->rings_; ring++)
     {
         std::vector<ScanPoint*> window(window_size);
-        for(uint32_t point = 0; point < (cloud.data_->points_.size() / cloud.data_->rings_); point++)
+        for (uint32_t point = 0; point < (cloud.data_->points_.size() / cloud.data_->rings_); point++)
         {
             int i = (point * cloud.data_->rings_) + ring;
             int first_element = (i - (half_window_size * cloud.data_->rings_));
-            for(uint8_t j = 0; j < window_size; j++)
-            { 
+            for (uint8_t j = 0; j < window_size; j++)
+            {
                 int index = ((first_element + (j * cloud.data_->rings_)) + cloud.data_->points_.size()) % cloud.data_->points_.size();
                 window[j] = (ScanPoint*)&cloud.data_->points_[index];
             }
-            
+
             result[i] = *window[median_from_array(window)];
-            
+
         }
     }
 

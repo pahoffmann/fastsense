@@ -22,7 +22,6 @@ CloudCallback::CloudCallback(Registration& registration,
                              const std::shared_ptr<PointCloudBuffer>& cloud_buffer,
                              const std::shared_ptr<LocalMap>& local_map,
                              const std::shared_ptr<GlobalMap>& global_map,
-                             Matrix4f& pose,
                              const msg::TransformStampedBuffer::Ptr& transform_buffer,
                              const fastsense::CommandQueuePtr& q,
                              MapThread& map_thread,
@@ -32,7 +31,7 @@ CloudCallback::CloudCallback(Registration& registration,
       cloud_buffer{cloud_buffer},
       local_map{local_map},
       global_map{global_map},
-      pose{pose},
+      pose{Matrix4f::Identity()},
       transform_buffer{transform_buffer},
       first_iteration{true},
       q{q},
@@ -70,15 +69,12 @@ void CloudCallback::thread_run()
         eval.start("total");
         eval.start("prep");
 
-        //DO NOT TOUCH THE ORIGINAL POINT CLOUD, USE COPY INSTEAD
-        fastsense::msg::PointCloudPtrStamped point_cloud2;
-        point_cloud2.data_ = point_cloud.data_;
-        point_cloud2.timestamp_ = point_cloud.timestamp_;
-
-        preprocessor.median_filter(point_cloud2, 5);
-        preprocessor.reduction_filter_average(point_cloud2);
-        InputBuffer<PointHW> scan_point_buffer{q, point_cloud2.data_->points_.size()};
-        preprocessor.preprocess_scan(point_cloud2, scan_point_buffer);
+        InputBuffer<PointHW> scan_point_buffer{q, point_cloud.data_->points_.size()};
+        for (size_t i = 0; i < point_cloud.data_->points_.size(); i++)
+        {
+            auto& point = point_cloud.data_->points_[i];
+            scan_point_buffer[i] = PointHW(point.x(), point.y(), point.z());
+        }
 
         eval.stop("prep");
 
@@ -97,7 +93,7 @@ void CloudCallback::thread_run()
 
             map_mutex.lock();
             eval.start("reg");
-            registration.register_cloud(*local_map, scan_point_buffer, point_cloud2.timestamp_, pose);
+            registration.register_cloud(*local_map, scan_point_buffer, point_cloud.timestamp_, pose);
             eval.stop("reg");
             map_mutex.unlock();
 

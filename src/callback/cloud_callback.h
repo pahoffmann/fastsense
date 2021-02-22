@@ -15,7 +15,7 @@
 #include <registration/registration.h>
 #include <util/config/config_manager.h>
 #include <util/concurrent_ring_buffer.h>
-#include <preprocessing/preprocessing.h>
+#include <msg/point_cloud.h>
 #include <callback/map_thread.h>
 
 namespace fastsense::callback
@@ -36,7 +36,6 @@ public:
                   const std::shared_ptr<PointCloudBuffer>& cloud_buffer,
                   const std::shared_ptr<LocalMap>& local_map,
                   const std::shared_ptr<GlobalMap>& global_map,
-                  Matrix4f& pose,
                   const msg::TransformStampedBuffer::Ptr& transform_buffer,
                   const fastsense::CommandQueuePtr& q,
                   MapThread& map_thread,
@@ -64,12 +63,11 @@ private:
     std::shared_ptr<PointCloudBuffer> cloud_buffer;
     std::shared_ptr<LocalMap> local_map;
     std::shared_ptr<GlobalMap> global_map;
-    Matrix4f& pose;
+    Matrix4f pose;
     msg::TransformStampedBuffer::Ptr transform_buffer;
     bool first_iteration;
     fastsense::CommandQueuePtr q;
     fastsense::kernels::TSDFKernel tsdf_krnl;
-    fastsense::preprocessing::Preprocessing preprocessor;
     MapThread& map_thread;
     std::mutex& map_mutex;
 };

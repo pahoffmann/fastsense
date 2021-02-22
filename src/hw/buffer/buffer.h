@@ -135,6 +135,30 @@ public:
         rhs.virtual_address_ = nullptr;
     }
 
+    void swap(Buffer& rhs)
+    {
+        std::swap(this->queue_, rhs.queue_);
+        std::swap(this->buffer_, rhs.buffer_);
+        std::swap(this->num_elements_, rhs.num_elements_);
+        std::swap(this->size_in_bytes_, rhs.size_in_bytes_);
+        std::swap(this->mem_flag_, rhs.mem_flag_);
+        std::swap(this->map_flag_, rhs.map_flag_);
+        std::swap(this->virtual_address_, rhs.virtual_address_);
+    }
+
+    void fill_from(const Buffer& rhs)
+    {
+        if (this->num_elements_ != rhs.num_elements_)
+        {
+            throw std::runtime_error("clone with different sizes not implemented");
+        }
+
+        for (size_t index = 0; index < num_elements_; ++index)
+        {
+            (*this)[index] = rhs[index];
+        }
+    }
+
     /**
      * @brief Destroy the Buffer object and unmap memory
      */

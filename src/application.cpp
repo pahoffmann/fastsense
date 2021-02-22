@@ -19,6 +19,7 @@
 #include <util/logging/logger.h>
 #include <util/runner.h>
 #include <registration/registration.h>
+#include <preprocessing/preprocessing.h>
 #include <callback/cloud_callback.h>
 #include <callback/map_thread.h>
 #include <map/local_map.h>
@@ -38,6 +39,7 @@ using fastsense::callback::MapThread;
 using fastsense::map::GlobalMap;
 using fastsense::map::LocalMap;
 using fastsense::registration::Registration;
+using fastsense::preprocessing::Preprocessing;
 
 Application::Application()
     : config{ConfigManager::config()}
@@ -110,7 +112,13 @@ int Application::run()
 
     bool send = config.bridge.use_to();
     comm::QueueBridge<msg::ImuStamped, true> imu_bridge{imu_buffer, imu_bridge_buffer, config.bridge.imu_port_to(), send};
-    comm::QueueBridge<msg::PointCloudPtrStamped, true> lidar_bridge{pointcloud_buffer, pointcloud_bridge_buffer, config.bridge.pcl_port_to(), send};
+
+    Preprocessing preprocessing{pointcloud_buffer,
+                                pointcloud_bridge_buffer,
+                                config.bridge.pcl_port_to(),
+                                send,
+                                config.bridge.send_preprocessed(),
+                                config.lidar.pointScale()};
 
     auto command_queue = fastsense::hw::FPGAManager::create_command_queue();
 
@@ -130,7 +138,6 @@ int Application::run()
     assert(initial_weight >= 0);
     assert(initial_weight <= std::numeric_limits<TSDFValue::WeightType>::max());
 
-    Matrix4f pose = Matrix4f::Identity();
     auto tsdf_buffer = std::make_shared<util::ConcurrentRingBuffer<msg::TSDFBridgeMessage>>(2);
     auto transform_buffer = std::make_shared<util::ConcurrentRingBuffer<msg::TransformStamped>>(16);
     auto vis_buffer = std::make_shared<util::ConcurrentRingBuffer<Matrix4f>>(2);
@@ -171,17 +178,24 @@ int Application::run()
         return false;
     };
 
-    led.setFrequency(1.0);
-    if (!button.wait_for_press_or_condition(running_condition))
+    if (!config.bridge.use_from())
     {
-        return 0;
-    }
-    led.setFrequency(5.0);
+        led.setFrequency(1.0);
+        if (!button.wait_for_press_or_condition(running_condition))
+        {
+            return 0;
+        }
+        led.setFrequency(5.0);
 
-    Logger::info("Calibrating IMU...");
-    imu_driver->start();
-    imu_driver->stop();
-    Logger::info("IMU calibrated!");
+        Logger::info("Calibrating IMU...");
+        imu_driver->start();
+        imu_driver->stop();
+        Logger::info("IMU calibrated!");
+    }
+    else
+    {
+        Logger::info("No need to calibrate IMU: Using bridge");
+    }
 
     while (true)
     {
@@ -218,17 +232,29 @@ int Application::run()
                              global_map, command_queue);
 
         MapThread map_thread{local_map, map_mutex, tsdf_buffer, ConfigManager::config().slam.map_update_period(), ConfigManager::config().slam.map_update_position_threshold(), command_queue};
-        CloudCallback cloud_callback{registration, pointcloud_bridge_buffer, local_map, global_map, pose, transform_buffer, command_queue, map_thread, map_mutex};
+        CloudCallback cloud_callback{registration, pointcloud_bridge_buffer, local_map, global_map, transform_buffer, command_queue, map_thread, map_mutex};
 
         {
             Runner run_lidar_driver(*lidar_driver);
-            Runner run_lidar_bridge(lidar_bridge);
+            Runner run_lidar_bridge(preprocessing);
             Runner run_imu_driver(*imu_driver);
             Runner run_imu_bridge(imu_bridge);
-            Runner run_cloud_callback{cloud_callback};
             Runner run_tsdf_bridge(tsdf_bridge);
             Runner run_transform_bridge(transform_bridge);
             Runner run_map_thread(map_thread);
+
+            // clear any remaining messages FIXME: WHY IS THIS NECESSARY???
+            std::this_thread::sleep_for(1s);
+            imu_buffer->clear();
+            imu_bridge_buffer->clear();
+            pointcloud_buffer->clear();
+            pointcloud_bridge_buffer->clear();
+            tsdf_buffer->clear();
+            transform_buffer->clear();
+            vis_buffer->clear();
+
+            Runner run_cloud_callback{cloud_callback};
+
             Logger::info("SLAM started! Running...");
             std::this_thread::sleep_for(2s);
             if (!button.wait_for_press_or_condition(running_condition))
@@ -242,5 +268,8 @@ int Application::run()
         local_map->write_back();
         global_map->write_back();
         Logger::info("Local and global map saved!");
+        local_map.reset();
+        global_map.reset();
+        Logger::info("Clear local and global map!");
     }
 }

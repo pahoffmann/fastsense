@@ -76,7 +76,7 @@ void TransformBridge::convert()
 {
     std::lock_guard guard(mtx);
 
-    auto timestamp = timestamp_to_rostime(msg_.timestamp_);
+    auto timestamp = ros::Time::now();//timestamp_to_rostime(msg_.timestamp_);
 
     // set pose_path header (once and only)
     if (first_smg)
@@ -102,6 +102,14 @@ void TransformBridge::convert()
     pose_stamped.pose.position.x = msg_.data_.translation.x() * 0.001;
     pose_stamped.pose.position.y = msg_.data_.translation.y() * 0.001;
     pose_stamped.pose.position.z = msg_.data_.translation.z() * 0.001;
+
+    // If identity is received, we are in cloudcallback iteration 1
+    // -> reset pose path
+    if (msg_.data_.translation.isZero() && msg_.data_.rotation.isApprox(Eigen::Quaternionf::Identity()))
+    {
+        ROS_WARN("Resetting pose path, registered new iteration");
+        pose_path.poses.clear();
+    }
 
     pose_path.poses.push_back(pose_stamped);
 
