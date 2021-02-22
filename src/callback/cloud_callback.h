@@ -15,7 +15,7 @@
 #include <registration/registration.h>
 #include <util/config/config_manager.h>
 #include <util/concurrent_ring_buffer.h>
-#include <preprocessing/preprocessing.h>
+#include <msg/point_cloud.h>
 #include <callback/map_thread.h>
 
 namespace fastsense::callback
@@ -68,7 +68,6 @@ private:
     bool first_iteration;
     fastsense::CommandQueuePtr q;
     fastsense::kernels::TSDFKernel tsdf_krnl;
-    fastsense::preprocessing::Preprocessing preprocessor;
     MapThread& map_thread;
     std::mutex& map_mutex;
 };
