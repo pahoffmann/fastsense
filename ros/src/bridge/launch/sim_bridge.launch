@@ -6,9 +6,7 @@
 
   <node pkg="bridge" type="to_trenz" name="to_trenz">
     <remap from="/velodyne_legacy" to="/from_trenz/velodyne/points" />
-    <remap from="/imu/data_raw" to="/from_trenz/imu/raw" />
+    <remap from="/imu/data_raw" to="/imu/data" />
   </node>
-
-  <node pkg="rosbag" type="play" name="fastsense_player" output="screen" args="$(arg bag) $(arg args) --topics /from_trenz/velodyne/points /from_trenz/imu/raw"/> 
 
 </launch>
