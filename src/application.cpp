@@ -113,8 +113,12 @@ int Application::run()
     bool send = config.bridge.use_to();
     comm::QueueBridge<msg::ImuStamped, true> imu_bridge{imu_buffer, imu_bridge_buffer, config.bridge.imu_port_to(), send};
 
-    bool send_preprocessed = config.bridge.send_preprocessed();
-    Preprocessing preprocessing{pointcloud_buffer, pointcloud_bridge_buffer, config.bridge.pcl_port_to(), send, send_preprocessed};
+    Preprocessing preprocessing{pointcloud_buffer,
+                                pointcloud_bridge_buffer,
+                                config.bridge.pcl_port_to(),
+                                send,
+                                config.bridge.send_preprocessed(),
+                                config.lidar.pointScale()};
 
     auto command_queue = fastsense::hw::FPGAManager::create_command_queue();
 

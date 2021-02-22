@@ -13,8 +13,9 @@ Preprocessing::Preprocessing(const std::shared_ptr<PointCloudBuffer>& in_buffer,
                              const std::shared_ptr<PointCloudBuffer>& out_buffer,
                              uint16_t port,
                              bool send,
-                             bool send_preprocessed)
-    : QueueBridge{in_buffer, out_buffer, port, send}, send_preprocessed(send_preprocessed)
+                             bool send_preprocessed,
+                             float scale)
+    : QueueBridge{in_buffer, out_buffer, port, send}, send_preprocessed(send_preprocessed), scale(scale)
 {
 
 }
@@ -40,6 +41,14 @@ void Preprocessing::thread_run()
 
         median_filter(out_cloud, 5);
         reduction_filter(out_cloud);
+
+        if (scale != 1.0f)
+        {
+            for (auto& point : out_cloud.data_->points_)
+            {
+                point = (point.cast<float>() * scale).cast<ScanPointType>();
+            }
+        }
 
         this->out_->push_nb(out_cloud, true);
 

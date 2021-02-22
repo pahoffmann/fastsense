@@ -30,7 +30,8 @@ public:
                   const std::shared_ptr<PointCloudBuffer>& out_buffer,
                   uint16_t port,
                   bool send,
-                  bool send_preprocessed);
+                  bool send_preprocessed,
+                  float scale = 1.0);
 
     void thread_run() override;
 
@@ -70,6 +71,7 @@ private:
     uint8_t median_from_array(std::vector<ScanPoint*> medians);
 
     bool send_preprocessed;
+    float scale;
 };
 
 }
