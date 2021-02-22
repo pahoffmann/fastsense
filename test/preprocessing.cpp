@@ -17,7 +17,10 @@ TEST_CASE("Preprocessing", "[Preprocessing]")
 {
     REQUIRE(1 == 1);
 
-    Preprocessing preprocessor;
+    auto pointcloud_buffer = std::make_shared<msg::PointCloudPtrStampedBuffer>(1);
+    auto pointcloud_bridge_buffer = std::make_shared<msg::PointCloudPtrStampedBuffer>(1);
+
+    Preprocessing preprocessor{pointcloud_buffer, pointcloud_bridge_buffer, 0, false, false};
     PointCloud::Ptr cloud = std::make_shared<PointCloud>();
     Stamped<PointCloud::Ptr> cloud_stamped;
     cloud_stamped.data_ = cloud;
