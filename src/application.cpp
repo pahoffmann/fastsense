@@ -19,6 +19,7 @@
 #include <util/logging/logger.h>
 #include <util/runner.h>
 #include <registration/registration.h>
+#include <preprocessing/preprocessing.h>
 #include <callback/cloud_callback.h>
 #include <callback/map_thread.h>
 #include <map/local_map.h>
@@ -38,6 +39,7 @@ using fastsense::callback::MapThread;
 using fastsense::map::GlobalMap;
 using fastsense::map::LocalMap;
 using fastsense::registration::Registration;
+using fastsense::preprocessing::Preprocessing;
 
 Application::Application()
     : config{ConfigManager::config()}
@@ -110,7 +112,9 @@ int Application::run()
 
     bool send = config.bridge.use_to();
     comm::QueueBridge<msg::ImuStamped, true> imu_bridge{imu_buffer, imu_bridge_buffer, config.bridge.imu_port_to(), send};
-    comm::QueueBridge<msg::PointCloudPtrStamped, true> lidar_bridge{pointcloud_buffer, pointcloud_bridge_buffer, config.bridge.pcl_port_to(), send};
+
+    bool send_preprocessed = config.bridge.send_preprocessed();
+    Preprocessing preprocessing{pointcloud_buffer, pointcloud_bridge_buffer, config.bridge.pcl_port_to(), send, send_preprocessed};
 
     auto command_queue = fastsense::hw::FPGAManager::create_command_queue();
 
@@ -170,15 +174,15 @@ int Application::run()
         return false;
     };
 
-    led.setFrequency(1.0);
-    if (!button.wait_for_press_or_condition(running_condition))
-    {
-        return 0;
-    }
-    led.setFrequency(5.0);
-
     if (!config.bridge.use_from())
     {
+        led.setFrequency(1.0);
+        if (!button.wait_for_press_or_condition(running_condition))
+        {
+            return 0;
+        }
+        led.setFrequency(5.0);
+
         Logger::info("Calibrating IMU...");
         imu_driver->start();
         imu_driver->stop();
@@ -228,7 +232,7 @@ int Application::run()
 
         {
             Runner run_lidar_driver(*lidar_driver);
-            Runner run_lidar_bridge(lidar_bridge);
+            Runner run_lidar_bridge(preprocessing);
             Runner run_imu_driver(*imu_driver);
             Runner run_imu_bridge(imu_bridge);
             Runner run_tsdf_bridge(tsdf_bridge);
