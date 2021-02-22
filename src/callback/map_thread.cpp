@@ -60,6 +60,7 @@ void MapThread::go(const Vector3i& pos, const Eigen::Matrix4f& pose, const fasts
 void MapThread::thread_run()
 {
     util::RuntimeEvaluator eval;
+    map::LocalMap tmp_map(*local_map_);
 
     while (running)
     {
@@ -69,10 +70,6 @@ void MapThread::thread_run()
             break;
         }
         Logger::info("Starting SUV");
-
-        eval.start("copy");
-        map::LocalMap tmp_map(*local_map_);
-        eval.stop("copy");
 
         // shift
         eval.start("shift");
@@ -97,8 +94,12 @@ void MapThread::thread_run()
         eval.stop("tsdf");
 
         map_mutex_.lock();
-        *local_map_ = std::move(tmp_map);
+        local_map_->swap(tmp_map);
         map_mutex_.unlock();
+
+        eval.start("copy");
+        tmp_map.fill_from(*local_map_);
+        eval.stop("copy");
 
         // visualize
         eval.start("vis");
