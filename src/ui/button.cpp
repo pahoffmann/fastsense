@@ -5,6 +5,7 @@
  */
 
 #include "button.h"
+#include "stdin.h"
 #include <thread>
 
 using namespace fastsense::ui;
@@ -22,8 +23,8 @@ bool Button::wait_for_press_or_condition(std::function<bool()> condition)
     // Interrupts (gpiod events) causes the system to freeze.
     // So we just get the value of the line and explicitly sleep.
 
-    // wait for press...
-    while (!line_.get_value())
+    // wait for press of button or enter...
+    while (!line_.get_value() || !readStdIn())
     {
         // ...or condition
         if (condition())
