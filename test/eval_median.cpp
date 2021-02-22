@@ -17,6 +17,7 @@
 
 using fastsense::util::PCDFile;
 using namespace fastsense::msg;
+using namespace fastsense::preprocessing;
 
 namespace fastsense::registration
 {
@@ -132,7 +133,10 @@ TEST_CASE("Eval_Median", "[eval_median][slow]")
 {
     std::cout << "Testing 'Eval Median'" << std::endl;
 
-    fastsense::preprocessing::Preprocessing preprocessor;
+    auto pointcloud_buffer = std::make_shared<msg::PointCloudPtrStampedBuffer>(1);
+    auto pointcloud_bridge_buffer = std::make_shared<msg::PointCloudPtrStampedBuffer>(1);
+
+    Preprocessing preprocessor{pointcloud_buffer, pointcloud_bridge_buffer, 0, false, false};
 
     fastsense::CommandQueuePtr q = fastsense::hw::FPGAManager::create_command_queue();
 
