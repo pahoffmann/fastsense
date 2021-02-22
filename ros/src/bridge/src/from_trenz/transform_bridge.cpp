@@ -103,6 +103,15 @@ void TransformBridge::convert()
     pose_stamped.pose.position.y = msg_.data_.translation.y() * 0.001;
     pose_stamped.pose.position.z = msg_.data_.translation.z() * 0.001;
 
+    // If identity is received, we are in cloudcallback iteration 1
+    // -> reset pose path
+    if ((msg_.data_.translation == Eigen::Vector3f(0, 0, 0))
+     && (msg_.data_.rotation.isApprox(Eigen::Quaternionf(0, 0, 0, 1))))
+    {
+        ROS_WARN("Resetting pose path, registered new iteration");
+        pose_path.poses.clear();
+    }
+
     pose_path.poses.push_back(pose_stamped);
 
     // RViz crashes if path is longer than 16384 (~13 minutes at 20 Scans/sec)
