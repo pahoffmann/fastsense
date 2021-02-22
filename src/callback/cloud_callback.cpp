@@ -124,6 +124,8 @@ void CloudCallback::thread_run()
         static double overhang = 0.0;
         static unsigned int dropped_scans = 0;
         static unsigned int over_count = 0;
+        static std::vector<unsigned int> histogram(10, 0);
+        constexpr int HIST_BUCKET_SIZE = 10;
 
         auto& forms = eval.get_forms();
         auto& form = *std::find_if(forms.begin(), forms.end(), [](const EvaluationFormular & f)
@@ -133,6 +135,9 @@ void CloudCallback::thread_run()
         double val = form.last / 1000.0;
         sum += val;
         sum_of_squares += val * val;
+
+        int hist_value = std::min((int)val / HIST_BUCKET_SIZE, 9);
+        histogram[hist_value]++;
 
         if (val > 50.0)
         {
@@ -160,9 +165,25 @@ void CloudCallback::thread_run()
             Logger::info("Over 50ms: ", over_count, " / ", form.count, " = ", 100 * over_count / form.count, "%");
             Logger::info("Dropped  : ", dropped_scans, " / ", form.count, " = ", 100 * dropped_scans / form.count, "%");
 
+            for (size_t i = 0; i < histogram.size(); i++)
+            {
+                size_t count = std::ceil(histogram[i] * 50.0 / form.count);
+                if (i == histogram.size() - 1)
+                {
+                    std::cout << ">" << std::setw(3) << (i * HIST_BUCKET_SIZE);
+                }
+                else
+                {
+                    std::cout << "<" << std::setw(3) << (i + 1) * HIST_BUCKET_SIZE;
+                }
+                std::cout << ": " << std::string(count, '=') << "\n";
+            }
+
             cnt = 0;
         }
+
         cnt++;
+
 #endif
     }
     Logger::info("Stopped Callback");
