@@ -105,8 +105,7 @@ void TransformBridge::convert()
 
     // If identity is received, we are in cloudcallback iteration 1
     // -> reset pose path
-    if ((msg_.data_.translation == Eigen::Vector3f(0, 0, 0))
-     && (msg_.data_.rotation.isApprox(Eigen::Quaternionf(0, 0, 0, 1))))
+    if (msg_.data_.translation.isZero() && msg_.data_.rotation.isApprox(Eigen::Quaternionf::Identity()))
     {
         ROS_WARN("Resetting pose path, registered new iteration");
         pose_path.poses.clear();
