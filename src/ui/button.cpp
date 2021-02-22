@@ -24,7 +24,7 @@ bool Button::wait_for_press_or_condition(std::function<bool()> condition)
     // So we just get the value of the line and explicitly sleep.
 
     // wait for press of button or enter...
-    while (!line_.get_value() || !readStdIn())
+    while (!line_.get_value() && !readStdIn())
     {
         // ...or condition
         if (condition())
