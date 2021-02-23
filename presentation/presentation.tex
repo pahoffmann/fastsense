@@ -2,6 +2,8 @@
 \usepackage[utf8]{inputenc}
 \usepackage[T1]{fontenc}
 \usepackage{lmodern}
+\usepackage{tikz}
+\usepackage[absolute,overlay]{textpos}
 
 \title{Meilenstein 3}
 \author{Projektgruppe FastSense}
@@ -36,6 +38,13 @@
 
 \begin{frame}{Inhalt}
 \tableofcontents
+\begin{textblock*}{1cm}(0cm,3.2cm)
+\begin{tikzpicture}
+\draw [white] (0, 2.35) rectangle +(1, 1); % Hier den y-Wert anpassen, falls sich das Inhaltsverzeichnis noch ändert
+\draw [light, ultra thick] (1, 0) -- (7, 0);
+\node [right, dark] at (7, 0) {Live Demonstration};
+\end{tikzpicture}
+\end{textblock*}
 \end{frame}
 
 \section{Recap MS\,2}
@@ -74,26 +83,23 @@ TODO
 \end{frame}
 
 \subsection{Algorithmus}
-\begin{frame}{\subsecname}
-TODO
-\end{frame}
 
-\subsubsection{Preprocessing}
+\subsubsection*{Preprocessing}
 \begin{frame}{\subsecname: \subsubsecname}
 TODO
 \end{frame}
 
-\subsubsection{Registrierung}
+\subsubsection*{Registrierung}
 \begin{frame}{\subsecname: \subsubsecname}
 TODO
 \end{frame}
 
-\subsubsection{Asynchronität}
+\subsubsection*{Asynchronität}
 \begin{frame}{\subsecname: \subsubsecname}
 TODO
 \end{frame}
 
-\subsubsection{Memports}
+\subsubsection*{Memports}
 \begin{frame}{\subsecname: \subsubsecname}
 TODO
 \end{frame}
@@ -107,10 +113,6 @@ TODO
 \begin{frame}{\subsecname}
 TODO
 \end{frame}
-
-% \section{Live Demonstration}
-% \begin{frame}{\secname}
-% \end{frame}
 
 \section{Evaluation}
 
