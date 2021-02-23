@@ -1,0 +1,46 @@
+\documentclass{beamer}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+
+\title{Meilenstein 3}
+\author{Projektgruppe FastSense}
+\date{25. Januar 2021}
+
+\usecolortheme{seahorse}
+\definecolor{dark}{rgb}{0, 0.1, 0.3}
+\definecolor{light}{rgb}{0.9, 0.933, 1}
+\setbeamercolor{normal text}{fg=black}
+\setbeamercolor{structure}{fg=dark}
+\setbeamercolor{footline}{fg=black}
+\setbeamercolor{frametitle}{fg=light,bg=dark}
+\setbeamertemplate{itemize items}[circle]
+\beamertemplatenavigationsymbolsempty
+\addtobeamertemplate{navigation symbols}{}{
+    \usebeamerfont{footline}
+    \usebeamercolor[fg]{footline}
+    {\footnotesize \insertframenumber\\\vspace{0.15cm}}
+}
+\setbeamertemplate{title page}{
+\insertauthor\\\vspace{0.5cm}
+\begin{LARGE}\textbf{\inserttitle}\end{LARGE}\\\vspace{0.5cm}
+\insertdate
+}
+
+\begin{document}
+
+{\setbeamertemplate{navigation symbols}{}
+\begin{frame}
+\titlepage
+\end{frame}}
+
+\begin{frame}{Inhalt}
+\tableofcontents
+\end{frame}
+
+\section{Gotta go fast}
+\begin{frame}{\secname}
+TODO
+\end{frame}
+
+\end{document}
