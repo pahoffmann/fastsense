@@ -266,7 +266,6 @@ int Application::run()
         Logger::info("Write local and global map...");
         // save Map to Disk
         local_map->write_back();
-        global_map->write_back();
         Logger::info("Local and global map saved!");
         local_map.reset();
         global_map.reset();
