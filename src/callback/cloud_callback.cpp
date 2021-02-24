@@ -120,72 +120,11 @@ void CloudCallback::thread_run()
 
         eval.stop("total");
 #ifdef TIME_MEASUREMENT
-        static double sum = 0.0, sum_of_squares = 0.0;
-        static double overhang = 0.0;
-        static unsigned int dropped_scans = 0;
-        static unsigned int over_count = 0;
-        static std::vector<unsigned int> histogram(10, 0);
-        constexpr int HIST_BUCKET_SIZE = 10;
-
-        auto& forms = eval.get_forms();
-        auto& form = *std::find_if(forms.begin(), forms.end(), [](const EvaluationFormular & f)
-        {
-            return f.name == "total";
-        });
-        double val = form.last / 1000.0;
-        sum += val;
-        sum_of_squares += val * val;
-
-        int hist_value = std::min((int)val / HIST_BUCKET_SIZE, 9);
-        histogram[hist_value]++;
-
-        if (val > 50.0)
-        {
-            over_count++;
-        }
-
-        overhang += val - 50.0;
-        if (overhang < 0.0)
-        {
-            overhang = 0.0;
-        }
-        if (overhang >= 50.0)
-        {
-            dropped_scans++;
-            overhang -= 50.0;
-        }
-
         if (cnt == 20)
         {
             Logger::info(eval.to_string());
-
-            double variance = (sum_of_squares - sum * sum / form.count) / form.count;
-            Logger::info("Variance : ", std::fixed, std::setprecision(4), variance);
-            Logger::info("Sigma    : ", std::fixed, std::setprecision(4), std::sqrt(variance));
-            Logger::info("Over 50ms: ", over_count, " / ", form.count, " = ", 100 * over_count / form.count, "%");
-            Logger::info("Dropped  : ", dropped_scans, " / ", form.count, " = ", 100 * dropped_scans / form.count, "%");
-
-            std::stringstream out;
-            out << "\n";
-
-            for (size_t i = 0; i < histogram.size(); i++)
-            {
-                size_t count = std::ceil(histogram[i] * 50.0 / form.count);
-                if (i == histogram.size() - 1)
-                {
-                    out << ">" << std::setw(3) << (i * HIST_BUCKET_SIZE);
-                }
-                else
-                {
-                    out << "<" << std::setw(3) << (i + 1) * HIST_BUCKET_SIZE;
-                }
-                out << ": " << std::string(count, '=') << "\n";
-            }
-            Logger::info(out.str());
-
             cnt = 0;
         }
-
         cnt++;
 
 #endif
