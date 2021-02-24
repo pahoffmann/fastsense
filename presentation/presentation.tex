@@ -468,6 +468,13 @@ Messages\\
 
 \subsection{Zeit}
 \begin{frame}{\secname: \subsecname}
+\begin{textblock*}{12.8cm}(0cm, 2.5cm)
+\centering
+\includegraphics[width=12cm]{images/Zeiten.pdf}
+\end{textblock*}
+\end{frame}
+
+\begin{frame}{\secname: \subsecname}
 \begin{textblock*}{12.8cm}(0cm, 1.1cm)
 \centering
 \definecolor{bad}{rgb}{1, 0.5, 0.4}
@@ -487,10 +494,9 @@ Messages\\
     }
 }
 \draw (9.5, 0.25) -- (9.5, -0.5) node[below] {$>90$};
-\node at (8.5, 5) {\begin{minipage}{6.5cm}
+\node at (9.5, 5) {\begin{minipage}{5.5cm}
 \begin{itemize}
-\item{Zeit für gesamten Algorithmus = \\
-Zeit für Registrierung}
+\item{Avg: 30ms}
 \item[\color{bad}$\bullet$]{11\% aller Scans über 50\,ms}
 \item[\color{red}$\bullet$]{2\% gedroppt}
 \end{itemize}
@@ -500,9 +506,34 @@ Zeit für Registrierung}
 \end{frame}
 
 \begin{frame}{\secname: \subsecname}
-\begin{textblock*}{12.8cm}(0cm, 2.5cm)
+\begin{textblock*}{12.8cm}(0cm, 1.1cm)
 \centering
-\includegraphics[width=12cm]{images/Zeiten.pdf}
+\definecolor{bad}{rgb}{1, 0.5, 0.4}
+\begin{tikzpicture}[scale=0.85]
+\draw[->] (0, 0) -- (10.5, 0) node[right] {Zeit [ms]};
+\draw[->] (0, 0) -- (0, 8) node[above] {Anzahl Frames};
+\foreach \i\y in {0/1,1/5,2/7,3/8,4/8,5/14,6/7,7/3,8/1,9/2} {
+    \pgfmathsetmacro\res{int(\i * 10)}
+    \draw (\i, -0.1) node[below]{\res} -- (\i, 0.1);
+    \tikzmath {
+        if {\i < 5} then {
+            let \c = light;
+        } else {
+            let \c = bad;
+        };
+        { \draw[fill=\c] (\i, 0) rectangle (\i+1, \y/2); };
+    }
+}
+\draw (9.5, 0.25) -- (9.5, -0.5) node[below] {$>90$};
+\node at (9.5, 5) {\begin{minipage}{5.5cm}
+\begin{itemize}
+\item{Vergleich: $\varepsilon = 0.01$}
+\item{Avg: 47ms}
+\item[\color{bad}$\bullet$]{48\% aller Scans über 50\,ms}
+\item[\color{red}$\bullet$]{10\% gedroppt $\Rightarrow$ 18 fps}
+\end{itemize}
+\end{minipage}};
+\end{tikzpicture}
 \end{textblock*}
 \end{frame}
 
