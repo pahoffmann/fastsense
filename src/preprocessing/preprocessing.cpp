@@ -6,8 +6,23 @@
 
 #include "preprocessing.h"
 
+#include <unordered_set>
+
 using namespace fastsense::preprocessing;
 using fastsense::buffer::InputBuffer;
+
+namespace std
+{
+template<> struct hash<fastsense::ScanPoint>
+{
+    std::size_t operator()(fastsense::ScanPoint const& p) const noexcept
+    {
+        long long v = ((long long)p.x() << 32) ^ ((long long)p.y() << 16) ^ (long long)p.z();
+        return std::hash<long long>()(v);
+    }
+};
+}
+
 
 Preprocessing::Preprocessing(const std::shared_ptr<PointCloudBuffer>& in_buffer,
                              const std::shared_ptr<PointCloudBuffer>& out_buffer,
@@ -40,7 +55,7 @@ void Preprocessing::thread_run()
         out_cloud.timestamp_ = in_cloud.timestamp_;
 
         median_filter(out_cloud, 5);
-        reduction_filter_average(out_cloud);
+        reduction_filter_closest(out_cloud);
 
         if (scale != 1.0f)
         {
@@ -63,26 +78,26 @@ void Preprocessing::reduction_filter_average(fastsense::msg::PointCloudPtrStampe
 {
     auto& cloud_points = cloud.data_->points_;
 
-    std::unordered_map<uint64_t, std::pair<Vector3i, int>> point_map;
+    std::unordered_map<ScanPoint, std::pair<Vector3i, int>> point_map;
     std::pair<Vector3i, int> default_value = std::make_pair(Vector3i::Zero(), 0);
 
     point_map.reserve(cloud_points.size());
 
-    for (uint32_t i = 0; i < cloud_points.size(); i++)
+    for (const auto& point : cloud_points)
     {
-        if (cloud_points[i].x() == 0 && cloud_points[i].y() == 0 && cloud_points[i].z() == 0)
+        if (point.x() == 0 && point.y() == 0 && point.z() == 0)
         {
             continue;
         }
 
-        uint64_t key = 0;
-        int16_t* key_ptr = (int16_t*)&key;
-        key_ptr[0] = std::floor(((float)cloud_points[i].x()) / (float)MAP_RESOLUTION);
-        key_ptr[1] = std::floor(((float)cloud_points[i].y()) / (float)MAP_RESOLUTION);
-        key_ptr[2] = std::floor(((float)cloud_points[i].z()) / (float)MAP_RESOLUTION);
-        
-        auto& avg_point = point_map.try_emplace(key, default_value).first->second;
-        avg_point.first += cloud_points[i].cast<int>();
+        ScanPoint voxel(
+            std::floor((float)point.x() / MAP_RESOLUTION),
+            std::floor((float)point.y() / MAP_RESOLUTION),
+            std::floor((float)point.z() / MAP_RESOLUTION)
+        );
+
+        auto& avg_point = point_map.try_emplace(voxel, default_value).first->second;
+        avg_point.first += point.cast<int>();
         avg_point.second++;
     }
 
@@ -95,48 +110,70 @@ void Preprocessing::reduction_filter_average(fastsense::msg::PointCloudPtrStampe
     }
 }
 
-void Preprocessing::reduction_filter_voxel_center(fastsense::msg::PointCloudPtrStamped& cloud)
+void Preprocessing::reduction_filter_closest(fastsense::msg::PointCloudPtrStamped& cloud)
 {
     auto& cloud_points = cloud.data_->points_;
 
-    std::unordered_map<uint64_t, Vector3i> point_map;
+    std::unordered_map<ScanPoint, std::pair<ScanPoint, int>> point_map;
+    std::pair<ScanPoint, int> default_value = std::make_pair(ScanPoint::Zero(), MAP_RESOLUTION * 2);
 
-    for (uint32_t i = 0; i < cloud_points.size(); i++)
+    point_map.reserve(cloud_points.size());
+
+    for (const auto& point : cloud_points)
     {
-        if (cloud_points[i].x() == 0 && cloud_points[i].y() == 0 && cloud_points[i].z() == 0)
+        if (point.x() == 0 && point.y() == 0 && point.z() == 0)
         {
             continue;
         }
 
-        int x_sign = (cloud_points[i].x() >= 0) ? 1 : -1;
-        int y_sign = (cloud_points[i].y() >= 0) ? 1 : -1;
-        int z_sign = (cloud_points[i].z() >= 0) ? 1 : -1;
+        ScanPoint voxel_center(
+            std::floor((float)point.x() / MAP_RESOLUTION) * MAP_RESOLUTION + MAP_RESOLUTION / 2,
+            std::floor((float)point.y() / MAP_RESOLUTION) * MAP_RESOLUTION + MAP_RESOLUTION / 2,
+            std::floor((float)point.z() / MAP_RESOLUTION) * MAP_RESOLUTION + MAP_RESOLUTION / 2
+        );
+        int distance = (point - voxel_center).norm();
 
-        int16_t x_voxel = std::ceil(((float)abs(cloud_points[i].x())) / (float)MAP_RESOLUTION) * x_sign;
-        int16_t y_voxel = std::ceil(((float)abs(cloud_points[i].y())) / (float)MAP_RESOLUTION) * y_sign;
-        int16_t z_voxel = std::ceil(((float)abs(cloud_points[i].z())) / (float)MAP_RESOLUTION) * z_sign;
-
-        uint64_t key = 0;
-        int16_t* key_ptr = (int16_t*)&key;
-        key_ptr[0] = x_voxel;
-        key_ptr[1] = y_voxel;
-        key_ptr[2] = z_voxel;
-
-        Vector3i center_point = {x_sign * (abs(x_voxel) * MAP_RESOLUTION - MAP_RESOLUTION / 2), 
-                                 y_sign * (abs(y_voxel) * MAP_RESOLUTION - MAP_RESOLUTION / 2), 
-                                 z_sign * (abs(z_voxel) * MAP_RESOLUTION - MAP_RESOLUTION / 2)};
-
-
-        point_map.try_emplace(key, center_point);  
+        auto& closest = point_map.try_emplace(voxel_center, default_value).first->second;
+        if (distance < closest.second)
+        {
+            closest.first = point;
+            closest.second = distance;
+        }
     }
 
     cloud_points.resize(point_map.size());
     int counter = 0;
-    for (auto& c_point : point_map)
+    for (auto& avg_point : point_map)
     {
-        cloud_points[counter] = c_point.second.cast<ScanPointType>();
+        cloud_points[counter] = avg_point.second.first;
         counter++;
     }
+}
+
+void Preprocessing::reduction_filter_voxel_center(fastsense::msg::PointCloudPtrStamped& cloud)
+{
+    auto& cloud_points = cloud.data_->points_;
+
+    std::unordered_set<ScanPoint> point_set;
+
+    for (const auto& point : cloud_points)
+    {
+        if (point.x() == 0 && point.y() == 0 && point.z() == 0)
+        {
+            continue;
+        }
+
+        ScanPoint voxel_center(
+            std::floor((float)point.x() / MAP_RESOLUTION) * MAP_RESOLUTION + MAP_RESOLUTION / 2,
+            std::floor((float)point.y() / MAP_RESOLUTION) * MAP_RESOLUTION + MAP_RESOLUTION / 2,
+            std::floor((float)point.z() / MAP_RESOLUTION) * MAP_RESOLUTION + MAP_RESOLUTION / 2
+        );
+
+        point_set.insert(voxel_center);  
+    }
+
+    cloud_points.resize(point_set.size());
+    std::copy(point_set.begin(), point_set.end(), cloud_points.begin());
 }
 
 
@@ -144,44 +181,33 @@ void Preprocessing::reduction_filter_random_point(fastsense::msg::PointCloudPtrS
     
     auto& cloud_points = cloud.data_->points_;
 
-    std::unordered_map<uint64_t, Vector3i> point_map;
+    std::unordered_map<ScanPoint, ScanPoint> point_map;
 
     std::random_shuffle(cloud_points.begin(), cloud_points.end());
 
-    for (uint32_t i = 0; i < cloud_points.size(); i++)
+    for (const auto& point : cloud_points)
     {
-        if (cloud_points[i].x() == 0 && cloud_points[i].y() == 0 && cloud_points[i].z() == 0)
+        if (point.x() == 0 && point.y() == 0 && point.z() == 0)
         {
             continue;
         }
 
-        int x_sign = (cloud_points[i].x() >= 0) ? 1 : -1;
-        int y_sign = (cloud_points[i].y() >= 0) ? 1 : -1;
-        int z_sign = (cloud_points[i].z() >= 0) ? 1 : -1;
+        ScanPoint voxel(
+            std::floor((float)point.x() / MAP_RESOLUTION),
+            std::floor((float)point.y() / MAP_RESOLUTION),
+            std::floor((float)point.z() / MAP_RESOLUTION)
+        );
 
-        int16_t x_voxel = std::ceil(((float)abs(cloud_points[i].x())) / (float)MAP_RESOLUTION) * x_sign;
-        int16_t y_voxel = std::ceil(((float)abs(cloud_points[i].y())) / (float)MAP_RESOLUTION) * y_sign;
-        int16_t z_voxel = std::ceil(((float)abs(cloud_points[i].z())) / (float)MAP_RESOLUTION) * z_sign;
-
-        uint64_t key = 0;
-        int16_t* key_ptr = (int16_t*)&key;
-        key_ptr[0] = x_voxel;
-        key_ptr[1] = y_voxel;
-        key_ptr[2] = z_voxel;
-
-        Vector3i point = {cloud_points[i].x(), cloud_points[i].y(), cloud_points[i].z()};
-
-        point_map.try_emplace(key, point);  
+        point_map.try_emplace(voxel, point);  
     }
 
     cloud_points.resize(point_map.size());
     int counter = 0;
     for (auto& c_point : point_map)
     {
-        cloud_points[counter] = c_point.second.cast<ScanPointType>();
+        cloud_points[counter] = c_point.second;
         counter++;
     }
-
 }
 
 
