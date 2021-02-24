@@ -3,5 +3,5 @@
   <include file="$(find bridge)/launch/bridge.launch"/>
 
   #### Recorder
-  <node pkg="rosbag" type="record" name="fastsense_recorder" output="screen" args="--all -o ../bridge"/>   
+  <node pkg="rosbag" type="record" name="fastsense_recorder" output="screen" args="--all -o /media/fastsense/37d47bee-ecba-4955-ab67-74a31bfbabbd/"/>   
 </launch>

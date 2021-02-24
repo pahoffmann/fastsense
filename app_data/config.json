@@ -6,7 +6,8 @@
 
     "lidar": {
         "bufferSize": 1,
-        "port": 2368
+        "port": 2368,
+        "pointScale": 1.0
     },
 
     "registration": {
