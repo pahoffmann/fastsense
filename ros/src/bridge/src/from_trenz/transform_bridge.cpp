@@ -124,6 +124,11 @@ void TransformBridge::convert()
         int index = dist(rng);
         pose_path.poses.erase(pose_path.poses.begin() + index);
     }
+
+    ROS_WARN("Most current Pose:");
+    ROS_WARN("  %f %f %f", pose_stamped.pose.position.x, pose_stamped.pose.position.y, pose_stamped.pose.position.z);
+    ROS_WARN("  %f %f %f %f", pose_stamped.pose.orientation.x, pose_stamped.pose.orientation.y, pose_stamped.pose.orientation.z, pose_stamped.pose.orientation.w);
+
 }
 
 void TransformBridge::publish()
