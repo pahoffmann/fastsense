@@ -55,7 +55,7 @@
 \begin{tikzpicture}
 \draw [white] (0, 2.35) rectangle +(1, 1); % Hier den y-Wert anpassen, falls sich das Inhaltsverzeichnis noch ändert
 \draw [light, ultra thick] (1, 0) -- (7, 0);
-\node [right, dark] at (7, 0) {Live Demonstration};
+\node [right, dark] at (7, 0) {Demonstration};
 \end{tikzpicture}
 \end{textblock*}
 \end{frame}
@@ -194,26 +194,31 @@ Geschwindigkeit & 10\,km/h \\
 
 \subsection{Aufbau}
 \begin{frame}{\subsecname}
-TODO
+TODO: Steffen oder Adrian mit Bildern von Adrian
 \end{frame}
 
 \subsection{Base Design}
 \begin{frame}{\subsecname}
-TODO
-
-Experte Marcel
+\begin{center}
+\includegraphics[width=8cm]{images/base_design.png}
+\end{center}
+\begin{itemize}
+\item{GPIO}
+\item{Autostart}
+\item{Beliebige Taktrate für die Kernel}
+\end{itemize}
 \end{frame}
 
 \subsection{Kommunikation}
 \begin{frame}{\subsecname}
-TODO
 
-Experte Julian
+TODO: Julian
+
 \end{frame}
 
 \subsection{Algorithmus}
 
-\subsubsection*{Preprocessing}
+\subsubsection*{Preprocessing Pointcloud}
 \begin{frame}{\subsecname: \subsubsecname}
 \begin{tabular}{m{4cm}m{6cm}}
 \begin{tikzpicture}
@@ -232,21 +237,72 @@ Experte Julian
 \item{Average}
 \item{Voxel Center}
 \item{Random Point}
+\item{Closest to Center}
+\item[$\rightarrow$]{Kaum Unterschiede}
 \end{itemize}
 \end{itemize}
 \end{tabular}
 \end{frame}
 
+\subsubsection*{Preprocessing IMU}
+\begin{frame}{\subsecname: \subsubsecname}
+\begin{itemize}
+\item{Vorher: Rolling Average}
+\item{Während des Algorithmus:\\
+Akkumulation bis zur nächsten Pointcloud}
+\end{itemize}
+\begin{center}
+\begin{tikzpicture}
+\draw (0, 0) rectangle +(1, 1) node[pos=0.5] {IMU};
+\draw[->] (1, 0.5) -- (3, 0.5);
+\draw[fill=white] (1.75, 0.25) rectangle +(0.5, 0.5);
+\node[above] at (2, 0.75) {Pose};
+\draw (3, 0.25) rectangle +(3, 0.5);
+\draw (3.5, 0.25) -- (3.5, 0.75);
+\draw (4, 0.25) -- (4, 0.75);
+\draw (4.5, 0.25) -- (4.5, 0.75);
+\draw (5, 0.25) -- (5, 0.75);
+\draw (5.5, 0.25) -- (5.5, 0.75);
+\draw [decorate, decoration={brace, amplitude=0.25cm, mirror}] (3, 0.25) -- (6, 0.25);
+\draw[->] (4.5, 0) -- (4.5, -0.5) -- (7, -0.5);
+\draw (7, -1) rectangle +(3, 1) node[pos=0.5] {Registration};
+\end{tikzpicture}
+\end{center}
+\end{frame}
+
 \subsubsection*{Registrierung}
 \begin{frame}{\subsecname: \subsubsecname}
-TODO
-
-Experten Malte, Patrick
+\begin{itemize}
+\item[]{\makebox[5cm]{\hfill} 676\,ms}
+\item{\makebox[5cm]{Vollständig auf HW\hfill} 74\,ms}
+\begin{itemize}
+\item{Solver}
+\item{Float Matrizen auf HW}
+\end{itemize}
+\item{Split \& Memports}
+\begin{itemize}
+\item{\makebox[5cm]{\small Erst 2$\times$\hfill}}\hspace{-\leftmargin} \normalsize 57\,ms
+\item{\makebox[5cm]{\small Dann 3$\times$\hfill}}\hspace{-\leftmargin} \normalsize 50\,ms
+\end{itemize}
+\item{Abbruchkriterium: $\varepsilon$ verändert}
+\begin{itemize}
+\item{\makebox[5cm]{\small 0,0001 $\rightarrow$ 0,01 \hfill}}\hspace{-\leftmargin} \normalsize 44\,ms
+\item{\makebox[5cm]{\small 0,01 $\rightarrow$ 0,04\hfill}}\hspace{-\leftmargin} \normalsize 30\,ms
+\end{itemize}
+\end{itemize}
+\vspace{0.5cm}
+\begin{itemize}
+\item{Rotation gefixt}
+\begin{itemize}
+\item{Relativ zum Scanner statt zum Ursprung}
+\end{itemize}
+\end{itemize}
 \end{frame}
 
 \subsubsection*{Asynchronität}
 \begin{frame}{\subsecname: \subsubsecname}
 \begin{textblock*}{12.8cm}(0cm, 1.1cm)
+TODO: Preprocessing parallel
 \centering
 \begin{tikzpicture}
 \fill[light] (-0.3, 1) rectangle (3.3, 9);
@@ -413,17 +469,27 @@ Messages\\
 
 \subsection{Zeit}
 \begin{frame}{\secname: \subsecname}
-TODO
+TODO: Steffen \\
+Histogramm \\
+11\% aller Scans sind über 50\,ms \\
+2\% gedroppt
+\end{frame}
+
+\begin{frame}{\secname: \subsecname}
+\centering
+\includegraphics[width=11cm]{images/Zeiten.pdf}
 \end{frame}
 
 \subsection{Power Consumption}
 \begin{frame}{\secname: \subsecname}
-TODO
+TODO: Adrian
 \end{frame}
 
 \subsection{Qualität}
 \begin{frame}{\secname: \subsecname}
-TODO
+TODO: Marc \\
+\vspace{2cm}
+Dran denken: Meshes zeigen
 \end{frame}
 
 \section{Ausblick}
