@@ -165,19 +165,23 @@ void CloudCallback::thread_run()
             Logger::info("Over 50ms: ", over_count, " / ", form.count, " = ", 100 * over_count / form.count, "%");
             Logger::info("Dropped  : ", dropped_scans, " / ", form.count, " = ", 100 * dropped_scans / form.count, "%");
 
+            std::stringstream out;
+            out << "\n";
+
             for (size_t i = 0; i < histogram.size(); i++)
             {
                 size_t count = std::ceil(histogram[i] * 50.0 / form.count);
                 if (i == histogram.size() - 1)
                 {
-                    std::cout << ">" << std::setw(3) << (i * HIST_BUCKET_SIZE);
+                    out << ">" << std::setw(3) << (i * HIST_BUCKET_SIZE);
                 }
                 else
                 {
-                    std::cout << "<" << std::setw(3) << (i + 1) * HIST_BUCKET_SIZE;
+                    out << "<" << std::setw(3) << (i + 1) * HIST_BUCKET_SIZE;
                 }
-                std::cout << ": " << std::string(count, '=') << "\n";
+                out << ": " << std::string(count, '=') << "\n";
             }
+            Logger::info(out.str());
 
             cnt = 0;
         }
