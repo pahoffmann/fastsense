@@ -3,6 +3,7 @@
 \usepackage[T1]{fontenc}
 \usepackage{lmodern}
 \usepackage{tikz}
+\usetikzlibrary{math}
 \usetikzlibrary{snakes}
 \usetikzlibrary{decorations.pathreplacing}
 \usepackage[absolute,overlay]{textpos}
@@ -39,6 +40,7 @@
 \setbeamertemplate{title page}{
 \insertauthor\\\vspace{0.5cm}
 \begin{LARGE}\textbf{\inserttitle}\end{LARGE}\\\vspace{0.5cm}
+TODO: Bild\\\vspace{0.5cm}
 \insertdate
 }
 
@@ -124,7 +126,7 @@ Variable & Ziel \\
 \midrule
 Genauigkeit & Wiederfinden erneuter Pose \\
 Energie & 0,5\,J/frame \\
-Frequenz & \textbf{20\,fps} (echtzeitfähig) \\
+Frequenz & \textbf{\color{dark}20\,fps} (echtzeitfähig) \\
 Geschwindigkeit & 10\,km/h \\
 \bottomrule
 \end{tabular}}
@@ -137,7 +139,7 @@ Geschwindigkeit & 10\,km/h \\
 \end{textblock*}
 \end{frame}
 
-\section{Was haben wir wirklich gemacht?}
+\section{Ergebnisse MS\,3}
 \begin{frame}{\secname}
 \begin{textblock*}{12cm}(1cm,2cm)
 \begin{itemize}
@@ -183,7 +185,7 @@ Geschwindigkeit & 10\,km/h \\
 \item{Ouster}
 \item{Blickfeld}
 \end{itemize}
-\item[$\rightarrow$]{Nicht erfolgreich}
+\item[$\rightarrow$]{Future Work}
 \end{itemize}
 \begin{textblock*}{4cm}(8cm,2cm)
 \centering
@@ -249,15 +251,15 @@ TODO: Julian
 \begin{itemize}
 \item{Vorher: Rolling Average}
 \item{Während des Algorithmus:\\
-Akkumulation bis zur nächsten Pointcloud}
+Akkumulation bis zur nächsten Punktwolke}
 \end{itemize}
 \begin{center}
 \begin{tikzpicture}
 \draw (0, 0) rectangle +(1, 1) node[pos=0.5] {IMU};
 \draw[->] (1, 0.5) -- (3, 0.5);
-\draw[fill=white] (1.75, 0.25) rectangle +(0.5, 0.5);
+\draw[fill=light] (1.75, 0.25) rectangle +(0.5, 0.5);
 \node[above] at (2, 0.75) {Pose};
-\draw (3, 0.25) rectangle +(3, 0.5);
+\draw[fill=light] (3, 0.25) rectangle +(3, 0.5);
 \draw (3.5, 0.25) -- (3.5, 0.75);
 \draw (4, 0.25) -- (4, 0.75);
 \draw (4.5, 0.25) -- (4.5, 0.75);
@@ -466,15 +468,42 @@ Messages\\
 
 \subsection{Zeit}
 \begin{frame}{\secname: \subsecname}
-TODO: Steffen \\
-Histogramm \\
-11\% aller Scans sind über 50\,ms \\
-2\% gedroppt
+\begin{textblock*}{12.8cm}(0cm, 1.1cm)
+\centering
+\definecolor{bad}{rgb}{1, 0.5, 0.4}
+\begin{tikzpicture}[scale=0.85]
+\draw[->] (0, 0) -- (10.5, 0) node[right] {Zeit [ms]};
+\draw[->] (0, 0) -- (0, 8) node[above] {Anzahl Frames};
+\foreach \i\y in {0/3,1/11,2/15,3/10,4/7,5/3,6/2,7/1,8/1,9/1} {
+    \pgfmathsetmacro\res{int(\i * 10)}
+    \draw (\i, -0.1) node[below]{\res} -- (\i, 0.1);
+    \tikzmath {
+        if {\i < 5} then {
+            let \c = light;
+        } else {
+            let \c = bad;
+        };
+        { \draw[fill=\c] (\i, 0) rectangle (\i+1, \y/2); };
+    }
+}
+\draw (9.5, 0.25) -- (9.5, -0.5) node[below] {$>90$};
+\node at (8.5, 5) {\begin{minipage}{6.5cm}
+\begin{itemize}
+\item{Zeit für gesamten Algorithmus = \\
+Zeit für Registrierung}
+\item[\color{bad}$\bullet$]{11\% aller Scans über 50\,ms}
+\item[\color{red}$\bullet$]{2\% gedroppt}
+\end{itemize}
+\end{minipage}};
+\end{tikzpicture}
+\end{textblock*}
 \end{frame}
 
 \begin{frame}{\secname: \subsecname}
+\begin{textblock*}{12.8cm}(0cm, 2.5cm)
 \centering
-\includegraphics[width=11cm]{images/Zeiten.pdf}
+\includegraphics[width=12cm]{images/Zeiten.pdf}
+\end{textblock*}
 \end{frame}
 
 \subsection{Power Consumption}
