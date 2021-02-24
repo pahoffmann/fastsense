@@ -6,6 +6,8 @@
 \usetikzlibrary{snakes}
 \usetikzlibrary{decorations.pathreplacing}
 \usepackage[absolute,overlay]{textpos}
+\usepackage{booktabs}
+\usepackage{ulem}
 
 \title{Meilenstein 3}
 \author{Projektgruppe FastSense}
@@ -99,32 +101,98 @@
 \end{itemize}
 \end{frame}
 
-\section{Motivation MS\,3}
+\section{Ziele für MS\,3}
 \begin{frame}{\secname}
-TODO
-
-Eventuell die gesetzten Ziele erst in die Evaluationsfolien zum direkten Vergleich?
+\begin{textblock*}{12cm}(1cm,2cm)
+\begin{itemize}
+\item{Aufbau einer SLAM-Box}
+\begin{itemize}
+\item{Nutzung als Sensor}
+\item{Einfache Portierung zwischen Drohne, Roboter, Rucksack etc.}
+\item{Festes Interface, einfache Bedienung, Kapselung}
+\end{itemize}
+\end{itemize}
+\end{textblock*}
+\begin{textblock*}{12cm}(1cm,3.9cm)
+\begin{itemize}
+\item{Verbesserung und Optimierung des Algorithmus \\
+\vspace{0.2cm}
+\begin{tabular}{ll}
+\toprule
+Variable & Ziel \\
+\midrule
+Genauigkeit & Wiederfinden erneuter Pose \\
+Energie & 0,5\,J/frame \\
+Frequenz & \textbf{20\,fps} (echtzeitfähig) \\
+Geschwindigkeit & 10\,km/h \\
+\bottomrule
+\end{tabular}}
+\end{itemize}
+\end{textblock*}
+\begin{textblock*}{12cm}(1cm,7.7cm)
+\begin{itemize}
+\item{Mesh-Generierung auf Basis der TSDF Werte}
+\end{itemize}
+\end{textblock*}
 \end{frame}
 
 \section{Was haben wir wirklich gemacht?}
 \begin{frame}{\secname}
-TODO
-
-Patricks Idee mit dem Kontrast zwischen Plan und Realität
+\begin{textblock*}{12cm}(1cm,2cm)
+\begin{itemize}
+\item{Aufbau einer SLAM-Box {\small\color{dark}$\rightarrow$ \textbf{Aufbau}}}
+\begin{itemize}
+\item{Nutzung als Sensor}
+\item{\sout{Einfache Portierung zwischen Drohne, Roboter, Rucksack etc.}}
+\item{Festes Interface, einfache Bedienung, Kapselung}
+\end{itemize}
+\end{itemize}
+\end{textblock*}
+\begin{textblock*}{12cm}(1cm,3.9cm)
+\begin{itemize}
+\item{Verbesserung und Optimierung des Algorithmus}
+\begin{itemize}
+\item[$\rightarrow$]{\color{dark} \textbf{Base Design}}
+\item[$\rightarrow$]{\color{dark} \textbf{Kommunikation}}
+\item[$\rightarrow$]{\color{dark} \textbf{Preprocessing}}
+\item[$\rightarrow$]{\color{dark} \textbf{Registrierung vollständig auf Hardware}}
+\item[$\rightarrow$]{\color{dark} \textbf{Asynchrones TSDF Update}}
+\end{itemize}
+\end{itemize}
+\end{textblock*}
+\begin{textblock*}{12cm}(1cm,7.7cm)
+\begin{itemize}
+\item{Mesh-Generierung auf Basis der TSDF Werte}
+\begin{itemize}
+\item[$\rightarrow$]{\color{dark} \textbf{Mesh Rekonstruktion}}
+\end{itemize}
+\end{itemize}
+\end{textblock*}
 \end{frame}
 
 \subsection{Drohne, Laserscanner}
 \begin{frame}{\subsecname}
-TODO
-
-Experte Patrick
+\begin{itemize}
+\item{Drohne erfordert neuen Laserscanner}
+\begin{itemize}
+\item{Velodyne nicht geeignet}
+\end{itemize}
+\item{Kontakt mit Firmen:}
+\begin{itemize}
+\item{Ouster}
+\item{Blickfeld}
+\end{itemize}
+\end{itemize}
+\begin{textblock*}{4cm}(8cm,1.5cm)
+\centering
+\includegraphics[width=4cm]{images/ouster.png}
+\includegraphics[width=3cm]{images/blickfeld.png}
+\end{textblock*}
 \end{frame}
 
 \subsection{Aufbau}
 \begin{frame}{\subsecname}
 TODO
-
-Experte Adrian
 \end{frame}
 
 \subsection{Base Design}
@@ -145,9 +213,12 @@ Experte Julian
 
 \subsubsection*{Preprocessing}
 \begin{frame}{\subsecname: \subsubsecname}
-TODO
-
-Experte Pascal
+\includegraphics[width=4cm]{images/preprocessing.png}
+\begin{textblock*}{8cm}(5.5cm,2cm)
+\begin{itemize}
+\item{Verbesserung und Optimierung des Algorithmus}
+\end{itemize}
+\end{textblock*}
 \end{frame}
 
 \subsubsection*{Registrierung}
@@ -199,7 +270,7 @@ Experten Malte, Patrick
 \begin{frame}{\subsecname: \subsubsecname}
 TODO
 
-Experten Marcel, Juri
+Experten Marcel, Juri (vielleicht ganz raus)
 \end{frame}
 
 \subsection{Mesh Rekonstruktion}
