@@ -53,6 +53,8 @@ public:
 
     void reduction_filter_random_point(fastsense::msg::PointCloudPtrStamped& cloud);
 
+    void reduction_filter_closest(fastsense::msg::PointCloudPtrStamped& cloud);
+
     /**
      * @brief Applies a Median Filter to the PointCloud
      * 
