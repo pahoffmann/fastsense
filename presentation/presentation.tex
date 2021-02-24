@@ -8,6 +8,7 @@
 \usepackage[absolute,overlay]{textpos}
 \usepackage{booktabs}
 \usepackage{ulem}
+\usepackage{array}
 
 \title{Meilenstein 3}
 \author{Projektgruppe FastSense}
@@ -182,8 +183,9 @@ Geschwindigkeit & 10\,km/h \\
 \item{Ouster}
 \item{Blickfeld}
 \end{itemize}
+\item[$\rightarrow$]{Nicht erfolgreich}
 \end{itemize}
-\begin{textblock*}{4cm}(8cm,1.5cm)
+\begin{textblock*}{4cm}(8cm,2cm)
 \centering
 \includegraphics[width=4cm]{images/ouster.png}
 \includegraphics[width=3cm]{images/blickfeld.png}
@@ -213,12 +215,20 @@ Experte Julian
 
 \subsubsection*{Preprocessing}
 \begin{frame}{\subsecname: \subsubsecname}
-\includegraphics[width=4cm]{images/preprocessing.png}
-\begin{textblock*}{8cm}(5.5cm,2cm)
+\begin{tabular}{m{4cm}m{6cm}}
+\begin{tikzpicture}
+\fill[light] (0, 0) rectangle (4, 6);
+\node at (2, 5.5) {Preprocessing};
+\draw[->] (2, 4.5) node[above] {\footnotesize Pointcloud} -- (2, 4);
+\draw[fill=white] (0.5, 3) rectangle +(3, 1) node[pos=0.5] {Medianfilter};
+\draw[->] (2, 3) -- (2, 2.5);
+\draw[fill=white] (0.5, 1.5) rectangle +(3, 1) node[pos=0.5] {Reduktionsfilter};
+\draw[->] (2, 1.5) -- (2, 1) node[below] {\footnotesize Pointcloud};
+\end{tikzpicture} &
 \begin{itemize}
-\item{Verbesserung und Optimierung des Algorithmus}
+\item{TODO (Pascal) Verschiedene Filter?}
 \end{itemize}
-\end{textblock*}
+\end{tabular}
 \end{frame}
 
 \subsubsection*{Registrierung}
@@ -264,13 +274,6 @@ Experten Malte, Patrick
 \node at (4, 0.7) {{\color{hw}$\blacksquare$} = ausgelagert auf FPGA};
 \end{tikzpicture}
 \end{textblock*}
-\end{frame}
-
-\subsubsection*{Memports}
-\begin{frame}{\subsecname: \subsubsecname}
-TODO
-
-Experten Marcel, Juri (vielleicht ganz raus)
 \end{frame}
 
 \subsection{Mesh Rekonstruktion}
