@@ -96,7 +96,24 @@ public:
      * A copy would be too slow and bending the pointer is not possible because it is used in other places too.
      * Therefore the local map is moved.
      */
-    LocalMap& operator=(LocalMap&&) = default;
+    LocalMap& operator=(LocalMap&&) = delete;
+
+    void swap(LocalMap& rhs)
+    {
+        this->data_.swap(rhs.data_);
+        std::swap(this->size_, rhs.size_);
+        std::swap(this->pos_, rhs.pos_);
+        std::swap(this->offset_, rhs.offset_);
+        std::swap(this->map_, rhs.map_);
+    }
+    void fill_from(const LocalMap& rhs)
+    {
+        this->data_.fill_from(rhs.data_);
+        this->size_ = rhs.size_;
+        this->pos_ = rhs.pos_;
+        this->offset_ = rhs.offset_;
+        this->map_ = rhs.map_;
+    }
 
     /**
      * Returns a value from the local map per reference.

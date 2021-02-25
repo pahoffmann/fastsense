@@ -67,7 +67,7 @@ void CloudCallback::thread_run()
         }
 
         eval.start("total");
-        eval.start("prep");
+        //eval.start("prep");
 
         InputBuffer<PointHW> scan_point_buffer{q, point_cloud.data_->points_.size()};
         for (size_t i = 0; i < point_cloud.data_->points_.size(); i++)
@@ -76,7 +76,7 @@ void CloudCallback::thread_run()
             scan_point_buffer[i] = PointHW(point.x(), point.y(), point.z());
         }
 
-        eval.stop("prep");
+        //eval.stop("prep");
 
         if (first_iteration)
         {

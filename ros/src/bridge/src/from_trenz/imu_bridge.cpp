@@ -99,7 +99,7 @@ void ImuBridge::convert()
 {  
     const auto& [ data, timestamp ] = msg();
 
-    ros::Time ros_timestamp = ros::Time::now();//timestamp_to_rostime(timestamp);
+    ros::Time ros_timestamp = timestamp_to_rostime(timestamp);
 
     imu_ros_.header.frame_id = "base_link";
     imu_ros_.header.stamp = ros_timestamp;

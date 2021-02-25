@@ -10,9 +10,12 @@
 #include <msg/point_cloud.h>
 #include <hw/buffer/buffer.h>
 #include <util/point.h>
+
+#include <stdlib.h>
+#include <algorithm>
+
 #include <util/process_thread.h>
 #include <comm/queue_bridge.h>
-
 
 namespace fastsense::preprocessing
 {
@@ -30,7 +33,8 @@ public:
                   const std::shared_ptr<PointCloudBuffer>& out_buffer,
                   uint16_t port,
                   bool send,
-                  bool send_preprocessed);
+                  bool send_preprocessed,
+                  float scale = 1.0);
 
     void thread_run() override;
 
@@ -43,7 +47,13 @@ public:
      *
      * @param cloud point cloud message that contains data points from the lidar
      */
-    void reduction_filter(fastsense::msg::PointCloudPtrStamped& cloud);
+    void reduction_filter_average(fastsense::msg::PointCloudPtrStamped& cloud);
+
+    void reduction_filter_voxel_center(fastsense::msg::PointCloudPtrStamped& cloud);
+
+    void reduction_filter_random_point(fastsense::msg::PointCloudPtrStamped& cloud);
+
+    void reduction_filter_closest(fastsense::msg::PointCloudPtrStamped& cloud);
 
     /**
      * @brief Applies a Median Filter to the PointCloud
@@ -70,6 +80,7 @@ private:
     uint8_t median_from_array(std::vector<ScanPoint*> medians);
 
     bool send_preprocessed;
+    float scale;
 };
 
 }

@@ -142,7 +142,7 @@ extern "C"
                 iter_steps.second = delta_z / MAP_RESOLUTION;
 
                 auto lowest = PointArith(proj.x, proj.y, proj.z) - ((normed_interpolation_vector * delta_z) / MATRIX_RESOLUTION);
-                bounds.first = PointHW(lowest.x, lowest.y, lowest.z) / MAP_RESOLUTION;
+                bounds.first = PointHW(lowest.x, lowest.y, lowest.z); // / MAP_RESOLUTION;
                 bounds.second = normed_interpolation_vector;
 
                 value_fifo << tsdf;
@@ -209,8 +209,8 @@ extern "C"
             // this check used to be done at the beginning of the tsdf_loop, but that leads to timing violations
             if (index != old_index)
             {
-                auto index_arith = PointArith(bounds.first.x, bounds.first.y, bounds.first.z) + ((bounds.second * step) / MATRIX_RESOLUTION);
-                index = PointHW(index_arith.x, index_arith.y, index_arith.z);
+                auto index_arith = PointArith(bounds.first.x, bounds.first.y, bounds.first.z) + ((bounds.second * (step * MAP_RESOLUTION)) / MATRIX_RESOLUTION);
+                index = PointHW(index_arith.x, index_arith.y, index_arith.z) / MAP_RESOLUTION;
 
                 int map_index = map.getIndex(index.x, index.y, index.z);
 
