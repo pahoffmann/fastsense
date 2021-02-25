@@ -199,10 +199,46 @@ Geschwindigkeit & 10\,km/h \\
 
 \subsection{Aufbau}
 \begin{frame}{\subsecname}
+\begin{textblock*}{5.8cm}(1cm,1.1cm)
 \centering
-\includegraphics[width=5cm]{images/Rucksack01.jpg}
+\begin{tikzpicture}[scale=0.4]
+\draw (3, 10) arc (0:180:1.5);
+\draw (0, 10) -- (3, 10);
+\draw[fill=light] (1, 11.5) rectangle +(1, 1);
+\node[above] at (1.5, 12.5) {Velodyne};
+\draw[fill=light] (2, 11.5) rectangle +(0.5, 0.5);
+\node[right] at (2.5, 11.75) {IMU};
+\draw [decorate, decoration={snake, segment length=0.5mm, amplitude=0.5mm}]
+(0.5, 10.5) -- (-0.5, 10.5);
+\draw [fill=white] (-0.5, 10.5) circle (0.5);
+\draw [fill=black] (-0.5, 10.5) circle (0.25);
+\draw [decorate, decoration={snake, segment length=0.5mm, amplitude=0.5mm}]
+(2.5, 10.5) -- (3.5, 10.5);
+\draw [fill=white] (3.5, 10.5) circle (0.5);
+\draw [fill=black] (3.5, 10.5) circle (0.25);
+\draw (-1, 2) rectangle +(5, 6);
+\draw[fill=light] (-0.5, 2) rectangle +(4, 3);
+\draw (1.5, 2.25) -- (1.5, 1.75) node[below] {FPGA Board};
+\draw[fill=light] (1, 3.5) rectangle +(1, 1);
+\draw (1.75, 4) -- (4.5, 4) node[right] {Velodyne};
+\draw[fill=light] (0, 2.5) rectangle +(3, 1);
+\draw (2.75, 3) -- (4.5, 3) node[right] {Spannungswandler};
+\draw[fill=light] (-0.5, 5) rectangle +(4, 2.5)
+node[pos=0.5] {Router};
+\draw (6, 6) rectangle +(1, 1);
+\node[above] at (6.5, 7) {Controller};
+\draw[<->] (1.5, 8.5) -- (1.5, 9.5);
+\draw[<->] (4.5, 6.5) -- (5.5, 6.5);
+\end{tikzpicture}
+\end{textblock*}
+\begin{textblock*}{5.8cm}(1cm,6.7cm)
+\centering
+\includegraphics[width=3.5cm]{images/Box.jpg}
+\end{textblock*}
+\begin{textblock*}{5cm}(6.8cm,1.1cm)
 \includegraphics[width=5cm]{images/Rucksack02.jpg}
-\includegraphics[width=4cm]{images/Box.jpg}
+\includegraphics[width=5cm]{images/Rucksack01.jpg}
+\end{textblock*}
 \end{frame}
 
 \subsection{Base Design}
@@ -574,7 +610,7 @@ $\varepsilon$ = 0,01}
 \midrule
 U [mV] & 78,7 & 76 & 88 & 89,8 & 85,7 & 105,5 \\
 I [A] & 1,124 & 1,086 & 1,257 & 1,283 & 1,224 & 1,507 \\
-P [W] & 13,488 & 13,032 & \textbf{15,084} & 15,396 & 14,688 & 18,084 \\
+P [W] & 13,488 & 13,032 & 15,084 & \textbf{15,396} & 14,688 & 18,084 \\
 \bottomrule
 \end{tabular}
 \end{frame}
