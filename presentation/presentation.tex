@@ -38,9 +38,9 @@
     {\footnotesize \insertframenumber\\\vspace{0.15cm}}
 }
 \setbeamertemplate{title page}{
-\insertauthor\\\vspace{0.5cm}
+Projektgruppe\\\vspace{0.5cm}
+\includegraphics[width=10.8cm]{images/LogoFastSense.png}\\\vspace{0.5cm}
 \begin{LARGE}\textbf{\inserttitle}\end{LARGE}\\\vspace{0.5cm}
-TODO: Bild\\\vspace{0.5cm}
 \insertdate
 }
 
@@ -500,7 +500,7 @@ Messages\\
 \definecolor{bad}{rgb}{1, 0.5, 0.4}
 \begin{tikzpicture}[scale=0.85]
 \draw[->] (0, 0) -- (10.5, 0) node[right] {Zeit [ms]};
-\draw[->] (0, 0) -- (0, 8) node[above] {Anzahl Frames};
+\draw[->] (0, 0) -- (0, 8) node[above] {Anzahl Scans};
 \foreach \i\y in {0/3,1/11,2/15,3/10,4/7,5/3,6/2,7/1,8/1,9/1} {
     \pgfmathsetmacro\x{int(\i * 10)}
     \draw (\i, -0.1) node[below]{\x} -- (\i, 0.1);
@@ -531,7 +531,7 @@ Messages\\
 \definecolor{bad}{rgb}{1, 0.5, 0.4}
 \begin{tikzpicture}[scale=0.85]
 \draw[->] (0, 0) -- (10.5, 0) node[right] {Zeit [ms]};
-\draw[->] (0, 0) -- (0, 8) node[above] {Anzahl Frames};
+\draw[->] (0, 0) -- (0, 8) node[above] {Anzahl Scans};
 \foreach \i\y in {0/1,1/5,2/7,3/8,4/8,5/14,6/7,7/3,8/1,9/2} {
     \pgfmathsetmacro\x{int(\i * 10)}
     \draw (\i, -0.1) node[below]{\x} -- (\i, 0.1);
@@ -547,10 +547,10 @@ Messages\\
 \draw (9.5, 0.25) -- (9.5, -0.5) node[below] {$>90$};
 \node at (9.5, 5) {\begin{minipage}{5.5cm}
 \begin{itemize}
-\item{Vergleich: $\varepsilon = 0.01$}
-\item{Avg: 47ms}
+\item{Vergleich: $\varepsilon = 0,01$}
+\item{Avg: 47\,ms}
 \item[\color{bad}$\bullet$]{48\% aller Scans über 50\,ms}
-\item[\color{red}$\bullet$]{10\% gedroppt $\Rightarrow$ 18 fps}
+\item[\color{red}$\bullet$]{10\% gedroppt $\Rightarrow$ 18\,fps}
 \end{itemize}
 \end{minipage}};
 \end{tikzpicture}
@@ -559,7 +559,32 @@ Messages\\
 
 \subsection{Power Consumption}
 \begin{frame}{\secname: \subsecname}
-TODO: Adrian
+\centering
+\includegraphics[width=8cm]{images/power_consumption.jpg}\\\vspace{0.5cm}
+\begin{tabular}{lllllll}
+\toprule
+& \multicolumn{3}{c}{Idle} & \multicolumn{3}{c}{Running} \\
+& Mean & Min & Max & Mean & Min & Max \\
+\midrule
+U [mV] & 78,7 & 76 & 88 & 89,8 & 85,7 & 105,5 \\
+I [A] & 1,124 & 1,086 & 1,257 & 1,283 & 1,224 & 1,507 \\
+P [W] & 13,488 & 13,032 & \textbf{15,084} & 15,396 & 14,688 & 18,084 \\
+\bottomrule
+\end{tabular}
+\end{frame}
+
+\begin{frame}{\secname: \subsecname}
+\centering
+\begin{tabular}{llll}
+\toprule
+Plattform & Zeit [s] & Leistung [W] & Energie [J/Scan] \\
+\midrule
+FPGA Board (MS3) & 0,038 & 15,4 & 0,59 \\
+FPGA Board (MS2) & 1,153 & 10,32 & 11,9 \\
+NUC (MS2) & 0,279 & 34 & 9,49 \\
+PC (MS2) & 0,182 & 80 & 14,6 \\
+\bottomrule
+\end{tabular}
 \end{frame}
 
 \subsection{Qualität}
@@ -567,38 +592,38 @@ TODO: Adrian
 \begin{itemize}
 \item{6. Stockwerk (Distanzabweichung in Meter)}
 \begin{center}
-\begin{tabular}{ |c|c|c| }
-    \hline
-    epsilon & 0.01 & 0.04 \\ 
-    \hline
-    & 0.0615 & 0.0505 \\  
-    \hline
+\begin{tabular}{ccc}
+    \toprule
+    $\varepsilon$ & 0,01 & 0,04 \\ 
+    \midrule
+    & 0,0615 & 0,0505 \\  
+    \bottomrule
 \end{tabular}
 \end{center}
 \begin{center}
-\begin{tabular}{ |c|c|c| }
-    \hline
+\begin{tabular}{ccc}
+    \toprule
     Geschw. & langsam & schnell \\ 
-    \hline
-    & 0.0505 & 0.0437 \\  
-    \hline
+    \midrule
+    & 0,0505 & 0,0437 \\  
+    \bottomrule
 \end{tabular}
 \end{center}
 \begin{itemize}
-    \item{gesamt (langsam, epsilon = 0.04): 0.075349}
+    \item{gesamt (langsam, $\varepsilon$ = 0,04): 0,075349}
 \end{itemize}
 \item{8 Meter Labortest (Distanzabweichung in Meter)}
 \begin{center}
-\begin{tabular}{ |c|c|c|c| }
-    \hline
+\begin{tabular}{cccc}
+    \toprule
     & hin & zurück & gesamt \\ 
-    \hline
-    langsam & 0.0548 & 0.0650 & 0.0861 \\  
-    schnell & 0.1676 & 0.0459 & 0.1320 \\
-    \hline
+    \midrule
+    langsam & 0,0548 & 0,0650 & 0,0861 \\  
+    schnell & 0,1676 & 0,0459 & 0,1320 \\
+    \bottomrule
 \end{tabular}
 \end{center}
-\item{Leerlauf (nach einer Stunde, epsilon = 0.04): 0.156095}
+\item{Leerlauf (nach einer Stunde, $\varepsilon$ = 0,04): 0,156095}
 \end{itemize}
 \end{frame}
 
