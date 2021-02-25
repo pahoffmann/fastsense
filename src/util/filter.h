@@ -27,15 +27,14 @@ protected:
     /// delete copy assignment operator
     Filter& operator=(const Filter& other) = delete;
 
-    // TODO without these as default Runtime Evaluator fails compilation
-    /// default move assignment operator
-    Filter& operator=(Filter&&) = default;
+    /// delete move assignment operator
+    Filter& operator=(Filter&&) noexcept = delete;
 
     // default copy constructor
     Filter(const Filter&) = default;
 
-    /// default move constructor
-    Filter(Filter&&) = default;
+    /// delete move constructor
+    Filter(Filter&&) noexcept = delete;
 
     /**
      * Update performs one filter step

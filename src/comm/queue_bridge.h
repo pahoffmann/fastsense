@@ -40,6 +40,19 @@ public:
      */
     virtual ~QueueBridgeBase() = default;
 
+    /// delete copy constructor
+    QueueBridgeBase(const QueueBridgeBase& other) = delete;
+
+    /// delete move constructor
+    QueueBridgeBase(QueueBridgeBase&& other) = delete;
+
+    /// delete assignment operator
+    QueueBridgeBase& operator=(const QueueBridgeBase& other) = delete;
+
+    /// delete move assignment operator
+    QueueBridgeBase& operator=(QueueBridgeBase&& other) = delete;
+
+
 protected:
     /// Input Buffer
     BufferType in_;
@@ -105,7 +118,21 @@ class QueueBridge : public QueueBridgeBase<T, T, FORCE>
 {
 public:
     using QueueBridgeBase<T, T, FORCE>::QueueBridgeBase;
+
+    /// default destructor
     ~QueueBridge() override = default;
+
+    /// delete copy constructor
+    QueueBridge(const QueueBridge& other) = delete;
+
+    /// delete move constructor
+    QueueBridge(QueueBridge&& other) = delete;
+
+    /// delete assignment operator
+    QueueBridge& operator=(const QueueBridge& other) = delete;
+
+    /// delete move assignment operator
+    QueueBridge& operator=(QueueBridge&& other) = delete;
 
 protected:
     void send(const T& val) override
@@ -125,7 +152,21 @@ class QueueBridge<std::shared_ptr<T>, FORCE> : public QueueBridgeBase<std::share
 {
 public:
     using QueueBridgeBase<std::shared_ptr<T>, T, FORCE>::QueueBridgeBase;
+
+    /// default destructor
     ~QueueBridge() override = default;
+
+    /// delete copy constructor
+    QueueBridge(const QueueBridge& other) = delete;
+
+    /// delete move constructor
+    QueueBridge(QueueBridge&& other) = delete;
+
+    /// delete assignment operator
+    QueueBridge& operator=(const QueueBridge& other) = delete;
+
+    /// delete move assignment operator
+    QueueBridge& operator=(QueueBridge&& other) = delete;
 
 protected:
     void send(const std::shared_ptr<T>& val) override
@@ -146,7 +187,21 @@ class QueueBridge<msg::Stamped<std::shared_ptr<msg::PointCloud>>, FORCE> : publi
 {
 public:
     using QueueBridgeBase<msg::Stamped<std::shared_ptr<msg::PointCloud>>, msg::PointCloudStamped, FORCE>::QueueBridgeBase;
+    
+    /// default destructor
     ~QueueBridge() override = default;
+
+    /// delete copy constructor
+    QueueBridge(const QueueBridge& other) = delete;
+
+    /// delete move constructor
+    QueueBridge(QueueBridge&& other) = delete;
+
+    /// delete assignment operator
+    QueueBridge& operator=(const QueueBridge& other) = delete;
+
+    /// delete move assignment operator
+    QueueBridge& operator=(QueueBridge&& other) = delete;
 
 protected:
     void send(const msg::Stamped<std::shared_ptr<msg::PointCloud>>& val) override
@@ -167,7 +222,21 @@ class QueueBridge<msg::Stamped<T>, FORCE> : public QueueBridgeBase<msg::Stamped<
 {
 public:
     using QueueBridgeBase<msg::Stamped<T>, msg::Stamped<T>, FORCE>::QueueBridgeBase;
+    
+    /// default destructor
     ~QueueBridge() override = default;
+
+    /// delete copy constructor
+    QueueBridge(const QueueBridge& other) = delete;
+
+    /// delete move constructor
+    QueueBridge(QueueBridge&& other) = delete;
+
+    /// delete assignment operator
+    QueueBridge& operator=(const QueueBridge& other) = delete;
+
+    /// delete move assignment operator
+    QueueBridge& operator=(QueueBridge&& other) = delete;
 
 protected:
     void send(const msg::Stamped<T>& val) override

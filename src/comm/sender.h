@@ -33,27 +33,22 @@ public:
         socket_.bind("tcp://*:" + std::to_string(port));
     }
 
-    /**
-     * @brief Destroy the Sender object
-     */
+    /// Destroy the Sender object
     ~Sender() = default;
 
-    /**
-     * @brief Delete copy constructor
-     */
+    /// Delete copy constructor
     Sender(const Sender&) = delete;
 
 
-    /**
-     * @brief Delete move constructor
-     */
+    /// @brief Delete move constructor
     Sender(Sender&&) = delete;
 
 
-    /**
-     * @brief Delete assignment operator
-     */
+    /// Delete assignment operator
     Sender& operator=(Sender const&) = delete;
+
+    /// Delete move assignment operator
+    Sender& operator=(Sender&&) = delete;
 
     /**
      * @brief Send data (with size known at compile time)
