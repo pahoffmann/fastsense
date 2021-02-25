@@ -196,7 +196,7 @@ Geschwindigkeit & 10\,km/h \\
 
 \subsection{Aufbau}
 \begin{frame}{\subsecname}
-TODO: Steffen oder Adrian mit Bildern von Adrian
+TODO: Steffen mit Bildern von Adrian
 \end{frame}
 
 \subsection{Base Design}
@@ -213,8 +213,6 @@ TODO: Steffen oder Adrian mit Bildern von Adrian
 
 \subsection{Kommunikation}
 \begin{frame}{\subsecname}
-
-\begin{textblock*}{12cm}(1cm,2cm)
 \begin{itemize}
 \item{Kommunikation funktioniert in beide Richtungen}
 \begin{itemize}
@@ -222,24 +220,15 @@ TODO: Steffen oder Adrian mit Bildern von Adrian
 \item[]{\color{dark} Host  \hphantom{} $\rightarrow$ Trenz}
 \item[$\rightarrow$]{\color{dark} \textbf{Grundlage für Evaluierung und Reproduzierbarkeit}}
 \end{itemize}
-\end{itemize}
-\end{textblock*}
-\begin{textblock*}{12cm}(1cm,4.5cm)
-\begin{itemize}
 \item{Speichern des Poseverlaufs}
 \begin{itemize}
 \item[$\rightarrow$]{\color{dark} \textbf{Visualisierung der Abweichungen und Pfades in RViz}}
 \end{itemize}
-\end{itemize}
-\end{textblock*}
-\begin{textblock*}{12cm}(1cm,6.5cm)
-\begin{itemize}
 \item{Nicht-Blockend}
 \begin{itemize}
 \item[$\rightarrow$]{\color{dark} \textbf{Sauberes Abspeichern der Global Map}}
 \end{itemize}
 \end{itemize}
-\end{textblock*}
 \end{frame}
 
 \subsection{Algorithmus}
@@ -273,17 +262,18 @@ TODO: Steffen oder Adrian mit Bildern von Adrian
 \subsubsection*{Preprocessing IMU}
 \begin{frame}{\subsecname: \subsubsecname}
 \begin{itemize}
-\item{Vor Iteration des Algorithmus: configurierbarer Rolling Average Filter}
+\item{Vor Iteration des Algorithmus: Konfigurierbarer Rolling Average Filter}
 \item{Während des Algorithmus:\\
 Akkumulation bis zur nächsten Punktwolke}
 \end{itemize}
 \begin{center}
 \begin{tikzpicture}
-\draw (0, 0) rectangle +(1, 1) node[pos=0.5] {IMU};
-\draw[->] (1, 0.5) -- (3, 0.5);
-\draw[fill=light] (1.75, 0.25) rectangle +(0.5, 0.5);
-\node[above] at (2, 0.75) {Pose};
+\draw (1, 0) rectangle +(1, 1) node[pos=0.5] {IMU};
+\draw[->] (2, 0.5) -- (3, 0.5);
 \draw[fill=light] (3, 0.25) rectangle +(3, 0.5);
+\node[above] at (3.25, 0.75) {0};
+\node[above] at (4.5, 0.75) {\dots};
+\node[above] at (5.75, 0.75) {$\sim$25};
 \draw (3.5, 0.25) -- (3.5, 0.75);
 \draw (4, 0.25) -- (4, 0.75);
 \draw (4.5, 0.25) -- (4.5, 0.75);
@@ -291,7 +281,10 @@ Akkumulation bis zur nächsten Punktwolke}
 \draw (5.5, 0.25) -- (5.5, 0.75);
 \draw [decorate, decoration={brace, amplitude=0.25cm, mirror}] (3, 0.25) -- (6, 0.25);
 \draw[->] (4.5, 0) -- (4.5, -0.5) -- (7, -0.5);
-\draw (7, -1) rectangle +(3, 1) node[pos=0.5] {Registration};
+\draw (7, -1.25) rectangle +(3, 1) node[pos=0.5] {Registration};
+\draw (1, -1.5) rectangle +(1, 1) node[pos=0.5] {Lidar};
+\draw[->] (2, -1) -- (7, -1);
+\draw[->] (8.5, -1.25) -- (8.5, -2) node[below] {Pose};
 \end{tikzpicture}
 \end{center}
 \end{frame}
@@ -506,8 +499,8 @@ Messages\\
 \draw[->] (0, 0) -- (10.5, 0) node[right] {Zeit [ms]};
 \draw[->] (0, 0) -- (0, 8) node[above] {Anzahl Frames};
 \foreach \i\y in {0/3,1/11,2/15,3/10,4/7,5/3,6/2,7/1,8/1,9/1} {
-    \pgfmathsetmacro\res{int(\i * 10)}
-    \draw (\i, -0.1) node[below]{\res} -- (\i, 0.1);
+    \pgfmathsetmacro\x{int(\i * 10)}
+    \draw (\i, -0.1) node[below]{\x} -- (\i, 0.1);
     \tikzmath {
         if {\i < 5} then {
             let \c = light;
@@ -537,8 +530,8 @@ Messages\\
 \draw[->] (0, 0) -- (10.5, 0) node[right] {Zeit [ms]};
 \draw[->] (0, 0) -- (0, 8) node[above] {Anzahl Frames};
 \foreach \i\y in {0/1,1/5,2/7,3/8,4/8,5/14,6/7,7/3,8/1,9/2} {
-    \pgfmathsetmacro\res{int(\i * 10)}
-    \draw (\i, -0.1) node[below]{\res} -- (\i, 0.1);
+    \pgfmathsetmacro\x{int(\i * 10)}
+    \draw (\i, -0.1) node[below]{\x} -- (\i, 0.1);
     \tikzmath {
         if {\i < 5} then {
             let \c = light;
@@ -573,18 +566,20 @@ TODO: Marc \\
 Dran denken: Meshes zeigen
 \end{frame}
 
-\section{Ausblick bis Hauptvortrag}
-\begin{frame}{\secname}
+\section{Ausblick}
+
+\begin{frame}{Ausblick bis Hauptvortrag}
 \begin{itemize}
 \item{Aufnahme eines Teils der Innenstadt auf Kettcar}
-\item{Aufarbeitung theoretischer Hintergründe (Registrierung, Kartierung, etc...)}
-\item{Vervollständigung der Dokumentation und static code checking}
+\item{Aufarbeitung theoretischer Hintergründe \\
+(Registrierung, Kartierung, etc\dots)}
+\item{Vervollständigung der Dokumentation und \\
+Static Code Checking}
+\item{Erstellung einer Übersicht über den gesamten Algorithmus}
 \end{itemize}
 \end{frame}
 
-
-\section{Gesamtausblick}
-\begin{frame}{\secname}
+\begin{frame}{Gesamtausblick}
 \begin{itemize}
 \item{FastSense Paper}
 \item{Loop Closing}
