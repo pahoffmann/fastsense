@@ -35,6 +35,14 @@ int main()
         return -1;
     }
 
+    // Add Logger to external drive
+    std::ostringstream filename;
+    auto now = std::chrono::system_clock::now();
+    auto t = std::chrono::system_clock::to_time_t(now);
+    filename << ConfigManager::config().slam.map_path() << "/FastSense_" << std::put_time(std::localtime(&t), "%Y-%m-%d-%H-%M-%S") << ".log";
+    auto externalFileSink = std::make_shared<FileSink>(filename.str());
+    Logger::addSink(externalFileSink);
+
     try
     {
         FPGAManager::load_xclbin("FastSense.xclbin");

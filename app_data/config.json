@@ -13,7 +13,7 @@
     "registration": {
         "max_iterations": 200,
         "it_weight_gradient": 0.1,
-        "epsilon": 0.01
+        "epsilon": 0.04
     },
 
     "gpio": {
@@ -26,7 +26,7 @@
     "bridge": {
         "use_from" : false,
         "use_to" : true,
-        "send_preprocessed" : true,
+        "send_preprocessed" : false,
 
         "host_from": "192.168.1.2",
 
