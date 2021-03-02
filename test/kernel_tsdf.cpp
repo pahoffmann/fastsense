@@ -74,7 +74,7 @@ TEST_CASE("Kernel_TSDF", "[kernel][slow]")
             kernel_points[0].y = MAP_RESOLUTION / 2;
             kernel_points[0].z = MAP_RESOLUTION / 2;
 
-            krnl.run(localMap, kernel_points, TAU, 5 * WEIGHT_RESOLUTION);
+            krnl.run(localMap, kernel_points, kernel_points.size(), TAU, 5 * WEIGHT_RESOLUTION);
             krnl.waitComplete();
 
             // Front values
@@ -130,7 +130,7 @@ TEST_CASE("Kernel_TSDF", "[kernel][slow]")
             kernel_points[0].y = MAP_RESOLUTION / 2;
             kernel_points[0].z = MAP_RESOLUTION / 2;
 
-            krnl.run(localMap, kernel_points, TAU, 5 * WEIGHT_RESOLUTION);
+            krnl.run(localMap, kernel_points, kernel_points.size(), TAU, 5 * WEIGHT_RESOLUTION);
             krnl.waitComplete();
 
             int new_weight = WEIGHT_RESOLUTION + DEFAULT_WEIGHT;
@@ -151,7 +151,7 @@ TEST_CASE("Kernel_TSDF", "[kernel][slow]")
             CHECK(localMap.value(2, 0, 0).weight() == new_weight);
             CHECK(localMap.value(1, 0, 0).weight() == new_weight);
 
-            krnl.run(localMap, kernel_points, TAU, 24);
+            krnl.run(localMap, kernel_points, kernel_points.size(), TAU, 24);
             krnl.waitComplete();
 
             CHECK(localMap.value(6, 0, 0).weight() == 24);
@@ -208,7 +208,7 @@ TEST_CASE("Kernel_TSDF", "[kernel][slow]")
 
         //calc tsdf values for the points from the pcd and store them in the local map
 
-        krnl.run(local_map, kernel_points, TAU, MAX_WEIGHT);
+        krnl.run(local_map, kernel_points, kernel_points.size(), TAU, MAX_WEIGHT);
         krnl.waitComplete();
 
         fastsense::buffer::InputOutputBuffer<TSDFValue> new_entries(q, local_map_sw.get_size().x() * local_map_sw.get_size().y() * local_map_sw.get_size().z());

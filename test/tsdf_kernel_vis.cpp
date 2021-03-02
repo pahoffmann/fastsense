@@ -93,7 +93,7 @@ TEST_CASE("TSDF_Kernel_Vis", "[tsdf_kernel_vis]")
         auto q3 = fastsense::hw::FPGAManager::create_command_queue();
         fastsense::kernels::TSDFKernel krnl(q3, local_map.getBuffer().size());
 
-        krnl.run(local_map, kernel_points, TAU, MAX_WEIGHT);
+        krnl.run(local_map, kernel_points, kernel_points.size(), TAU, MAX_WEIGHT);
         krnl.waitComplete();
 
         // fastsense::tsdf::krnl_tsdf_sw(kernel_points_sw.data(),

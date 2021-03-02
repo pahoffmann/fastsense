@@ -118,7 +118,7 @@ static EvalStats eval_registration(fastsense::map::LocalMap& local_map, fastsens
     auto buffer_ptr = scan_points_to_input_buffer(pretransformed, q);
     auto& buffer = *buffer_ptr;
     Matrix4f result_matrix = Matrix4f::Identity();
-    reg.register_cloud(local_map, buffer, util::HighResTime::now(), result_matrix);
+    reg.register_cloud(local_map, buffer, buffer.size(), util::HighResTime::now(), result_matrix);
 
     reg.transform_point_cloud(pretransformed, result_matrix);
     return get_transform_error(pretransformed, original);
@@ -227,10 +227,10 @@ TEST_CASE("Eval_Median", "[eval_median][slow]")
     auto q3 = fastsense::hw::FPGAManager::create_command_queue();
     fastsense::kernels::TSDFKernel krnl(q3, local_map.getBuffer().size());
 
-    krnl.run(local_map, kernel_points, TAU, MAX_WEIGHT);
+    krnl.run(local_map, kernel_points, kernel_points.size(), TAU, MAX_WEIGHT);
     krnl.waitComplete();
 
-    krnl.run(local_map_preprocessed, kernel_points_preprocessed, TAU, MAX_WEIGHT);
+    krnl.run(local_map_preprocessed, kernel_points_preprocessed, kernel_points_preprocessed.size(), TAU, MAX_WEIGHT);
     krnl.waitComplete();
 
     SECTION("Test Registration No Transform")
