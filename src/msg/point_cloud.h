@@ -43,7 +43,7 @@ public:
     {
     }
 
-    PointCloud& operator=(PointCloud&& other)
+    PointCloud& operator=(PointCloud&& other) noexcept
     {
         points_ = std::move(other.points_);
         rings_ = other.rings_;

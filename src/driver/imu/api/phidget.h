@@ -43,7 +43,14 @@ namespace driver
 class Phidget
 {
 public:
+    /**
+     * @brief Construct a new Phidget object with empty handle
+     */
     Phidget();
+
+    /**
+     * @brief Destroy the Phidget object: Handles closing of connection
+     */
     virtual ~Phidget();
 
     /**
@@ -51,13 +58,26 @@ public:
      *
      * @return Phidget& other Phidget
      */
-    Phidget& operator=(Phidget&) = delete;
+    Phidget& operator=(const Phidget& other) = delete;
+
+    /**
+     * @brief delete move assignment operator because of pointer member variable
+     *
+     * @return Phidget&& other Phidget (rval)
+     */
+    Phidget& operator=(const Phidget&& other) = delete;
 
     /**
      * @brief delete copy constructor because of pointer member variable
      * @param Phidget& other Phidget
      */
-    Phidget(Phidget&) = delete;
+    Phidget(Phidget& other) = delete;
+
+    /**
+     * @brief delete move constructor because of pointer member variable
+     * @param Phidget&& other Phidget (rval)
+     */
+    Phidget(Phidget&& other) = delete;
 
     /**@brief Open a connection to a Phidget
      * @param serial_number The serial number of the phidget to which to attach
@@ -100,7 +120,9 @@ protected:
     virtual void error_handler(int error);
 
 private:
+    /// device handler
     CPhidgetHandle handle_;
+
     static int attach_handler(CPhidgetHandle handle, void* userptr);
     static int detach_handler(CPhidgetHandle handle, void* userptr);
     static int error_handler(CPhidgetHandle handle, void* userptr, int ErrorCode,

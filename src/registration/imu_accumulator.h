@@ -34,6 +34,18 @@ public:
      */
     ~ImuAccumulator() = default;
 
+    /// delete copy assignment operator
+    ImuAccumulator& operator=(const ImuAccumulator& other) = delete;
+
+    /// delete move assignment operator
+    ImuAccumulator& operator=(ImuAccumulator&&) = delete;
+
+    /// delete copy constructor
+    ImuAccumulator(const ImuAccumulator&) = delete;
+
+    /// delete move constructor
+    ImuAccumulator(ImuAccumulator&&) = delete;
+
     /**
      * @brief Return acculated transform for given pointcloud timestamp
      *

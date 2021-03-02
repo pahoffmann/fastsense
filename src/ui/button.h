@@ -30,8 +30,16 @@ public:
  */
     Button(const gpiod::line& line, std::chrono::nanoseconds timeout = std::chrono::nanoseconds{100'000'000});
     ~Button() = default;
+    /// delete copy constructor
     Button(const Button&) = delete;
+    /// delete copy assignment operator
     Button& operator=(const Button&) = delete;
+    
+    /// delete move assignment operator
+    Button& operator=(Button&&) noexcept = delete;
+
+    /// delete move constructor
+    Button(Button&&) = delete;
 
     /**
      * @brief Wait for button press or until a condition is true

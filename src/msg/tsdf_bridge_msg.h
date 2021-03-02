@@ -16,17 +16,51 @@
 namespace fastsense::msg
 {
 
+/**
+ * @brief Represents TSDF Bridge Message
+ * 
+ * Inherits from ZMQConverter, because it contains a dynamic data type (std::vector)
+ */
 struct TSDFBridgeMessage : public ZMQConverter
 {
+    /// default constructor
     TSDFBridgeMessage() = default;
+
+    /// default destructor
     ~TSDFBridgeMessage() override = default;
 
+    /// copy assignment operator
+    TSDFBridgeMessage& operator=(const TSDFBridgeMessage& other) = default;
+
+    /// default move assignment operator
+    TSDFBridgeMessage& operator=(TSDFBridgeMessage&&) noexcept = default;
+
+    /// default copy constructor
+    TSDFBridgeMessage(const TSDFBridgeMessage&) = default;
+
+    /// default move constructor
+    TSDFBridgeMessage(TSDFBridgeMessage&&) noexcept = default;
+
+    /// truncation distance
     float tau_;
+
+    /// size of map 
     Vector3i size_;
+
+    /// global position
     Vector3i pos_;
+    
+    /// shift offset
     Vector3i offset_;
+
+    /// actual tsdf data
     std::vector<TSDFValue> tsdf_data_;
 
+    /**
+     * @brief Convert zmq_multipart to TSDFBridgeMessage
+     * 
+     * @param msg multipart message
+     */
     void from_zmq_msg(zmq::multipart_t& msg)
     {
         tau_ = msg.poptyp<float>();
@@ -41,6 +75,11 @@ struct TSDFBridgeMessage : public ZMQConverter
         std::copy_n(static_cast<TSDFValue*>(tsdf_data_msg.data()), n_tsdf_values, std::back_inserter(tsdf_data_));
     }
 
+    /**
+     * @brief Convert TSDFBridgeMessage to multipart
+     * 
+     * @return zmq::multipart_t zmw multipart message
+     */
     zmq::multipart_t to_zmq_msg() const
     {
         zmq::multipart_t multi;

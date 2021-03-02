@@ -50,20 +50,20 @@ public:
               float position_threshold,
               fastsense::CommandQueuePtr& q);
 
-    /**
-     * @brief Default destructor of the map thread.
-     */
+    /// Default destructor of the map thread.
     ~MapThread() = default;
 
-    /**
-     * @brief Deleted copy constructor of the map thread.
-     */
+    /// Deleted copy constructor of the map thread.
     MapThread(const MapThread&) = delete;
     
-    /**
-     * @brief Deleted assignment operator of the map thread.   
-     */
+    /// Deleted assignment operator of the map thread.   
     MapThread& operator=(const MapThread&) = delete;
+
+    /// Deleted move constructor of the map thread.
+    MapThread(MapThread&&) = delete;
+    
+    /// Deleted assignment operator of the map thread.   
+    MapThread& operator=(MapThread&&) = delete;
 
     /**
      * @brief Starts the thread for shifting, updating and visualization the map

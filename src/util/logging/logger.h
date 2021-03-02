@@ -70,6 +70,15 @@ public:
      */
     Logger(Logger&) = delete;
 
+    /// delete move assignment operator
+    Logger& operator=(Logger&&) noexcept = delete;
+
+    /// delete move constructor
+    Logger(Logger&&) = delete;
+
+    /// default destructor
+    ~Logger() = default;
+
     template<typename ...Args>
     static void debug(const Args& ...args);
 

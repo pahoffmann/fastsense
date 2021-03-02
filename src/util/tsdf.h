@@ -38,8 +38,10 @@ public:
 
     TSDFValue() = default;
     TSDFValue(const TSDFValue&) = default;
+    TSDFValue(TSDFValue&&) = default;
     ~TSDFValue() = default;
     TSDFValue& operator=(const TSDFValue&) = default;
+    TSDFValue& operator=(TSDFValue&&) = default;
 
     bool operator==(const TSDFValue& rhs) const
     {

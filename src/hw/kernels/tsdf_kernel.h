@@ -30,6 +30,18 @@ public:
 
     ~TSDFKernel() override = default;
 
+    /// delete copy assignment operator
+    TSDFKernel& operator=(const TSDFKernel& other) = delete;
+
+    /// delete move assignment operator
+    TSDFKernel& operator=(TSDFKernel&&) noexcept = delete;
+
+    /// delete copy constructor
+    TSDFKernel(const TSDFKernel&) = delete;
+
+    /// delete move constructor
+    TSDFKernel(TSDFKernel&&) = delete;
+
     void run(map::LocalMap& map, const buffer::InputBuffer<PointHW>& scan_points, TSDFValue::ValueType tau, TSDFValue::WeightType max_weight, PointHW up = PointHW(0, 0, MATRIX_RESOLUTION))
     {
         for (int i = 0; i < (int)new_entries.size(); ++i)
