@@ -13,7 +13,6 @@
 
 #include "application.h"
 #include <msg/imu.h>
-#include <msg/tsdf_bridge_msg.h>
 #include <msg/stamped.h>
 #include <util/config/config_manager.h>
 #include <util/logging/logger.h>
@@ -236,7 +235,6 @@ int Application::run()
             Runner run_lidar_bridge(preprocessing);
             Runner run_imu_driver(*imu_driver);
             Runner run_imu_bridge(imu_bridge);
-            Runner run_tsdf_bridge(tsdf_bridge);
             Runner run_transform_bridge(transform_bridge);
             Runner run_map_thread(map_thread);
 

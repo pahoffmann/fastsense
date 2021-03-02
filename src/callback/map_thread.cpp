@@ -52,7 +52,7 @@ void MapThread::go(const Vector3i& pos, const Eigen::Matrix4f& pose, const fasts
     {
         pos_ = pos;
         pose_ = pose;
-        if (points_ptr_->size() != points.size())
+        if (points_ptr_ == nullptr || points_ptr_->size() != points.size())
         {
             points_ptr_.reset();
             points_ptr_.reset(new fastsense::buffer::InputBuffer<PointHW>(points));
