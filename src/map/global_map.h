@@ -86,18 +86,6 @@ private:
      */
     int index_from_pos(Vector3i pos, const Vector3i& chunkPos);
 
-    /**
-     * Activates a chunk and returns it by reference.
-     * If the chunk was already active, it is simply returned.
-     * Else the HDF5 file is checked for the chunk.
-     * If it also doesn't exist there, a new empty chunk is created.
-     * Chunks get replaced and written into the HDF5 file by a LRU strategy.
-     * The age of the activated chunk is reset and all ages are updated.
-     * @param chunk position of the chunk that gets activated
-     * @return reference to the activated chunk
-     */
-    std::vector<TSDFValue::RawType>& activate_chunk(const Vector3i& chunk);
-
 public:
 
     /**
@@ -150,6 +138,18 @@ public:
      * @param quat_w w-value of the rotation quaternion of the pose
      */
     void save_pose(float t_x, float t_y, float t_z, float quat_x, float quat_y, float quat_z, float quat_w);
+
+    /**
+     * Activates a chunk and returns it by reference.
+     * If the chunk was already active, it is simply returned.
+     * Else the HDF5 file is checked for the chunk.
+     * If it also doesn't exist there, a new empty chunk is created.
+     * Chunks get replaced and written into the HDF5 file by a LRU strategy.
+     * The age of the activated chunk is reset and all ages are updated.
+     * @param chunk position of the chunk that gets activated
+     * @return reference to the activated chunk
+     */
+    std::vector<TSDFValue::RawType>& activate_chunk(const Vector3i& chunk);
 
     /**
      * Writes all active chunks into the HDF5 file.

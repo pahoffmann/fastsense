@@ -73,7 +73,7 @@ void MapThread::thread_run()
 
         // shift
         eval.start("shift");
-        tmp_map.shift(pos_.x(), pos_.y(), pos_.z());
+        tmp_map.shift(pos_);
         eval.stop("shift");
 
         Matrix4i rotation_mat = Matrix4i::Identity();

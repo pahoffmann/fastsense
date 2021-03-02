@@ -58,7 +58,12 @@ TEST_CASE("Map", "[Map]")
     krnl.waitComplete();
 
     // shift so that the chunk gets unloaded
-    localMap.shift(24, 0, 0);
+    // Each shift can only cover an area of one Map size
+    localMap.shift(Eigen::Vector3i( 5, 0, 0));
+    localMap.shift(Eigen::Vector3i(10, 0, 0));
+    localMap.shift(Eigen::Vector3i(15, 0, 0));
+    localMap.shift(Eigen::Vector3i(20, 0, 0));
+    localMap.shift(Eigen::Vector3i(24, 0, 0));
 
     auto pos1 = localMap.get_pos();
     auto size1 = localMap.get_size();
