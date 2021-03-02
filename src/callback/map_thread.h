@@ -73,7 +73,7 @@ public:
      * @param pos Current position
      * @param points Current scan points
      */
-    void go(const Vector3i& pos, const Eigen::Matrix4f& pose, const fastsense::buffer::InputBuffer<PointHW>& points);
+    void go(const Vector3i& pos, const Eigen::Matrix4f& pose, const fastsense::buffer::InputBuffer<PointHW>& points, int num_points);
 
     /**
      * @brief Stop the map thread safely.
@@ -116,6 +116,8 @@ private:
 
     /// Scan points that are used for shifting, updating and visualization
     std::unique_ptr<fastsense::buffer::InputBuffer<PointHW>> points_ptr_;
+    /// Number of Points in points_ptr_, because buffer size might be larger
+    int num_points_;
     /// Maximum number of registration periods without a map shift and update. Ignored if lower than 1
     unsigned int period_;
     /// Distance from the current position to the last activated position at which the thread is activated (in mm)

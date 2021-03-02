@@ -50,7 +50,16 @@ void MapThread::go(const Vector3i& pos, const Eigen::Matrix4f& pose, const fasts
     {
         pos_ = pos;
         pose_ = pose;
+        if (points_ptr_->size() != points.size())
+        {
+            points_ptr_.reset();
         points_ptr_.reset(new fastsense::buffer::InputBuffer<PointHW>(points));
+        }
+        else
+        {
+            points_ptr_->fill_from(points);
+        }
+        num_points_ = num_points;
         active_ = true;
         start_mutex_.unlock(); // signal
         reg_cnt_ = 0;
@@ -89,7 +98,7 @@ void MapThread::thread_run()
         eval.start("tsdf");
         int tau = ConfigManager::config().slam.max_distance();
         int max_weight = ConfigManager::config().slam.max_weight() * WEIGHT_RESOLUTION;
-        tsdf_krnl_.run(tmp_map, *points_ptr_, tau, max_weight, up_hw);
+        tsdf_krnl_.run(tmp_map, *points_ptr_, num_points_, tau, max_weight, up_hw);
         tsdf_krnl_.waitComplete();
         eval.stop("tsdf");
 

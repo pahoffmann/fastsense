@@ -55,6 +55,7 @@ void CloudCallback::set_local_map(const std::shared_ptr<LocalMap>& local_map)
 void CloudCallback::thread_run()
 {
     fastsense::msg::PointCloudPtrStamped point_cloud;
+    std::unique_ptr<InputBuffer<PointHW>> scan_point_buffer;
     auto& eval = RuntimeEvaluator::get_instance();
 #ifdef TIME_MEASUREMENT
     int cnt = 0;
@@ -68,11 +69,17 @@ void CloudCallback::thread_run()
 
         eval.start("total");
 
-        InputBuffer<PointHW> scan_point_buffer{q, point_cloud.data_->points_.size()};
-        for (size_t i = 0; i < point_cloud.data_->points_.size(); i++)
+        int num_points = point_cloud.data_->points_.size();
+        if (scan_point_buffer == nullptr || num_points > scan_point_buffer->size())
+        {
+            // IMPORTANT: Delete old buffer first
+            scan_point_buffer.reset();
+            scan_point_buffer.reset(new InputBuffer<PointHW>(q, num_points * 1.5));
+        }
+        for (int i = 0; i < num_points; i++)
         {
             auto& point = point_cloud.data_->points_[i];
-            scan_point_buffer[i] = PointHW(point.x(), point.y(), point.z());
+            scan_point_buffer->operator[](i) = PointHW(point.x(), point.y(), point.z());
         }
 
         if (first_iteration)
@@ -81,7 +88,7 @@ void CloudCallback::thread_run()
 
             int tau = ConfigManager::config().slam.max_distance();
             int max_weight = ConfigManager::config().slam.max_weight() * WEIGHT_RESOLUTION;
-            tsdf_krnl.run(*local_map, scan_point_buffer, tau, max_weight);
+            tsdf_krnl.run(*local_map, *scan_point_buffer, num_points, tau, max_weight);
             tsdf_krnl.waitComplete();
         }
         else
@@ -90,7 +97,7 @@ void CloudCallback::thread_run()
 
             map_mutex.lock();
             eval.start("reg");
-            registration.register_cloud(*local_map, scan_point_buffer, point_cloud.timestamp_, pose);
+            registration.register_cloud(*local_map, *scan_point_buffer, num_points, point_cloud.timestamp_, pose);
             eval.stop("reg");
             map_mutex.unlock();
 
@@ -106,7 +113,7 @@ void CloudCallback::thread_run()
         Vector3i pos((int)std::floor(pose(0, 3) / MAP_RESOLUTION),
                      (int)std::floor(pose(1, 3) / MAP_RESOLUTION),
                      (int)std::floor(pose(2, 3) / MAP_RESOLUTION));
-        map_thread.go(pos, pose, scan_point_buffer);
+        map_thread.go(pos, pose, *scan_point_buffer, num_points);
 
         Eigen::Quaternionf quat(pose.block<3, 3>(0, 0));
 

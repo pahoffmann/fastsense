@@ -75,6 +75,7 @@ public:
      */
     void register_cloud(fastsense::map::LocalMap& localmap,
                         fastsense::buffer::InputBuffer<PointHW>& cloud,
+                        int num_points,
                         const util::HighResTimePoint& cloud_timestamp,
                         Matrix4f& pose);
 
