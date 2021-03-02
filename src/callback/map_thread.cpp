@@ -16,9 +16,9 @@ using fastsense::util::logging::Logger;
 
 MapThread::MapThread(const std::shared_ptr<fastsense::map::LocalMap>& local_map,
                      std::mutex& map_mutex,
-                     std::shared_ptr<TSDFBuffer> tsdf_buffer,
                      unsigned int period,
                      float position_threshold,
+                     uint16_t port,
                      fastsense::CommandQueuePtr& q)
     : ProcessThread(),
       local_map_(local_map),
@@ -28,7 +28,7 @@ MapThread::MapThread(const std::shared_ptr<fastsense::map::LocalMap>& local_map,
       period_(period),
       position_threshold_(position_threshold),
       reg_cnt_(0),
-      tsdf_buffer_(tsdf_buffer)
+      sender_(port)
 {
     /*
     Use the mutex as a 1-semaphore.
@@ -36,9 +36,11 @@ MapThread::MapThread(const std::shared_ptr<fastsense::map::LocalMap>& local_map,
     The mutex starts in the wrong state.
     */
     start_mutex_.lock();
+
+    tsdf_msg_.tsdf_data_.resize(local_map->getBuffer().size());
 }
 
-void MapThread::go(const Vector3i& pos, const Eigen::Matrix4f& pose, const fastsense::buffer::InputBuffer<PointHW>& points)
+void MapThread::go(const Vector3i& pos, const Eigen::Matrix4f& pose, const fastsense::buffer::InputBuffer<PointHW>& points, int num_points)
 {
     reg_cnt_++;
     const Vector3i& old_pos = local_map_->get_pos();
@@ -53,7 +55,7 @@ void MapThread::go(const Vector3i& pos, const Eigen::Matrix4f& pose, const fasts
         if (points_ptr_->size() != points.size())
         {
             points_ptr_.reset();
-        points_ptr_.reset(new fastsense::buffer::InputBuffer<PointHW>(points));
+            points_ptr_.reset(new fastsense::buffer::InputBuffer<PointHW>(points));
         }
         else
         {
@@ -112,14 +114,12 @@ void MapThread::thread_run()
 
         // visualize
         eval.start("vis");
-        msg::TSDFBridgeMessage tsdf_msg;
-        tsdf_msg.tau_ = tau;
-        tsdf_msg.size_ = local_map_->get_size();
-        tsdf_msg.pos_ = local_map_->get_pos();
-        tsdf_msg.offset_ = local_map_->get_offset();
-        tsdf_msg.tsdf_data_.reserve(local_map_->getBuffer().size());
-        std::copy(local_map_->getBuffer().cbegin(), local_map_->getBuffer().cend(), std::back_inserter(tsdf_msg.tsdf_data_));
-        tsdf_buffer_->push_nb(tsdf_msg, true);
+        tsdf_msg_.tau_ = tau;
+        tsdf_msg_.size_ = local_map_->get_size();
+        tsdf_msg_.pos_ = local_map_->get_pos();
+        tsdf_msg_.offset_ = local_map_->get_offset();
+        std::copy(local_map_->getBuffer().cbegin(), local_map_->getBuffer().cend(), tsdf_msg_.tsdf_data_.data());
+        sender_.send(tsdf_msg_);
         eval.stop("vis");
 
         Logger::info("Map Thread:\n", eval.to_string(), "\nStopping SUV");

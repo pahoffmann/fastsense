@@ -5,17 +5,19 @@
  * @author Steffen Hinderink, Marc Eisoldt
  */
 
-#include <util/point_hw.h>
-#include <msg/transform.h>
-#include <map/local_map.h>
 #include <eigen3/Eigen/Dense>
-#include <util/process_thread.h>
-#include <msg/tsdf_bridge_msg.h>
-#include <hw/kernels/tsdf_kernel.h>
-#include <util/config/config_manager.h>
-#include <util/concurrent_ring_buffer.h>
 #include <mutex>
 #include <atomic>
+
+#include <msg/transform.h>
+#include <msg/tsdf_bridge_msg.h>
+#include <map/local_map.h>
+#include <hw/kernels/tsdf_kernel.h>
+#include <util/point_hw.h>
+#include <util/process_thread.h>
+#include <util/config/config_manager.h>
+#include <util/concurrent_ring_buffer.h>
+#include <comm/sender.h>
 
 namespace fastsense::callback
 {
@@ -45,9 +47,9 @@ public:
      */
     MapThread(const std::shared_ptr<fastsense::map::LocalMap>& local_map, 
               std::mutex& map_mutex,
-              std::shared_ptr<TSDFBuffer> tsdf_buffer,
               unsigned int period,
               float position_threshold,
+              uint16_t port,
               fastsense::CommandQueuePtr& q);
 
     /**
@@ -124,8 +126,10 @@ private:
     float position_threshold_;
     /// Counter for the number of performed registrations after the last thread activation
     unsigned int reg_cnt_;
+    /// Message to send with the tsdf values
+    msg::TSDFBridgeMessage tsdf_msg_;
     /// Buffer for starting the map visualization thread
-    std::shared_ptr<TSDFBuffer> tsdf_buffer_;
+    comm::Sender<msg::TSDFBridgeMessage> sender_;
 };
 
 } // namespace fastsense::callback
