@@ -57,46 +57,47 @@ void LocalMap::shift(const Vector3i& new_pos)
     Vector3i diff = new_pos - pos_;
     for (int axis = 0; axis < 3; axis++)
     {
-        if (diff[axis] != 0)
+        if (diff[axis] == 0)
         {
-            if (std::abs(diff[axis]) > size_[axis])
-            {
-                throw std::invalid_argument("Map Shift is larger than Map");
-            }
-            Vector3i start = pos_ - size_ / 2;
-            Vector3i end = pos_ + size_ / 2;
-            if (diff[axis] > 0)
-            {
-                // -1 because save_load_area takes inclusive ranges
-                end[axis] = start[axis] + diff[axis] - 1;
-            }
-            else
-            {
-                // diff is negative and ranges are inclusive: end - (std::(diff) - 1)
-                start[axis] = end[axis] + diff[axis] + 1;
-            }
-            save_load_area(start, end, true);
-            pos_[axis] += diff[axis];
-            offset_[axis] = (offset_[axis] + diff[axis] + size_[axis]) % size_[axis];
-
-            start = pos_ - size_ / 2;
-            end = pos_ + size_ / 2;
-            if (diff[axis] > 0)
-            {
-                start[axis] = end[axis] - diff[axis] + 1;
-            }
-            else
-            {
-                end[axis] = start[axis] - diff[axis] - 1;
-            }
-            save_load_area(start, end, false);
+            continue;
         }
+        if (std::abs(diff[axis]) > size_[axis])
+        {
+            throw std::invalid_argument("Map Shift is larger than Map");
+        }
+        Vector3i start = pos_ - size_ / 2;
+        Vector3i end = pos_ + size_ / 2;
+        if (diff[axis] > 0)
+        {
+            // -1 because save_load_area takes inclusive ranges
+            end[axis] = start[axis] + diff[axis] - 1;
+        }
+        else
+        {
+            // diff is negative and ranges are inclusive: end - (std::(diff) - 1)
+            start[axis] = end[axis] + diff[axis] + 1;
+        }
+        save_load_area(start, end, true);
+        pos_[axis] += diff[axis];
+        offset_[axis] = (offset_[axis] + diff[axis] + size_[axis]) % size_[axis];
+
+        start = pos_ - size_ / 2;
+        end = pos_ + size_ / 2;
+        if (diff[axis] > 0)
+        {
+            start[axis] = end[axis] - diff[axis] + 1;
+        }
+        else
+        {
+            end[axis] = start[axis] - diff[axis] - 1;
+        }
+        save_load_area(start, end, false);
     }
 }
 
 void LocalMap::save_load_area(const Vector3i& start, const Vector3i& end, bool save)
 {
-    // explanation: We only want to touch each Chunk only once,
+    // explanation: We only want to touch each Chunk once,
     // instead of every time that get/set_value is called.
     // => iterate over all affected Chunks and handle all values within each Chunk
 
@@ -140,7 +141,7 @@ void LocalMap::save_load_area(const Vector3i& start, const Vector3i& end, bool s
                         for (int dz = dz_start; dz <= dz_end; ++dz)
                         {
                             index = index_y + dz;
-                            global_pos.z() = chunk_z * CHUNK_SIZE + dz_start;
+                            global_pos.z() = chunk_z * CHUNK_SIZE + dz;
 
                             if (save)
                             {

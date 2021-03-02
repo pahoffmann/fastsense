@@ -70,7 +70,7 @@ void CloudCallback::thread_run()
         eval.start("total");
 
         int num_points = point_cloud.data_->points_.size();
-        if (scan_point_buffer == nullptr || num_points > scan_point_buffer->size())
+        if (scan_point_buffer == nullptr || num_points > (int)scan_point_buffer->size())
         {
             // IMPORTANT: Delete old buffer first
             scan_point_buffer.reset();
