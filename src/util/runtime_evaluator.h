@@ -184,6 +184,19 @@ private:
     /// Vector of the different measurement variables for every measured task
     std::vector<EvaluationFormular> forms_;
 
+    /// Histogram of the total time
+    std::vector<int> histogram_;
+    const int HIST_BUCKET_SIZE = 10;
+
+    /// Excess time from the previous Scans. Used to calculate how many Scans are dropped
+    double overhang_time_;
+
+    /// Number of Scans that were dropped because previous Scans took too long
+    int num_dropped_scans;
+
+    /// Number of Scans that exceeded the 50ms limit
+    int num_scans_over_50ms;
+
     /// Temporary variable for storing the start time of the current measurement
     std::chrono::_V2::system_clock::time_point start_;
 };

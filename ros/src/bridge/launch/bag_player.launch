@@ -2,13 +2,18 @@
   <arg name="bag" />
   <arg name="args" default="" />
 
-  <node pkg="bridge" type="from_trenz" name="from_trenz_bridge"/>
+  <!-- <node pkg="bridge" type="from_trenz" name="from_trenz_bridge"/> -->
 
-  <node pkg="bridge" type="to_trenz" name="to_trenz">
+  <include file="$(find bridge)/launch/bridge.launch"/>
+
+  <node pkg="bridge" type="to_trenz" name="to_trenz" output="screen">
     <remap from="/velodyne_legacy" to="/from_trenz/velodyne/points" />
     <remap from="/imu/data_raw" to="/from_trenz/imu/raw" />
   </node>
 
-  <node pkg="rosbag" type="play" name="fastsense_player" output="screen" args="$(arg bag) $(arg args) --topics /from_trenz/velodyne/points /from_trenz/imu/raw"/> 
+  <node pkg="rosbag" type="play" name="fastsense_player" output="screen" args="$(arg bag) $(arg args) --topics /from_trenz_bridge/velodyne/points /from_trenz_bridge/imu/raw">
+    <remap from="/from_trenz_bridge/velodyne/points" to="/from_trenz/velodyne/points"/>
+    <remap from="/from_trenz_bridge/imu/raw" to="/from_trenz/imu/raw"/>
+  </node> 
 
 </launch>

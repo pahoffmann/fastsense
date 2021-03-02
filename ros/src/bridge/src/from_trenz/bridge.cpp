@@ -45,7 +45,7 @@ int main(int argc, char** argv)
     
     ROS_INFO_STREAM("from_trenz bridge started");
 
-    ros::Rate rate(1.0);
+    ros::Rate rate(0.1);
     while(ros::ok())
     {
         rate.sleep();
