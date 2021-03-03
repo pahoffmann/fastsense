@@ -60,14 +60,14 @@ void TransformBridge::run()
         {
             if (receive())
             {
-                ROS_INFO_STREAM("Received transform\n");
+                ROS_DEBUG_STREAM("Received transform\n");
                 convert();
                 publish();
             }
         }
         catch(const std::exception& e)
         {
-            std::cerr << "transform bridge error: " << e.what() << '\n';
+            ROS_ERROR_STREAM("transform bridge error: " << e.what());
         }
     }
 }

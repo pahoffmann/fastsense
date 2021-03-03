@@ -30,14 +30,14 @@ void TSDFBridge::run()
         {
             if (receive())
             {
-                ROS_INFO_STREAM("Received " << msg_.tsdf_data_.size() << " tsdf values\n");
+                ROS_DEBUG_STREAM("Received " << msg_.tsdf_data_.size() << " tsdf values\n");
                 convert();
                 publish();
             }
         }
         catch(const std::exception& e)
         {
-            std::cerr << "tsdf bridge error: " << e.what() << '\n';
+            ROS_ERROR_STREAM("tsdf bridge error: " << e.what());
         }
     }
 }

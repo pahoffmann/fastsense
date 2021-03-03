@@ -27,14 +27,14 @@ void VelodyneBridge::run()
         {
             if (receive())
             {
-                ROS_INFO_STREAM("Received " << msg_.data_.points_.size() << " points\n");
+                ROS_DEBUG_STREAM("Received " << msg_.data_.points_.size() << " points\n");
                 convert();
                 publish();
             }
         }
         catch(const std::exception& e)
         {
-            std::cerr << "velo bridge error: " << e.what() << '\n';
+            ROS_ERROR_STREAM("velo bridge error: " << e.what());
         }
     }
 }
@@ -55,7 +55,7 @@ void VelodyneBridge::convert()
         return out;
     });
 
-    ROS_INFO_STREAM("Converted points: " << msg_points.size() << "->" << points_.size() << " points\n");
+    ROS_DEBUG_STREAM("Converted points: " << msg_points.size() << "->" << points_.size() << " points\n");
 }
 
 void VelodyneBridge::publish()
@@ -66,5 +66,5 @@ void VelodyneBridge::publish()
     pc.points = points_;
     pub().publish(pc);
 
-    ROS_INFO_STREAM("Published points values\n");
+    ROS_DEBUG_STREAM("Published points values\n");
 }
