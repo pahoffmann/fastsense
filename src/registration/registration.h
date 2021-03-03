@@ -66,6 +66,18 @@ public:
      */
     ~Registration() = default;
 
+    /// delete copy assignment operator
+    Registration& operator=(const Registration& other) = delete;
+
+    /// delete move assignment operator
+    Registration& operator=(Registration&&) noexcept = delete;
+
+    /// delete copy constructor
+    Registration(const Registration&) = delete;
+
+    /// delete move constructor
+    Registration(Registration&&) = delete;
+
     /**
      * @brief Registers the given pointcloud with the local ring buffer. Transforms the cloud
      *

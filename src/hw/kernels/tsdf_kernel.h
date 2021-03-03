@@ -30,6 +30,18 @@ public:
 
     ~TSDFKernel() override = default;
 
+    /// delete copy assignment operator
+    TSDFKernel& operator=(const TSDFKernel& other) = delete;
+
+    /// delete move assignment operator
+    TSDFKernel& operator=(TSDFKernel&&) noexcept = delete;
+
+    /// delete copy constructor
+    TSDFKernel(const TSDFKernel&) = delete;
+
+    /// delete move constructor
+    TSDFKernel(TSDFKernel&&) = delete;
+
     void run(map::LocalMap& map,
              const buffer::InputBuffer<PointHW>& scan_points,
              int num_points,

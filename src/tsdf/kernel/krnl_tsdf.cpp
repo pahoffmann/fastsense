@@ -221,7 +221,7 @@ extern "C"
                 bool current_is_interpolated = step != iter_steps.second;
                 bool current_is_better = hls_abs(new_value.value) < hls_abs(old_entry.value) || old_entry.weight == 0;
 
-                if (current_is_better || old_is_interpolated)
+                if ((current_is_better || old_is_interpolated) && map.in_bounds(index.x, index.y, index.z))
                 {
                     TSDFValueHW tmp_value = old_entry;
                     // we always want the smallest tsdf value in each cell, even from interpolated values

@@ -34,6 +34,9 @@ public:
     /// delete assignment operator
     ZMQContextManager& operator=(const ZMQContextManager& other) = delete;
 
+    /// delete move assignment operator
+    ZMQContextManager& operator=(ZMQContextManager&&) = delete;
+
     /**
      * @brief Get the Context object, singleton
      * 

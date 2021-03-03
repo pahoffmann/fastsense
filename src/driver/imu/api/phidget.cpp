@@ -30,9 +30,10 @@
 
 #include "phidget.h"
 #include <stdexcept>
-#include <cstdio>
+#include <util/logging/logger.h>
 
 using namespace fastsense::driver;
+using namespace fastsense::util::logging;
 
 Phidget::Phidget() : handle_{} {}
 
@@ -130,17 +131,17 @@ std::string Phidget::getErrorDescription(int errorCode)
 
 void Phidget::attach_handler()
 {
-    printf("Phidget attached (serial# %d)\n", getDeviceSerialNumber());
+    Logger::info("Phidget attached (serial# %d)\n", getDeviceSerialNumber());
 }
 
 void Phidget::detach_handler()
 {
-    printf("Phidget detached (serial# %d)\n", getDeviceSerialNumber());
+    Logger::info("Phidget detached (serial# %d)\n", getDeviceSerialNumber());
 }
 
 void Phidget::error_handler(int error)
 {
-    printf("Phidget error [%d]: %s\n", error,
+    Logger::error("Phidget error [%d]: %s\n", error,
            getErrorDescription(error).c_str());
 }
 

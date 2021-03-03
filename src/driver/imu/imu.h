@@ -33,11 +33,18 @@ public:
     ~Imu() override = default;
 
     /**
-     * @brief delete assignment operator because of pointer member variable
+     * @brief delete copy assignment operator because of pointer member variable
      *
      * @return Imu& other imu
      */
     Imu& operator=(Imu&) = delete;
+
+        /**
+     * @brief delete move assignment operator because of pointer member variable
+     *
+     * @return Imu&& other imu (rvalue)
+     */
+    Imu& operator=(Imu&&) = delete;
 
     /**
      * @brief delete copy constructor because of pointer member variable
@@ -69,6 +76,11 @@ public:
      */
     void start() override;
 
+    /**
+     * @brief Threadrun is empty, because
+     * in contrast to velodyne driver, libphidget ALREADY listens to data coming from driver
+     * from separate thread. This function only serves to provide the same api for all sensor
+     */
     void thread_run() override {}
 
     /**
