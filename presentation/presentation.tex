@@ -74,7 +74,141 @@ TODO
 
 \section{Vorgehen}
 \begin{frame}{\secname}
-TODO    
+\centering
+\begin{tikzpicture}[scale=0.8]
+\draw[thick] (-4, 0) rectangle +(2, 5.4);
+\node at (-3, 0.5) {\begin{minipage}{2cm}\centering\footnotesize
+External\\
+ROS Nodes\\
+\end{minipage}};
+
+\draw[fill=light] (-3.8, 3.2) rectangle +(1.6, 2) node[pos=0.5] {\begin{minipage}{1.6cm}\centering
+%Sensors\\
+%\begin{footnotesize}
+%Lidar\\
+%IMU\\
+%Camera\\
+%\dots\\
+%\end{footnotesize}
+\end{minipage}};
+
+\draw[fill=light] (-3.8, 1) rectangle +(1.6, 2) node[pos=0.5] {\begin{minipage}{1.6cm}\centering
+%Control\\
+%\begin{footnotesize}
+%Motor\\
+%Battery\\
+%\dots\\
+%\end{footnotesize}
+\end{minipage}};
+
+\draw (0.2, 1.4) rectangle +(6.4, 3.8);
+\node at (3.4, 4.9) {\footnotesize Reconfigurable System on Chip};
+\node at (3.56, 0.66) {\includegraphics[height=0.96cm]{images/pynq.png}};
+\draw (0.2, 1.4) -- (3.1, 0.7);
+\draw (6.6, 1.4) -- (3.7, 0.7);
+\draw[dark, ultra thick] (3.4, 0.7) circle (0.3);
+
+\draw[fill=light] (0.4, 1.6) rectangle +(2, 3);
+\node at (1.4, 4.1) {\footnotesize Processor};
+\draw (0.5, 3.1) rectangle +(1.8, 0.5);% node[pos=0.5] {\footnotesize ROS Master};
+\draw (0.5, 2.5) rectangle +(1.8, 0.5);% node[pos=0.5] {\tiny Motor Ctrl Node};
+\draw (0.5, 1.9) rectangle +(1.8, 0.5);% node[pos=0.5] {\tiny SLAM Node};
+%\node at (1.4, 1.75) {\footnotesize \dots};
+
+\draw[shade, left color=light, right color=hw] (2.6, 1.6) rectangle +(1.6, 3);
+\node at (3.4, 4.1) {\begin{minipage}{1.6cm}\centering\footnotesize
+Shared\\
+Memory\\
+\end{minipage}};
+
+\draw[fill=hw] (4.4, 1.6) rectangle +(2, 3);
+\node at (5.4, 4.1) {\footnotesize FPGA};
+
+\node at (-1, 3.1) {\begin{minipage}{2cm}\centering\footnotesize
+ROS\\
+Messages\\
+\end{minipage}};
+\draw[<->] (-2.2, 3.8) -- (0.4, 3.8);
+\draw[<->] (-2.2, 2.4) -- (0.4, 2.4);
+
+\draw[thick] (0, 0) rectangle +(6.8, 5.4);
+\node[left] at (6.8, 0.3) {\footnotesize ReconfROS};
+
+% Shared Memory
+\draw (2.9, 3.15) rectangle +(1, 0.4);
+\draw (2.9, 2.55) rectangle +(1, 0.4);
+\draw (2.9, 1.95) rectangle +(1, 0.4);
+
+% FPGA
+\draw (4.5, 3.1) rectangle +(1.8, 0.5);% node[pos=0.5] {\tiny Path Detection};
+\draw (4.5, 2.5) rectangle +(1.8, 0.5);% node[pos=0.5] {\tiny Registration};
+\draw (4.5, 1.9) rectangle +(1.8, 0.5);% node[pos=0.5] {\tiny Outlier Removal};
+%\node at (5.4, 1.75) {\footnotesize \dots};
+
+\draw[<->] (2.3, 2.75) -- (2.9, 3.35);
+\draw[<->] (2.3, 2.15) -- (2.9, 2.75);
+\draw[<->] (2.3, 2.15) -- (2.9, 2.15);
+\draw[<->] (3.9, 3.35) -- (4.5, 3.35);
+\draw[<->] (3.9, 2.75) -- (4.5, 2.75);
+\draw[<->] (3.9, 2.15) -- (4.5, 2.15);
+\end{tikzpicture}
+
+\vspace{0.3cm}
+
+\begin{tikzpicture}[scale=0.7]
+\setlength{\fboxsep}{0pt}
+\node[inner sep=0pt] at (0, 5) {\fbox{\includegraphics[width=2.1cm]{images/pipeline_pics/cam.png}}};
+\node at (0, 3.75) {\footnotesize Camera image};
+\node[inner sep=0pt] at (4, 5) {\fbox{\includegraphics[width=2.1cm]{images/pipeline_pics/gauss.png}}};
+\node at (4, 3.75) {\footnotesize Removing noise};
+\node[inner sep=0pt] at (8, 5) {\fbox{\includegraphics[width=2.1cm]{images/pipeline_pics/green_filter.png}}};
+\node at (8, 3.75) {\footnotesize Trail pixel extraction};
+\node[inner sep=0pt] at (0, 2) {\fbox{\includegraphics[width=2.1cm]{images/pipeline_pics/threshold.png}}};
+\node at (0, 0.75) {\footnotesize Thresholding};
+\node[inner sep=0pt] at (4, 2) {\fbox{\includegraphics[width=2.1cm]{images/pipeline_pics/morph.png}}};
+\node at (4, 0.75) {\footnotesize Remove fragments};
+\node[inner sep=0pt] at (8, 2) {\fbox{\includegraphics[width=2.1cm]{images/pipeline_pics/direction.png}}};
+\node at (8, 0.75) {\footnotesize Trail direction};
+\draw[->] (1.5, 5) -- (2.5, 5);
+\draw[->] (5.5, 5) -- (6.5, 5);
+\draw[->] (9.5, 5) -- (10, 5) -- (10, 3.25) -- (-2, 3.25) -- (-2, 2) -- (-1.5, 2);
+\draw[->] (1.5, 2) -- (2.5, 2);
+\draw[->] (5.5, 2) -- (6.5, 2);
+\end{tikzpicture}
+\end{frame}
+
+\section{SLAM-Box}
+\begin{frame}{\secname}
+\centering
+\begin{tikzpicture}
+\draw[fill=dark] (3, 2) rectangle +(2.5, 2.5);
+\draw[fill=light] (0, 0) rectangle +(8.5, 1) node[pos=0.5] {Computer (ROS, Bagfiles, RViz, LVR)};
+\draw[fill=light] (0, 5.5) rectangle +(1, 1) node[pos=0.5] {IMU};
+\draw[fill=light] (1.5, 5.5) rectangle +(1, 1) node[pos=0.5] {Lidar};
+\draw[fill=light] (3, 5.5) rectangle +(2.5, 1) node[pos=0.5] {Speicher};
+
+\draw (0.5, 1) -- (0.5, 5.5);
+\fill (0.5, 4) circle (0.05);
+\draw[->] (0.5, 4) -- (3, 4);
+\draw[dashed] (3, 4) -- (5, 4) -- (5, 2);
+\draw[->] (5, 2) -- (5, 1);
+
+\draw (2, 1) -- (2, 5.5);
+\fill (2, 2.5) circle (0.05);
+\draw[->] (2, 2.5) -- (3, 2.5);
+\draw[dashed] (3, 2.5) -- (3.5, 2.5) -- (3.5, 2);
+\draw[->] (3.5, 2) -- (3.5, 1);
+
+\draw[->] (3.5, 4.5) -- (3.5, 5.5);
+\draw[->] (5, 5.5) -- (5, 4.5);
+\node [fill=white, inner sep=0.1cm] at (4.25, 5) {Globale Karte};
+
+\draw[->] (5.5, 2.5) -- (6.5, 2.5) -- (6.5, 1);
+\node [fill=white, inner sep=0.1cm] at (6.5, 1.75) {Lokale Karte};
+
+\draw[->] (5.5, 4) -- (8, 4) -- (8, 1);
+\node [fill=white, inner sep=0.1cm] at (8, 2.5) {Pose};
+\end{tikzpicture}
 \end{frame}
 
 \section{TSDF}
@@ -93,10 +227,57 @@ TODO
 \end{center}
 \end{frame}
 
+\section{Komponenten}
+\begin{frame}{\secname}
+\begin{textblock*}{12.8cm}(0cm, 1.2cm)
+\centering
+\includegraphics[width=12cm]{images/Architecture.pdf}
+\end{textblock*}
+\end{frame}
+
+\section{Algorithmus}
+\begin{frame}{\secname}
+\begin{textblock*}{12.8cm}(0cm, 1.5cm)
+\centering
+\begin{tikzpicture}[scale=0.9]
+\fill[light] (-5.3, 1) rectangle (-1.7, 9);
+\fill[light] (-0.3, 1) rectangle (3.3, 9);
+\fill[light] (4.7, 1) rectangle (8.3, 9);
+\node at (-3.5, 8.5) {Preprocessing};
+\node at (1.5, 8.5) {Cloud Callback};
+\node at (6.5, 8.5) {Map Thread};
+\draw[->] (-5.5, 7.85) -- (-3.5, 7.85) -- (-3.5, 7.7);
+\draw[fill=white] (-5, 7) rectangle +(3, 0.7) node[pos=0.5] {Preprocessing};
+\draw[->] (1.5, 6) -- (1.5, 5.7);
+\draw[fill=hw] (0, 6) rectangle +(3, 0.7) node[pos=0.5] {Registration};
+\draw[->] (-3.5, 7) -- (-3.5, 6.85) -- (1.5, 6.85) -- (1.5, 6.7);
+\draw[fill=white] (0, 4.85) -- (1.5, 4) -- (3, 4.85) -- (1.5, 5.7) -- cycle;
+\node at (1.5, 4.85) {\begin{minipage}{2cm}\centering\footnotesize Distanz oder\\Iterationen\\\end{minipage}};
+\draw[->] (1.5, 4) -- (1.5, 3.2) node[midway, fill=light, inner sep=0.1cm] {Immer};
+\draw[fill=white] (0, 2.5) -- (2.7, 2.5) -- (3, 3.2) -- (0.3, 3.2) -- cycle;
+\node at (1.5, 2.85) {Pose};
+\draw[->] (3, 4.85) -- (6.5, 4.85) -- (6.5, 4.7);
+\node[fill=white, inner sep=0.1cm] at (4, 4.85) {Ja};
+\draw[fill=white] (5, 4) rectangle +(3, 0.7) node[pos=0.5] {Map Shift};
+\draw[->] (6.5, 3) -- (6.5, 2.7);
+\draw[fill=hw] (5, 3) rectangle +(3, 0.7) node[pos=0.5] {TSDF Update};
+\draw[->] (6.5, 4) -- (6.5, 3.7);
+\draw[fill=white] (5, 2) -- (7.7, 2) -- (8, 2.7) -- (5.3, 2.7) -- cycle;
+\node at (6.5, 2.35) {Lokale Karte};
+\draw [decorate, decoration={brace, amplitude=0.3cm, mirror}]
+(-0.2, 6.7) -- (-0.2, 2.5) node[midway, xshift=-0.3cm, above, rotate=90] {Bottleneck};
+\node at (1.5, 0.7) {{\color{hw}$\blacksquare$} = ausgelagert auf FPGA};
+\end{tikzpicture}
+\end{textblock*}
+\end{frame}
+
 \section{Hardware Architektur}
 \begin{frame}{\secname}
 \begin{center}
+\begin{textblock*}{12.8cm}(0cm, 1.5cm)
+\centering
 \includegraphics[width=10cm]{images/Blockdiagram.pdf}
+\end{textblock*}
 \end{center}
 \end{frame}
 
