@@ -11,7 +11,6 @@
 \usepackage{ulem}
 \usepackage{array}
 
-
 \title{Abschlusspräsentation}
 \author{Projektgruppe FastSense}
 \date{11. März 2021}
@@ -53,23 +52,14 @@
 \titlepage
 \end{frame}}
 
-\section{Motivation}
+\section{Zielsetzung}
 \begin{frame}{\secname}
-\begin{textblock*}{12cm}(1cm,2cm)
 \begin{itemize}
-\item{TODO}
+\item Autonome echtzeitfähige Kartierung
+\item FPGA-basierte Hardwarebeschleunigung
+\item Einfaches, handliches System
+\item Anbindung an bestehende Systeme (LVR2)
 \end{itemize}
-\end{textblock*}
-\end{frame}
-
-\section{Problematik}
-\begin{frame}{\secname}
-TODO
-\end{frame}
-
-\section{Ziele}
-\begin{frame}{\secname}
-TODO
 \end{frame}
 
 \section{MS1: Trail Detection}
@@ -80,6 +70,11 @@ TODO
 \section{SLAM-Box}
 \begin{frame}{\secname}
 TODO
+\end{frame}
+
+\section{Vorgehen}
+\begin{frame}{\secname}
+TODO    
 \end{frame}
 
 \section{TSDF}
@@ -93,20 +88,16 @@ TODO
 \section{Point-to-TSDF Registrierung}
 \begin{frame}{\secname}
 \begin{center}
-\includegraphics[width=5cm]{images/Reg_Gradient.png}
+\includegraphics[width=7cm]{images/Reg_Gradient.png}
+\includegraphics[width=7cm]{images/Pose_Graph.png}
 \end{center}
 \end{frame}
 
 \section{Hardware Architektur}
 \begin{frame}{\secname}
 \begin{center}
-\includegraphics[width=10cm]{images/HW_Architecture.png}
+\includegraphics[width=10cm]{images/Blockdiagram.pdf}
 \end{center}
-\end{frame}
-
-\section{Vorgehen}
-\begin{frame}{\secname}
-TODO    
 \end{frame}
 
 \section{Aufbau}
@@ -156,12 +147,85 @@ node[pos=0.5] {Router};
 \section{Evaluation}
 \subsection{Zeit}
 \begin{frame}{\secname: \subsecname}
-TODO
+\begin{textblock*}{12.8cm}(0cm, 1.1cm)
+\centering
+\definecolor{bad}{rgb}{1, 0.5, 0.4}
+\begin{tikzpicture}[scale=0.85]
+\draw[->] (0, 0) -- (10.5, 0) node[right] {Zeit [ms]};
+\draw[->] (0, 0) -- (0, 8) node[above] {Anzahl Scans};
+\foreach \i\y in {0/3,1/11,2/15,3/10,4/7,5/3,6/2,7/1,8/1,9/1} {
+    \pgfmathsetmacro\x{int(\i * 10)}
+    \draw (\i, -0.1) node[below]{\x} -- (\i, 0.1);
+    \tikzmath {
+        if {\i < 5} then {
+            let \c = light;
+        } else {
+            let \c = bad;
+        };
+        { \draw[fill=\c] (\i, 0) rectangle (\i+1, \y/2); };
+    }
+}
+\draw (9.5, 0.25) -- (9.5, -0.5) node[below] {$>90$};
+\node[below right] at (6, 8) {\begin{minipage}{6cm}
+\begin{itemize}
+\item{6. Stock WB; 8000 Scans; \\
+$\varepsilon$ = 0,04}
+\item{Avg: 30\,ms}
+\item[\color{bad}$\bullet$]{11\% aller Scans über 50\,ms}
+\item[\color{red}$\bullet$]{2\% gedroppt $\Rightarrow$ 19,6\,fps}
+\end{itemize}
+\end{minipage}};
+\end{tikzpicture}
+\end{textblock*}
 \end{frame}
+
+\begin{frame}{\secname: \subsecname}
+\begin{textblock*}{12.8cm}(0cm, 1.1cm)
+\centering
+\definecolor{bad}{rgb}{1, 0.5, 0.4}
+\begin{tikzpicture}[scale=0.85]
+\draw[->] (0, 0) -- (10.5, 0) node[right] {Zeit [ms]};
+\draw[->] (0, 0) -- (0, 8) node[above] {Anzahl Scans};
+\foreach \i\y in {0/1,1/5,2/7,3/8,4/8,5/14,6/7,7/3,8/1,9/2} {
+    \pgfmathsetmacro\x{int(\i * 10)}
+    \draw (\i, -0.1) node[below]{\x} -- (\i, 0.1);
+    \tikzmath {
+        if {\i < 5} then {
+            let \c = light;
+        } else {
+            let \c = bad;
+        };
+        { \draw[fill=\c] (\i, 0) rectangle (\i+1, \y/2); };
+    }
+}
+\draw (9.5, 0.25) -- (9.5, -0.5) node[below] {$>90$};
+\node[below right] at (6, 8) {\begin{minipage}{6cm}
+\begin{itemize}
+\item{6. Stock WB; 6000 Scans; \\
+$\varepsilon$ = 0,01}
+\item{Avg: 47\,ms}
+\item[\color{bad}$\bullet$]{48\% aller Scans über 50\,ms}
+\item[\color{red}$\bullet$]{10\% gedroppt $\Rightarrow$ 18\,fps}
+\end{itemize}
+\end{minipage}};
+\end{tikzpicture}
+\end{textblock*}
+\end{frame}    
 
 \subsection{Power Consumption}
 \begin{frame}{\secname: \subsecname}
-TODO
+\centering
+\includegraphics[width=8cm]{images/power_consumption.jpg}\\\vspace{0.5cm}
+\begin{tabular}{lllllll}
+\toprule
+& \multicolumn{3}{c}{Idle} & \multicolumn{3}{c}{Running} \\
+& Mean & Min & Max & Mean & Min & Max \\
+\midrule
+U [mV] & 78,7 & 76 & 88 & 89,8 & 85,7 & 105,5 \\
+I [A] & 1,124 & 1,086 & 1,257 & 1,283 & 1,224 & 1,507 \\
+P [W] & 13,488 & 13,032 & 15,084 & \textbf{15,396} & 14,688 & 18,084 \\
+\bottomrule
+\end{tabular}
 \end{frame}
 
 \subsection{Genauigkeit}
@@ -200,18 +264,28 @@ schnell & 0,1676 & 0,0459 & 0,1320 \\
 \bottomrule
 \end{tabular}
 \end{center}
-\item{Leerlauf (nach einer Stunde, $\varepsilon$ = 0,04): 0,156095}
 \end{itemize}
 \end{frame}
 
 \section{Fazit}
 \begin{frame}{\secname}
-TODO    
+\begin{itemize}
+\item{Portables System}
+\item{Weiche Echtzeitfähigkeit}
+\item{Geringer Stromverbrauch}
+\item{Einfache Handhabung}
+\item{Einfache Analyse}
+\end{itemize}   
 \end{frame}
 
 \section{Ausblick}
 \begin{frame}{\secname}
-TODO
+\begin{itemize}
+\item Evaluierung mit anderer Sensorik
+\item Portierung auf Drohne
+\item Optimierung des Posegraphen (Loop Closing)
+\item Paper
+\end{itemize}
 \end{frame}
 
 \end{document}
