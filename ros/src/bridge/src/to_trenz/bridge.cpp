@@ -23,7 +23,7 @@
 
 #include <registration/imu_accumulator.h>
 
-namespace fs = fastsense;
+namespace fast = fastsense;
 
 /**
  * @brief Bridge that sends data to Trenz board
@@ -61,7 +61,7 @@ public:
         pcl1_sub_ = nh_.subscribe<sensor_msgs::PointCloud>("/velodyne_legacy", 1, &Bridge::pcl1_callback, this);
         pcl2_sub_ = nh_.subscribe<sensor_msgs::PointCloud2>("/velodyne_points", 1, &Bridge::pcl2_callback, this);
         ROS_INFO("to_trenz bridge initiated");
-        fs::util::RelativeTime::init();
+        fast::util::RelativeTime::reset();
     }
 
     /**
@@ -82,7 +82,7 @@ public:
      */
     void imu_callback(const sensor_msgs::ImuConstPtr& msg)
     {
-        fs::msg::Imu imu;
+        fast::msg::Imu imu;
         imu.ang.x() = msg->angular_velocity.x;
         imu.ang.y() = msg->angular_velocity.y;
         imu.ang.z() = msg->angular_velocity.z;
@@ -90,7 +90,7 @@ public:
         imu.acc.y() = msg->linear_acceleration.y;
         imu.acc.z() = msg->linear_acceleration.z;
 		
-        imu_sender_.send(fs::msg::ImuStamped{std::move(imu), fs::bridge::rostime_to_timestamp(msg->header.stamp)});
+        imu_sender_.send(fast::msg::ImuStamped{std::move(imu), fast::bridge::rostime_to_timestamp(msg->header.stamp)});
 
         ROS_DEBUG("Sent imu\n");
     }
@@ -123,14 +123,14 @@ public:
             for (size_t i = 0; i < n_points; ++i)
             {
                 const auto it = pcl_start + i;
-                trenz_points[i] = fs::ScanPoint(it[0] * 1000.f, it[1] * 1000.f, it[2] * 1000.f);
+                trenz_points[i] = fast::ScanPoint(it[0] * 1000.f, it[1] * 1000.f, it[2] * 1000.f);
             }
         }
 
         pcl_sender_.send
         (
-        	fs::msg::PointCloudStamped{std::move(trenz_pcl),
-			fs::bridge::rostime_to_timestamp(pcl->header.stamp)}
+        	fast::msg::PointCloudStamped{std::move(trenz_pcl),
+			fast::bridge::rostime_to_timestamp(pcl->header.stamp)}
         );
 
         ROS_DEBUG("Sent pcl2\n");
@@ -161,14 +161,14 @@ public:
             for (size_t i = 0; i < n_points; ++i)
             {
                 const auto point = pcl->points[i];
-                trenz_points[i] = fs::ScanPoint(point.x * 1000.f, point.y * 1000.f, point.z * 1000.f);
+                trenz_points[i] = fast::ScanPoint(point.x * 1000.f, point.y * 1000.f, point.z * 1000.f);
             }
         }
 
         pcl_sender_.send
         (
-        	fs::msg::PointCloudStamped{std::move(trenz_pcl),
-			fs::bridge::rostime_to_timestamp(pcl->header.stamp)}
+        	fast::msg::PointCloudStamped{std::move(trenz_pcl),
+			fast::bridge::rostime_to_timestamp(pcl->header.stamp)}
 		);
 
         ROS_DEBUG("Sent pcl1\n");
@@ -191,10 +191,10 @@ private:
     ros::Subscriber pcl2_sub_;
 
     /// fastsense::msg::ImuStamped sender
-    fs::comm::Sender<fs::msg::ImuStamped> imu_sender_;
+    fast::comm::Sender<fast::msg::ImuStamped> imu_sender_;
 
     /// fastsense::msg::PointCloud sender
-    fs::comm::Sender<fs::msg::PointCloudStamped> pcl_sender_;
+    fast::comm::Sender<fast::msg::PointCloudStamped> pcl_sender_;
 };
 
 int main(int argc, char **argv)

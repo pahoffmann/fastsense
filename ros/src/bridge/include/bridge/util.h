@@ -18,7 +18,8 @@ inline ros::Time timestamp_to_rostime(uint64_t ts)
 
 inline uint64_t rostime_to_timestamp(const ros::Time& stamp)
 {
-	return static_cast<uint64_t>(stamp.toNSec() / 1000000.0);
+	static ros::Time init_time = ros::Time::now();
+	return static_cast<uint64_t>((stamp.toNSec() - init_time.toNSec()) / 1000000.0);
 }
 
 }

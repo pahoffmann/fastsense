@@ -106,9 +106,9 @@ int Application::run()
     auto imu_bridge_buffer = std::make_shared<msg::ImuStampedBuffer>(config.imu.bufferSize());
     auto pointcloud_buffer = std::make_shared<msg::PointCloudPtrStampedBuffer>(config.lidar.bufferSize());
     auto pointcloud_bridge_buffer = std::make_shared<msg::PointCloudPtrStampedBuffer>(config.lidar.bufferSize());
-
-    util::RelativeTime::init();
     
+    util::RelativeTime::reset();
+
     util::ProcessThread::UPtr imu_driver = init_imu(imu_buffer);
     util::ProcessThread::UPtr lidar_driver = init_lidar(pointcloud_buffer);
 
@@ -264,6 +264,7 @@ int Application::run()
                 return 0;
             }
         }
+
         Logger::info("SLAM stopped!");
         Logger::info("Write local and global map...");
         // save Map to Disk

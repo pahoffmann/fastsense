@@ -100,6 +100,7 @@ void ImuBridge::convert()
     const auto& [ data, timestamp ] = msg();
 
     ros::Time ros_timestamp = timestamp_to_rostime(timestamp);
+    ROS_INFO_STREAM("Received IMU: " << ros_timestamp.sec << "/" << ros_timestamp.nsec);
 
     imu_ros_.header.frame_id = "base_link";
     imu_ros_.header.stamp = ros_timestamp;
