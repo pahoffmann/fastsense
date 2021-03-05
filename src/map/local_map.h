@@ -194,7 +194,7 @@ public:
      * Shifts the local map, so that a new position is the center of the cuboid.
      * Entries, that stay in the buffer, stay in place.
      * Values outside of the buffer are loaded from and stored in the global map.
-     * @param new_pos the new position
+     * @param new_pos the new position. Must not be more than get_size() units away from get_pos()
      */
     void shift(const Vector3i& new_pos);
 
@@ -241,16 +241,16 @@ public:
 private:
     /**
      * @brief writes to or reads from the global map in an area
-     * 
-     * @param start the "bottom left" corner of the area (smallest values along all axes); inclusive
-     * @param end the "top right" corner of the area (biggest values along all axes); inclusive
+     *
+     * @param bottom_corner the "bottom" corner of the area (smallest values along all axes); inclusive
+     * @param top_corner the "top" corner of the area (biggest values along all axes); inclusive
      * @param save true: write to global map; false: read from global map
      */
-    void save_load_area(const Vector3i& start, const Vector3i& end, bool save);
+    void save_load_area(const Vector3i& bottom_corner, const Vector3i& top_corner, bool save);
 
     /**
      * @brief Calculate the Index of a Point
-     * 
+     *
      * @param point the Point
      * @return int the index in data_
      */
@@ -264,7 +264,7 @@ private:
 
     /**
      * @brief see #value but without bounds checking
-     * 
+     *
      * @param p position of the index in global coordinates
      * @return value of the local map
      */
@@ -275,7 +275,7 @@ private:
 
     /**
      * @brief see #value but without bounds checking
-     * 
+     *
      * @param p position of the index in global coordinates
      * @return value of the local map
      */
