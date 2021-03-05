@@ -13,10 +13,11 @@ using secs_double = std::chrono::duration<double>;
 class RelativeTime
 {
 public:
-	static void init()
+	static void reset()
 	{
 		[[maybe_unused]]
 		auto& time = getInst();
+		time.set_time(HighResTime::now());
 	}
 	
 	static uint64_t now()
@@ -36,13 +37,18 @@ public:
 private:
 	RelativeTime() : start_time{HighResTime::now()} {}
 	
+	void set_time(const HighResTimePoint& t)
+	{
+		start_time = t;
+	}
+
 	static RelativeTime& getInst()
 	{
 		static RelativeTime time;
 		return time;
 	}
 	
-	const HighResTimePoint start_time;
+	HighResTimePoint start_time;
 };
 
 } // namespace fastsense::util

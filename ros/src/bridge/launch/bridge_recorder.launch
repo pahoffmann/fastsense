@@ -1,7 +1,10 @@
 <launch>
-  #### Bridge 
-  <include file="$(find bridge)/launch/bridge.launch"/>
+  #### Automatically set sim time false, or else bagfile will not be recorded
+  <param name="/use_sim_time" value="false"/>
 
   #### Recorder
-  <node pkg="rosbag" type="record" name="fastsense_recorder" output="screen" args="--all -o /media/fastsense/37d47bee-ecba-4955-ab67-74a31bfbabbd/"/>   
+  <node pkg="rosbag" type="record" name="fastsense_recorder" output="screen" args="--all -o /media/fastsense/37d47bee-ecba-4955-ab67-74a31bfbabbd/trash/"/> 
+
+  #### Bridge 
+  <include file="$(find bridge)/launch/bridge.launch"/>  
 </launch>
