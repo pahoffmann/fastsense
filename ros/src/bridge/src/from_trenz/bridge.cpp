@@ -19,24 +19,30 @@ int main(int argc, char** argv)
     ros::init(argc, argv, "from_trenz_bridge");
     ros::NodeHandle n("~");
 
+    // Setup board address
     std::string board_addr;
-    if(!ros::param::get("~board_addr", board_addr))
-    {
-        board_addr = "192.168.1.123"; // default hardware board
-    }
+    n.param<std::string>("board_addr", board_addr, "192.168.1.123");
     ROS_INFO_STREAM("Board address is " << board_addr);
 
-    std::chrono::milliseconds timeout;
+    // setup timer for receiver
     int timeout_ros;
-    if(!ros::param::get("~timeout", timeout_ros))
+    n.param("timeout", timeout_ros, 10);
+    ROS_INFO_STREAM("Timeout " << timeout_ros << "ms");
+    auto timeout = std::chrono::milliseconds(static_cast<size_t>(timeout_ros)); 
+
+    // Setup discard_timestamp
+    bool discard_timestamp;
+    n.param("discard_timestamp", discard_timestamp, false);
+    ROS_INFO_STREAM("Discard timestamps: " << std::boolalpha << discard_timestamp);
+    if (discard_timestamp)
     {
-        timeout = std::chrono::milliseconds(static_cast<size_t>(timeout_ros)); // default timeout for receiver
+        ROS_WARN("Do not record bagfiles with 'discard_timestamp' enabled!\n");
     }
 
-    fs::bridge::TSDFBridge tsdf_bridge{n, board_addr, timeout};
-    fs::bridge::ImuBridge imu_bridge{n, board_addr, timeout};
-    fs::bridge::VelodyneBridge velodyne_bridge{n, board_addr, timeout};
-    fs::bridge::TransformBridge transform_bridge{n, board_addr, timeout};
+    fs::bridge::TSDFBridge tsdf_bridge{n, board_addr, timeout, discard_timestamp};
+    fs::bridge::ImuBridge imu_bridge{n, board_addr, timeout, discard_timestamp};
+    fs::bridge::VelodyneBridge velodyne_bridge{n, board_addr, timeout, discard_timestamp};
+    fs::bridge::TransformBridge transform_bridge{n, board_addr, timeout, discard_timestamp};
     
     tsdf_bridge.start();
     imu_bridge.start();

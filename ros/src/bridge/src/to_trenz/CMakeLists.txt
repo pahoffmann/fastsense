@@ -3,7 +3,7 @@ add_executable(to_trenz
   bridge.cpp
 )
 
-target_compile_options(to_trenz PRIVATE ${OpenMP_FLAGS} -Wall -Wextra -Wpedantic)
+target_compile_options(to_trenz PRIVATE ${OpenMP_FLAGS} -Wall -Wpedantic)
 
 target_include_directories(to_trenz PRIVATE
   ${FASTSENSE_DIR}/src
