@@ -18,7 +18,6 @@ TSDFBridge::TSDFBridge(ros::NodeHandle& n, const std::string& board_addr, std::c
     ProcessThread{},
     points_{},
     colors_{},
-    timestamp_{ros::Time::now()},
     discard_timestamp_{discard_timestamp}
 {
     points_.reserve(30'000);

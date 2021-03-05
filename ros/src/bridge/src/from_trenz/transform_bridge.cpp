@@ -12,7 +12,7 @@
 
 using namespace fastsense::bridge;
 
-TransformBridge::TransformBridge(ros::NodeHandle& n, const std::string& board_addr, std::chrono::milliseconds timeout)
+TransformBridge::TransformBridge(ros::NodeHandle& n, const std::string& board_addr, std::chrono::milliseconds timeout, bool discard_timestamp)
     :   BridgeBase{n, "pose", board_addr, 1000, timeout},
         ProcessThread{},
         broadcaster{},
@@ -21,7 +21,8 @@ TransformBridge::TransformBridge(ros::NodeHandle& n, const std::string& board_ad
         transform_data{},
         first_smg{true},
         pose_path{},
-        pose_stamped()
+        pose_stamped{},
+        discard_timestamp_{discard_timestamp}
 {
     transform_data.transform.rotation.w = 1.0;
 
@@ -60,14 +61,14 @@ void TransformBridge::run()
         {
             if (receive())
             {
-                ROS_INFO_STREAM("Received transform\n");
+                ROS_DEBUG_STREAM("Received transform\n");
                 convert();
                 publish();
             }
         }
         catch(const std::exception& e)
         {
-            std::cerr << "transform bridge error: " << e.what() << '\n';
+            ROS_ERROR_STREAM("transform bridge error: " << e.what());
         }
     }
 }
@@ -76,7 +77,7 @@ void TransformBridge::convert()
 {
     std::lock_guard guard(mtx);
 
-    auto timestamp = timestamp_to_rostime(msg_.timestamp_);
+    auto timestamp = timestamp_to_rostime(msg_.timestamp_, discard_timestamp_);
 
     // set pose_path header (once and only)
     if (first_smg)
@@ -124,11 +125,6 @@ void TransformBridge::convert()
         int index = dist(rng);
         pose_path.poses.erase(pose_path.poses.begin() + index);
     }
-
-    ROS_WARN("Most current Pose:");
-    ROS_WARN("  %f %f %f", pose_stamped.pose.position.x, pose_stamped.pose.position.y, pose_stamped.pose.position.z);
-    ROS_WARN("  %f %f %f %f", pose_stamped.pose.orientation.x, pose_stamped.pose.orientation.y, pose_stamped.pose.orientation.z, pose_stamped.pose.orientation.w);
-
 }
 
 void TransformBridge::publish()

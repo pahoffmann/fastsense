@@ -74,9 +74,6 @@ private:
     /// Color vector
     std::vector<std_msgs::ColorRGBA> colors_;
 
-    /// timestamp of received messages
-    ros::Time timestamp_;
-
     /// Whether or not to discard timestamps and replace with ros::Time::now()
     bool discard_timestamp_;
 };

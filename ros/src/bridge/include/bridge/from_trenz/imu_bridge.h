@@ -30,8 +30,9 @@ public:
      * @param n nodehandle
      * @param board_addr ip addr of Trenz board
      * @param timeout how long to wait for message before trying again
+     * @param discard_timestamp Whether or not to discard timestamps and replace with ros::Time::now()
      */
-    ImuBridge(ros::NodeHandle& n, const std::string& board_addr, std::chrono::milliseconds timeout);
+    ImuBridge(ros::NodeHandle& n, const std::string& board_addr, std::chrono::milliseconds timeout, bool discard_timestamp);
 
     /**
      * @brief Destroy the Imu Bridge object
@@ -81,6 +82,9 @@ private:
 
     /// magnetic field covariance
     std::array<double, 9> magnetic_field_covariance_;
+
+    /// Whether or not to discard timestamps and replace with ros::Time::now()
+    const bool discard_timestamp_;
 };
 
 } // namespace fastsense::bridge
