@@ -31,10 +31,10 @@ public:
 	RelativeTime(RelativeTime&&) = delete;
 	RelativeTime(const RelativeTime&) = delete;
 	
+	~RelativeTime() = default;
+
 private:
 	RelativeTime() : start_time{HighResTime::now()} {}
-	
-	~RelativeTime() = default;
 	
 	static RelativeTime& getInst()
 	{

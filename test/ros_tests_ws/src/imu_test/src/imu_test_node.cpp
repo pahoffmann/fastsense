@@ -24,7 +24,7 @@ int main(int argc, char** argv)
     fs::driver::Imu imu(imu_buffer, 25);
     imu.start();
 
-    auto last = fs::util::HighResTime::now();
+    auto last = fs::util::RelativeTime::now();
 
     fs::msg::ImuStamped data_stamped;
     while (ros::ok())

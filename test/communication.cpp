@@ -120,8 +120,9 @@ TEST_CASE("PointCloudStamped Sender Receiver Test", "[communication]")
         pc_to_send.points_.push_back({1, 2, 3});
         pc_to_send.points_.push_back({2, 3, 4});
         pc_to_send.points_.push_back({3, 4, 5});
-
-        auto tp_to_send = util::HighResTime::now();
+		
+        util::RelativeTime::init();
+        auto tp_to_send = util::RelativeTime::now();
 
         PointCloudStamped pcl_stamped{std::move(pc_to_send), tp_to_send};
 
@@ -172,8 +173,9 @@ TEST_CASE("Stamped<PointCloud> Sender Receiver Test", "[communication]")
         pc_to_send.points_.push_back({1, 2, 3});
         pc_to_send.points_.push_back({2, 3, 4});
         pc_to_send.points_.push_back({3, 4, 5});
-
-        auto tp_to_send = util::HighResTime::now();
+		
+        util::RelativeTime::init();
+        auto tp_to_send = util::RelativeTime::now();
 
         Stamped<PointCloud> pcl_stamped{std::move(pc_to_send), tp_to_send};
         Stamped<PointCloud> pcl_stamped_received;
@@ -274,7 +276,8 @@ TEST_CASE("TSDFBridgeMessage Sender Receiver Test", "[communication]")
 TEST_CASE("ImuStamped Sender Receiver Test", "[communication]")
 {
     std::cout << "Testing 'ImuStamped Sender Receiver Test'" << std::endl;
-    auto tp = util::HighResTimePoint{std::chrono::nanoseconds{1000}};
+    util::RelativeTime::init();
+    auto tp = util::RelativeTime::now();
 
     LinearAcceleration acc{1, 2, 3};
     AngularVelocity ang{4, 5, 6};
@@ -287,9 +290,7 @@ TEST_CASE("ImuStamped Sender Receiver Test", "[communication]")
     for (size_t i = 0; i < iterations; ++i)
     {
         bool received = false;
-
-        auto tp = util::HighResTimePoint{std::chrono::nanoseconds{1000}};
-
+        
         LinearAcceleration acc{1, 2, 3};
         AngularVelocity ang{4, 5, 6};
         MagneticField mag{7, 8, 9};
@@ -338,7 +339,8 @@ TEST_CASE("ImuStamped Sender Receiver Test", "[communication]")
  {
      std::cout << "Testing 'BufferedImuStampedReceiver Test'" << std::endl;
 
-     auto tp = util::HighResTimePoint{std::chrono::nanoseconds{1000}};
+     util::RelativeTime::init();
+     auto tp = util::RelativeTime::now();
 
      LinearAcceleration acc{1, 2, 3};
      AngularVelocity ang{4, 5, 6};
@@ -426,8 +428,9 @@ TEST_CASE("ImuStamped Sender Receiver Test", "[communication]")
       pcl.points_.push_back({3, 4, 5});
 
       PointCloudPtrStamped data_recv;
-
-      auto tp_to_send = util::HighResTime::now();
+      
+      util::RelativeTime::init();
+      auto tp_to_send = util::RelativeTime::now();
 
       PointCloudStamped pcl_stamped{std::move(pcl), tp_to_send};
 
@@ -489,8 +492,10 @@ TEST_CASE("Stamped<int> Sender Receiver Test", "[communication]")
     for (size_t i = 0; i < iterations; ++i)
     {
         bool received = false;
-
-        auto tp = util::HighResTime::now();
+		
+        util::RelativeTime::init();
+        auto tp = util::RelativeTime::now();
+        
         msg::Stamped<int> value_received{};
         msg::Stamped<int> value_to_send(42, tp);
 
@@ -526,8 +531,10 @@ TEST_CASE("Stamped<msg::Transform> Sender Receiver Test", "[communication]")
     for (size_t i = 0; i < iterations; ++i)
     {
         bool received = false;
-
-        auto tp = util::HighResTime::now();
+		
+        util::RelativeTime::init();
+        auto tp = util::RelativeTime::now();
+        
         msg::Stamped<msg::Transform> value_received;
         msg::Stamped<msg::Transform> value_to_send(std::move(msg::Transform{Quaternionf{1, 2, 3, 4}, Vector3f{5, 6, 7}}), tp);
 

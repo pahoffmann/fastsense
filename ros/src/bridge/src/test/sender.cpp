@@ -28,7 +28,7 @@ int main()
     for(;;)
     {
         std::this_thread::sleep_for(500ms);
-        auto tp = util::HighResTime::now();
+        auto tp = util::RelativeTime::now();
 
         // send transform message
         msg::Transform tf{Quaternionf{1, 0, 0, 0}, Vector3f{1, 1, 1}};

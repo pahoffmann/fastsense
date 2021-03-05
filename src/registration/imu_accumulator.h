@@ -49,11 +49,11 @@ public:
     /**
      * @brief Return acculated transform for given pointcloud timestamp
      *
-     * @param pcl_timestamp timestamp of received pointcloud 
+     * @param pcl_timestamp **relative** timestamp of received pointcloud
      * 
      * @return const Matrix4f the accumulated transform
      */
-    Matrix4f acc_transform(util::HighResTimePoint pcl_timestamp);
+    Matrix4f acc_transform(uint64_t pcl_timestamp);
 
     /// imu buffer to use for accumulation
     msg::ImuStampedBuffer::Ptr& buffer_;
@@ -69,18 +69,18 @@ private:
     /**
      * @brief Calculates whether or not ts_1 happened before ts_2 (before in the OS timestamp sense)
      * 
-     * @param ts_1 timestamp 1
-     * @param ts_2 timestamp 2
+     * @param ts_1 **relative** timestamp 1
+     * @param ts_2 **relative** timestamp 2
      * @return true if ts_1 happened before ts_2
      * @return false if ts_1 happened after ts_2
      */
-    bool before(util::HighResTimePoint& ts_1, util::HighResTimePoint& ts_2);
+    bool before(uint64_t ts_1, uint64_t ts_2);
 
     /// first imu message needs to be catched to calculate diff
     bool first_imu_msg_;
 
-    /// last timestamp of imu to calculate difference to incoming messages
-    util::HighResTimePoint last_imu_timestamp_;
+    /// last **relative** timestamp of imu to calculate difference to incoming messages
+	uint64_t last_imu_timestamp_;
 };
 
 } // namespace fastsense::registration

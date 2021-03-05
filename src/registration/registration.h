@@ -87,7 +87,7 @@ public:
      */
     void register_cloud(fastsense::map::LocalMap& localmap,
                         fastsense::buffer::InputBuffer<PointHW>& cloud,
-                        const util::HighResTimePoint& cloud_timestamp,
+                        uint64_t cloud_timestamp,
                         Matrix4f& pose);
 
     /**

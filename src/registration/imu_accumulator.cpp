@@ -16,11 +16,11 @@ ImuAccumulator::ImuAccumulator(msg::ImuStampedBuffer::Ptr& buffer)
 {}
 
 
-bool ImuAccumulator::before(fastsense::util::HighResTimePoint& ts_1, fastsense::util::HighResTimePoint& ts_2){
-    return std::chrono::duration_cast<std::chrono::milliseconds>(ts_2 - ts_1).count() >= 0;
+bool ImuAccumulator::before(uint64_t ts_1, uint64_t ts_2){
+    return ts_2 >= ts_1;
 }
 
-Eigen::Matrix4f ImuAccumulator::acc_transform(util::HighResTimePoint pcl_timestamp) {
+Eigen::Matrix4f ImuAccumulator::acc_transform(uint64_t pcl_timestamp) {
     
     msg::ImuStamped imu_msg;
     Matrix4f acc_transform = Matrix4f::Identity();
@@ -46,7 +46,9 @@ Eigen::Matrix4f ImuAccumulator::acc_transform(util::HighResTimePoint pcl_timesta
 void ImuAccumulator::apply_transform(Matrix4f& acc_transform, const msg::ImuStamped& imu_msg)
 {
     const auto& ang_vel = imu_msg.data_.ang;
-    const double acc_time = std::abs(std::chrono::duration_cast<util::secs_double>(imu_msg.timestamp_ - last_imu_timestamp_).count());
+    // relative timestamp is in milliseconds, convert into seconds
+    const double acc_time = std::abs((imu_msg.timestamp_ - last_imu_timestamp_) / 1000.0);
+    
     Vector3f orientation = ang_vel * acc_time; //in radiants [rad, rad, rad]
     
     auto rotation = Eigen::AngleAxisf(orientation.x(), Vector3f::UnitX())

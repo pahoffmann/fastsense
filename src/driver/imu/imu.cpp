@@ -116,7 +116,7 @@ void Imu::data_handler(const double* acceleration, const double* angularRate, co
     }
 
     const auto filtered_msg = filter_.update(msg::Imu{acceleration, angularRate, magneticField});
-    data_buffer_->push_nb(msg::ImuStamped{std::move(filtered_msg), util::HighResTime::now()}, true);
+    data_buffer_->push_nb(msg::ImuStamped{std::move(filtered_msg), util::RelativeTime::now()}, true);
 }
 
 void Imu::attach_handler()

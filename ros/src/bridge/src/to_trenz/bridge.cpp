@@ -11,7 +11,7 @@
 #include <sensor_msgs/PointCloud2.h>
 #include <sensor_msgs/point_cloud2_iterator.h>
 
-
+#include <bridge/util.h>
 #include <util/time.h>
 #include <util/point.h>
 #include <util/concurrent_ring_buffer.h>
@@ -61,6 +61,7 @@ public:
         pcl1_sub_ = nh_.subscribe<sensor_msgs::PointCloud>("/velodyne_legacy", 1, &Bridge::pcl1_callback, this);
         pcl2_sub_ = nh_.subscribe<sensor_msgs::PointCloud2>("/velodyne_points", 1, &Bridge::pcl2_callback, this);
         ROS_INFO("to_trenz bridge initiated");
+        fs::util::RelativeTime::init();
     }
 
     /**
@@ -88,10 +89,8 @@ public:
         imu.acc.x() = msg->linear_acceleration.x;
         imu.acc.y() = msg->linear_acceleration.y;
         imu.acc.z() = msg->linear_acceleration.z;
-
-        auto tp = fs::util::HighResTimePoint{std::chrono::nanoseconds{msg->header.stamp.toNSec()}};
-
-        imu_sender_.send(fs::msg::ImuStamped{std::move(imu), tp});
+		
+        imu_sender_.send(fs::msg::ImuStamped{std::move(imu), fs::bridge::rostime_to_timestamp(msg->header.stamp)});
 
         ROS_DEBUG("Sent imu\n");
     }
@@ -104,8 +103,6 @@ public:
      */
     void pcl2_callback(const sensor_msgs::PointCloud2ConstPtr &pcl)
     {
-        auto tp = fs::util::HighResTimePoint{std::chrono::nanoseconds{pcl->header.stamp.toNSec()}};
-
         fastsense::msg::PointCloud trenz_pcl;
         auto& trenz_points = trenz_pcl.points_;
 
@@ -130,7 +127,11 @@ public:
             }
         }
 
-        pcl_sender_.send(fs::msg::PointCloudStamped{std::move(trenz_pcl), tp});
+        pcl_sender_.send
+        (
+        	fs::msg::PointCloudStamped{std::move(trenz_pcl),
+			fs::bridge::rostime_to_timestamp(pcl->header.stamp)}
+        );
 
         ROS_DEBUG("Sent pcl2\n");
     }
@@ -143,8 +144,6 @@ public:
      */
     void pcl1_callback(const sensor_msgs::PointCloudConstPtr &pcl)
     {
-        auto tp = fs::util::HighResTimePoint{std::chrono::nanoseconds{pcl->header.stamp.toNSec()}};
-
         fastsense::msg::PointCloud trenz_pcl;
         auto& trenz_points = trenz_pcl.points_;
 
@@ -166,7 +165,11 @@ public:
             }
         }
 
-        pcl_sender_.send(fs::msg::PointCloudStamped{std::move(trenz_pcl), tp});
+        pcl_sender_.send
+        (
+        	fs::msg::PointCloudStamped{std::move(trenz_pcl),
+			fs::bridge::rostime_to_timestamp(pcl->header.stamp)}
+		);
 
         ROS_DEBUG("Sent pcl1\n");
     }

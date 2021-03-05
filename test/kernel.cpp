@@ -194,7 +194,8 @@ TEST_CASE("Kernel", "[kernel][slow]")
     krnl.waitComplete();
 
     //fastsense::tsdf::update_tsdf(scan_points, Vector3i::Zero(), local_map, TAU, MAX_WEIGHT);
-
+	
+    util::RelativeTime::init();
     {
         std::cout << "    Section 'Test Registration No Transform'" << std::endl;
 
@@ -203,7 +204,7 @@ TEST_CASE("Kernel", "[kernel][slow]")
         auto buffer_ptr = scan_points_to_input_buffer(points_transformed, q);
         auto& buffer = *buffer_ptr;
         Matrix4f result_matrix = Matrix4f::Identity();
-        reg.register_cloud(local_map, buffer, util::HighResTime::now(), result_matrix);
+        reg.register_cloud(local_map, buffer, util::RelativeTime::now(), result_matrix);
 
         reg.transform_point_cloud(points_transformed, result_matrix);
         check_computed_transform(points_transformed, points_original);
@@ -220,7 +221,7 @@ TEST_CASE("Kernel", "[kernel][slow]")
         auto buffer_ptr = scan_points_to_input_buffer(points_transformed, q);
         auto& buffer = *buffer_ptr;
         Matrix4f result_matrix = Matrix4f::Identity();
-        reg.register_cloud(local_map, buffer, util::HighResTime::now(), result_matrix);
+        reg.register_cloud(local_map, buffer, util::RelativeTime::now(), result_matrix);
 
         reg.transform_point_cloud(points_transformed, result_matrix);
         check_computed_transform(points_transformed, points_original);
@@ -234,7 +235,7 @@ TEST_CASE("Kernel", "[kernel][slow]")
         auto buffer_ptr = scan_points_to_input_buffer(points_transformed, q);
         auto& buffer = *buffer_ptr;
         Matrix4f result_matrix = Matrix4f::Identity();
-        reg.register_cloud(local_map, buffer, util::HighResTime::now(), result_matrix);
+        reg.register_cloud(local_map, buffer, util::RelativeTime::now(), result_matrix);
 
         reg.transform_point_cloud(points_transformed, result_matrix);
         check_computed_transform(points_transformed, points_original);
@@ -248,7 +249,7 @@ TEST_CASE("Kernel", "[kernel][slow]")
         auto buffer_ptr = scan_points_to_input_buffer(points_transformed, q);
         auto& buffer = *buffer_ptr;
         Matrix4f result_matrix = Matrix4f::Identity();
-        reg.register_cloud(local_map, buffer, util::HighResTime::now(), result_matrix);
+        reg.register_cloud(local_map, buffer, util::RelativeTime::now(), result_matrix);
 
         reg.transform_point_cloud(points_transformed, result_matrix);
         float result1 = check_computed_transform(points_transformed, points_original, false);
@@ -258,7 +259,7 @@ TEST_CASE("Kernel", "[kernel][slow]")
         auto buffer_ptr2 = scan_points_to_input_buffer(points_transformed2, q);
         auto& buffer2 = *buffer_ptr2;
         Matrix4f result_matrix2 = Matrix4f::Identity();
-        reg.register_cloud(local_map, buffer2, util::HighResTime::now(), result_matrix2);
+        reg.register_cloud(local_map, buffer2, util::RelativeTime::now(), result_matrix2);
 
         reg.transform_point_cloud(points_transformed2, result_matrix2);
         float result2 = check_computed_transform(points_transformed2, points_original);

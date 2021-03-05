@@ -57,7 +57,7 @@ void Registration::transform_point_cloud(fastsense::buffer::InputBuffer<PointHW>
 
 void Registration::register_cloud(fastsense::map::LocalMap& localmap,
                                   fastsense::buffer::InputBuffer<PointHW>& cloud,
-                                  const util::HighResTimePoint& cloud_timestamp,
+								  uint64_t cloud_timestamp,
                                   Matrix4f& pose)
 {
     Matrix4f imu_estimate = imu_accumulator_.acc_transform(cloud_timestamp);

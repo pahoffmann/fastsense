@@ -21,7 +21,6 @@ static void transform_point_cloud(std::vector<Vector3f>& in_cloud, const Matrix4
         Eigen::Vector4f v;
         v << in_cloud[i], 1;
         in_cloud[i] = (mat * v).block<3,1>(0, 0);
-
     }
 }
 
@@ -30,21 +29,22 @@ TEST_CASE("AccumulatorPos", "[Accumulator]")
 
     //msg::ImuStampedBuffer imu_buffer(10);
     auto imu_buffer = std::make_shared<msg::ImuStampedBuffer>(10);
-
-    auto stamp = util::HighResTime::now();
-    auto diff = 250ms;
+    
+    util::RelativeTime::init();
+    auto stamp = util::RelativeTime::now();
+    auto diff = 250;
 
     msg::Imu imu{msg::LinearAcceleration{0,0,0}, msg::AngularVelocity{0,0,M_PI}, msg::MagneticField{0,0,0}};
 
     for (const auto& i: {1, 2, 3, 4, 5, 6, 7})
     {
-        msg::ImuStamped imu_msg{imu, util::HighResTimePoint(stamp + i * diff)};
+        msg::ImuStamped imu_msg{imu, stamp + i * diff};
         imu_buffer->push(imu_msg);
     }
 
     registration::ImuAccumulator imu_acc{imu_buffer};
 
-    Eigen::Matrix4f acc = imu_acc.acc_transform(util::HighResTimePoint(stamp + 5 * diff));
+    Eigen::Matrix4f acc = imu_acc.acc_transform(stamp + 5 * diff);
 
     // target rotation in deg
     auto target = 180; 
@@ -68,7 +68,7 @@ TEST_CASE("AccumulatorPos", "[Accumulator]")
 
     REQUIRE(imu_buffer->size() ==  2);
     
-    acc = imu_acc.acc_transform(util::HighResTimePoint(stamp + 7 * diff));
+    acc = imu_acc.acc_transform(stamp + 7 * diff);
 
     // 2 imu messages left in buffer -> -90 grad rotation around z axis
     // target rotation in deg
@@ -98,21 +98,22 @@ TEST_CASE("AccumulatorNeg", "[Accumulator]")
 {
 
     auto imu_buffer = std::make_shared<msg::ImuStampedBuffer>(10);
-
-    auto stamp = util::HighResTime::now();
-    auto diff = 250ms;
+	
+    util::RelativeTime::init();
+    auto stamp = util::RelativeTime::now();
+    auto diff = 250;
 
     msg::Imu imu{msg::LinearAcceleration{0,0,0}, msg::AngularVelocity{0,0,-M_PI}, msg::MagneticField{0,0,0}};
 
     for (const auto& i: {1, 2, 3, 4, 5, 6, 7})
     {
-        msg::ImuStamped imu_msg{imu, util::HighResTimePoint(stamp + i * diff)};
+        msg::ImuStamped imu_msg{imu, stamp + i * diff};
         imu_buffer->push(imu_msg);
     }
 
     registration::ImuAccumulator imu_acc{imu_buffer};
 
-    Eigen::Matrix4f acc = imu_acc.acc_transform(util::HighResTimePoint(stamp + 5 * diff));
+    Eigen::Matrix4f acc = imu_acc.acc_transform(stamp + 5 * diff);
 
     // target rotation in deg
     auto target = -180; 
@@ -136,7 +137,7 @@ TEST_CASE("AccumulatorNeg", "[Accumulator]")
 
     REQUIRE(imu_buffer->size() ==  2);
     
-    acc = imu_acc.acc_transform(util::HighResTimePoint(stamp + 7 * diff));
+    acc = imu_acc.acc_transform(stamp + 7 * diff);
 
     // 2 imu messages left in buffer -> -90 grad rotation around z axis
 
@@ -166,21 +167,22 @@ TEST_CASE("AccumulatorNeg", "[Accumulator]")
 TEST_CASE("AccumulatorCloudRotation", "[Accumulator]")
 {
     auto imu_buffer = std::make_shared<msg::ImuStampedBuffer>(10);
-
-    auto stamp = util::HighResTime::now();
-    auto diff = 250ms;
+	
+    util::RelativeTime::init();
+    auto stamp = util::RelativeTime::now();
+    auto diff = 250;
 
     msg::Imu imu{msg::LinearAcceleration{0,0,0}, msg::AngularVelocity{0,0,-M_PI}, msg::MagneticField{0,0,0}};
 
     for (const auto& i: {1, 2, 3, 4, 5, 6, 7})
     {
-        msg::ImuStamped imu_msg{imu, util::HighResTimePoint(stamp + i * diff)};
+        msg::ImuStamped imu_msg{imu, stamp + i * diff};
         imu_buffer->push(imu_msg);
     }
 
     registration::ImuAccumulator imu_acc{imu_buffer};
 
-    Eigen::Matrix4f acc = imu_acc.acc_transform(util::HighResTimePoint(stamp + 5 * diff));
+    Eigen::Matrix4f acc = imu_acc.acc_transform(stamp + 5 * diff);
 
     std::vector<Vector3f> cloud(5);
     std::vector<Vector3f> result(5);
@@ -206,7 +208,7 @@ TEST_CASE("AccumulatorCloudRotation", "[Accumulator]")
         REQUIRE(cloud[i].z() == Approx(result[i].z()).margin(0.00001));
     }
 
-    acc = imu_acc.acc_transform(util::HighResTimePoint(stamp + 7 * diff));
+    acc = imu_acc.acc_transform(stamp + 7 * diff);
 
     transform_point_cloud(cloud, acc);
 

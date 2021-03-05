@@ -124,7 +124,9 @@ TEST_CASE("QueueBridge Stamped<Imu>", "[communication_queue_bridge]")
 {
     std::cout << "Testing 'QueueBridge Stamped<Imu>'" << std::endl;
     Imu imu{{1, 2, 3}, {4, 5, 6}, {7, 8, 9}};
-    auto ts_sent = HighResTime::now();
+    RelativeTime::init();
+    
+    auto ts_sent = RelativeTime::now();
     ImuStamped value_to_send{std::move(imu), ts_sent};
     ImuStamped value_received;
 
@@ -187,7 +189,7 @@ TEST_CASE("QueueBridge Stamped<PointCloud>", "[communication_queue_bridge]")
 {
     std::cout << "Testing 'QueueBridge Stamped<PointCloud>'" << std::endl;
     Imu imu{{1, 2, 3}, {4, 5, 6}, {7, 8, 9}};
-    auto ts_sent = HighResTime::now();
+    auto ts_sent = RelativeTime::now();
     PointCloud pc_to_send;
     pc_to_send.rings_ = 2;
     pc_to_send.points_.push_back({1, 2, 3});

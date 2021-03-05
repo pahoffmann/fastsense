@@ -26,7 +26,7 @@ struct Stamped : public ZMQConverter
      */
     Stamped()
     : data_{}
-    , timestamp_{util::HighResTime::now()}
+    , timestamp_{util::RelativeTime::now()}
     {
     }
 
@@ -38,7 +38,7 @@ struct Stamped : public ZMQConverter
      * @param data Data to store with given timestamp
      * @param timepoint timestamp of data creation/recording
      */
-    explicit Stamped(DATA_T data, util::HighResTimePoint timepoint = util::HighResTime::now())
+    explicit Stamped(DATA_T data, uint64_t timepoint = util::RelativeTime::now())
     : data_(std::move(data))
     , timestamp_(timepoint)
     {
@@ -100,7 +100,7 @@ struct Stamped : public ZMQConverter
     template < typename TT = DATA_T, std::enable_if_t < std::is_base_of_v<msg::ZMQConverter, TT>, int > = 0 >
     void convert_from_zmq(zmq::multipart_t &msg) 
     {
-        timestamp_ = msg.poptyp<util::HighResTimePoint>();
+        timestamp_ = msg.poptyp<uint64_t>();
         data_.from_zmq_msg(msg);
     }
 
@@ -114,7 +114,7 @@ struct Stamped : public ZMQConverter
     template < typename TT = DATA_T, std::enable_if_t < !std::is_base_of_v<msg::ZMQConverter, TT>, int > = 0 >
     void convert_from_zmq(zmq::multipart_t &msg) 
     {
-        timestamp_ = msg.poptyp<util::HighResTimePoint>();
+        timestamp_ = msg.poptyp<uint64_t>();
         auto leftover_msg = msg.pop();
         data_ = *static_cast<DATA_T*>(leftover_msg.data());
     }
@@ -154,8 +154,8 @@ struct Stamped : public ZMQConverter
     /// Data to refer timestamp to
     DATA_T data_;
 
-    /// Time of creation/recording of data_
-    util::HighResTimePoint timestamp_;
+    /// **relative** time of creation/recording of data
+	uint64_t timestamp_;
 };
 
 }
