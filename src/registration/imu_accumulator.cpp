@@ -46,7 +46,7 @@ Eigen::Matrix4f ImuAccumulator::acc_transform(util::HighResTimePoint pcl_timesta
 void ImuAccumulator::apply_transform(Matrix4f& acc_transform, const msg::ImuStamped& imu_msg)
 {
     const auto& ang_vel = imu_msg.data_.ang;
-    const double acc_time = std::abs(std::chrono::duration_cast<util::time::secs_double>(imu_msg.timestamp_ - last_imu_timestamp_).count());
+    const double acc_time = std::abs(std::chrono::duration_cast<util::secs_double>(imu_msg.timestamp_ - last_imu_timestamp_).count());
     Vector3f orientation = ang_vel * acc_time; //in radiants [rad, rad, rad]
     
     auto rotation = Eigen::AngleAxisf(orientation.x(), Vector3f::UnitX())

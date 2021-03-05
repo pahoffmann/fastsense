@@ -107,6 +107,8 @@ int Application::run()
     auto pointcloud_buffer = std::make_shared<msg::PointCloudPtrStampedBuffer>(config.lidar.bufferSize());
     auto pointcloud_bridge_buffer = std::make_shared<msg::PointCloudPtrStampedBuffer>(config.lidar.bufferSize());
 
+    RelativeTime::init();
+    
     util::ProcessThread::UPtr imu_driver = init_imu(imu_buffer);
     util::ProcessThread::UPtr lidar_driver = init_lidar(pointcloud_buffer);
 
