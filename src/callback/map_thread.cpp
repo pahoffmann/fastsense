@@ -28,6 +28,7 @@ MapThread::MapThread(const std::shared_ptr<fastsense::map::LocalMap>& local_map,
       period_(period),
       position_threshold_(position_threshold),
       reg_cnt_(0),
+      tsdf_msg_(),
       sender_(port)
 {
     /*
@@ -37,7 +38,7 @@ MapThread::MapThread(const std::shared_ptr<fastsense::map::LocalMap>& local_map,
     */
     start_mutex_.lock();
 
-    tsdf_msg_.tsdf_data_.resize(local_map->getBuffer().size());
+    tsdf_msg_.data_.tsdf_data_.resize(local_map->getBuffer().size());
 }
 
 void MapThread::go(const Vector3i& pos, const Eigen::Matrix4f& pose, const fastsense::buffer::InputBuffer<PointHW>& points, int num_points)
@@ -114,11 +115,12 @@ void MapThread::thread_run()
 
         // visualize
         eval.start("vis");
-        tsdf_msg_.tau_ = tau;
-        tsdf_msg_.size_ = local_map_->get_size();
-        tsdf_msg_.pos_ = local_map_->get_pos();
-        tsdf_msg_.offset_ = local_map_->get_offset();
-        std::copy(local_map_->getBuffer().cbegin(), local_map_->getBuffer().cend(), tsdf_msg_.tsdf_data_.data());
+        tsdf_msg_.update_time();
+        tsdf_msg_.data_.tau_ = tau;
+        tsdf_msg_.data_.size_ = local_map_->get_size();
+        tsdf_msg_.data_.pos_ = local_map_->get_pos();
+        tsdf_msg_.data_.offset_ = local_map_->get_offset();
+        std::copy(local_map_->getBuffer().cbegin(), local_map_->getBuffer().cend(), tsdf_msg_.data_.tsdf_data_.data());
         sender_.send(tsdf_msg_);
         eval.stop("vis");
 

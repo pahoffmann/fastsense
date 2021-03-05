@@ -9,14 +9,17 @@
 #include <ros/ros.h>
 #include <bridge/from_trenz/tsdf_bridge.h>
 #include <util/constants.h>
+#include <bridge/util.h>
 
 using namespace fastsense::bridge;
 
-TSDFBridge::TSDFBridge(ros::NodeHandle& n, const std::string& board_addr, std::chrono::milliseconds timeout)
+TSDFBridge::TSDFBridge(ros::NodeHandle& n, const std::string& board_addr, std::chrono::milliseconds timeout, bool discard_timestamp)
 :   BridgeBase{n, "tsdf", board_addr, 1000, timeout},
     ProcessThread{},
     points_{},
-    colors_{}
+    colors_{},
+    timestamp_{ros::Time::now()},
+    discard_timestamp_{discard_timestamp}
 {
     points_.reserve(30'000);
     colors_.reserve(30'000);
@@ -30,14 +33,14 @@ void TSDFBridge::run()
         {
             if (receive())
             {
-                ROS_INFO_STREAM("Received " << msg_.tsdf_data_.size() << " tsdf values\n");
+                ROS_DEBUG_STREAM("Received tsdf values\n");
                 convert();
                 publish();
             }
         }
         catch(const std::exception& e)
         {
-            std::cerr << "tsdf bridge error: " << e.what() << '\n';
+            ROS_ERROR_STREAM("tsdf bridge error: " << e.what());
         }
     }
 }
@@ -45,24 +48,27 @@ void TSDFBridge::run()
 // TODO in util, so steffen and my version match
 bool TSDFBridge::in_bounds(int x, int y, int z) const
 {
-    return abs(x - msg().pos_[0] <= msg().size_[0] / 2 && abs(y - msg().pos_[1]) <= msg().size_[1] / 2 && abs(z - msg().pos_[2]) <= msg().size_[2] / 2);
+    const auto& data = msg().data_;
+    return abs(x - data.pos_[0] <= data.size_[0] / 2 && abs(y - data.pos_[1]) <= data.size_[1] / 2 && abs(z - data.pos_[2]) <= data.size_[2] / 2);
 }
 
 TSDFValue TSDFBridge::get_tsdf_value(int x, int y, int z) const
 {
+    const auto& data = msg().data_;
+
     if (!in_bounds(x, y, z))
     {
         throw std::out_of_range("Index out of bounds");
     }
 
-    if (msg().tsdf_data_.empty())
+    if (data.tsdf_data_.empty())
     {
         throw std::out_of_range("Index out of bounds: data empty");
     }
     
-    return msg().tsdf_data_[((x - msg().pos_[0] + msg().offset_[0] + msg().size_[0]) % msg().size_[0]) * msg().size_[1] * msg().size_[2] +
-                     ((y - msg().pos_[1] + msg().offset_[1] + msg().size_[1]) % msg().size_[1]) * msg().size_[2] +
-                     (z - msg().pos_[2] + msg().offset_[2] + msg().size_[2]) % msg().size_[2]];
+    return data.tsdf_data_[((x - data.pos_[0] + data.offset_[0] + data.size_[0]) % data.size_[0]) * data.size_[1] * data.size_[2] +
+                     ((y - data.pos_[1] + data.offset_[1] + data.size_[1]) % data.size_[1]) * data.size_[2] +
+                     (z - data.pos_[2] + data.offset_[2] + data.size_[2]) % data.size_[2]];
 }
 
 void TSDFBridge::convert()
@@ -72,10 +78,12 @@ void TSDFBridge::convert()
 
     int left[3], right[3];
 
+    const auto& data = msg().data_;
+
     for (size_t i = 0; i < 3; i++)
     {
-        left[i] = msg().pos_[i] - msg().size_[i] / 2;
-        right[i] = msg().pos_[i] + msg().size_[i] / 2;
+        left[i] = data.pos_[i] - data.size_[i] / 2;
+        right[i] = data.pos_[i] + data.size_[i] / 2;
     }
 
     #pragma omp parallel num_threads(thread_count)
@@ -93,7 +101,7 @@ void TSDFBridge::convert()
                 for (int z = left[2]; z <= right[2]; z++)
                 {
                     auto val = get_tsdf_value(x, y, z);
-                    if (val.weight() == 0 || fabsf(val.value()) >= msg().tau_)
+                    if (val.weight() == 0 || fabsf(val.value()) >= data.tau_)
                     {
                         continue;
                     }
@@ -106,13 +114,13 @@ void TSDFBridge::convert()
                     // color.a = std::min(val.weight(), 1.0f);
                     if (val.value() >= 0)
                     {
-                        color.r = val.value() / msg().tau_;
+                        color.r = val.value() / data.tau_;
                         color.g = 0;
                     }
                     else
                     {
                         color.r = 0;
-                        color.g = -val.value() / msg().tau_;
+                        color.g = -val.value() / data.tau_;
                     }
 
                     result.push_back(std::make_pair(point, color));
@@ -152,9 +160,11 @@ void TSDFBridge::convert()
 
 void TSDFBridge::publish()
 {
+    const auto& timestamp = msg().timestamp_;
+
     visualization_msgs::Marker marker;
     marker.header = std_msgs::Header{};
-    marker.header.stamp = ros::Time::now();
+    marker.header.stamp = timestamp_to_rostime(timestamp, discard_timestamp_);
     marker.header.frame_id = "map";
     marker.type = visualization_msgs::Marker::POINTS;
     marker.action = visualization_msgs::Marker::ADD;

@@ -127,9 +127,9 @@ private:
     /// Counter for the number of performed registrations after the last thread activation
     unsigned int reg_cnt_;
     /// Message to send with the tsdf values
-    msg::TSDFBridgeMessage tsdf_msg_;
+    msg::TSDFBridgeMessageStamped tsdf_msg_;
     /// Buffer for starting the map visualization thread
-    comm::Sender<msg::TSDFBridgeMessage> sender_;
+    comm::Sender<msg::TSDFBridgeMessageStamped> sender_;
 };
 
 } // namespace fastsense::callback

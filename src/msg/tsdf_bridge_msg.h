@@ -12,6 +12,7 @@
 
 #include <util/point.h>
 #include <util/tsdf.h>
+#include <msg/stamped.h>
 
 namespace fastsense::msg
 {
@@ -91,5 +92,7 @@ struct TSDFBridgeMessage : public ZMQConverter
         return multi;
     }
 };
+
+using TSDFBridgeMessageStamped = Stamped<TSDFBridgeMessage>;
 
 } // namespace fastsense::msg

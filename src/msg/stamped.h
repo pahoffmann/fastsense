@@ -151,6 +151,14 @@ struct Stamped : public ZMQConverter
         return multi;
     }
 
+    /**
+     * @brief Update Time to NOW
+     */
+    inline void update_time()
+    {
+        timestamp_ = util::HighResTime::now();
+    }
+
     /// Data to refer timestamp to
     DATA_T data_;
 
