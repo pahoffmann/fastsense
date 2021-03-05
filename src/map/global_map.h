@@ -86,31 +86,10 @@ private:
      */
     int index_from_pos(Vector3i pos, const Vector3i& chunkPos);
 
-    /**
-     * Activates a chunk and returns it by reference.
-     * If the chunk was already active, it is simply returned.
-     * Else the HDF5 file is checked for the chunk.
-     * If it also doesn't exist there, a new empty chunk is created.
-     * Chunks get replaced and written into the HDF5 file by a LRU strategy.
-     * The age of the activated chunk is reset and all ages are updated.
-     * @param chunk position of the chunk that gets activated
-     * @return reference to the activated chunk
-     */
-    std::vector<TSDFValue::RawType>& activate_chunk(const Vector3i& chunk);
-
 public:
 
-    /**
-     * log(CHUNK_SIZE).
-     * The side length is a power of 2 so that divisions by the side length can be accomplished by shifting.
-     */
-    static constexpr int CHUNK_SHIFT = 6;
-
-    /// Side length of the cube-shaped chunks (2^CHUNK_SHIFT).
-    static constexpr int CHUNK_SIZE = 1 << CHUNK_SHIFT;
-
-    /// Number of voxels in one chunk (CHUNK_SIZE^3).
-    static constexpr int TOTAL_CHUNK_SIZE = 1 << (3 * CHUNK_SHIFT); // = CHUNK_SIZE * CHUNK_SIZE * CHUNK_SIZE
+    /// Side length of the cube-shaped chunks
+    static constexpr int CHUNK_SIZE = 64;
 
     /// Maximum number of active chunks.
     static constexpr int NUM_CHUNKS = 64;
@@ -150,6 +129,18 @@ public:
      * @param quat_w w-value of the rotation quaternion of the pose
      */
     void save_pose(float t_x, float t_y, float t_z, float quat_x, float quat_y, float quat_z, float quat_w);
+
+    /**
+     * Activates a chunk and returns it by reference.
+     * If the chunk was already active, it is simply returned.
+     * Else the HDF5 file is checked for the chunk.
+     * If it also doesn't exist there, a new empty chunk is created.
+     * Chunks get replaced and written into the HDF5 file by a LRU strategy.
+     * The age of the activated chunk is reset and all ages are updated.
+     * @param chunk position of the chunk that gets activated
+     * @return reference to the activated chunk
+     */
+    std::vector<TSDFValue::RawType>& activate_chunk(const Vector3i& chunk);
 
     /**
      * Writes all active chunks into the HDF5 file.

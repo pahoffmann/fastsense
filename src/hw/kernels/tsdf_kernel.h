@@ -42,7 +42,12 @@ public:
     /// delete move constructor
     TSDFKernel(TSDFKernel&&) = delete;
 
-    void run(map::LocalMap& map, const buffer::InputBuffer<PointHW>& scan_points, TSDFValue::ValueType tau, TSDFValue::WeightType max_weight, PointHW up = PointHW(0, 0, MATRIX_RESOLUTION))
+    void run(map::LocalMap& map,
+             const buffer::InputBuffer<PointHW>& scan_points,
+             int num_points,
+             TSDFValue::ValueType tau,
+             TSDFValue::WeightType max_weight,
+             PointHW up = PointHW(0, 0, MATRIX_RESOLUTION))
     {
         for (int i = 0; i < (int)new_entries.size(); ++i)
         {
@@ -56,7 +61,7 @@ public:
         {
             setArg(scan_points.getBuffer());
         }
-        setArg((int)scan_points.size());
+        setArg(num_points);
         for (int i = 0; i < SPLIT_FACTOR; i++)
         {
             setArg(map.getBuffer().getBuffer());

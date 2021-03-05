@@ -5,17 +5,19 @@
  * @author Steffen Hinderink, Marc Eisoldt
  */
 
-#include <util/point_hw.h>
-#include <msg/transform.h>
-#include <map/local_map.h>
 #include <eigen3/Eigen/Dense>
-#include <util/process_thread.h>
-#include <msg/tsdf_bridge_msg.h>
-#include <hw/kernels/tsdf_kernel.h>
-#include <util/config/config_manager.h>
-#include <util/concurrent_ring_buffer.h>
 #include <mutex>
 #include <atomic>
+
+#include <msg/transform.h>
+#include <msg/tsdf_bridge_msg.h>
+#include <map/local_map.h>
+#include <hw/kernels/tsdf_kernel.h>
+#include <util/point_hw.h>
+#include <util/process_thread.h>
+#include <util/config/config_manager.h>
+#include <util/concurrent_ring_buffer.h>
+#include <comm/sender.h>
 
 namespace fastsense::callback
 {
@@ -45,9 +47,9 @@ public:
      */
     MapThread(const std::shared_ptr<fastsense::map::LocalMap>& local_map, 
               std::mutex& map_mutex,
-              std::shared_ptr<TSDFBuffer> tsdf_buffer,
               unsigned int period,
               float position_threshold,
+              uint16_t port,
               fastsense::CommandQueuePtr& q);
 
     /// Default destructor of the map thread.
@@ -73,7 +75,7 @@ public:
      * @param pos Current position
      * @param points Current scan points
      */
-    void go(const Vector3i& pos, const Eigen::Matrix4f& pose, const fastsense::buffer::InputBuffer<PointHW>& points);
+    void go(const Vector3i& pos, const Eigen::Matrix4f& pose, const fastsense::buffer::InputBuffer<PointHW>& points, int num_points);
 
     /**
      * @brief Stop the map thread safely.
@@ -116,14 +118,18 @@ private:
 
     /// Scan points that are used for shifting, updating and visualization
     std::unique_ptr<fastsense::buffer::InputBuffer<PointHW>> points_ptr_;
+    /// Number of Points in points_ptr_, because buffer size might be larger
+    int num_points_;
     /// Maximum number of registration periods without a map shift and update. Ignored if lower than 1
     unsigned int period_;
     /// Distance from the current position to the last activated position at which the thread is activated (in mm)
     float position_threshold_;
     /// Counter for the number of performed registrations after the last thread activation
     unsigned int reg_cnt_;
+    /// Message to send with the tsdf values
+    msg::TSDFBridgeMessage tsdf_msg_;
     /// Buffer for starting the map visualization thread
-    std::shared_ptr<TSDFBuffer> tsdf_buffer_;
+    comm::Sender<msg::TSDFBridgeMessage> sender_;
 };
 
 } // namespace fastsense::callback

@@ -57,6 +57,7 @@ void Registration::transform_point_cloud(fastsense::buffer::InputBuffer<PointHW>
 
 void Registration::register_cloud(fastsense::map::LocalMap& localmap,
                                   fastsense::buffer::InputBuffer<PointHW>& cloud,
+                                  int num_points,
                                   const util::HighResTimePoint& cloud_timestamp,
                                   Matrix4f& pose)
 {
@@ -67,7 +68,7 @@ void Registration::register_cloud(fastsense::map::LocalMap& localmap,
     pose.block<3, 3>(0, 0) = rotation;
     pose.block<3, 1>(0, 3) += imu_estimate.block<3, 1>(0, 3); 
 
-    krnl.synchronized_run(localmap, cloud, max_iterations_, it_weight_gradient_, epsilon_, pose);
+    krnl.synchronized_run(localmap, cloud, num_points, max_iterations_, it_weight_gradient_, epsilon_, pose);
 
     // apply final transformation
     transform_point_cloud(cloud, pose);

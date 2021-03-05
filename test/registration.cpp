@@ -235,7 +235,7 @@ TEST_CASE("Registration", "[registration][slow]")
         auto buffer_ptr = scan_points_to_input_buffer(points_pretransformed_trans, q);
         auto& buffer = *buffer_ptr;
         Matrix4f result_matrix = Matrix4f::Identity();
-        reg.register_cloud(local_map, buffer, util::HighResTime::now(), result_matrix);
+        reg.register_cloud(local_map, buffer, buffer.size(), util::HighResTime::now(), result_matrix);
 
         reg.transform_point_cloud(points_pretransformed_trans, result_matrix);
         check_computed_transform(points_pretransformed_trans, scan_points);
@@ -252,7 +252,7 @@ TEST_CASE("Registration", "[registration][slow]")
         auto buffer_ptr = scan_points_to_input_buffer(points_pretransformed_trans, q);
         auto& buffer = *buffer_ptr;
         Matrix4f result_matrix = Matrix4f::Identity();
-        reg.register_cloud(local_map, buffer, util::HighResTime::now(), result_matrix);
+        reg.register_cloud(local_map, buffer, buffer.size(), util::HighResTime::now(), result_matrix);
 
         reg.transform_point_cloud(points_pretransformed_trans, result_matrix);
         check_computed_transform(points_pretransformed_trans, scan_points);
@@ -266,7 +266,7 @@ TEST_CASE("Registration", "[registration][slow]")
         auto buffer_ptr = scan_points_to_input_buffer(points_pretransformed_rot, q);
         auto& buffer = *buffer_ptr;
         Matrix4f result_matrix = Matrix4f::Identity();
-        reg.register_cloud(local_map, buffer, util::HighResTime::now(), result_matrix);
+        reg.register_cloud(local_map, buffer, buffer.size(), util::HighResTime::now(), result_matrix);
 
         reg.transform_point_cloud(points_pretransformed_rot, result_matrix);
         check_computed_transform(points_pretransformed_rot, scan_points_2);

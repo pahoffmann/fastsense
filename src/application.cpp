@@ -13,7 +13,6 @@
 
 #include "application.h"
 #include <msg/imu.h>
-#include <msg/tsdf_bridge_msg.h>
 #include <msg/stamped.h>
 #include <util/config/config_manager.h>
 #include <util/logging/logger.h>
@@ -124,13 +123,13 @@ int Application::run()
 
     Registration registration{command_queue,
                               imu_bridge_buffer,
-                              ConfigManager::config().registration.max_iterations(),
-                              ConfigManager::config().registration.it_weight_gradient(),
-                              ConfigManager::config().registration.epsilon()};
+                              config.registration.max_iterations(),
+                              config.registration.it_weight_gradient(),
+                              config.registration.epsilon()};
 
-    int tau = ConfigManager::config().slam.max_distance();
-    int max_weight = ConfigManager::config().slam.max_weight() * WEIGHT_RESOLUTION;
-    int initial_weight = ConfigManager::config().slam.initial_map_weight() * WEIGHT_RESOLUTION;
+    int tau = config.slam.max_distance();
+    int max_weight = config.slam.max_weight() * WEIGHT_RESOLUTION;
+    int initial_weight = config.slam.initial_map_weight() * WEIGHT_RESOLUTION;
     assert(tau >= std::numeric_limits<TSDFValue::ValueType>::min());
     assert(tau <= std::numeric_limits<TSDFValue::ValueType>::max());
     assert(max_weight >= 0);
@@ -138,13 +137,11 @@ int Application::run()
     assert(initial_weight >= 0);
     assert(initial_weight <= std::numeric_limits<TSDFValue::WeightType>::max());
 
-    auto tsdf_buffer = std::make_shared<util::ConcurrentRingBuffer<msg::TSDFBridgeMessage>>(2);
     auto transform_buffer = std::make_shared<util::ConcurrentRingBuffer<msg::TransformStamped>>(16);
     auto vis_buffer = std::make_shared<util::ConcurrentRingBuffer<Matrix4f>>(2);
 
     std::mutex map_mutex;
 
-    comm::QueueBridge<msg::TSDFBridgeMessage, true> tsdf_bridge{tsdf_buffer, nullptr, config.bridge.tsdf_port_to()};
     comm::QueueBridge<msg::TransformStamped, true> transform_bridge{transform_buffer, nullptr, config.bridge.transform_port_to()};
 
     gpiod::chip button_chip(config.gpio.button_chip());
@@ -213,7 +210,6 @@ int Application::run()
         imu_bridge_buffer->clear();
         pointcloud_buffer->clear();
         pointcloud_bridge_buffer->clear();
-        tsdf_buffer->clear();
         transform_buffer->clear();
         vis_buffer->clear();
 
@@ -222,7 +218,7 @@ int Application::run()
         auto t = std::chrono::system_clock::to_time_t(now);
         filename << "GlobalMap_" << std::put_time(std::localtime(&t), "%Y-%m-%d-%H-%M-%S") << ".h5";
         auto global_map = std::make_shared<GlobalMap>(
-                              std::filesystem::path(ConfigManager::config().slam.map_path()) / filename.str(),
+                              std::filesystem::path(config.slam.map_path()) / filename.str(),
                               tau, initial_weight);
 
         auto local_map = std::make_shared<LocalMap>(
@@ -231,7 +227,7 @@ int Application::run()
                              config.slam.map_size_z(),
                              global_map, command_queue);
 
-        MapThread map_thread{local_map, map_mutex, tsdf_buffer, ConfigManager::config().slam.map_update_period(), ConfigManager::config().slam.map_update_position_threshold(), command_queue};
+        MapThread map_thread{local_map, map_mutex, config.slam.map_update_period(), config.slam.map_update_position_threshold(), config.bridge.tsdf_port_to(), command_queue};
         CloudCallback cloud_callback{registration, pointcloud_bridge_buffer, local_map, global_map, transform_buffer, command_queue, map_thread, map_mutex};
 
         {
@@ -239,7 +235,6 @@ int Application::run()
             Runner run_lidar_bridge(preprocessing);
             Runner run_imu_driver(*imu_driver);
             Runner run_imu_bridge(imu_bridge);
-            Runner run_tsdf_bridge(tsdf_bridge);
             Runner run_transform_bridge(transform_bridge);
             Runner run_map_thread(map_thread);
 
@@ -249,7 +244,6 @@ int Application::run()
             imu_bridge_buffer->clear();
             pointcloud_buffer->clear();
             pointcloud_bridge_buffer->clear();
-            tsdf_buffer->clear();
             transform_buffer->clear();
             vis_buffer->clear();
 
