@@ -104,14 +104,6 @@ Technische Informatik\\
 \color{dark}\LARGE\textbf{\secname}
 \end{frame}
 
-\subsection{Vorgehen}
-\begin{frame}{\subsecname}
-TODO: Bunt, als PDF oder wenigstens weniger verpixelt, evtl Bilder
-\begin{center}
-\includegraphics[width=11cm]{images/vorgehen.png}
-\end{center}
-\end{frame}
-
 \subsection{ReconfROS}
 \begin{frame}{\subsecname}
 \centering
@@ -255,19 +247,40 @@ Messages\\
 
 \subsubsection*{TSDF}
 \begin{frame}{\subsubsecname}
-TODO: Bessere Bilder, vllt etwas Text?
 \begin{center}
+\begin{textblock*}{10cm} (1cm, 2.5cm)
+%\centering
+\begin{itemize}
+\item Implizite Oberflächenrepräsentation
+\item Inkrementell erweiterbar
+\item Effiziente Meshgenerierung (Marching Cubes)
+\end{itemize}    
+\end{textblock*}
+\begin{textblock*}{15cm}(-1cm, 4.5cm)
+%\centering
 \includegraphics[width=5cm]{images/TSDF_Gen_new.png}
-\includegraphics[width=5cm]{images/TSDF_3D.png}
+\includegraphics[width=5cm]{images/TSDF_3D_2.png}    
+\end{textblock*}
 \end{center}
 \end{frame}
 
 \subsubsection*{Registrierung}
 \begin{frame}{\subsubsecname}
-TODO: Bessere Bilder, vllt etwas Text?
 \begin{center}
-\includegraphics[width=7cm]{images/Reg_Gradient.png}
-\includegraphics[width=7cm]{images/Pose_Graph.png}
+\begin{textblock*}{10cm} (1cm, 2.5cm)
+\begin{itemize}
+\item Point-to-TSDF
+\item Initiale Rotation (IMU)
+\item Erzeugt Posegraphen 
+\end{itemize}    
+\end{textblock*}
+\begin{textblock*}{15cm}(1.5cm, 2.5cm)
+\includegraphics[width=4cm]{images/Pose_Graph_rviz.png} 
+\end{textblock*}
+\begin{textblock*}{15cm}(-1cm, 5cm)
+\includegraphics[width=5cm]{images/Reg_Gradient.pdf}
+\includegraphics[width=5cm]{images/Pose_Graph.pdf} 
+\end{textblock*}
 \end{center}
 \end{frame}
 
