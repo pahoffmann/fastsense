@@ -6,15 +6,24 @@
 namespace fastsense::bridge
 {
 
-inline ros::Time timestamp_to_rostime(const fastsense::util::HighResTimePoint& ts)
+/**
+ * @brief Convert std::chrono timestamp from trenz board into ros::Time
+ * 
+ * @param ts std::chrono time_point
+ * @param discard_timestamp if set to true, replace timestamp with ros::Time::now()
+ * @return ros::Time::now() if (discard_timestamp), else converted std::chrono -> ros::Time
+ */
+inline ros::Time timestamp_to_rostime(const fastsense::util::HighResTimePoint& ts, bool discard_timestamp)
 {
-    std::chrono::nanoseconds t_since_epoch{ts.time_since_epoch()};
-    int64_t nsec{t_since_epoch.count()};
-    nsec %= 1'000'000'000ll;
-    //      s  ms  µs  ns
+	if (discard_timestamp)
+	{
+		return ros::Time::now();
+	}
 
-    uint32_t sec = std::chrono::duration_cast<std::chrono::seconds>(t_since_epoch).count();
-    return ros::Time(sec, static_cast<uint32_t>(nsec));
+	auto tstamp = ts.time_since_epoch();
+	int32_t sec = std::chrono::duration_cast<std::chrono::seconds>(tstamp).count();
+    int32_t nsec = std::chrono::duration_cast<std::chrono::nanoseconds>(tstamp).count() % 1'000'000'000UL;
+    return ros::Time(sec, nsec);
 }
 
 }

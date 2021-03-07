@@ -216,7 +216,7 @@ TEST_CASE("TSDFBridgeMessage Sender Receiver Test", "[communication]")
     for (size_t i = 0; i < iterations; ++i)
     {
         bool received = false;
-
+        
         TSDFBridgeMessage tsdf_msg;
         tsdf_msg.tau_ = 2;
         tsdf_msg.size_ = {10, 10, 10};
@@ -268,6 +268,75 @@ TEST_CASE("TSDFBridgeMessage Sender Receiver Test", "[communication]")
         REQUIRE(tsdf_msg.pos_ == tsdf_received.pos_);
         REQUIRE(tsdf_msg.offset_ == tsdf_received.offset_);
         REQUIRE(tsdf_msg.tsdf_data_ == tsdf_received.tsdf_data_);
+    }
+}
+
+TEST_CASE("TSDFBridgeMessageStamped Sender Receiver Test", "[communication]")
+{
+    std::cout << "Testing 'TSDFBridgeMessageStamped Sender Receiver Test'" << std::endl;
+
+    for (size_t i = 0; i < iterations; ++i)
+    {
+        bool received = false;
+        
+        auto tp = util::HighResTimePoint{std::chrono::nanoseconds{1000}};
+        TSDFBridgeMessage tsdf_msg;
+        tsdf_msg.tau_ = 2;
+        tsdf_msg.size_ = {10, 10, 10};
+        tsdf_msg.pos_ = {0, 0, 0};
+        tsdf_msg.offset_ = {0, 0, 0};
+        tsdf_msg.tsdf_data_.resize(10 * 10 * 10);
+        for (size_t i = 0; i < 10 * 10 * 10; ++i)
+        {
+            tsdf_msg.tsdf_data_[i].value(0);
+            tsdf_msg.tsdf_data_[i].weight(0);
+        }
+
+        tsdf_msg.tsdf_data_[4 + 5 * 10 + 5 * 10 * 10].value(1);
+        tsdf_msg.tsdf_data_[4 + 5 * 10 + 5 * 10 * 10].weight(1);
+
+        tsdf_msg.tsdf_data_[3 + 5 * 10 + 5 * 10 * 10].value(2);
+        tsdf_msg.tsdf_data_[3 + 5 * 10 + 5 * 10 * 10].weight(1);
+
+        tsdf_msg.tsdf_data_[6 + 5 * 10 + 5 * 10 * 10].value(-1);
+        tsdf_msg.tsdf_data_[6 + 5 * 10 + 5 * 10 * 10].weight(1);
+
+        tsdf_msg.tsdf_data_[7 + 5 * 10 + 5 * 10 * 10].value(-2);
+        tsdf_msg.tsdf_data_[7 + 5 * 10 + 5 * 10 * 10].weight(1);
+
+        TSDFBridgeMessageStamped tsdf_stamped_sent{std::move(tsdf_msg), tp};
+        TSDFBridgeMessageStamped tsdf_stamped_received;
+
+        std::thread receive_thread{[&]()
+        {
+            Receiver<TSDFBridgeMessageStamped> receiver{"127.0.0.1", 1288, 5ms};
+
+            while (!received)
+            {
+                received = receiver.receive(tsdf_stamped_received);
+            }
+        }};
+
+        std::thread send_thread{[&]()
+        {
+            Sender<TSDFBridgeMessageStamped> sender{1288};
+            SLEEP(500ms);
+            sender.send(tsdf_stamped_sent);
+            SLEEP(500ms);
+        }};
+
+        receive_thread.join();
+        send_thread.join();
+
+        const auto& [tsdf_sent, timestamp_sent] = tsdf_stamped_sent;
+        const auto& [tsdf_received, timestamp_received] = tsdf_stamped_received;
+
+        REQUIRE(tsdf_sent.tau_ == tsdf_received.tau_);
+        REQUIRE(tsdf_sent.size_ == tsdf_received.size_);
+        REQUIRE(tsdf_sent.pos_ == tsdf_received.pos_);
+        REQUIRE(tsdf_sent.offset_ == tsdf_received.offset_);
+        REQUIRE(tsdf_sent.tsdf_data_ == tsdf_received.tsdf_data_);
+        REQUIRE(timestamp_sent == timestamp_received);
     }
 }
 

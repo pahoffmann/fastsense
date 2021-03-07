@@ -12,10 +12,11 @@
 
 using namespace fastsense::bridge;
 
-VelodyneBridge::VelodyneBridge(ros::NodeHandle& n, const std::string& board_addr, std::chrono::milliseconds timeout)
+VelodyneBridge::VelodyneBridge(ros::NodeHandle& n, const std::string& board_addr, std::chrono::milliseconds timeout, bool discard_timestamp)
     :   BridgeBase{n, "velodyne/points", board_addr, 1000, timeout},
         ProcessThread{},
-        points_{}
+        points_{},
+        discard_timestamp_{discard_timestamp}
 {
 }
 
@@ -27,7 +28,7 @@ void VelodyneBridge::run()
         {
             if (receive())
             {
-                ROS_DEBUG_STREAM("Received " << msg_.data_.points_.size() << " points\n");
+                ROS_DEBUG_STREAM("Received " << msg_.data_.points_.size() << " points");
                 convert();
                 publish();
             }
@@ -43,7 +44,7 @@ void VelodyneBridge::convert()
 {
     points_.clear();
 
-    timestamp_ = timestamp_to_rostime(msg_.timestamp_);
+    timestamp_ = timestamp_to_rostime(msg_.timestamp_, discard_timestamp_);
     const auto& msg_points = msg_.data_.points_;
 
     std::transform(msg_points.begin(), msg_points.end(), std::back_inserter(points_), [](const ScanPoint& p)
