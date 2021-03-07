@@ -198,6 +198,9 @@ int main(int argc, char **argv)
 {
     ros::init(argc, argv, "to_trenz_bridge");
     Bridge b;
+
+    ROS_INFO("Stared to trenz bridge");
+
     ros::waitForShutdown();
     return 0;
 }

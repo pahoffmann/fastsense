@@ -150,19 +150,21 @@ TEST_CASE("Map", "[Map]")
     std::vector<float> pose;
     d.read(pose);
 
-    CHECK(TSDFValue(chunk[(GlobalMap::CHUNK_SIZE * GlobalMap::CHUNK_SIZE * (GlobalMap::CHUNK_SIZE - 2) + GlobalMap::CHUNK_SIZE * 2)]).value() == 0 * 2);
-    CHECK(TSDFValue(chunk[(GlobalMap::CHUNK_SIZE * GlobalMap::CHUNK_SIZE * (GlobalMap::CHUNK_SIZE - 1) + GlobalMap::CHUNK_SIZE * 2)]).value() == 1 * 2);
-    CHECK(TSDFValue(chunk[(GlobalMap::CHUNK_SIZE * GlobalMap::CHUNK_SIZE * (GlobalMap::CHUNK_SIZE - 2) + GlobalMap::CHUNK_SIZE * 1)]).value() == 2 * 2);
-    CHECK(TSDFValue(chunk[(GlobalMap::CHUNK_SIZE * GlobalMap::CHUNK_SIZE * (GlobalMap::CHUNK_SIZE - 1) + GlobalMap::CHUNK_SIZE * 1)]).value() == 3 * 2);
-    CHECK(TSDFValue(chunk[(GlobalMap::CHUNK_SIZE * GlobalMap::CHUNK_SIZE * (GlobalMap::CHUNK_SIZE - 2) + GlobalMap::CHUNK_SIZE * 0)]).value() == 4 * 2);
-    CHECK(TSDFValue(chunk[(GlobalMap::CHUNK_SIZE * GlobalMap::CHUNK_SIZE * (GlobalMap::CHUNK_SIZE - 1) + GlobalMap::CHUNK_SIZE * 0)]).value() == 5 * 2);
+    constexpr int CHUNK_SIZE = GlobalMap::CHUNK_SIZE;
 
-    CHECK(TSDFValue(chunk[(GlobalMap::CHUNK_SIZE * GlobalMap::CHUNK_SIZE * (GlobalMap::CHUNK_SIZE - 2) + GlobalMap::CHUNK_SIZE * 2)]).weight() == 0 / 2);
-    CHECK(TSDFValue(chunk[(GlobalMap::CHUNK_SIZE * GlobalMap::CHUNK_SIZE * (GlobalMap::CHUNK_SIZE - 1) + GlobalMap::CHUNK_SIZE * 2)]).weight() == 1 / 2);
-    CHECK(TSDFValue(chunk[(GlobalMap::CHUNK_SIZE * GlobalMap::CHUNK_SIZE * (GlobalMap::CHUNK_SIZE - 2) + GlobalMap::CHUNK_SIZE * 1)]).weight() == 1 / 2);
-    CHECK(TSDFValue(chunk[(GlobalMap::CHUNK_SIZE * GlobalMap::CHUNK_SIZE * (GlobalMap::CHUNK_SIZE - 1) + GlobalMap::CHUNK_SIZE * 1)]).weight() == 2 / 2);
-    CHECK(TSDFValue(chunk[(GlobalMap::CHUNK_SIZE * GlobalMap::CHUNK_SIZE * (GlobalMap::CHUNK_SIZE - 2) + GlobalMap::CHUNK_SIZE * 0)]).weight() == 3 / 2);
-    CHECK(TSDFValue(chunk[(GlobalMap::CHUNK_SIZE * GlobalMap::CHUNK_SIZE * (GlobalMap::CHUNK_SIZE - 1) + GlobalMap::CHUNK_SIZE * 0)]).weight() == 5 / 2);
+    CHECK(TSDFValue(chunk[(CHUNK_SIZE * CHUNK_SIZE * (CHUNK_SIZE - 2) + CHUNK_SIZE * 2)]).value() == 0 * 2);
+    CHECK(TSDFValue(chunk[(CHUNK_SIZE * CHUNK_SIZE * (CHUNK_SIZE - 1) + CHUNK_SIZE * 2)]).value() == 1 * 2);
+    CHECK(TSDFValue(chunk[(CHUNK_SIZE * CHUNK_SIZE * (CHUNK_SIZE - 2) + CHUNK_SIZE * 1)]).value() == 2 * 2);
+    CHECK(TSDFValue(chunk[(CHUNK_SIZE * CHUNK_SIZE * (CHUNK_SIZE - 1) + CHUNK_SIZE * 1)]).value() == 3 * 2);
+    CHECK(TSDFValue(chunk[(CHUNK_SIZE * CHUNK_SIZE * (CHUNK_SIZE - 2) + CHUNK_SIZE * 0)]).value() == 4 * 2);
+    CHECK(TSDFValue(chunk[(CHUNK_SIZE * CHUNK_SIZE * (CHUNK_SIZE - 1) + CHUNK_SIZE * 0)]).value() == 5 * 2);
+
+    CHECK(TSDFValue(chunk[(CHUNK_SIZE * CHUNK_SIZE * (CHUNK_SIZE - 2) + CHUNK_SIZE * 2)]).weight() == 0 / 2);
+    CHECK(TSDFValue(chunk[(CHUNK_SIZE * CHUNK_SIZE * (CHUNK_SIZE - 1) + CHUNK_SIZE * 2)]).weight() == 1 / 2);
+    CHECK(TSDFValue(chunk[(CHUNK_SIZE * CHUNK_SIZE * (CHUNK_SIZE - 2) + CHUNK_SIZE * 1)]).weight() == 1 / 2);
+    CHECK(TSDFValue(chunk[(CHUNK_SIZE * CHUNK_SIZE * (CHUNK_SIZE - 1) + CHUNK_SIZE * 1)]).weight() == 2 / 2);
+    CHECK(TSDFValue(chunk[(CHUNK_SIZE * CHUNK_SIZE * (CHUNK_SIZE - 2) + CHUNK_SIZE * 0)]).weight() == 3 / 2);
+    CHECK(TSDFValue(chunk[(CHUNK_SIZE * CHUNK_SIZE * (CHUNK_SIZE - 1) + CHUNK_SIZE * 0)]).weight() == 5 / 2);
 
     int i = 0;
     CHECK(pose[i++] == 144);

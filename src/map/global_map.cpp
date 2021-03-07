@@ -71,7 +71,7 @@ std::vector<TSDFValue::RawType>& GlobalMap::activate_chunk(const Vector3i& chunk
         else
         {
             // create new chunk
-            newChunk.data = std::vector<TSDFValue::RawType>(TOTAL_CHUNK_SIZE, initial_tsdf_value_.raw());
+            newChunk.data = std::vector<TSDFValue::RawType>(CHUNK_SIZE * CHUNK_SIZE * CHUNK_SIZE, initial_tsdf_value_.raw());
         }
         // put new chunk into active_chunks_
         if (n < NUM_CHUNKS)
@@ -123,7 +123,7 @@ std::vector<TSDFValue::RawType>& GlobalMap::activate_chunk(const Vector3i& chunk
 
 TSDFValue GlobalMap::get_value(const Vector3i& pos)
 {
-    Vector3i chunkPos = floor_shift(pos, CHUNK_SHIFT);
+    Vector3i chunkPos = floor_divide(pos, CHUNK_SIZE);
     const auto& chunk = activate_chunk(chunkPos);
     int index = index_from_pos(pos, chunkPos);
     return TSDFValue(chunk[index]);
@@ -131,7 +131,7 @@ TSDFValue GlobalMap::get_value(const Vector3i& pos)
 
 void GlobalMap::set_value(const Vector3i& pos, const TSDFValue& value)
 {
-    Vector3i chunkPos = floor_shift(pos, CHUNK_SHIFT);
+    Vector3i chunkPos = floor_divide(pos, CHUNK_SIZE);
     auto& chunk = activate_chunk(chunkPos);
     int index = index_from_pos(pos, chunkPos);
     chunk[index] = value.raw();

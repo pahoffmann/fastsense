@@ -49,6 +49,8 @@ int main(int argc, char** argv)
     velodyne_bridge.start();
     transform_bridge.start();
     
+    ROS_INFO_STREAM("Timeout for bridge (ms): " << timeout_ros);
+    ROS_INFO_STREAM("Board address is " << board_addr);
     ROS_INFO_STREAM("from_trenz bridge started");
 
     ros::Rate rate(0.1);

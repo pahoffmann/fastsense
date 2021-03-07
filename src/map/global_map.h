@@ -88,17 +88,8 @@ private:
 
 public:
 
-    /**
-     * log(CHUNK_SIZE).
-     * The side length is a power of 2 so that divisions by the side length can be accomplished by shifting.
-     */
-    static constexpr int CHUNK_SHIFT = 6;
-
-    /// Side length of the cube-shaped chunks (2^CHUNK_SHIFT).
-    static constexpr int CHUNK_SIZE = 1 << CHUNK_SHIFT;
-
-    /// Number of voxels in one chunk (CHUNK_SIZE^3).
-    static constexpr int TOTAL_CHUNK_SIZE = 1 << (3 * CHUNK_SHIFT); // = CHUNK_SIZE * CHUNK_SIZE * CHUNK_SIZE
+    /// Side length of the cube-shaped chunks
+    static constexpr int CHUNK_SIZE = 64;
 
     /// Maximum number of active chunks.
     static constexpr int NUM_CHUNKS = 64;
