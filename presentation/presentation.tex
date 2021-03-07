@@ -19,6 +19,7 @@
 \definecolor{dark}{rgb}{0, 0.1, 0.3}
 \definecolor{light}{rgb}{0.9, 0.933, 1}
 \definecolor{hw}{rgb}{0.8, 1, 0.9}
+\definecolor{sw}{rgb}{0, 0.7, 1}
 \definecolor{red}{rgb}{1, 0, 0}
 \definecolor{yellow}{rgb}{1, 1, 0}
 \definecolor{green}{rgb}{0, 1, 0}
@@ -38,7 +39,9 @@
     {\footnotesize \insertframenumber\\\vspace{0.15cm}}
 }
 \setbeamertemplate{title page}{
-\insertauthor\\
+Projektgruppe\\
+\vspace{0.2cm}
+\includegraphics[width=10.8cm]{images/LogoFastSense.png}\\
 \vspace{0.5cm}
 \begin{LARGE}\textbf{\inserttitle}\end{LARGE}\\
 \vspace{0.5cm}
@@ -52,18 +55,65 @@
 \titlepage
 \end{frame}}
 
-\section{Zielsetzung}
+% \begin{frame}{Inhalt}
+% \tableofcontents
+% \end{frame}
+
+\section*{Zielsetzung}
 \begin{frame}{\secname}
+\begin{center}
+\begin{tikzpicture}
+\node at (-2.5, 5.5) {\begin{minipage}{5cm}\centering
+Wissensbasierte Systeme\\
+Autonome Robotik\\
+\end{minipage}};
+\node at (2.5, 5.5) {\begin{minipage}{5cm}\centering
+Technische Informatik\\
+\end{minipage}};
+\node at (-2.5, 4) {\includegraphics[height=2cm]{images/kbs.png}};
+\node at (2.5, 4) {\includegraphics[height=2cm]{images/ti.png}};
+\node[below] at (-2.5, 3) {\begin{minipage}{5cm}
 \begin{itemize}
-\item Autonome echtzeitfähige Kartierung
-\item FPGA-basierte Hardwarebeschleunigung
-\item Einfaches, handliches System
-\item Anbindung an bestehende Systeme (LVR2)
+\item{SLAM}
+\item{TSDF Karten}
+\item{LVR2}
 \end{itemize}
+\end{minipage}};
+\node[below] at (2.5, 3) {\begin{minipage}{5cm}
+\begin{itemize}
+\item{Hardware Beschleunigung}
+\item{FPGAs}
+\item{High-Level-Synthese}
+\end{itemize}
+\end{minipage}};
+\draw [decorate, decoration={brace, amplitude=0.5cm, mirror}] (-5, 1) -- (5, 1);
+\node at (0, 0) {\color{dark}\LARGE\textbf{Hardware Accelerated TSDF SLAM}};
+\end{tikzpicture}
+\end{center}
+% \begin{itemize}
+% \item Autonome echtzeitfähige Kartierung
+% \item FPGA-basierte Hardwarebeschleunigung
+% \item Einfaches, handliches System
+% \item Anbindung an bestehende Systeme (LVR2)
+% \end{itemize}
 \end{frame}
 
-\section{MS1: Trail Detection}
-\begin{frame}{\secname}
+\section{Meilenstein 1}
+\begin{frame}
+\centering
+\color{dark}\LARGE\textbf{\secname}
+\end{frame}
+
+\subsection{Vorgehen}
+\begin{frame}{\subsecname}
+TODO: Bunt, als PDF oder wenigstens weniger verpixelt, evtl Bilder
+\begin{center}
+\includegraphics[width=11cm]{images/vorgehen.png}
+\end{center}
+\end{frame}
+
+\subsection{ReconfROS}
+\begin{frame}{\subsecname}
 \centering
 \begin{tikzpicture}[scale=0.8]
 \draw[thick] (-4, 0) rectangle +(2, 5.4);
@@ -166,39 +216,30 @@ Messages\\
 \draw[->] (5.5, 2) -- (6.5, 2);
 \end{tikzpicture}
 \end{frame}
-\section{SLAM-Box}
-\begin{frame}{\secname}
+
+\section{Meilenstein 2}
+\begin{frame}
+\centering
+\color{dark}\LARGE\textbf{\secname}
+\end{frame}
+
+\subsection{SLAM-Box}
+\begin{frame}{\subsecname}
 \centering
 \begin{tikzpicture}
-\draw[fill=dark] (3, 2) rectangle +(2.5, 2.5);
-\draw[fill=light] (0, 0) rectangle +(8.5, 1) node[pos=0.5] {Computer (ROS, Bagfiles, RViz, LVR)};
-\draw[fill=light] (0, 5.5) rectangle +(1, 1) node[pos=0.5] {IMU};
-\draw[fill=light] (1.5, 5.5) rectangle +(1, 1) node[pos=0.5] {Lidar};
-\draw[fill=light] (3, 5.5) rectangle +(2.5, 1) node[pos=0.5] {Speicher};
-
-\draw (0.5, 1) -- (0.5, 5.5);
-\fill (0.5, 4) circle (0.05);
-\draw[->] (0.5, 4) -- (3, 4);
-\draw[dashed] (3, 4) -- (5, 4) -- (5, 2);
-\draw[->] (5, 2) -- (5, 1);
-
-\draw (2, 1) -- (2, 5.5);
-\fill (2, 2.5) circle (0.05);
-\draw[->] (2, 2.5) -- (3, 2.5);
-\draw[dashed] (3, 2.5) -- (3.5, 2.5) -- (3.5, 2);
-\draw[->] (3.5, 2) -- (3.5, 1);
-
-\draw[->] (3.5, 4.5) -- (3.5, 5.5);
-\draw[->] (5, 5.5) -- (5, 4.5);
-\node [fill=white, inner sep=0.1cm] at (4.25, 5) {Globale Karte};
-
-\draw[->] (5.5, 2.5) -- (6.5, 2.5) -- (6.5, 1);
-\node [fill=white, inner sep=0.1cm] at (6.5, 1.75) {Lokale Karte};
-
-\draw[->] (5.5, 4) -- (8, 4) -- (8, 1);
-\node [fill=white, inner sep=0.1cm] at (8, 2.5) {Pose};
+\draw[fill=dark] (0, 0) rectangle +(2, 2) node[pos=0.5] {\color{light}SLAM};
+\draw[->] (-1, 1.5) node[left] {Lidar} -- (0, 1.5);
+\node at (-3, 2) {\includegraphics[width=2cm]{images/Velodyne.jpg}};
+\draw[->] (-1, 0.5) node[left] {IMU} -- (0, 0.5);
+\node at (-3, 0) {\includegraphics[width=2cm]{images/IMU.jpg}};
+\draw[->] (2, 1) -- (3, 1) node[right] {6D Pose};
+\draw[red, ultra thick, ->] (5.25, 0.75) -- (6.25, 0.75);
+\draw[green, ultra thick, ->] (5.25, 0.75) -- (5.25, 1.75);
+\draw[blue, ultra thick, ->] (5.25, 0.75) -- (4.75, 0.25);
+\draw[->, dashed] (1, 0) -- (1, -1) node[below] {TSDF Karte};
 \end{tikzpicture}
 \end{frame}
+
 
 \section{Vorgehen}
 \begin{frame}{\secname}
@@ -210,36 +251,42 @@ Messages\\
 \end{center}
 \end{frame}
 
-\section{TSDF}
-\begin{frame}{\secname}
+\subsection{Grundlagen}
+
+\subsubsection*{TSDF}
+\begin{frame}{\subsubsecname}
+TODO: Bessere Bilder, vllt etwas Text?
 \begin{center}
 \includegraphics[width=5cm]{images/TSDF_Gen_new.png}
 \includegraphics[width=5cm]{images/TSDF_3D.png}
 \end{center}
 \end{frame}
 
-\section{Point-to-TSDF Registrierung}
-\begin{frame}{\secname}
+\subsubsection*{Registrierung}
+\begin{frame}{\subsubsecname}
+TODO: Bessere Bilder, vllt etwas Text?
 \begin{center}
-\begin{textblock*}{12.8cm} (0.0cm, 1.7cm)
 \includegraphics[width=7cm]{images/Reg_Gradient.png}
-\end{textblock*}
-\begin{textblock*}{12.8cm} (0.0cm, 6.7cm)
 \includegraphics[width=7cm]{images/Pose_Graph.png}
-\end{textblock*}
 \end{center}
 \end{frame}
 
-\section{Komponenten}
-\begin{frame}{\secname}
-\begin{textblock*}{12.8cm}(0cm, 1.2cm)
+\section{Meilenstein 3}
+\begin{frame}
+\centering
+\color{dark}\LARGE\textbf{\secname}
+\end{frame}
+
+\subsection{Komponenten}
+\begin{frame}{\subsecname}
+\begin{textblock*}{12.8cm}(0cm, 1cm)
 \centering
 \includegraphics[width=12cm]{images/Architecture.pdf}
 \end{textblock*}
 \end{frame}
 
-\section{Algorithmus}
-\begin{frame}{\secname}
+\subsection{Algorithmus}
+\begin{frame}{\subsecname}
 \begin{textblock*}{12.8cm}(0cm, 1.5cm)
 \centering
 \begin{tikzpicture}[scale=0.9]
@@ -274,8 +321,8 @@ Messages\\
 \end{textblock*}
 \end{frame}
 
-\section{Hardware Architektur}
-\begin{frame}{\secname}
+\subsection{Hardware Architektur}
+\begin{frame}{\subsecname}
 \begin{center}
 \begin{textblock*}{12.8cm}(0cm, 1.8cm)
 \centering
@@ -284,8 +331,32 @@ Messages\\
 \end{center}
 \end{frame}
 
-\section{Aufbau}
-\begin{frame}{\secname}
+% Kann als Stichpunkt auf die Komponenten Folie
+
+% \subsection{Mesh Rekonstruktion}
+% \begin{frame}{\subsecname}
+% \begin{itemize}
+% \item{Global Map offline}
+% \begin{itemize}
+% \item{Programm im LVR2 Repository}
+% \item{Mesh Verbesserungen}
+% \item{HDF5 $\rightarrow$ PLY}
+% \end{itemize}
+% \item{Local Map online}
+% \begin{itemize}
+% \item{ROS Node}
+% \item{Marker Message $\rightarrow$ Mesh Message}
+% \end{itemize}
+% \end{itemize}
+
+% \begin{center}
+% \includegraphics[width=5cm]{images/ReconstructionTSDF.png}
+% \includegraphics[width=5cm]{images/ReconstructionMesh.png}
+% \end{center}
+% \end{frame}
+
+\subsection{Aufbau}
+\begin{frame}{\subsecname}
 \begin{textblock*}{5.8cm}(1cm,1.1cm)
 \centering
 \begin{tikzpicture}[scale=0.4]
@@ -323,15 +394,22 @@ node[pos=0.5] {Router};
 \includegraphics[width=3.5cm]{images/Box.jpg}
 \end{textblock*}
 \begin{textblock*}{5cm}(6.8cm,1.1cm)
+TODO: Alles schicker
 \includegraphics[width=5cm]{images/Rucksack02.jpg}
 \includegraphics[width=5cm]{images/Rucksack01.jpg}
 \end{textblock*}
 \end{frame}
 
 \section{Evaluation}
+\begin{frame}
+\centering
+\color{dark}\LARGE\textbf{\secname}
+\end{frame}
+
 \subsection{Zeit}
-\begin{frame}{\secname: \subsecname}
+\begin{frame}{\subsecname}
 \begin{textblock*}{12.8cm}(0cm, 1.1cm)
+TODO
 \centering
 \definecolor{bad}{rgb}{1, 0.5, 0.4}
 \begin{tikzpicture}[scale=0.85]
@@ -363,42 +441,43 @@ $\varepsilon$ = 0,04}
 \end{textblock*}
 \end{frame}
 
-\begin{frame}{\secname: \subsecname}
-\begin{textblock*}{12.8cm}(0cm, 1.1cm)
-\centering
-\definecolor{bad}{rgb}{1, 0.5, 0.4}
-\begin{tikzpicture}[scale=0.85]
-\draw[->] (0, 0) -- (10.5, 0) node[right] {Zeit [ms]};
-\draw[->] (0, 0) -- (0, 8) node[above] {Anzahl Scans};
-\foreach \i\y in {0/1,1/5,2/7,3/8,4/8,5/14,6/7,7/3,8/1,9/2} {
-    \pgfmathsetmacro\x{int(\i * 10)}
-    \draw (\i, -0.1) node[below]{\x} -- (\i, 0.1);
-    \tikzmath {
-        if {\i < 5} then {
-            let \c = light;
-        } else {
-            let \c = bad;
-        };
-        { \draw[fill=\c] (\i, 0) rectangle (\i+1, \y/2); };
-    }
-}
-\draw (9.5, 0.25) -- (9.5, -0.5) node[below] {$>90$};
-\node[below right] at (6, 8) {\begin{minipage}{6cm}
-\begin{itemize}
-\item{6. Stock WB; 6000 Scans; \\
-$\varepsilon$ = 0,01}
-\item{Avg: 47\,ms}
-\item[\color{bad}$\bullet$]{48\% aller Scans über 50\,ms}
-\item[\color{red}$\bullet$]{10\% gedroppt $\Rightarrow$ 18\,fps}
-\end{itemize}
-\end{minipage}};
-\end{tikzpicture}
-\end{textblock*}
-\end{frame}    
+% \begin{frame}{\subsecname}
+% \begin{textblock*}{12.8cm}(0cm, 1.1cm)
+% \centering
+% \definecolor{bad}{rgb}{1, 0.5, 0.4}
+% \begin{tikzpicture}[scale=0.85]
+% \draw[->] (0, 0) -- (10.5, 0) node[right] {Zeit [ms]};
+% \draw[->] (0, 0) -- (0, 8) node[above] {Anzahl Scans};
+% \foreach \i\y in {0/1,1/5,2/7,3/8,4/8,5/14,6/7,7/3,8/1,9/2} {
+    % \pgfmathsetmacro\x{int(\i * 10)}
+    % \draw (\i, -0.1) node[below]{\x} -- (\i, 0.1);
+    % \tikzmath {
+        % if {\i < 5} then {
+            % let \c = light;
+        % } else {
+            % let \c = bad;
+        % };
+        % { \draw[fill=\c] (\i, 0) rectangle (\i+1, \y/2); };
+    % }
+% }
+% \draw (9.5, 0.25) -- (9.5, -0.5) node[below] {$>90$};
+% \node[below right] at (6, 8) {\begin{minipage}{6cm}
+% \begin{itemize}
+% \item{6. Stock WB; 6000 Scans; \\
+% $\varepsilon$ = 0,01}
+% \item{Avg: 47\,ms}
+% \item[\color{bad}$\bullet$]{48\% aller Scans über 50\,ms}
+% \item[\color{red}$\bullet$]{10\% gedroppt $\Rightarrow$ 18\,fps}
+% \end{itemize}
+% \end{minipage}};
+% \end{tikzpicture}
+% \end{textblock*}
+% \end{frame}    
 
 \subsection{Power Consumption}
-\begin{frame}{\secname: \subsecname}
+\begin{frame}{\subsecname}
 \centering
+TODO\\
 \includegraphics[width=8cm]{images/power_consumption.jpg}\\\vspace{0.5cm}
 \begin{tabular}{lllllll}
 \toprule
@@ -413,9 +492,9 @@ P [W] & 13,488 & 13,032 & 15,084 & \textbf{15,396} & 14,688 & 18,084 \\
 \end{frame}
 
 \subsection{Genauigkeit}
-\begin{frame}{\secname: \subsecname}
+\begin{frame}{\subsecname}
 \begin{itemize}
-\item{6. Stockwerk (Distanz in Meter, Auflösung: 6,4cm)}
+\item{6. Stockwerk (Distanz in Meter, Auflösung: 6,4\,cm)}
 \begin{center}
 \begin{tabular}{ccc}
 \toprule
@@ -437,7 +516,7 @@ Geschw. & langsam & schnell \\
 \begin{itemize}
 \item{gesamt (langsam, $\varepsilon$ = 0,04, Strecke $\approx$ \textbf{270m}): 0,075349}
 \end{itemize}
-\item{8 Meter Labortest (Distanz in Meter, Auflösung: 6,4cm)}
+\item{8 Meter Labortest (Distanz in Meter, Auflösung: 6,4\,cm)}
 \begin{center}
 \begin{tabular}{cccc}
 \toprule
@@ -451,8 +530,9 @@ schnell & 0,1676 & 0,0459 & 0,1320 \\
 \end{itemize}
 \end{frame}
 
-\section{Fazit}
+\section*{Fazit}
 \begin{frame}{\secname}
+TODO
 \begin{itemize}
 \item{Portables System}
 \item{Weiche Echtzeitfähigkeit}
@@ -462,8 +542,9 @@ schnell & 0,1676 & 0,0459 & 0,1320 \\
 \end{itemize}   
 \end{frame}
 
-\section{Ausblick}
+\section*{Ausblick}
 \begin{frame}{\secname}
+TODO
 \begin{itemize}
 \item Evaluierung mit anderer Sensorik
 \item Portierung auf Drohne
