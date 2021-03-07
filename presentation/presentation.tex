@@ -55,9 +55,9 @@ Projektgruppe\\
 \titlepage
 \end{frame}}
 
-\begin{frame}{Inhalt}
-\tableofcontents
-\end{frame}
+% \begin{frame}{Inhalt}
+% \tableofcontents
+% \end{frame}
 
 \section*{Zielsetzung}
 \begin{frame}{\secname}
@@ -227,33 +227,16 @@ Messages\\
 \begin{frame}{\subsecname}
 \centering
 \begin{tikzpicture}
-\draw[fill=dark] (3, 2) rectangle +(2.5, 2.5);
-\draw[fill=light] (0, 0) rectangle +(8.5, 1) node[pos=0.5] {Computer (ROS, Bagfiles, RViz, LVR)};
-\draw[fill=light] (0, 5.5) rectangle +(1, 1) node[pos=0.5] {IMU};
-\draw[fill=light] (1.5, 5.5) rectangle +(1, 1) node[pos=0.5] {Lidar};
-\draw[fill=light] (3, 5.5) rectangle +(2.5, 1) node[pos=0.5] {Speicher};
-
-\draw (0.5, 1) -- (0.5, 5.5);
-\fill (0.5, 4) circle (0.05);
-\draw[->] (0.5, 4) -- (3, 4);
-\draw[dashed] (3, 4) -- (5, 4) -- (5, 2);
-\draw[->] (5, 2) -- (5, 1);
-
-\draw (2, 1) -- (2, 5.5);
-\fill (2, 2.5) circle (0.05);
-\draw[->] (2, 2.5) -- (3, 2.5);
-\draw[dashed] (3, 2.5) -- (3.5, 2.5) -- (3.5, 2);
-\draw[->] (3.5, 2) -- (3.5, 1);
-
-\draw[->] (3.5, 4.5) -- (3.5, 5.5);
-\draw[->] (5, 5.5) -- (5, 4.5);
-\node [fill=white, inner sep=0.1cm] at (4.25, 5) {Globale Karte};
-
-\draw[->] (5.5, 2.5) -- (6.5, 2.5) -- (6.5, 1);
-\node [fill=white, inner sep=0.1cm] at (6.5, 1.75) {Lokale Karte};
-
-\draw[->] (5.5, 4) -- (8, 4) -- (8, 1);
-\node [fill=white, inner sep=0.1cm] at (8, 2.5) {Pose};
+\draw[fill=dark] (0, 0) rectangle +(2, 2) node[pos=0.5] {\color{light}SLAM};
+\draw[->] (-1, 1.5) node[left] {Lidar} -- (0, 1.5);
+\node at (-3, 2) {\includegraphics[width=2cm]{images/Velodyne.jpg}};
+\draw[->] (-1, 0.5) node[left] {IMU} -- (0, 0.5);
+\node at (-3, 0) {\includegraphics[width=2cm]{images/IMU.jpg}};
+\draw[->] (2, 1) -- (3, 1) node[right] {6D Pose};
+\draw[red, ultra thick, ->] (5.25, 0.75) -- (6.25, 0.75);
+\draw[green, ultra thick, ->] (5.25, 0.75) -- (5.25, 1.75);
+\draw[blue, ultra thick, ->] (5.25, 0.75) -- (4.75, 0.25);
+\draw[->, dashed] (1, 0) -- (1, -1) node[below] {TSDF Karte};
 \end{tikzpicture}
 \end{frame}
 
@@ -262,7 +245,6 @@ Messages\\
 \subsubsection*{TSDF}
 \begin{frame}{\subsubsecname}
 TODO: Bessere Bilder, vllt etwas Text?
-(Vor allem nicht das gleiche Bild wie bei Mesh Rekonstruktion)
 \begin{center}
 \includegraphics[width=5cm]{images/TSDF_Gen_new.png}
 \includegraphics[width=5cm]{images/TSDF_3D.png}
