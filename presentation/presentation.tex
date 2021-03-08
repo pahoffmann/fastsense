@@ -398,15 +398,21 @@ node[pos=0.5] {Router};
 \draw[<->] (4.5, 6.5) -- (5.5, 6.5);
 \end{tikzpicture}
 \end{textblock*}
-\begin{textblock*}{5.8cm}(1cm,6.7cm)
-\centering
-\includegraphics[width=3.5cm]{images/Box.jpg}
-\end{textblock*}
+% \begin{textblock*}{5.8cm}(1cm,6.7cm)
+% \centering
+% \includegraphics[width=3.5cm]{images/Box.jpg}
+% \end{textblock*}
 \begin{textblock*}{5cm}(6.8cm,1.1cm)
 TODO: Alles schicker
 \includegraphics[width=5cm]{images/Rucksack02.jpg}
 \includegraphics[width=5cm]{images/Rucksack01.jpg}
 \end{textblock*}
+\end{frame}
+
+\section{Demonstration}
+\begin{frame}
+\centering
+\color{dark}\LARGE\textbf{\secname}
 \end{frame}
 
 \section{Evaluation}
@@ -417,8 +423,7 @@ TODO: Alles schicker
 
 \subsection{Zeit}
 \begin{frame}{\subsecname}
-\begin{textblock*}{12.8cm}(0cm, 1.1cm)
-TODO
+\begin{textblock*}{12.8cm}(0cm, 1.2cm)
 \centering
 \definecolor{bad}{rgb}{1, 0.5, 0.4}
 \begin{tikzpicture}[scale=0.85]
@@ -437,13 +442,12 @@ TODO
     }
 }
 \draw (9.5, 0.25) -- (9.5, -0.5) node[below] {$>90$};
-\node[below right] at (6, 8) {\begin{minipage}{6cm}
+\node[below right] at (5, 7) {\begin{minipage}{6cm}
 \begin{itemize}
-\item{6. Stock WB; 8000 Scans; \\
-$\varepsilon$ = 0,04}
+\item{6. Stockwerk Wachsbleiche}
+\item{8000 Scans}
 \item{Avg: 30\,ms}
 \item[\color{bad}$\bullet$]{11\% aller Scans über 50\,ms}
-\item[\color{red}$\bullet$]{2\% gedroppt $\Rightarrow$ 19,6\,fps}
 \end{itemize}
 \end{minipage}};
 \end{tikzpicture}
@@ -486,8 +490,7 @@ $\varepsilon$ = 0,04}
 \subsection{Power Consumption}
 \begin{frame}{\subsecname}
 \centering
-TODO\\
-\includegraphics[width=8cm]{images/power_consumption.jpg}\\\vspace{0.5cm}
+\includegraphics[height=5cm]{images/power_consumption.jpg}\\\vspace{0.3cm}
 \begin{tabular}{lllllll}
 \toprule
 & \multicolumn{3}{c}{Idle} & \multicolumn{3}{c}{Running} \\
@@ -503,39 +506,15 @@ P [W] & 13,488 & 13,032 & 15,084 & \textbf{15,396} & 14,688 & 18,084 \\
 \subsection{Genauigkeit}
 \begin{frame}{\subsecname}
 \begin{itemize}
-\item{6. Stockwerk (Distanz in Meter, Auflösung: 6,4\,cm)}
+\item{6. Stockwerk Wachsbleiche}
+\item{Distanz: 270\,m}
+\item{Auflösung: 6,4\,cm}
+\end{itemize}
 \begin{center}
-\begin{tabular}{ccc}
-\toprule
-$\varepsilon$ & 0,01 & 0,04 \\ 
-\midrule
-& 0,0615 & 0,0505 \\  
-\bottomrule
-\end{tabular}
-\end{center}
-\begin{center}
-\begin{tabular}{ccc}
-\toprule
-Geschw. & langsam & schnell \\ 
-\midrule
-& 0,0505 & 0,0437 \\  
-\bottomrule
-\end{tabular}
+\includegraphics[width=4cm]{images/pose_difference.png}
 \end{center}
 \begin{itemize}
-\item{gesamt (langsam, $\varepsilon$ = 0,04, Strecke $\approx$ \textbf{270m}): 0,075349}
-\end{itemize}
-\item{8 Meter Labortest (Distanz in Meter, Auflösung: 6,4\,cm)}
-\begin{center}
-\begin{tabular}{cccc}
-\toprule
-& hin & zurück & gesamt \\ 
-\midrule
-langsam & 0,0548 & 0,0650 & 0,0861 \\  
-schnell & 0,1676 & 0,0459 & 0,1320 \\
-\bottomrule
-\end{tabular}
-\end{center}
+\item[$\rightarrow$]{Differenz: 7,5\,cm}
 \end{itemize}
 \end{frame}
 
