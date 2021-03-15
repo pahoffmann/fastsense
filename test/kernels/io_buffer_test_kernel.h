@@ -21,7 +21,27 @@ public:
     {}
 
     ~IOBufferTestKernel() = default;
+
+    /**
+     * @brief used to synchronize the kernel run and encapsulate the functionality of waitcomplete inside the kernel
+     * 
+     * @param data 
+     * @param size 
+     */
+    void synchronized_run(buffer::InputOutputBuffer<int>& data, int size){
+        // run the kernel
+        run(data, size);
+        
+        //wait for its completion
+        waitComplete();
+    }
     
+    /**
+     * @brief runs the test kernel
+     * 
+     * @param data 
+     * @param size 
+     */
     void run(buffer::InputOutputBuffer<int>& data, int size)
     {
         resetNArg();

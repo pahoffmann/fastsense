@@ -19,8 +19,7 @@ TEST_CASE("Testing HW Buffers", "[TestHWBuffers]")
     buffer::InputOutputBuffer<int> data{q, DATA_SIZE};
     std::fill(data.begin(), data.end(), 1);
 
-    kernel.run(data, DATA_SIZE);
-    kernel.waitComplete();
+    kernel.synchronized_run(data, DATA_SIZE);
 
     SECTION("Test 'InputOutputBuffer'")
     {
