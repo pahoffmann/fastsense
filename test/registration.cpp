@@ -25,12 +25,13 @@ namespace fastsense::registration
 
 constexpr unsigned int SCALE = 1000;
 
-constexpr float MAX_OFFSET = 100; // TODO: this is too much
+constexpr float MAX_OFFSET = 100;
 
 // Test Translation
 constexpr float TX = 0.3 * SCALE;
 constexpr float TY = 0.3 * SCALE;
 constexpr float TZ = 0.0 * SCALE;
+
 // Test Rotation
 constexpr float RY = 10 * (M_PI / 180); //radiants
 
@@ -45,6 +46,12 @@ constexpr int SIZE_Z = 5 * SCALE / MAP_RESOLUTION;
 
 constexpr int ACCURACY = 5;
 
+/**
+ * @brief checks if the pointclouds are registered correctly, e.g. the average distances of the pointcloud's points doesnt exceed a predefined maximum (MAX_OFFSET)
+ * 
+ * @param points_posttransform 
+ * @param points_pretransform 
+ */
 static void check_computed_transform(const ScanPoints_t& points_posttransform, ScanPoints_t& points_pretransform)
 {
     int minimum = std::numeric_limits<int>::infinity();
@@ -78,9 +85,6 @@ static void check_computed_transform(const ScanPoints_t& points_posttransform, S
         average_z += std::abs(sub.z());
 
         dists[i] = norm;
-
-        //std::cout << norm << std::endl;
-        //REQUIRE(norm < MAX_OFFSET);
     }
 
     std::sort(dists.begin(), dists.end());
@@ -96,7 +100,14 @@ static void check_computed_transform(const ScanPoints_t& points_posttransform, S
     REQUIRE((average / points_pretransform.size()) < MAX_OFFSET);
 }
 
-// convert scan points array to input buffer to make use of it in the registration
+
+/**
+ * @brief convert scan points array to input buffer to make use of it in the registration
+ * 
+ * @param cloud 
+ * @param q 
+ * @return std::shared_ptr<fastsense::buffer::InputBuffer<PointHW>> 
+ */
 static std::shared_ptr<fastsense::buffer::InputBuffer<PointHW>> scan_points_to_input_buffer(ScanPoints_t& cloud, const fastsense::CommandQueuePtr q)
 {
     auto buffer_ptr = std::make_shared<fastsense::buffer::InputBuffer<PointHW>>(q, cloud.size());
@@ -113,10 +124,14 @@ static const std::string error_message =
     "Error: Result mismatch:\n"
     "i = %d CPU result = %d Device result = %d\n";
 
+
+/**
+ * @brief Tests the registration in various ways
+ * 
+ */
 TEST_CASE("Registration", "[registration][slow]")
 {
     std::cout << "Testing 'Registration'" << std::endl;
-
 
     fastsense::CommandQueuePtr q = fastsense::hw::FPGAManager::create_command_queue();
 
@@ -127,6 +142,7 @@ TEST_CASE("Registration", "[registration][slow]")
     std::vector<std::vector<Vector3f>> float_points;
     unsigned int num_points;
 
+    // we use pcd files, which are basically just one laserscan at a specific point in time
     fastsense::util::PCDFile file("sim_cloud.pcd");
     file.readPoints(float_points, num_points);
 
@@ -150,12 +166,13 @@ TEST_CASE("Registration", "[registration][slow]")
     ScanPoints_t points_pretransformed_trans(scan_points);
     ScanPoints_t points_pretransformed_rot(scan_points);
 
+    // initialize a global map, needed for the registration
     std::shared_ptr<fastsense::map::GlobalMap> global_map_ptr(new fastsense::map::GlobalMap("test_global_map.h5", 0.0, 0.0));
 
+    // initialize the local map
     fastsense::map::LocalMap local_map(SIZE_Y, SIZE_Y, SIZE_Z, global_map_ptr, q);
 
-    // Initialize temporary testing variables
-
+    // Initialize temporary testing variables (translation and rotation matrices)
     Eigen::Matrix4f translation_mat;
     translation_mat << 1, 0, 0, TX,
                     0, 1, 0, TY,
@@ -169,13 +186,16 @@ TEST_CASE("Registration", "[registration][slow]")
                  0,             0,       0, 1;
 
     //calc tsdf values for the points from the pcd and store them in the local map
-
     fastsense::tsdf::update_tsdf(scan_points, Vector3i::Zero(), local_map, TAU, MAX_WEIGHT);
 
+    /**
+     * @brief Tests, if the transformation of a pointcloud with a transformation matrix works properly
+     * 
+     */
     SECTION("Test Transform PCL")
     {
         std::cout << "    Section 'Test Transform PCL'" << std::endl;
-        //test pointcloud transform
+
         ScanPoints_t cloud(5);
         ScanPoints_t result(5);
 
@@ -228,11 +248,15 @@ TEST_CASE("Registration", "[registration][slow]")
         CHECK(cloud[0].z() == result[0].z());
     }
 
+    /**
+     * @brief checks the registration, when no transform is applied to the pointcloud
+     * 
+     */
     SECTION("Test Registration No Transform")
     {
         std::cout << "    Section 'Test Registration No Transform'" << std::endl;
 
-        //copy from scanpoints to  inputbuffer
+        //copy from scanpoints to  inputbuffer, which is needed by the registration
         auto buffer_ptr = scan_points_to_input_buffer(points_pretransformed_trans, q);
         auto& buffer = *buffer_ptr;
         Matrix4f result_matrix = Matrix4f::Identity();
@@ -243,6 +267,10 @@ TEST_CASE("Registration", "[registration][slow]")
 
     }
 
+    /**
+     * @brief checks the registration, if only a translation is applied to the pointcloud
+     * 
+     */
     SECTION("Test Registration Translation")
     {
         std::cout << "    Section 'Test Registration Translation'" << std::endl;
@@ -260,6 +288,10 @@ TEST_CASE("Registration", "[registration][slow]")
 
     }
 
+    /**
+     * @brief Tests the registration, if only a rotation is applied to the pointcloud
+     * 
+     */
     SECTION("Registration test Rotation")
     {
         std::cout << "    Section 'Registration test Rotation'" << std::endl;
