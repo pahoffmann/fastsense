@@ -7,7 +7,9 @@
     "lidar": {
         "bufferSize": 1,
         "port": 2368,
-        "pointScale": 1.0
+        "pointScale": 1.0,
+        "rings": 16,
+        "vertical_fov_angle": 30.0
     },
 
     "registration": {

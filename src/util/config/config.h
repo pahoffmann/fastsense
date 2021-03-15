@@ -25,6 +25,8 @@ struct LidarConfig : public ConfigGroup
     DECLARE_CONFIG_ENTRY(size_t, bufferSize, "Size of the Buffer for incoming values");
     DECLARE_CONFIG_ENTRY(uint16_t, port, "The Port to listen to");
     DECLARE_CONFIG_ENTRY(float, pointScale, "A Factor to apply to the entire Cloud");
+    DECLARE_CONFIG_ENTRY(int, rings, "The number of rings that the lidar has");
+    DECLARE_CONFIG_ENTRY(float, vertical_fov_angle, "The field of view in vertical direction in degrees");
 };
 
 struct BridgeConfig : public ConfigGroup

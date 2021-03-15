@@ -11,7 +11,7 @@
 #include <eigen3/Eigen/Dense>
 #include <util/process_thread.h>
 #include <msg/tsdf_bridge_msg.h>
-#include <hw/kernels/tsdf_kernel.h>
+#include <tsdf/krnl_tsdf.h>
 #include <registration/registration.h>
 #include <util/config/config_manager.h>
 #include <util/concurrent_ring_buffer.h>
@@ -67,7 +67,7 @@ private:
     msg::TransformStampedBuffer::Ptr transform_buffer;
     bool first_iteration;
     fastsense::CommandQueuePtr q;
-    fastsense::kernels::TSDFKernel tsdf_krnl;
+    fastsense::tsdf::TSDFKernel tsdf_krnl;
     MapThread& map_thread;
     std::mutex& map_mutex;
 };

@@ -8,12 +8,11 @@
  */
 #include "catch2_config.h"
 
-#include <tsdf/update_tsdf.h>
 #include <util/pcd/pcd_file.h>
 #include <comm/queue_bridge.h>
-#include <tsdf/krnl_tsdf_sw.h>
 #include <msg/tsdf_bridge_msg.h>
 #include <util/config/config_manager.h>
+#include <tsdf/krnl_tsdf.h>
 
 using namespace fastsense;
 
@@ -25,7 +24,9 @@ TEST_CASE("TSDF_Kernel_Vis", "[tsdf_kernel_vis]")
         std::cout << "    Section 'Visualize TSDF Data'" << std::endl;
         constexpr unsigned int SCALE = 1000;
         constexpr float TAU = 1 * SCALE;
-        constexpr float MAX_WEIGHT = 10 * WEIGHT_RESOLUTION;
+        constexpr float MAX_WEIGHT = 10;
+        constexpr int RINGS = 16;
+        constexpr float VERTICAL_FOV_ANGLE = 30;
 
         constexpr int SIZE_X = 20 * SCALE / MAP_RESOLUTION + 1;
         constexpr int SIZE_Y = 20 * SCALE / MAP_RESOLUTION + 1;
@@ -75,8 +76,6 @@ TEST_CASE("TSDF_Kernel_Vis", "[tsdf_kernel_vis]")
         auto& pos = local_map.get_pos();
         auto& offset = local_map.get_offset();
 
-        // fastsense::tsdf::update_tsdf(scan_points, Vector3i::Zero(), local_map, TAU, MAX_WEIGHT);
-
         auto tsdf_buffer = std::make_shared<fastsense::util::ConcurrentRingBuffer<fastsense::msg::TSDFBridgeMessage>>(2);
         fastsense::comm::QueueBridge<fastsense::msg::TSDFBridgeMessage, true> tsdf_bridge{tsdf_buffer, nullptr, 6666};
 
@@ -91,29 +90,9 @@ TEST_CASE("TSDF_Kernel_Vis", "[tsdf_kernel_vis]")
         }
 
         auto q3 = fastsense::hw::FPGAManager::create_command_queue();
-        fastsense::kernels::TSDFKernel krnl(q3, local_map.getBuffer().size());
+        fastsense::tsdf::TSDFKernel krnl(q3, local_map.getBuffer().size());
 
-        krnl.run(local_map, kernel_points, kernel_points.size(), TAU, MAX_WEIGHT);
-        krnl.waitComplete();
-
-        // fastsense::tsdf::krnl_tsdf_sw(kernel_points_sw.data(),
-        //                               kernel_points_sw.data(),
-        //                               kernel_points_sw.data(),
-        //                               kernel_points_sw.data(),
-        //                               num_points,
-        //                               (TSDFValueHW*)local_map.getBuffer().getVirtualAddress(),
-        //                               (TSDFValueHW*)local_map.getBuffer().getVirtualAddress(),
-        //                               (TSDFValueHW*)local_map.getBuffer().getVirtualAddress(),
-        //                               (TSDFValueHW*)local_map.getBuffer().getVirtualAddress(),
-        //                               size.x(), size.y(), size.z(),
-        //                               pos.x(), pos.y(), pos.z(),
-        //                               offset.x(), offset.y(), offset.z(),
-        //                               (TSDFValueHW*)new_entries.getVirtualAddress(),
-        //                               (TSDFValueHW*)new_entries.getVirtualAddress(),
-        //                               (TSDFValueHW*)new_entries.getVirtualAddress(),
-        //                               (TSDFValueHW*)new_entries.getVirtualAddress(),
-        //                               TAU,
-        //                               MAX_WEIGHT);
+        krnl.synchronized_run(local_map, kernel_points, kernel_points.size(), TAU, MAX_WEIGHT, RINGS, VERTICAL_FOV_ANGLE);
 
         fastsense::msg::TSDFBridgeMessage tsdf_msg;
 

@@ -9,8 +9,6 @@
 #include <msg/transform.h>
 #include <algorithm>
 #include <eigen3/Eigen/Geometry>
-#include <tsdf/update_tsdf_hw.h>
-#include <tsdf/krnl_tsdf_sw.h>
 #include <util/logging/logger.h>
 
 using namespace fastsense::callback;
@@ -86,10 +84,14 @@ void CloudCallback::thread_run()
         {
             first_iteration = false;
 
-            int tau = ConfigManager::config().slam.max_distance();
-            int max_weight = ConfigManager::config().slam.max_weight() * WEIGHT_RESOLUTION;
-            tsdf_krnl.run(*local_map, *scan_point_buffer, num_points, tau, max_weight);
-            tsdf_krnl.waitComplete();
+            auto& config = ConfigManager::config();
+            tsdf_krnl.synchronized_run(*local_map,
+                                       *scan_point_buffer,
+                                       num_points,
+                                       config.slam.max_distance(),
+                                       config.slam.max_weight(),
+                                       config.lidar.vertical_fov_angle(),
+                                       config.lidar.rings());
         }
         else
         {

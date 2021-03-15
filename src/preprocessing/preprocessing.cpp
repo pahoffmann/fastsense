@@ -5,6 +5,7 @@
  */
 
 #include "preprocessing.h"
+#include <util/config/config_manager.h>
 
 #include <unordered_set>
 
@@ -37,6 +38,7 @@ Preprocessing::Preprocessing(const std::shared_ptr<PointCloudBuffer>& in_buffer,
 
 void Preprocessing::thread_run()
 {
+    int expected_rings = util::config::ConfigManager::config().lidar.rings();
     fastsense::msg::PointCloudPtrStamped in_cloud;
     while (this->running)
     {
@@ -49,6 +51,8 @@ void Preprocessing::thread_run()
         {
             this->send(in_cloud);
         }
+
+        assert(expected_rings == in_cloud.data_->rings_);
 
         fastsense::msg::PointCloudPtrStamped out_cloud;
         out_cloud.data_ = in_cloud.data_;
