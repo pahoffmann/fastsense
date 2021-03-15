@@ -96,6 +96,7 @@ static void check_computed_transform(const ScanPoints_t& points_posttransform, S
     REQUIRE((average / points_pretransform.size()) < MAX_OFFSET);
 }
 
+// convert scan points array to input buffer to make use of it in the registration
 static std::shared_ptr<fastsense::buffer::InputBuffer<PointHW>> scan_points_to_input_buffer(ScanPoints_t& cloud, const fastsense::CommandQueuePtr q)
 {
     auto buffer_ptr = std::make_shared<fastsense::buffer::InputBuffer<PointHW>>(q, cloud.size());

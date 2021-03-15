@@ -84,7 +84,8 @@ public:
     }
 
     /**
-     * @brief Called by the synchronized run method, uses the kernel to register
+     * @brief Called by the synchronized run method, uses the kernel to register the incoming pointcloud 
+     *        with the localmap (map) using the data coming from the imu accumulator (in_transform)
      *
      * @param map
      * @param scan_points
@@ -101,6 +102,8 @@ public:
         auto m = map.get_hardware_representation();
 
         // MARKER: SPLIT
+        // split factor used for splitting the access weight onto multiple mem-ports defined in the link.cfg - MARKER: SPLIT marks positions in the code, which need to be adapted
+        // when changing the split factor
         constexpr int SPLIT_FACTOR = 3;
 
         for (int i = 0; i < SPLIT_FACTOR; i++)
@@ -111,6 +114,7 @@ public:
 
         for (int i = 0; i < SPLIT_FACTOR; i++)
         {
+            //for every split factor, we got three map buffers on different memports to access from to fasten things up
             setArg(map.getBuffer().getBuffer());
             setArg(map.getBuffer().getBuffer());
             setArg(map.getBuffer().getBuffer());

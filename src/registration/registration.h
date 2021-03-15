@@ -25,27 +25,16 @@ namespace fastsense::registration
  */
 class Registration
 {
-    using Matrix6i = Eigen::Matrix<long, 6, 6>;
-    using Matrix6f = Eigen::Matrix<float, 6, 6>;
-    using Vector6i = Eigen::Matrix<long, 6, 1>;
-    using Vector6f = Eigen::Matrix<float, 6, 1>;
 
 private:
-    size_t max_iterations_;
-    float it_weight_gradient_;
-    float epsilon_;
+    size_t max_iterations_;      // maxmimum number of error function minimizations
+    float it_weight_gradient_;   // linear weighted gradient to weigh tranforms in futher iterations less than in earlier to avoid jumping over the optimium
+    float epsilon_;              // epsilon value used for the termination condition
 
+    // used to accumulate the incoming IMU data until the laserscan data comes in
     ImuAccumulator imu_accumulator_;
-
-
+    // Registration Kernel object (reg_kernel.h) - softwarepart of the kernel
     fastsense::kernels::RegistrationKernel krnl;
-
-    /**
-     * @brief transforms xi vector 6x1 (angular and linear velocity) to transformation matrix 4x4
-     *
-     * @param xi vector
-     */
-    Matrix4f xi_to_transform(Vector6f xi);
 
 public:
 

@@ -80,6 +80,7 @@ TEST_CASE("load configuration", "[ConfigManager]")
         REQUIRE(TestConfigManager::config().myFloat() == 1.25f);
     }
 
+    /* Load config from file */
     SECTION("load file")
     {
         std::cout << "    Section 'load file'" << std::endl;
@@ -89,6 +90,7 @@ TEST_CASE("load configuration", "[ConfigManager]")
         REQUIRE(TestConfigManager::config().myFloat() == 2.5f);
     }
 
+    /*  */
     SECTION("load partial")
     {
         std::cout << "    Section 'load partial'" << std::endl;

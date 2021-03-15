@@ -116,7 +116,7 @@ public:
     /**
      * @brief Get current value
      *
-     * @return T curretn value
+     * @return T current value
      */
     T operator ()();
 

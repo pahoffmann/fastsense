@@ -16,12 +16,23 @@ class BaseKernel
 private:
     int narg_;
 protected:
+
+    /**
+     * @brief Sets the given kernel argument
+     * 
+     * @tparam T 
+     * @param arg 
+     */
     template <typename T>
     inline void setArg(const T& arg)
     {
         kernel_.setArg(narg_++, arg);
     }
 
+    /**
+     * @brief resets the narg_ counter
+     * 
+     */
     void resetNArg()
     {
         narg_ = 0;

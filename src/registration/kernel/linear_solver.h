@@ -8,6 +8,13 @@
 namespace fastsense::registration
 {
 
+/**
+ * @brief Performs lu-decomposition for the incoming matrix
+ * 
+ * @tparam T 
+ * @tparam N 
+ * @param A 
+ */
 template<typename T, int N>
 void lu_decomposition(T A[N][N])
 {
@@ -28,6 +35,16 @@ void lu_decomposition(T A[N][N])
     }
 }
 
+
+/**
+ * @brief Performs lu-solving for the incoming parameters
+ * 
+ * @tparam T 
+ * @tparam N 
+ * @param A 
+ * @param b 
+ * @param x 
+ */
 template<typename T, int N>
 void lu_solve(T A[N][N], T b[N], T x[N])
 {
@@ -55,6 +72,15 @@ void lu_solve(T A[N][N], T b[N], T x[N])
     }
 }
 
+/**
+ * @brief Performs lu-decomposition for the three incoming matrices
+ * 
+ * @tparam T 
+ * @tparam N 
+ * @param A 
+ * @param L 
+ * @param R 
+ */
 template<typename T, int N>
 void lu_decomposition(T A[N][N], T L[N][N], T R[N][N])
 {

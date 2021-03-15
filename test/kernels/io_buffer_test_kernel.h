@@ -21,7 +21,7 @@ public:
     {}
 
     ~IOBufferTestKernel() = default;
-
+    
     void run(buffer::InputOutputBuffer<int>& data, int size)
     {
         resetNArg();
