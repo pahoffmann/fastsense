@@ -54,9 +54,6 @@ void Preprocessing::thread_run()
         out_cloud.data_ = in_cloud.data_;
         out_cloud.timestamp_ = in_cloud.timestamp_;
 
-        median_filter(out_cloud, 5);
-        reduction_filter_closest(out_cloud);
-
         if (scale != 1.0f)
         {
             for (auto& point : out_cloud.data_->points_)
@@ -64,6 +61,9 @@ void Preprocessing::thread_run()
                 point = (point.cast<float>() * scale).cast<ScanPointType>();
             }
         }
+
+        median_filter(out_cloud, 5);
+        reduction_filter_closest(out_cloud);
 
         this->out_->push_nb(out_cloud, true);
 

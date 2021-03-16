@@ -35,7 +35,6 @@ CloudCallback::CloudCallback(Registration& registration,
       transform_buffer{transform_buffer},
       first_iteration{true},
       q{q},
-      tsdf_krnl(q, local_map->getBuffer().size()),
       map_thread{map_thread},
       map_mutex{map_mutex}
 {
@@ -88,8 +87,8 @@ void CloudCallback::thread_run()
 
             int tau = ConfigManager::config().slam.max_distance();
             int max_weight = ConfigManager::config().slam.max_weight() * WEIGHT_RESOLUTION;
-            tsdf_krnl.run(*local_map, *scan_point_buffer, num_points, tau, max_weight);
-            tsdf_krnl.waitComplete();
+            map_thread.get_tsdf_krnl().run(*local_map, *scan_point_buffer, num_points, tau, max_weight);
+            map_thread.get_tsdf_krnl().waitComplete();
         }
         else
         {
