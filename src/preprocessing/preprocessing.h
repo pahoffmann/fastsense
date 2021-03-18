@@ -79,9 +79,9 @@ private:
     */
     uint8_t median_from_array(std::vector<ScanPoint*> medians);
 
-    const std::shared_ptr<PointCloudBuffer> send_buffer;
     bool send_original;
     bool send_preprocessed;
+    const std::shared_ptr<PointCloudBuffer> send_buffer;
     float scale;
 };
 
