@@ -1,7 +1,7 @@
 /**
  * @author Marc Eisoldt
  *
- * Test the hardware implementation of the TSDF generatio and map update with simple scenarios
+ * Test the hardware implementation of the TSDF generation and map update with simple scenarios
  */
 
 #include <tsdf/krnl_tsdf.h>
@@ -19,13 +19,12 @@ TEST_CASE("Kernel_TSDF", "[kernel]")
 
     CommandQueuePtr q = hw::FPGAManager::create_command_queue();
 
-    constexpr int SCALE = MAP_RESOLUTION;
+    constexpr int TAU = 3 * MAP_RESOLUTION;
+    constexpr int MAX_WEIGHT = 5;
 
-    constexpr int TAU = 3 * SCALE;
-
-    constexpr int SIZE_X = 50 * SCALE / MAP_RESOLUTION;
-    constexpr int SIZE_Y = 50 * SCALE / MAP_RESOLUTION;
-    constexpr int SIZE_Z = 10 * SCALE / MAP_RESOLUTION;
+    constexpr int SIZE_X = 50;
+    constexpr int SIZE_Y = 50;
+    constexpr int SIZE_Z = 10;
 
     SECTION("Generation")
     {
@@ -35,18 +34,16 @@ TEST_CASE("Kernel_TSDF", "[kernel]")
         map::LocalMap localMap{SIZE_X, SIZE_Y, SIZE_Z, gm_ptr, q};
 
         buffer::InputBuffer<PointHW> kernel_points(q, 1);
-        kernel_points[0].x = 6 * SCALE + MAP_RESOLUTION / 2;
-        kernel_points[0].y = MAP_RESOLUTION / 2;
-        kernel_points[0].z = MAP_RESOLUTION / 2;
+        kernel_points[0] = PointHW(6, 0, 0).to_mm();
 
         tsdf::TSDFKernel krnl(q, localMap.getBuffer().size());
-        krnl.synchronized_run(localMap, kernel_points, kernel_points.size(), TAU, 5, RINGS, VERTICAL_FOV_ANGLE);
+        krnl.synchronized_run(localMap, kernel_points, kernel_points.size(), TAU, MAX_WEIGHT, RINGS, VERTICAL_FOV_ANGLE);
 
         // Front values
-        CHECK(localMap.value(6, 0, 0).value() == 0);
-        CHECK(localMap.value(5, 0, 0).value() == 1 * SCALE);
-        CHECK(localMap.value(4, 0, 0).value() == 2 * SCALE);
-        CHECK(localMap.value(3, 0, 0).value() == TAU);
+        CHECK(localMap.value(6, 0, 0).value() == 0 * MAP_RESOLUTION);
+        CHECK(localMap.value(5, 0, 0).value() == 1 * MAP_RESOLUTION);
+        CHECK(localMap.value(4, 0, 0).value() == 2 * MAP_RESOLUTION);
+        CHECK(localMap.value(3, 0, 0).value() == TAU); // == 3 * MAP_RESOLUTION
         CHECK(localMap.value(2, 0, 0).value() == TAU);
         CHECK(localMap.value(1, 0, 0).value() == TAU);
 
@@ -59,12 +56,12 @@ TEST_CASE("Kernel_TSDF", "[kernel]")
         CHECK(localMap.value(1, 0, 0).weight() == WEIGHT_RESOLUTION);
 
         // back values
-        CHECK(localMap.value( 7, 0, 0).value() == -1 * SCALE);
-        CHECK(localMap.value( 8, 0, 0).value() == -2 * SCALE);
-        CHECK(localMap.value( 9, 0, 0).value() ==  0 * SCALE);
-        CHECK(localMap.value(10, 0, 0).value() ==  0 * SCALE);
-        CHECK(localMap.value(11, 0, 0).value() ==  0 * SCALE);
-        CHECK(localMap.value(12, 0, 0).value() ==  0 * SCALE);
+        CHECK(localMap.value( 7, 0, 0).value() == -1 * MAP_RESOLUTION);
+        CHECK(localMap.value( 8, 0, 0).value() == -2 * MAP_RESOLUTION);
+        CHECK(localMap.value( 9, 0, 0).value() ==  0 * MAP_RESOLUTION);
+        CHECK(localMap.value(10, 0, 0).value() ==  0 * MAP_RESOLUTION);
+        CHECK(localMap.value(11, 0, 0).value() ==  0 * MAP_RESOLUTION);
+        CHECK(localMap.value(12, 0, 0).value() ==  0 * MAP_RESOLUTION);
 
         // back weights
         CHECK(localMap.value( 7, 0, 0).weight() < WEIGHT_RESOLUTION);
@@ -85,12 +82,10 @@ TEST_CASE("Kernel_TSDF", "[kernel]")
         map::LocalMap localMap{SIZE_X, SIZE_Y, SIZE_Z, gm_ptr, q};
 
         buffer::InputBuffer<PointHW> kernel_points(q, 1);
-        kernel_points[0].x = 6 * SCALE + MAP_RESOLUTION / 2;
-        kernel_points[0].y = MAP_RESOLUTION / 2;
-        kernel_points[0].z = MAP_RESOLUTION / 2;
+        kernel_points[0] = PointHW(6, 0, 0).to_mm();
 
         tsdf::TSDFKernel krnl(q, localMap.getBuffer().size());
-        krnl.synchronized_run(localMap, kernel_points, kernel_points.size(), TAU, 5, RINGS, VERTICAL_FOV_ANGLE);
+        krnl.synchronized_run(localMap, kernel_points, kernel_points.size(), TAU, MAX_WEIGHT, RINGS, VERTICAL_FOV_ANGLE);
 
         int new_weight = WEIGHT_RESOLUTION + DEFAULT_WEIGHT;
 
@@ -110,9 +105,17 @@ TEST_CASE("Kernel_TSDF", "[kernel]")
         CHECK(localMap.value(2, 0, 0).weight() == new_weight);
         CHECK(localMap.value(1, 0, 0).weight() == new_weight);
 
-        krnl.synchronized_run(localMap, kernel_points, kernel_points.size(), TAU, 1, RINGS, VERTICAL_FOV_ANGLE);
-        krnl.waitComplete();
+        // test max weight
+        for (int i = 0; i < MAX_WEIGHT + 1; i++)
+        {
+            krnl.synchronized_run(localMap, kernel_points, kernel_points.size(), TAU, MAX_WEIGHT, RINGS, VERTICAL_FOV_ANGLE);
+        }
 
-        CHECK(localMap.value(6, 0, 0).weight() == WEIGHT_RESOLUTION);
+        CHECK(localMap.value(6, 0, 0).weight() == MAX_WEIGHT * WEIGHT_RESOLUTION);
+        CHECK(localMap.value(5, 0, 0).weight() == MAX_WEIGHT * WEIGHT_RESOLUTION);
+        CHECK(localMap.value(4, 0, 0).weight() == MAX_WEIGHT * WEIGHT_RESOLUTION);
+        CHECK(localMap.value(3, 0, 0).weight() == MAX_WEIGHT * WEIGHT_RESOLUTION);
+        CHECK(localMap.value(2, 0, 0).weight() == MAX_WEIGHT * WEIGHT_RESOLUTION);
+        CHECK(localMap.value(1, 0, 0).weight() == MAX_WEIGHT * WEIGHT_RESOLUTION);
     }
 }

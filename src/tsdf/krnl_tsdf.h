@@ -17,8 +17,12 @@
 namespace fastsense::tsdf
 {
 
+/**
+ * @brief Wrapper around the TSDF Kernel
+ */
 class TSDFKernel : public kernels::BaseKernel
 {
+    /// Storage for the new TSDF Map before it is merged in the update process
     buffer::InputOutputBuffer<TSDFValue> new_entries;
 
 public:
@@ -49,6 +53,18 @@ public:
     /// delete move constructor
     TSDFKernel(TSDFKernel&&) = delete;
 
+    /**
+     * @brief Starts the Kernel and waits for completion
+     * 
+     * @param map The local map
+     * @param scan_points The points to update with
+     * @param num_points The number of Points in `scan_points`
+     * @param tau The truncation distance in mm
+     * @param max_weight_float The max weight as a floating Point
+     * @param rings The number of rings in the point cloud
+     * @param vertical_fov_angle The vertical angle of the Scanner
+     * @param up A Vector pointing in the up direction of the Scanner
+     */
     void synchronized_run(map::LocalMap& map,
                           const buffer::InputBuffer<PointHW>& scan_points,
                           int num_points,
@@ -72,6 +88,17 @@ public:
         waitComplete();
     }
 
+    /**
+     * @brief Starts the Kernel without waiting. Requires waitComplete() to be called afterwards
+     * 
+     * @param map The local map
+     * @param scan_points The points to update with
+     * @param num_points The number of Points in `scan_points`
+     * @param tau The truncation distance in mm
+     * @param max_weight The max weight as an integer, with WEIGHT_RESOLUTION as the equivalent of 1.0f
+     * @param dz_per_distance Number of interpolation steps as a function of the distance
+     * @param up A Vector pointing in the up direction of the Scanner
+     */
     void run(map::LocalMap& map,
              const buffer::InputBuffer<PointHW>& scan_points,
              int num_points,
