@@ -104,12 +104,33 @@ void TransformBridge::convert()
     pose_stamped.pose.position.y = msg_.data_.translation.y() * 0.001;
     pose_stamped.pose.position.z = msg_.data_.translation.z() * 0.001;
 
+
     // If identity is received, we are in cloudcallback iteration 1
     // -> reset pose path
     if (msg_.data_.translation.isZero() && msg_.data_.rotation.isApprox(Eigen::Quaternionf::Identity()))
     {
+        std::ostringstream filename;
+        auto now = std::chrono::system_clock::now();
+        auto t = std::chrono::system_clock::to_time_t(now);
+        filename << "pose_" << std::put_time(std::localtime(&t), "%Y-%m-%d-%H-%M-%S") << ".txt";
+
+        pose_stream_.close();
+        pose_stream_.open(filename.str());
+
+        if (!pose_stream_)
+        {
+            ROS_ERROR_STREAM("Cannot save pose path!");
+        }
+
         ROS_WARN("Resetting pose path, registered new iteration");
         pose_path.poses.clear();
+    }
+
+    if (pose_stream_)
+    {
+        pose_stream_ << pose_stamped.pose.position.x << " " << pose_stamped.pose.position.y << " " << pose_stamped.pose.position.z << " "
+                    << pose_stamped.pose.orientation.x << " " << pose_stamped.pose.orientation.y << " " << pose_stamped.pose.orientation.z << " " 
+                    << pose_stamped.pose.orientation.w << std::endl;
     }
 
     pose_path.poses.push_back(pose_stamped);

@@ -14,6 +14,7 @@
 #include "bridge_base.h"
 
 #include <mutex>
+#include <fstream>
 
 namespace fastsense::bridge
 {
@@ -39,7 +40,10 @@ public:
     /**
      * @brief Destroy the Transform Bridge object
      */
-    ~TransformBridge() override = default;
+    ~TransformBridge()
+    {
+        pose_stream_.close(); 
+    }
 
     /**
      * @brief Starts the Transform Bridge in its own thread
@@ -100,6 +104,8 @@ private:
 
     /// Whether or not to discard timestamps and replace with ros::Time::now()
     bool discard_timestamp_;
+
+    std::ofstream pose_stream_;
 };
 
 } // namespace fastsense::bridge

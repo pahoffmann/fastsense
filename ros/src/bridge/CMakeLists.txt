@@ -37,5 +37,6 @@ catkin_package()
 
 add_subdirectory(src/from_trenz)
 add_subdirectory(src/to_trenz)
+add_subdirectory(src/pose_vis)
 
 install(PROGRAMS scripts/sync_time.sh DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
