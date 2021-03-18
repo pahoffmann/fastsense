@@ -33,7 +33,10 @@ struct BridgeConfig : public ConfigGroup
 
     DECLARE_CONFIG_ENTRY(bool, use_from, "true: take input from PC, false: use Sensors");
     DECLARE_CONFIG_ENTRY(bool, use_to, "true: send output to PC");
-    DECLARE_CONFIG_ENTRY(bool, send_preprocessed, "true: send PointCloud after Preprocessing; false: send original PointCloud");
+
+    DECLARE_CONFIG_ENTRY(bool, send_original, "send PointCloud before Preprocessing. Only one send_* option can be active");
+    DECLARE_CONFIG_ENTRY(bool, send_preprocessed, "send PointCloud after Preprocessing. Only one send_* option can be active");
+    DECLARE_CONFIG_ENTRY(bool, send_after_registration, "send PointCloud after Registration. Only one send_* option can be active");
 
     DECLARE_CONFIG_ENTRY(std::string, host_from, "IP Address of the PC when 'use_from' is true");
     DECLARE_CONFIG_ENTRY(uint16_t, recv_timeout, "Timeout for the receiver");

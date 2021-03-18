@@ -24,9 +24,12 @@
     },
 
     "bridge": {
-        "use_from" : false,
-        "use_to" : true,
-        "send_preprocessed" : false,
+        "use_from": false,
+        "use_to": true,
+
+        "send_original": true,
+        "send_preprocessed": false,
+        "send_after_registration": false,
 
         "host_from": "192.168.1.2",
 

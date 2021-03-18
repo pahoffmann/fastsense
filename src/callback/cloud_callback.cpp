@@ -23,6 +23,8 @@ CloudCallback::CloudCallback(Registration& registration,
                              const std::shared_ptr<LocalMap>& local_map,
                              const std::shared_ptr<GlobalMap>& global_map,
                              const msg::TransformStampedBuffer::Ptr& transform_buffer,
+                             const msg::PointCloudPtrStampedBuffer::Ptr& pointcloud_buffer,
+                             bool send_after_registration,
                              const fastsense::CommandQueuePtr& q,
                              MapThread& map_thread,
                              std::mutex& map_mutex)
@@ -33,6 +35,8 @@ CloudCallback::CloudCallback(Registration& registration,
       global_map{global_map},
       pose{Matrix4f::Identity()},
       transform_buffer{transform_buffer},
+      pointcloud_buffer{pointcloud_buffer},
+      send_after_registration{send_after_registration},
       first_iteration{true},
       q{q},
       map_thread{map_thread},
@@ -123,6 +127,12 @@ void CloudCallback::thread_run()
         transform.data_.translation = pose.block<3, 1>(0, 3);
         transform.data_.rotation = quat;
         transform_buffer->push_nb(transform, true);
+
+        if (send_after_registration)
+        {
+            point_cloud.timestamp_ = util::HighResTime::now();
+            pointcloud_buffer->push_nb(point_cloud, true);
+        }
 
         eval.stop("total");
 #ifdef TIME_MEASUREMENT

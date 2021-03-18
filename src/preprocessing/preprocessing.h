@@ -31,8 +31,8 @@ class Preprocessing : public comm::QueueBridge<msg::PointCloudPtrStamped, true>
 public:
     Preprocessing(const std::shared_ptr<PointCloudBuffer>& in_buffer,
                   const std::shared_ptr<PointCloudBuffer>& out_buffer,
-                  uint16_t port,
-                  bool send,
+                  const std::shared_ptr<PointCloudBuffer>& send_buffer,
+                  bool send_original,
                   bool send_preprocessed,
                   float scale = 1.0);
 
@@ -79,6 +79,8 @@ private:
     */
     uint8_t median_from_array(std::vector<ScanPoint*> medians);
 
+    const std::shared_ptr<PointCloudBuffer> send_buffer;
+    bool send_original;
     bool send_preprocessed;
     float scale;
 };

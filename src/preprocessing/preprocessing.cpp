@@ -26,11 +26,11 @@ template<> struct hash<fastsense::ScanPoint>
 
 Preprocessing::Preprocessing(const std::shared_ptr<PointCloudBuffer>& in_buffer,
                              const std::shared_ptr<PointCloudBuffer>& out_buffer,
-                             uint16_t port,
-                             bool send,
+                             const std::shared_ptr<PointCloudBuffer>& send_buffer,
+                             bool send_original,
                              bool send_preprocessed,
                              float scale)
-    : QueueBridge{in_buffer, out_buffer, port, send}, send_preprocessed(send_preprocessed), scale(scale)
+    : QueueBridge{in_buffer, out_buffer, 0, false}, send_original(send_original), send_preprocessed(send_preprocessed), send_buffer(send_buffer), scale(scale)
 {
 
 }
@@ -45,9 +45,9 @@ void Preprocessing::thread_run()
             continue;
         }
 
-        if (this->send_ && !send_preprocessed)
+        if (send_original)
         {
-            this->send(in_cloud);
+            send_buffer->push_nb(in_cloud);
         }
 
         fastsense::msg::PointCloudPtrStamped out_cloud;
@@ -67,9 +67,9 @@ void Preprocessing::thread_run()
 
         this->out_->push_nb(out_cloud, true);
 
-        if (this->send_ && send_preprocessed)
+        if (send_preprocessed)
         {
-            this->send(out_cloud);
+            send_buffer->push_nb(out_cloud);
         }
     }
 }
@@ -169,7 +169,7 @@ void Preprocessing::reduction_filter_voxel_center(fastsense::msg::PointCloudPtrS
             std::floor((float)point.z() / MAP_RESOLUTION) * MAP_RESOLUTION + MAP_RESOLUTION / 2
         );
 
-        point_set.insert(voxel_center);  
+        point_set.insert(voxel_center);
     }
 
     cloud_points.resize(point_set.size());
@@ -177,8 +177,9 @@ void Preprocessing::reduction_filter_voxel_center(fastsense::msg::PointCloudPtrS
 }
 
 
-void Preprocessing::reduction_filter_random_point(fastsense::msg::PointCloudPtrStamped& cloud){
-    
+void Preprocessing::reduction_filter_random_point(fastsense::msg::PointCloudPtrStamped& cloud)
+{
+
     auto& cloud_points = cloud.data_->points_;
 
     std::unordered_map<ScanPoint, ScanPoint> point_map;
@@ -198,7 +199,7 @@ void Preprocessing::reduction_filter_random_point(fastsense::msg::PointCloudPtrS
             std::floor((float)point.z() / MAP_RESOLUTION)
         );
 
-        point_map.try_emplace(voxel, point);  
+        point_map.try_emplace(voxel, point);
     }
 
     cloud_points.resize(point_map.size());

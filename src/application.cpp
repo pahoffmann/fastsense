@@ -105,6 +105,7 @@ int Application::run()
     auto imu_bridge_buffer = std::make_shared<msg::ImuStampedBuffer>(config.imu.bufferSize());
     auto pointcloud_buffer = std::make_shared<msg::PointCloudPtrStampedBuffer>(config.lidar.bufferSize());
     auto pointcloud_bridge_buffer = std::make_shared<msg::PointCloudPtrStampedBuffer>(config.lidar.bufferSize());
+    auto pointcloud_send_buffer = std::make_shared<msg::PointCloudPtrStampedBuffer>(1);
 
     util::ProcessThread::UPtr imu_driver = init_imu(imu_buffer);
     util::ProcessThread::UPtr lidar_driver = init_lidar(pointcloud_buffer);
@@ -112,11 +113,19 @@ int Application::run()
     bool send = config.bridge.use_to();
     comm::QueueBridge<msg::ImuStamped, true> imu_bridge{imu_buffer, imu_bridge_buffer, config.bridge.imu_port_to(), send};
 
+    bool send_original = config.bridge.send_original();
+    bool send_preprocessed = config.bridge.send_preprocessed();
+    bool send_after_registration = config.bridge.send_after_registration();
+    if (send_original + send_preprocessed + send_after_registration > 1)
+    {
+        throw std::runtime_error("More than one send option active in config.json/bridge/send_*");
+    }
+
     Preprocessing preprocessing{pointcloud_buffer,
                                 pointcloud_bridge_buffer,
-                                config.bridge.pcl_port_to(),
-                                send,
-                                config.bridge.send_preprocessed(),
+                                pointcloud_send_buffer,
+                                send_original,
+                                send_preprocessed,
                                 config.lidar.pointScale()};
 
     auto command_queue = fastsense::hw::FPGAManager::create_command_queue();
@@ -143,6 +152,7 @@ int Application::run()
     std::mutex map_mutex;
 
     comm::QueueBridge<msg::TransformStamped, true> transform_bridge{transform_buffer, nullptr, config.bridge.transform_port_to()};
+    comm::QueueBridge<msg::PointCloudPtrStamped, true> pointcloud_send_bridge{pointcloud_send_buffer, nullptr, config.bridge.pcl_port_to()};
 
     gpiod::chip button_chip(config.gpio.button_chip());
     ui::Button button{button_chip.get_line(config.gpio.button_line())};
@@ -227,8 +237,22 @@ int Application::run()
                              config.slam.map_size_z(),
                              global_map, command_queue);
 
-        MapThread map_thread{local_map, map_mutex, config.slam.map_update_period(), config.slam.map_update_position_threshold(), config.bridge.tsdf_port_to(), command_queue};
-        CloudCallback cloud_callback{registration, pointcloud_bridge_buffer, local_map, global_map, transform_buffer, command_queue, map_thread, map_mutex};
+        MapThread map_thread{local_map,
+                             map_mutex,
+                             config.slam.map_update_period(),
+                             config.slam.map_update_position_threshold(),
+                             config.bridge.tsdf_port_to(),
+                             command_queue};
+        CloudCallback cloud_callback{registration,
+                                     pointcloud_bridge_buffer,
+                                     local_map,
+                                     global_map,
+                                     transform_buffer,
+                                     pointcloud_send_buffer,
+                                     send_after_registration,
+                                     command_queue,
+                                     map_thread,
+                                     map_mutex};
 
         {
             Runner run_lidar_driver(*lidar_driver);
@@ -236,6 +260,7 @@ int Application::run()
             Runner run_imu_driver(*imu_driver);
             Runner run_imu_bridge(imu_bridge);
             Runner run_transform_bridge(transform_bridge);
+            Runner run_pointcloud_send_bridge(pointcloud_send_bridge);
             Runner run_map_thread(map_thread);
 
             // clear any remaining messages FIXME: WHY IS THIS NECESSARY???
