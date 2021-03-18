@@ -89,7 +89,7 @@ public:
      */
     void set_local_map(const std::shared_ptr<fastsense::map::LocalMap>& local_map);
 
-    fastsense::kernels::TSDFKernel& get_tsdf_krnl()
+    tsdf::TSDFKernel& get_tsdf_krnl()
     {
         return tsdf_krnl_;
     }
@@ -109,7 +109,7 @@ private:
     /// Pointer to the local map
     std::shared_ptr<fastsense::map::LocalMap> local_map_;
     /// Kernel object to perform an map update on hardware
-    fastsense::tsdf::TSDFKernel tsdf_krnl_;
+    tsdf::TSDFKernel tsdf_krnl_;
     /// Mutex for synchronisation between the map thread and the cloud callback for access to the local map
     std::mutex& map_mutex_;
     /// Mutex functions as a semaphore to control the when the map thread starts
