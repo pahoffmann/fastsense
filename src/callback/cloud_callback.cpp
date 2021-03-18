@@ -33,7 +33,6 @@ CloudCallback::CloudCallback(Registration& registration,
       transform_buffer{transform_buffer},
       first_iteration{true},
       q{q},
-      tsdf_krnl(q, local_map->getBuffer().size()),
       map_thread{map_thread},
       map_mutex{map_mutex}
 {
@@ -85,13 +84,15 @@ void CloudCallback::thread_run()
             first_iteration = false;
 
             auto& config = ConfigManager::config();
-            tsdf_krnl.synchronized_run(*local_map,
-                                       *scan_point_buffer,
-                                       num_points,
-                                       config.slam.max_distance(),
-                                       config.slam.max_weight(),
-                                       config.lidar.vertical_fov_angle(),
-                                       config.lidar.rings());
+            map_thread.get_tsdf_krnl().synchronized_run(
+                *local_map,
+                *scan_point_buffer,
+                num_points,
+                config.slam.max_distance(),
+                config.slam.max_weight(),
+                config.lidar.vertical_fov_angle(),
+                config.lidar.rings()
+            );
         }
         else
         {

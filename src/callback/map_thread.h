@@ -89,6 +89,11 @@ public:
      */
     void set_local_map(const std::shared_ptr<fastsense::map::LocalMap>& local_map);
 
+    fastsense::kernels::TSDFKernel& get_tsdf_krnl()
+    {
+        return tsdf_krnl_;
+    }
+
 protected:
 
     /**

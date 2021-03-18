@@ -67,7 +67,6 @@ private:
     msg::TransformStampedBuffer::Ptr transform_buffer;
     bool first_iteration;
     fastsense::CommandQueuePtr q;
-    fastsense::tsdf::TSDFKernel tsdf_krnl;
     MapThread& map_thread;
     std::mutex& map_mutex;
 };
