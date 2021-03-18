@@ -24,9 +24,7 @@ TEST_CASE("TSDF_Kernel_Vis", "[tsdf_kernel_vis]")
         std::cout << "    Section 'Visualize TSDF Data'" << std::endl;
         constexpr unsigned int SCALE = 1000;
         constexpr float TAU = 1 * SCALE;
-        constexpr float MAX_WEIGHT = 10;
-        constexpr int RINGS = 16;
-        constexpr float VERTICAL_FOV_ANGLE = 30;
+        constexpr float MAX_WEIGHT = 10 * WEIGHT_RESOLUTION;
 
         constexpr int SIZE_X = 20 * SCALE / MAP_RESOLUTION + 1;
         constexpr int SIZE_Y = 20 * SCALE / MAP_RESOLUTION + 1;
@@ -92,7 +90,8 @@ TEST_CASE("TSDF_Kernel_Vis", "[tsdf_kernel_vis]")
         auto q3 = fastsense::hw::FPGAManager::create_command_queue();
         fastsense::tsdf::TSDFKernel krnl(q3, local_map.getBuffer().size());
 
-        krnl.synchronized_run(local_map, kernel_points, kernel_points.size(), TAU, MAX_WEIGHT, RINGS, VERTICAL_FOV_ANGLE);
+        krnl.run(local_map, kernel_points, kernel_points.size(), TAU, MAX_WEIGHT);
+        krnl.waitComplete();
 
         fastsense::msg::TSDFBridgeMessage tsdf_msg;
 

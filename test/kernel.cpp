@@ -34,9 +34,7 @@ constexpr float TZ = 0.0 * SCALE;
 constexpr float RY = 5 * (M_PI / 180); //radiants
 
 constexpr float TAU = 1 * SCALE;
-constexpr float MAX_WEIGHT = 10;
-constexpr int RINGS = 16;
-constexpr float VERTICAL_FOV_ANGLE = 30;
+constexpr float MAX_WEIGHT = 10 * WEIGHT_RESOLUTION;
 
 constexpr int MAX_ITERATIONS = 200;
 
@@ -192,9 +190,8 @@ TEST_CASE("Kernel", "[kernel][slow]")
     auto q3 = fastsense::hw::FPGAManager::create_command_queue();
     fastsense::tsdf::TSDFKernel krnl(q3, local_map.getBuffer().size());
 
-    krnl.synchronized_run(local_map, kernel_points, kernel_points.size(), TAU, MAX_WEIGHT, RINGS, VERTICAL_FOV_ANGLE);
-
-    //fastsense::tsdf::update_tsdf(scan_points, Vector3i::Zero(), local_map, TAU, MAX_WEIGHT);
+    krnl.run(local_map, kernel_points, kernel_points.size(), TAU, MAX_WEIGHT);
+    krnl.waitComplete();
 
     {
         std::cout << "    Section 'Test Registration No Transform'" << std::endl;

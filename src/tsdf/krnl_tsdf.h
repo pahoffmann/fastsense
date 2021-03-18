@@ -10,6 +10,7 @@
 #include <hw/buffer/buffer.h>
 #include <map/local_map.h>
 #include <util/point_hw.h>
+#include <util/config/config_manager.h>
 #include <hw/buffer/buffer.h>
 
 #include <iostream>
@@ -59,23 +60,20 @@ public:
      * @param map The local map
      * @param scan_points The points to update with
      * @param num_points The number of Points in `scan_points`
-     * @param tau The truncation distance in mm
-     * @param max_weight_float The max weight as a floating Point
-     * @param rings The number of rings in the point cloud
-     * @param vertical_fov_angle The vertical angle of the Scanner
      * @param up A Vector pointing in the up direction of the Scanner
      */
     void synchronized_run(map::LocalMap& map,
                           const buffer::InputBuffer<PointHW>& scan_points,
                           int num_points,
-                          int tau,
-                          float max_weight_float,
-                          int rings,
-                          float vertical_fov_angle,
                           PointHW up = PointHW(0, 0, MATRIX_RESOLUTION))
     {
-        int max_weight = max_weight_float * WEIGHT_RESOLUTION;
-        int dz_per_distance = std::tan(vertical_fov_angle / (rings - 1.0) / 180.0 * M_PI) / 2.0 * MATRIX_RESOLUTION;
+        auto& config = util::config::ConfigManager::config();
+
+        int tau = config.slam.max_distance();
+        int max_weight = config.slam.max_weight() * WEIGHT_RESOLUTION;
+        float vertical_fov = config.lidar.vertical_fov_angle() / 180.0 * M_PI;
+        int rings = config.lidar.rings();
+        int dz_per_distance = std::tan(vertical_fov / (rings - 1.0) / 2.0) * MATRIX_RESOLUTION;
 
         run(map,
             scan_points,
@@ -104,7 +102,7 @@ public:
              int num_points,
              TSDFValue::ValueType tau,
              TSDFValue::WeightType max_weight,
-             int dz_per_distance,
+             int dz_per_distance = 572, // default with 16 Rings and 30 degrees fov
              PointHW up = PointHW(0, 0, MATRIX_RESOLUTION))
     {
         for (auto& v : new_entries)

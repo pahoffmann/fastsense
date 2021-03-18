@@ -10,9 +10,6 @@
 
 using namespace fastsense;
 
-constexpr int RINGS = 16;
-constexpr float VERTICAL_FOV_ANGLE = 30;
-
 TEST_CASE("Kernel_TSDF", "[kernel]")
 {
     std::cout << "Testing 'Kernel_TSDF'" << std::endl;
@@ -20,7 +17,7 @@ TEST_CASE("Kernel_TSDF", "[kernel]")
     CommandQueuePtr q = hw::FPGAManager::create_command_queue();
 
     constexpr int TAU = 3 * MAP_RESOLUTION;
-    constexpr int MAX_WEIGHT = 5;
+    constexpr int MAX_WEIGHT = 5 * WEIGHT_RESOLUTION;
 
     constexpr int SIZE_X = 50;
     constexpr int SIZE_Y = 50;
@@ -37,7 +34,8 @@ TEST_CASE("Kernel_TSDF", "[kernel]")
         kernel_points[0] = PointHW(6, 0, 0).to_mm();
 
         tsdf::TSDFKernel krnl(q, localMap.getBuffer().size());
-        krnl.synchronized_run(localMap, kernel_points, kernel_points.size(), TAU, MAX_WEIGHT, RINGS, VERTICAL_FOV_ANGLE);
+        krnl.run(localMap, kernel_points, kernel_points.size(), TAU, MAX_WEIGHT);
+        krnl.waitComplete();
 
         // Front values
         CHECK(localMap.value(6, 0, 0).value() == 0 * MAP_RESOLUTION);
@@ -85,7 +83,8 @@ TEST_CASE("Kernel_TSDF", "[kernel]")
         kernel_points[0] = PointHW(6, 0, 0).to_mm();
 
         tsdf::TSDFKernel krnl(q, localMap.getBuffer().size());
-        krnl.synchronized_run(localMap, kernel_points, kernel_points.size(), TAU, MAX_WEIGHT, RINGS, VERTICAL_FOV_ANGLE);
+        krnl.run(localMap, kernel_points, kernel_points.size(), TAU, MAX_WEIGHT);
+        krnl.waitComplete();
 
         int new_weight = WEIGHT_RESOLUTION + DEFAULT_WEIGHT;
 
@@ -106,16 +105,17 @@ TEST_CASE("Kernel_TSDF", "[kernel]")
         CHECK(localMap.value(1, 0, 0).weight() == new_weight);
 
         // test max weight
-        for (int i = 0; i < MAX_WEIGHT + 1; i++)
+        for (int i = 0; i < MAX_WEIGHT / WEIGHT_RESOLUTION + 1; i++)
         {
-            krnl.synchronized_run(localMap, kernel_points, kernel_points.size(), TAU, MAX_WEIGHT, RINGS, VERTICAL_FOV_ANGLE);
+            krnl.run(localMap, kernel_points, kernel_points.size(), TAU, MAX_WEIGHT);
+            krnl.waitComplete();
         }
 
-        CHECK(localMap.value(6, 0, 0).weight() == MAX_WEIGHT * WEIGHT_RESOLUTION);
-        CHECK(localMap.value(5, 0, 0).weight() == MAX_WEIGHT * WEIGHT_RESOLUTION);
-        CHECK(localMap.value(4, 0, 0).weight() == MAX_WEIGHT * WEIGHT_RESOLUTION);
-        CHECK(localMap.value(3, 0, 0).weight() == MAX_WEIGHT * WEIGHT_RESOLUTION);
-        CHECK(localMap.value(2, 0, 0).weight() == MAX_WEIGHT * WEIGHT_RESOLUTION);
-        CHECK(localMap.value(1, 0, 0).weight() == MAX_WEIGHT * WEIGHT_RESOLUTION);
+        CHECK(localMap.value(6, 0, 0).weight() == MAX_WEIGHT);
+        CHECK(localMap.value(5, 0, 0).weight() == MAX_WEIGHT);
+        CHECK(localMap.value(4, 0, 0).weight() == MAX_WEIGHT);
+        CHECK(localMap.value(3, 0, 0).weight() == MAX_WEIGHT);
+        CHECK(localMap.value(2, 0, 0).weight() == MAX_WEIGHT);
+        CHECK(localMap.value(1, 0, 0).weight() == MAX_WEIGHT);
     }
 }

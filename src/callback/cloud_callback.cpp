@@ -83,16 +83,7 @@ void CloudCallback::thread_run()
         {
             first_iteration = false;
 
-            auto& config = ConfigManager::config();
-            map_thread.get_tsdf_krnl().synchronized_run(
-                *local_map,
-                *scan_point_buffer,
-                num_points,
-                config.slam.max_distance(),
-                config.slam.max_weight(),
-                config.lidar.vertical_fov_angle(),
-                config.lidar.rings()
-            );
+            map_thread.get_tsdf_krnl().synchronized_run(*local_map, *scan_point_buffer, num_points);
         }
         else
         {
