@@ -1,5 +1,6 @@
 #include <ros/ros.h>
 #include <nav_msgs/Path.h>
+#include <sensor_msgs/PointCloud2.h>
 
 #include <tf2/LinearMath/Matrix3x3.h>
 #include <tf2/LinearMath/Transform.h>
@@ -11,6 +12,43 @@
 
 #include <random>
 #include <fstream>
+#include <memory>
+
+auto pose_counter = 0u;
+nav_msgs::Path original_pose_path;
+std::unique_ptr<tf2_ros::TransformBroadcaster> broadcaster;
+
+void cloud_callback(const sensor_msgs::PointCloud2ConstPtr& cloud)
+{
+    if (broadcaster == nullptr)
+    {
+        ROS_ERROR_STREAM("TF broadcaster not initialized!");
+        return;
+    }
+
+    if (pose_counter < original_pose_path.poses.size())
+    {
+        auto& pose_stamped = original_pose_path.poses[pose_counter];
+
+        geometry_msgs::TransformStamped transform_data;
+        transform_data.header.frame_id = "map";
+        transform_data.child_frame_id = "ground_truth";
+
+        transform_data.transform.rotation.x = pose_stamped.pose.orientation.x;
+        transform_data.transform.rotation.y = pose_stamped.pose.orientation.y;
+        transform_data.transform.rotation.z = pose_stamped.pose.orientation.z;
+        transform_data.transform.rotation.w = pose_stamped.pose.orientation.w;
+        transform_data.transform.translation.x = pose_stamped.pose.position.x;
+        transform_data.transform.translation.y = pose_stamped.pose.position.y;
+        transform_data.transform.translation.z = pose_stamped.pose.position.z;
+
+        transform_data.header.stamp = ros::Time::now();
+        broadcaster->sendTransform(transform_data);
+    }
+
+
+    ++pose_counter;
+}
 
 int main(int argc, char** argv)
 {
@@ -40,17 +78,17 @@ int main(int argc, char** argv)
 
     /// Path message
     nav_msgs::Path pose_path;
-    pose_path.header.frame_id = "ground_truth";
+    pose_path.header.frame_id = "map";
 
     geometry_msgs::PoseStamped pose_stamped;
-    pose_stamped.header.frame_id = "ground_truth";
+    pose_stamped.header.frame_id = "map";
     pose_stamped.header.stamp = ros::Time::now();
 
-    bool first = true;
+    // bool first = true;
 
-    geometry_msgs::TransformStamped transform_data;
-    transform_data.header.frame_id = "map";
-    transform_data.child_frame_id = "ground_truth";
+    // geometry_msgs::TransformStamped transform_data;
+    // transform_data.header.frame_id = "map";
+    // transform_data.child_frame_id = "ground_truth";
 
     while (!pose_stream.eof())
     {
@@ -106,31 +144,36 @@ int main(int argc, char** argv)
             return 1;
         }
 
-        pose_stamped.pose.position.x /= scale;
-        pose_stamped.pose.position.y /= scale;
-        pose_stamped.pose.position.z /= scale;
+        pose_stamped.pose.position.x *= scale;
+        pose_stamped.pose.position.y *= scale;
+        pose_stamped.pose.position.z *= scale;
 
-        if (first)
-        {
-            transform_data.transform.rotation.x = pose_stamped.pose.orientation.x;
-            transform_data.transform.rotation.y = pose_stamped.pose.orientation.y;
-            transform_data.transform.rotation.z = pose_stamped.pose.orientation.z;
-            transform_data.transform.rotation.w = pose_stamped.pose.orientation.w;
-            transform_data.transform.translation.x = pose_stamped.pose.position.x;
-            transform_data.transform.translation.y = pose_stamped.pose.position.y;
-            transform_data.transform.translation.z = pose_stamped.pose.position.z;
+        // if (first)
+        // {
+        //     transform_data.transform.rotation.x = pose_stamped.pose.orientation.x;
+        //     transform_data.transform.rotation.y = pose_stamped.pose.orientation.y;
+        //     transform_data.transform.rotation.z = pose_stamped.pose.orientation.z;
+        //     transform_data.transform.rotation.w = pose_stamped.pose.orientation.w;
+        //     transform_data.transform.translation.x = pose_stamped.pose.position.x;
+        //     transform_data.transform.translation.y = pose_stamped.pose.position.y;
+        //     transform_data.transform.translation.z = pose_stamped.pose.position.z;
 
-            first = false;
-        }
+        //     first = false;
+        // }
 
         pose_path.poses.push_back(pose_stamped);
     }
 
     pose_stream.close();
 
+    original_pose_path = pose_path;
+
     ros::Publisher pub = n.advertise<nav_msgs::Path>("pose", 10);
 
-    tf2_ros::TransformBroadcaster broadcaster;
+    //tf2_ros::TransformBroadcaster broadcaster;
+    broadcaster.reset(new tf2_ros::TransformBroadcaster());
+
+    auto cloud_sub = n.subscribe<sensor_msgs::PointCloud2>("/velodyne_points", 1, cloud_callback);
 
     while (pose_path.poses.size() >= 16380)
     {
@@ -147,9 +190,10 @@ int main(int argc, char** argv)
     while (ros::ok())
     {
         pose_path.header.stamp = ros::Time::now();
-        transform_data.header.stamp = pose_path.header.stamp;
-        broadcaster.sendTransform(transform_data);
+        // transform_data.header.stamp = pose_path.header.stamp;
+        // broadcaster->sendTransform(transform_data);
         pub.publish(pose_path);
+        ros::spinOnce();
         duration.sleep();
     }
 
