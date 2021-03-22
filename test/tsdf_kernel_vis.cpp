@@ -82,7 +82,7 @@ TEST_CASE("TSDF_Kernel_Vis", "[tsdf_kernel_vis]")
 
         tsdf_bridge.start();
 
-        fastsense::buffer::InputOutputBuffer<TSDFValue> new_entries(q, local_map.getBuffer().size());
+        fastsense::buffer::InputOutputBuffer<TSDFEntry> new_entries(q, local_map.getBuffer().size());
 
         for (auto& entry : new_entries)
         {
@@ -101,17 +101,17 @@ TEST_CASE("TSDF_Kernel_Vis", "[tsdf_kernel_vis]")
         //                               kernel_points_sw.data(),
         //                               kernel_points_sw.data(),
         //                               num_points,
-        //                               (TSDFValueHW*)local_map.getBuffer().getVirtualAddress(),
-        //                               (TSDFValueHW*)local_map.getBuffer().getVirtualAddress(),
-        //                               (TSDFValueHW*)local_map.getBuffer().getVirtualAddress(),
-        //                               (TSDFValueHW*)local_map.getBuffer().getVirtualAddress(),
+        //                               (TSDFEntryHW*)local_map.getBuffer().getVirtualAddress(),
+        //                               (TSDFEntryHW*)local_map.getBuffer().getVirtualAddress(),
+        //                               (TSDFEntryHW*)local_map.getBuffer().getVirtualAddress(),
+        //                               (TSDFEntryHW*)local_map.getBuffer().getVirtualAddress(),
         //                               size.x(), size.y(), size.z(),
         //                               pos.x(), pos.y(), pos.z(),
         //                               offset.x(), offset.y(), offset.z(),
-        //                               (TSDFValueHW*)new_entries.getVirtualAddress(),
-        //                               (TSDFValueHW*)new_entries.getVirtualAddress(),
-        //                               (TSDFValueHW*)new_entries.getVirtualAddress(),
-        //                               (TSDFValueHW*)new_entries.getVirtualAddress(),
+        //                               (TSDFEntryHW*)new_entries.getVirtualAddress(),
+        //                               (TSDFEntryHW*)new_entries.getVirtualAddress(),
+        //                               (TSDFEntryHW*)new_entries.getVirtualAddress(),
+        //                               (TSDFEntryHW*)new_entries.getVirtualAddress(),
         //                               TAU,
         //                               MAX_WEIGHT);
 

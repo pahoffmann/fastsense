@@ -21,7 +21,7 @@ using fastsense::util::PCDFile;
 namespace fastsense::tsdf
 {
 
-static void check_tsdf(const fastsense::buffer::InputOutputBuffer<TSDFValue>& tsdf_hw, const fastsense::buffer::InputOutputBuffer<TSDFValue>& tsdf_sw)
+static void check_tsdf(const fastsense::buffer::InputOutputBuffer<TSDFEntry>& tsdf_hw, const fastsense::buffer::InputOutputBuffer<TSDFEntry>& tsdf_sw)
 {
     REQUIRE(tsdf_hw.size() == tsdf_sw.size());
 
@@ -211,7 +211,7 @@ TEST_CASE("Kernel_TSDF", "[kernel][slow]")
         krnl.run(local_map, kernel_points, kernel_points.size(), TAU, MAX_WEIGHT);
         krnl.waitComplete();
 
-        fastsense::buffer::InputOutputBuffer<TSDFValue> new_entries(q, local_map_sw.get_size().x() * local_map_sw.get_size().y() * local_map_sw.get_size().z());
+        fastsense::buffer::InputOutputBuffer<TSDFEntry> new_entries(q, local_map_sw.get_size().x() * local_map_sw.get_size().y() * local_map_sw.get_size().z());
 
         for (int i = 0; i < local_map.get_size().x() * local_map.get_size().y() * local_map.get_size().z(); ++i)
         {
@@ -229,17 +229,17 @@ TEST_CASE("Kernel_TSDF", "[kernel][slow]")
                                       kernel_points_sw.data(),
                                       kernel_points_sw.data(),
                                       num_points,
-                                      (TSDFValueHW*)local_map_sw.getBuffer().getVirtualAddress(),
-                                      (TSDFValueHW*)local_map_sw.getBuffer().getVirtualAddress(),
-                                      (TSDFValueHW*)local_map_sw.getBuffer().getVirtualAddress(),
-                                      (TSDFValueHW*)local_map_sw.getBuffer().getVirtualAddress(),
+                                      (TSDFEntryHW*)local_map_sw.getBuffer().getVirtualAddress(),
+                                      (TSDFEntryHW*)local_map_sw.getBuffer().getVirtualAddress(),
+                                      (TSDFEntryHW*)local_map_sw.getBuffer().getVirtualAddress(),
+                                      (TSDFEntryHW*)local_map_sw.getBuffer().getVirtualAddress(),
                                       size.x(), size.y(), size.z(),
                                       pos.x(), pos.y(), pos.z(),
                                       offset.x(), offset.y(), offset.z(),
-                                      (TSDFValueHW*)new_entries.getVirtualAddress(),
-                                      (TSDFValueHW*)new_entries.getVirtualAddress(),
-                                      (TSDFValueHW*)new_entries.getVirtualAddress(),
-                                      (TSDFValueHW*)new_entries.getVirtualAddress(),
+                                      (TSDFEntryHW*)new_entries.getVirtualAddress(),
+                                      (TSDFEntryHW*)new_entries.getVirtualAddress(),
+                                      (TSDFEntryHW*)new_entries.getVirtualAddress(),
+                                      (TSDFEntryHW*)new_entries.getVirtualAddress(),
                                       TAU,
                                       MAX_WEIGHT,
                                       up.x, up.y, up.z);

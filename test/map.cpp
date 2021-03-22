@@ -23,12 +23,12 @@ TEST_CASE("Map", "[Map]")
 
     // write some tsdf values and weights into one corner of the ring buffer,
     // that will be written to the file as one chunk
-    TSDFValue p0(0, 0);
-    TSDFValue p1(1, 1);
-    TSDFValue p2(2, 1);
-    TSDFValue p3(3, 2);
-    TSDFValue p4(4, 3);
-    TSDFValue p5(5, 5);
+    TSDFEntry p0(0, 0);
+    TSDFEntry p1(1, 1);
+    TSDFEntry p2(2, 1);
+    TSDFEntry p3(3, 2);
+    TSDFEntry p4(4, 3);
+    TSDFEntry p5(5, 5);
     localMap.value(-2, 2, 0) = p0;
     localMap.value(-1, 2, 0) = p1;
     localMap.value(-2, 1, 0) = p2;
@@ -72,16 +72,16 @@ TEST_CASE("Map", "[Map]")
     CHECK(localMap.value(24, 0, 0).weight() == DEFAULT_WEIGHT);
 
     // ==================== shift directions ====================
-    localMap.value(24, 0, 0) = TSDFValue(24, 0);
+    localMap.value(24, 0, 0) = TSDFEntry(24, 0);
 
     localMap.shift(Vector3i(24, 5, 0));
-    localMap.value(24, 5, 0) = TSDFValue(24, 5);
+    localMap.value(24, 5, 0) = TSDFEntry(24, 5);
 
     localMap.shift(Vector3i(19, 5, 0));
-    localMap.value(19, 5, 0) = TSDFValue(19, 5);
+    localMap.value(19, 5, 0) = TSDFEntry(19, 5);
 
     localMap.shift(Vector3i(19, 0, 0));
-    localMap.value(19, 0, 0) = TSDFValue(19, 0);
+    localMap.value(19, 0, 0) = TSDFEntry(19, 0);
 
     localMap.shift(Vector3i(24, 0, 0));
     CHECK(localMap.value(24, 0, 0).value() == 24);
@@ -138,7 +138,7 @@ TEST_CASE("Map", "[Map]")
     HighFive::File f("MapTest.h5", HighFive::File::OpenOrCreate);
     HighFive::Group g = f.getGroup("/map");
     HighFive::DataSet d = g.getDataSet("-1_0_0");
-    std::vector<TSDFValue::RawType> chunk;
+    std::vector<TSDFEntry::RawType> chunk;
     d.read(chunk);
 
     // test pose
@@ -152,19 +152,19 @@ TEST_CASE("Map", "[Map]")
 
     constexpr int CHUNK_SIZE = GlobalMap::CHUNK_SIZE;
 
-    CHECK(TSDFValue(chunk[(CHUNK_SIZE * CHUNK_SIZE * (CHUNK_SIZE - 2) + CHUNK_SIZE * 2)]).value() == 0 * 2);
-    CHECK(TSDFValue(chunk[(CHUNK_SIZE * CHUNK_SIZE * (CHUNK_SIZE - 1) + CHUNK_SIZE * 2)]).value() == 1 * 2);
-    CHECK(TSDFValue(chunk[(CHUNK_SIZE * CHUNK_SIZE * (CHUNK_SIZE - 2) + CHUNK_SIZE * 1)]).value() == 2 * 2);
-    CHECK(TSDFValue(chunk[(CHUNK_SIZE * CHUNK_SIZE * (CHUNK_SIZE - 1) + CHUNK_SIZE * 1)]).value() == 3 * 2);
-    CHECK(TSDFValue(chunk[(CHUNK_SIZE * CHUNK_SIZE * (CHUNK_SIZE - 2) + CHUNK_SIZE * 0)]).value() == 4 * 2);
-    CHECK(TSDFValue(chunk[(CHUNK_SIZE * CHUNK_SIZE * (CHUNK_SIZE - 1) + CHUNK_SIZE * 0)]).value() == 5 * 2);
+    CHECK(TSDFEntry(chunk[(CHUNK_SIZE * CHUNK_SIZE * (CHUNK_SIZE - 2) + CHUNK_SIZE * 2)]).value() == 0 * 2);
+    CHECK(TSDFEntry(chunk[(CHUNK_SIZE * CHUNK_SIZE * (CHUNK_SIZE - 1) + CHUNK_SIZE * 2)]).value() == 1 * 2);
+    CHECK(TSDFEntry(chunk[(CHUNK_SIZE * CHUNK_SIZE * (CHUNK_SIZE - 2) + CHUNK_SIZE * 1)]).value() == 2 * 2);
+    CHECK(TSDFEntry(chunk[(CHUNK_SIZE * CHUNK_SIZE * (CHUNK_SIZE - 1) + CHUNK_SIZE * 1)]).value() == 3 * 2);
+    CHECK(TSDFEntry(chunk[(CHUNK_SIZE * CHUNK_SIZE * (CHUNK_SIZE - 2) + CHUNK_SIZE * 0)]).value() == 4 * 2);
+    CHECK(TSDFEntry(chunk[(CHUNK_SIZE * CHUNK_SIZE * (CHUNK_SIZE - 1) + CHUNK_SIZE * 0)]).value() == 5 * 2);
 
-    CHECK(TSDFValue(chunk[(CHUNK_SIZE * CHUNK_SIZE * (CHUNK_SIZE - 2) + CHUNK_SIZE * 2)]).weight() == 0 / 2);
-    CHECK(TSDFValue(chunk[(CHUNK_SIZE * CHUNK_SIZE * (CHUNK_SIZE - 1) + CHUNK_SIZE * 2)]).weight() == 1 / 2);
-    CHECK(TSDFValue(chunk[(CHUNK_SIZE * CHUNK_SIZE * (CHUNK_SIZE - 2) + CHUNK_SIZE * 1)]).weight() == 1 / 2);
-    CHECK(TSDFValue(chunk[(CHUNK_SIZE * CHUNK_SIZE * (CHUNK_SIZE - 1) + CHUNK_SIZE * 1)]).weight() == 2 / 2);
-    CHECK(TSDFValue(chunk[(CHUNK_SIZE * CHUNK_SIZE * (CHUNK_SIZE - 2) + CHUNK_SIZE * 0)]).weight() == 3 / 2);
-    CHECK(TSDFValue(chunk[(CHUNK_SIZE * CHUNK_SIZE * (CHUNK_SIZE - 1) + CHUNK_SIZE * 0)]).weight() == 5 / 2);
+    CHECK(TSDFEntry(chunk[(CHUNK_SIZE * CHUNK_SIZE * (CHUNK_SIZE - 2) + CHUNK_SIZE * 2)]).weight() == 0 / 2);
+    CHECK(TSDFEntry(chunk[(CHUNK_SIZE * CHUNK_SIZE * (CHUNK_SIZE - 1) + CHUNK_SIZE * 2)]).weight() == 1 / 2);
+    CHECK(TSDFEntry(chunk[(CHUNK_SIZE * CHUNK_SIZE * (CHUNK_SIZE - 2) + CHUNK_SIZE * 1)]).weight() == 1 / 2);
+    CHECK(TSDFEntry(chunk[(CHUNK_SIZE * CHUNK_SIZE * (CHUNK_SIZE - 1) + CHUNK_SIZE * 1)]).weight() == 2 / 2);
+    CHECK(TSDFEntry(chunk[(CHUNK_SIZE * CHUNK_SIZE * (CHUNK_SIZE - 2) + CHUNK_SIZE * 0)]).weight() == 3 / 2);
+    CHECK(TSDFEntry(chunk[(CHUNK_SIZE * CHUNK_SIZE * (CHUNK_SIZE - 1) + CHUNK_SIZE * 0)]).weight() == 5 / 2);
 
     int i = 0;
     CHECK(pose[i++] == 144);

@@ -9,7 +9,7 @@
 extern "C"
 {
 
-    void krnl_local_map_test(TSDFValueHW* mapData,
+    void krnl_local_map_test(TSDFEntryHW* mapData,
                              int sizeX,
                              int sizeY,
                              int sizeZ,
@@ -46,7 +46,7 @@ extern "C"
                 for (int k = map.posZ - map.sizeZ / 2; k <= map.posZ + map.sizeZ / 2; k++)
                 {
 #pragma HLS PIPELINE
-                    TSDFValueHW tmp = map.get(mapData, i, j, k);
+                    TSDFEntryHW tmp = map.get(mapData, i, j, k);
                     tmp.value *= 2;
                     tmp.weight /= 2;
                     map.set(mapData, i, j, k, tmp);
