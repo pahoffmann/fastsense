@@ -21,10 +21,8 @@ RuntimeEvaluator& RuntimeEvaluator::get_instance()
     return instance;
 }
 
-RuntimeEvaluator::RuntimeEvaluator() : forms_(), histogram_(8, 0)
+RuntimeEvaluator::RuntimeEvaluator() : forms_(), histogram_(10, 0)
 {
-    overhang_time_ = 0.0;
-    num_dropped_scans = num_scans_over_50ms = 0;
     // "unpause" for the first time
     start_ = high_resolution_clock::now();
 }
@@ -126,18 +124,6 @@ void RuntimeEvaluator::stop(const std::string& task_name)
     {
         double time_ms = time / 1000.0;
 
-        if (time_ms > 50.0)
-        {
-            num_scans_over_50ms++;
-        }
-
-        overhang_time_ = std::max(overhang_time_ + time_ms - 50.0, 0.0);
-        if (overhang_time_ >= 50.0)
-        {
-            num_dropped_scans++;
-            overhang_time_ -= 50.0;
-        }
-
         size_t bucket = time_ms / HIST_BUCKET_SIZE;
         bucket = std::min(bucket, histogram_.size() - 1);
         histogram_[bucket]++;
@@ -204,11 +190,6 @@ std::string RuntimeEvaluator::to_string()
     if (total_index != -1)
     {
         const auto& form = forms_[total_index];
-
-        ss << "Over 50ms: " << std::setw(width) << num_scans_over_50ms << " / " << form.count
-           << " = " << std::setw(2) << 100 * num_scans_over_50ms / form.count << "%\n";
-        ss << "Dropped  : " << std::setw(width) << num_dropped_scans << " / " << form.count
-           << " = " << std::setw(2) << 100 * num_dropped_scans / form.count << "%\n";
 
         //                  columns with padding    +    separators     -       start of line
         int line_length = FIELD_COUNT * (width + 2) + (FIELD_COUNT - 1) - std::string("10-20: ").length();

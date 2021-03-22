@@ -24,11 +24,14 @@ template<typename T>
 bool ConcurrentRingBuffer<T>::push_nb(const T& val, bool force)
 {
     std::unique_lock<std::mutex> lock(mutex_);
+    bool not_forced = true;
+    
     if (size_ == buffer_.size())
     {
         if (force)
         {
             doPop(nullptr);
+            not_forced = false;
         }
         else
         {
@@ -38,7 +41,7 @@ bool ConcurrentRingBuffer<T>::push_nb(const T& val, bool force)
 
     doPush(val);
     cvEmpty_.notify_one();
-    return true;
+    return not_forced;
 }
 
 template<typename T>
