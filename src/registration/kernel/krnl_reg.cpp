@@ -245,6 +245,10 @@ extern "C"
     mapData##n##0, mapData##n##1, mapData##n##2, \
     h##n, g##n, error##n, count##n
 
+    /**
+     * @brief Create a dataflow from the registration process 
+     * 
+     */
     void reg_dataflow(DECLARE_PARAMS(0), // MARKER: SPLIT
                       DECLARE_PARAMS(1),
                       DECLARE_PARAMS(2),
@@ -269,6 +273,26 @@ extern "C"
         CALL_STEP(2, last_step);
     }
 
+    /**
+     * @brief Perform a complete registration of the given point data to the current TSDF map
+     *  
+     * @param pointDataX Point data assigned to different memory points, which should be registered
+     * @param numPoints  Number of points in the current scan
+     * @param mapDataXX  Map data assigned to different memory ports. which should be used to register the scan points
+     * @param sizeX Map size in x direction
+     * @param sizeY Map size in y direction
+     * @param sizeZ Map size in z direction
+     * @param posX  X coordinate of the scanner in the global system
+     * @param posY  Y coordinate of the scanner in the global system
+     * @param posZ  Z coordinate of the scanner in the global system
+     * @param offsetX Offset for the x axis regarding the current map shift 
+     * @param offsetY Offset for the y axis regarding the current map shift
+     * @param offsetZ Offset for the z axis regarding the current map shift
+     * @param max_iterations Maximum number of iteration for determining the transfomormation of the current scan to the map
+     * @param it_weight_gradient Decay variable for the iteration influence
+     * @param in_transform Initial transformation for scan point
+     * @param out_transform Result transformation for the scan into the global coordinate system
+     */
     void krnl_reg(const PointHW* pointData0, // MARKER: SPLIT
                   const PointHW* pointData1,
                   const PointHW* pointData2,
