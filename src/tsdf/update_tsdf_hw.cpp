@@ -31,7 +31,7 @@ void update_tsdf_hw(const fastsense::buffer::InputBuffer<PointHW>& scan_points,
 {
     int weight_epsilon = tau / 10;
 
-    std::unordered_map<PointHW, TSDFValue> values;
+    std::unordered_map<PointHW, TSDFEntry> values;
 
     PointHW scanner_pos(buffer.get_pos().x(), buffer.get_pos().y(), buffer.get_pos().z());
 
@@ -80,7 +80,7 @@ void update_tsdf_hw(const fastsense::buffer::InputBuffer<PointHW>& scan_points,
                 continue;
             }
 
-            TSDFValue object(value, weight);
+            TSDFEntry object(value, weight);
 
             int delta_z = dz_per_distance * len / MATRIX_RESOLUTION;
 

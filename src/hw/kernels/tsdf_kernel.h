@@ -18,7 +18,7 @@ namespace fastsense::kernels
 
 class TSDFKernel : public BaseKernel
 {
-    buffer::InputOutputBuffer<TSDFValue> new_entries;
+    buffer::InputOutputBuffer<TSDFEntry> new_entries;
 
 public:
 
@@ -45,13 +45,13 @@ public:
     void run(map::LocalMap& map,
              const buffer::InputBuffer<PointHW>& scan_points,
              int num_points,
-             TSDFValue::ValueType tau,
-             TSDFValue::WeightType max_weight,
+             TSDFEntry::ValueType tau,
+             TSDFEntry::WeightType max_weight,
              PointHW up = PointHW(0, 0, MATRIX_RESOLUTION))
     {
         for (int i = 0; i < (int)new_entries.size(); ++i)
         {
-            new_entries[i] = TSDFValue(0, 0);
+            new_entries[i] = TSDFEntry(0, 0);
         }
 
         constexpr int SPLIT_FACTOR = 4;

@@ -198,7 +198,7 @@ void LocalMap::save_load_area(const Vector3i& bottom_corner, const Vector3i& top
     }
 }
 
-buffer::InputOutputBuffer<TSDFValue>& LocalMap::getBuffer()
+buffer::InputOutputBuffer<TSDFEntry>& LocalMap::getBuffer()
 {
     return data_;
 }

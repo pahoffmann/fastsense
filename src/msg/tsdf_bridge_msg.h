@@ -55,7 +55,7 @@ struct TSDFBridgeMessage : public ZMQConverter
     Vector3i offset_;
 
     /// actual tsdf data
-    std::vector<TSDFValue> tsdf_data_;
+    std::vector<TSDFEntry> tsdf_data_;
 
     /**
      * @brief Convert zmq_multipart to TSDFBridgeMessage
@@ -70,10 +70,10 @@ struct TSDFBridgeMessage : public ZMQConverter
         offset_ = msg.poptyp<Vector3i>();
 
         zmq::message_t tsdf_data_msg = msg.pop();
-        size_t n_tsdf_values = tsdf_data_msg.size() / sizeof(TSDFValue);
+        size_t n_tsdf_values = tsdf_data_msg.size() / sizeof(TSDFEntry);
         tsdf_data_.clear();
         tsdf_data_.reserve(n_tsdf_values);
-        std::copy_n(static_cast<TSDFValue*>(tsdf_data_msg.data()), n_tsdf_values, std::back_inserter(tsdf_data_));
+        std::copy_n(static_cast<TSDFEntry*>(tsdf_data_msg.data()), n_tsdf_values, std::back_inserter(tsdf_data_));
     }
 
     /**

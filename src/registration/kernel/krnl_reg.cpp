@@ -119,7 +119,7 @@ extern "C"
      */
     void registration_step(const PointHW* pointData,
                            int numPoints,
-                           TSDFValueHW* mapData0, TSDFValueHW* mapData1, TSDFValueHW* mapData2,
+                           TSDFEntryHW* mapData0, TSDFEntryHW* mapData1, TSDFEntryHW* mapData2,
                            const LocalMapHW& map,
                            const int transform_matrix[4][4],
                            const PointHW& center,
@@ -237,7 +237,7 @@ extern "C"
 // Declares the parameters for variables ending with 'n'. Macro Syntax: ## means concat variable name with the contents of 'n'
 #define DECLARE_PARAMS(n) \
     const PointHW* pointData##n, \
-    TSDFValueHW* mapData##n##0, TSDFValueHW* mapData##n##1, TSDFValueHW* mapData##n##2, \
+    TSDFEntryHW* mapData##n##0, TSDFEntryHW* mapData##n##1, TSDFEntryHW* mapData##n##2, \
     long h##n[6][6], long g##n[6], long& error##n, long& count##n
 
 #define USE_PARAMS(n) \
@@ -297,9 +297,9 @@ extern "C"
                   const PointHW* pointData1,
                   const PointHW* pointData2,
                   int numPoints,
-                  TSDFValueHW* mapData00, TSDFValueHW* mapData01, TSDFValueHW* mapData02, // MARKER: SPLIT
-                  TSDFValueHW* mapData10, TSDFValueHW* mapData11, TSDFValueHW* mapData12,
-                  TSDFValueHW* mapData20, TSDFValueHW* mapData21, TSDFValueHW* mapData22,
+                  TSDFEntryHW* mapData00, TSDFEntryHW* mapData01, TSDFEntryHW* mapData02, // MARKER: SPLIT
+                  TSDFEntryHW* mapData10, TSDFEntryHW* mapData11, TSDFEntryHW* mapData12,
+                  TSDFEntryHW* mapData20, TSDFEntryHW* mapData21, TSDFEntryHW* mapData22,
                   int sizeX,   int sizeY,   int sizeZ,
                   int posX,    int posY,    int posZ,
                   int offsetX, int offsetY, int offsetZ,

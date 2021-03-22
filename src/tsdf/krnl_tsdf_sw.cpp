@@ -21,16 +21,16 @@ constexpr int SPLIT_FACTOR = 4;
 void read_points(PointHW* scanPoints,
                  int numPoints,
                  const LocalMapHW& map,
-                 TSDFValueHW::ValueType tau,
+                 TSDFEntryHW::ValueType tau,
                  const PointHW& up,
-                 hls::stream<TSDFValueHW>& value_fifo,
+                 hls::stream<TSDFEntryHW>& value_fifo,
                  hls::stream<PointHW>& index_fifo,
                  hls::stream<std::pair<PointHW, PointArith>>& bounds_fifo,
                  hls::stream<std::pair<int, int>>& iter_steps_fifo)
 {
     PointHW map_pos{map.posX, map.posY, map.posZ};
 
-    TSDFValueHW::ValueType weight_epsilon = tau / 10;
+    TSDFEntryHW::ValueType weight_epsilon = tau / 10;
     int max_distance = (map.sizeX / 2 + map.sizeY / 2 + map.sizeZ / 2) * MAP_RESOLUTION;
 
     for (int point_idx = 0; point_idx < numPoints; point_idx++)
@@ -67,7 +67,7 @@ void read_points(PointHW* scanPoints,
                 continue;
             }
 
-            TSDFValueHW tsdf;
+            TSDFEntryHW tsdf;
             auto value = (scan_point - index.to_mm()).norm();
             if (value > tau)
             {
@@ -112,20 +112,20 @@ void read_points(PointHW* scanPoints,
             iter_steps_fifo << iter_steps;
         }
     }
-    value_fifo << TSDFValueHW{0, 0};
+    value_fifo << TSDFEntryHW{0, 0};
     index_fifo << PointHW();
     bounds_fifo << std::pair<PointHW, PointArith> {PointHW(), PointArith()};
     iter_steps_fifo << std::pair<int, int>(0, 0);
 }
 
 void update_tsdf(const LocalMapHW& map,
-                 TSDFValueHW* new_entries,
-                 hls::stream<TSDFValueHW>& value_fifo,
+                 TSDFEntryHW* new_entries,
+                 hls::stream<TSDFEntryHW>& value_fifo,
                  hls::stream<PointHW>& index_fifo,
                  hls::stream<std::pair<PointHW, PointArith>>& bounds_fifo,
                  hls::stream<std::pair<int, int>>& iter_steps_fifo)
 {
-    TSDFValueHW value;
+    TSDFEntryHW value;
     PointHW index, old_index{0, 0, 0};
     std::pair<PointHW, PointArith> bounds{PointHW(), PointArith()};
     std::pair<int, int> iter_steps{0, 0};
@@ -160,8 +160,8 @@ void update_tsdf(const LocalMapHW& map,
 
             int map_index = map.getIndex(index.x, index.y, index.z);
 
-            TSDFValueHW entry = new_entries[map_index];
-            TSDFValueHW tmp_value = value;
+            TSDFEntryHW entry = new_entries[map_index];
+            TSDFEntryHW tmp_value = value;
 
             if (entry.weight <= 0 || hls_abs(value.value) < hls_abs(entry.value))
             {
@@ -183,11 +183,11 @@ void update_tsdf(const LocalMapHW& map,
 }
 
 void sync_loop(
-    TSDFValueHW* mapData,
+    TSDFEntryHW* mapData,
     int start,
     int end,
-    TSDFValueHW* new_entries,
-    TSDFValueHW::WeightType max_weight)
+    TSDFEntryHW* new_entries,
+    TSDFEntryHW::WeightType max_weight)
 {
     for (int index = start; index < end; index++)
     {
@@ -196,8 +196,8 @@ void sync_loop(
 #pragma HLS dependence variable=mapData inter false
 #pragma HLS dependence variable=new_entries inter false
 
-        TSDFValueHW map_entry = mapData[index];
-        TSDFValueHW new_entry = new_entries[index];
+        TSDFEntryHW map_entry = mapData[index];
+        TSDFEntryHW new_entry = new_entries[index];
 
         int new_weight = map_entry.weight + new_entry.weight;
 
@@ -228,17 +228,17 @@ void tsdf_dataflower(PointHW* scanPoints0,
                      PointHW* scanPoints3,
                      int step,
                      int last_step,
-                     TSDFValueHW* new_entries0,
-                     TSDFValueHW* new_entries1,
-                     TSDFValueHW* new_entries2,
-                     TSDFValueHW* new_entries3,
+                     TSDFEntryHW* new_entries0,
+                     TSDFEntryHW* new_entries1,
+                     TSDFEntryHW* new_entries2,
+                     TSDFEntryHW* new_entries3,
                      const LocalMapHW& map,
-                     TSDFValueHW::ValueType tau,
+                     TSDFEntryHW::ValueType tau,
                      const PointHW& up)
 {
 #pragma HLS dataflow
 
-    hls::stream<TSDFValueHW> value_fifo0;
+    hls::stream<TSDFEntryHW> value_fifo0;
     hls::stream<PointHW> index_fifo0;
     hls::stream<std::pair<PointHW, PointArith>> bounds_fifo0;
     hls::stream<std::pair<int, int>> iter_steps_fifo0;
@@ -258,7 +258,7 @@ void tsdf_dataflower(PointHW* scanPoints0,
                 bounds_fifo0,
                 iter_steps_fifo0);
 
-    hls::stream<TSDFValueHW> value_fifo1;
+    hls::stream<TSDFEntryHW> value_fifo1;
     hls::stream<PointHW> index_fifo1;
     hls::stream<std::pair<PointHW, PointArith>> bounds_fifo1;
     hls::stream<std::pair<int, int>> iter_steps_fifo1;
@@ -278,7 +278,7 @@ void tsdf_dataflower(PointHW* scanPoints0,
                 bounds_fifo1,
                 iter_steps_fifo1);
 
-    hls::stream<TSDFValueHW> value_fifo2;
+    hls::stream<TSDFEntryHW> value_fifo2;
     hls::stream<PointHW> index_fifo2;
     hls::stream<std::pair<PointHW, PointArith>> bounds_fifo2;
     hls::stream<std::pair<int, int>> iter_steps_fifo2;
@@ -298,7 +298,7 @@ void tsdf_dataflower(PointHW* scanPoints0,
                 bounds_fifo2,
                 iter_steps_fifo2);
 
-    hls::stream<TSDFValueHW> value_fifo3;
+    hls::stream<TSDFEntryHW> value_fifo3;
     hls::stream<PointHW> index_fifo3;
     hls::stream<std::pair<PointHW, PointArith>> bounds_fifo3;
     hls::stream<std::pair<int, int>> iter_steps_fifo3;
@@ -319,19 +319,19 @@ void tsdf_dataflower(PointHW* scanPoints0,
                 iter_steps_fifo3);
 }
 
-void sync_looper(TSDFValueHW* mapData0,
-                 TSDFValueHW* mapData1,
-                 TSDFValueHW* mapData2,
-                 TSDFValueHW* mapData3,
+void sync_looper(TSDFEntryHW* mapData0,
+                 TSDFEntryHW* mapData1,
+                 TSDFEntryHW* mapData2,
+                 TSDFEntryHW* mapData3,
                  int end0,
                  int end1,
                  int end2,
                  int end3,
-                 TSDFValueHW* new_entries0,
-                 TSDFValueHW* new_entries1,
-                 TSDFValueHW* new_entries2,
-                 TSDFValueHW* new_entries3,
-                 TSDFValueHW::WeightType max_weight)
+                 TSDFEntryHW* new_entries0,
+                 TSDFEntryHW* new_entries1,
+                 TSDFEntryHW* new_entries2,
+                 TSDFEntryHW* new_entries3,
+                 TSDFEntryHW::WeightType max_weight)
 {
 #pragma HLS dataflow
     sync_loop(mapData0, 0, end0, new_entries0, max_weight);
@@ -367,19 +367,19 @@ void krnl_tsdf_sw(PointHW* scanPoints0,
                   PointHW* scanPoints2,
                   PointHW* scanPoints3,
                   int numPoints,
-                  TSDFValueHW* mapData0,
-                  TSDFValueHW* mapData1,
-                  TSDFValueHW* mapData2,
-                  TSDFValueHW* mapData3,
+                  TSDFEntryHW* mapData0,
+                  TSDFEntryHW* mapData1,
+                  TSDFEntryHW* mapData2,
+                  TSDFEntryHW* mapData3,
                   int sizeX,   int sizeY,   int sizeZ,
                   int posX,    int posY,    int posZ,
                   int offsetX, int offsetY, int offsetZ,
-                  TSDFValueHW* new_entries0,
-                  TSDFValueHW* new_entries1,
-                  TSDFValueHW* new_entries2,
-                  TSDFValueHW* new_entries3,
-                  TSDFValueHW::ValueType tau,
-                  TSDFValueHW::WeightType max_weight,
+                  TSDFEntryHW* new_entries0,
+                  TSDFEntryHW* new_entries1,
+                  TSDFEntryHW* new_entries2,
+                  TSDFEntryHW* new_entries3,
+                  TSDFEntryHW::ValueType tau,
+                  TSDFEntryHW::WeightType max_weight,
                   int up_x, int up_y, int up_z)
 {
 #pragma HLS INTERFACE m_axi port=scanPoints0  offset=slave bundle=scan0mem  latency=22 depth=360

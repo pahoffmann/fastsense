@@ -9,7 +9,11 @@
 #include <cinttypes>
 #include <util/constants.h>
 
-struct TSDFValueHW
+/**
+ * @brief Hardware representation of a TSDF entry in the map. Consists of a TSDF value and a current weight for the update procedure
+ * 
+ */
+struct TSDFEntryHW
 {
     using ValueType = int16_t;
     using WeightType = int16_t;
