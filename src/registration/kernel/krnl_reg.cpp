@@ -20,6 +20,14 @@ constexpr int SPLIT_FACTOR = 3; // MARKER: SPLIT
 extern "C"
 {
 
+    /**
+     * @brief Convert the motion representation into a transformation matrix
+     * 
+     * @param xi        Motion representation, which should be converted into a transformatio matrix.
+     *                  It is represented as a 6D-vector with three linear velocity and three angular velocity entries (for every axis) 
+     * @param transform Transformation matrix built from the motion representation
+     * @param center    Current center of the scan in global coordinates
+     */
     void xi_to_transform(const float xi[6], float transform[4][4], PointHW& center)
     {
         // Formula 3.9 on Page 40 of "Truncated Signed Distance Fields Applied To Robotics"
@@ -92,6 +100,23 @@ extern "C"
         transform[2][3] = shift[2] + center.z + xi[5];
     }
 
+    /**
+     * @brief Perfom a registration iteration step, where a H and g matrix is built based 
+     *        on every scan point which can be used to determine an intermediat transformation
+     * 
+     * @param pointData        Current set of scan points, which should matched against the map
+     * @param numPoints        Number of points in the current scan
+     * @param mapData0         First map data reference, which is used to get the TSDF value of the grid the points lie in
+     * @param mapData1         Second map data reference, which is used to get rear TSDF value of an axis around a point to build a TSDF gradient
+     * @param mapData2         Third map data reference, which is used to get front TSDF value of an axis around a point to build a TSDF gradient
+     * @param map              Map representation to access the raw map data
+     * @param transform_matrix Current total transformation
+     * @param center           Current center of the scan in global coordinates
+     * @param h                H matrix, which is built from the scan points and the map
+     * @param g                g matrix, which is built from the scan points and the map
+     * @param error            Determined registration error of the scan points to the map 
+     * @param count            Number of point, which were considered for the registration step
+     */
     void registration_step(const PointHW* pointData,
                            int numPoints,
                            TSDFValueHW* mapData0, TSDFValueHW* mapData1, TSDFValueHW* mapData2,
@@ -152,6 +177,7 @@ extern "C"
             //get value of local map
             const auto& current = map.get(mapData0, buf.x, buf.y, buf.z);
 
+            // If the TSDF value was not set, we have no information about it and so the point cannot be considered for registration
             if (current.weight == 0)
             {
                 continue;
@@ -160,6 +186,7 @@ extern "C"
             int gradient[3] = {0, 0, 0};
 #pragma HLS array_partition variable=gradient complete
 
+        // Build the TSDF gradient based on the local TSDF neighborhood of a point
         gradient_loop:
             for (size_t axis = 0; axis < 3; axis++)
             {
@@ -386,14 +413,15 @@ extern "C"
                 h_float[row][row] += alpha_bonus;
             }
 
+            // Invert H matrix und multiplicate it with g to receive the next motion
             lu_decomposition<float, 6>(h_float);
             lu_solve<float, 6>(h_float, g_float, xi);
 
+            // Convert the current motion iterion into a transformation matrix and add it to the total transformation
             xi_to_transform(xi, next_transform, center);
             MatrixMul<float, 4, 4, 4>(next_transform, total_transform, temp_transform);
 
             // copy temp_transform to total_transform
-            // TODO: multiply in-place to avoid copy?
             for (int row = 0; row < 4; row++)
             {
 #pragma HLS unroll
@@ -408,8 +436,6 @@ extern "C"
             float err = (float)error0 / count0;
             float d1 = err - previous_errors[2];
             float d2 = err - previous_errors[0];
-
-            //std::cout << d1 << " " << d2 << std::endl;
 
             if (d1 >= -epsilon && d1 <= epsilon && d2 >= -epsilon && d2 <= epsilon)
             {
