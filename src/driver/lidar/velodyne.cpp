@@ -239,6 +239,7 @@ void VelodyneDriver::decode_packet()
             // add new scan to queue when azimuth overflows
             if (az_block < az_last_)
             {
+                current_scan_->rings_ = 16;
                 // TODO set new time point?
                 // TODO std::move()
                 scan_buffer_->push_nb(Stamped<PointCloud::Ptr>{current_scan_, util::HighResTime::now()}, true);

@@ -15,8 +15,20 @@
 
 using namespace fastsense::map;
 
+/// An estimate of the number of points in a cloud for the Vitis Cycle estimation
 constexpr int NUM_POINTS = 6000;
-constexpr int SPLIT_FACTOR = 4;
+/// An estimate of the number of cells in the map for the Vitis Cycle estimation
+constexpr int NUM_CELLS = 200 * 200 * 100;
+
+struct StreamMessage
+{
+    TSDFValueHW value;
+    PointHW index;
+    PointHW interpolation_start;
+    PointArith interpolation_step;
+    int iter_steps;
+    int iter_middle;
+};
 
 extern "C"
 {
@@ -31,20 +43,15 @@ extern "C"
      * @param map metadata of the LocalMap. Needed for Scanner position and Map size
      * @param tau the truncation distance for tsdf values
      * @param up up-vector for the orientation of the Scanner
-     * @param value_fifo fifo to send the calculated tsdf value to update_tsdf
-     * @param index_fifo fifo to send the current cell to update_tsdf
-     * @param bounds_fifo fifo to send (starting point, interpolation vector) to update_tsdf
-     * @param iter_steps_fifo fifo to send (number of interpolation steps, index of current cell) to update_tsdf
+     * @param message_fifo fifo to send data to update_tsdf
      */
     void read_points(PointHW* scanPoints,
                      int numPoints,
                      const LocalMapHW& map,
                      TSDFValueHW::ValueType tau,
+                     int dz_per_distance,
                      const PointHW& up,
-                     hls::stream<TSDFValueHW>& value_fifo,
-                     hls::stream<PointHW>& index_fifo,
-                     hls::stream<std::pair<PointHW, PointArith>>& bounds_fifo,
-                     hls::stream<std::pair<int, int>>& iter_steps_fifo)
+                     hls::stream<StreamMessage>& message_fifo)
     {
         // Position of the Scanner
         PointHW map_pos{map.posX, map.posY, map.posZ};
@@ -58,7 +65,7 @@ extern "C"
     points_loop:
         for (int point_idx = 0; point_idx < numPoints; point_idx++)
         {
-#pragma HLS loop_tripcount max=NUM_POINTS/SPLIT_FACTOR
+#pragma HLS loop_tripcount max=NUM_POINTS/TSDF_SPLIT_FACTOR
 
             PointHW scan_point = scanPoints[point_idx];
 
@@ -133,34 +140,32 @@ extern "C"
                     continue;
                 }
 
+                StreamMessage msg;
+                msg.value = tsdf;
+                msg.index = index;
+
                 // delta_z == how many cells should be interpolated to fill the area between rings
                 int delta_z = dz_per_distance * len / MATRIX_RESOLUTION;
-                std::pair<PointHW, PointArith> bounds;
-                std::pair<int, int> iter_steps;
 
-                iter_steps.first = (delta_z * 2) / MAP_RESOLUTION + 1;
-                iter_steps.second = delta_z / MAP_RESOLUTION;
+                msg.iter_steps = (delta_z * 2) / MAP_RESOLUTION + 1;
+                msg.iter_middle = delta_z / MAP_RESOLUTION;
 
                 auto lowest = PointArith(proj.x, proj.y, proj.z) - ((normed_interpolation_vector * delta_z) / MATRIX_RESOLUTION);
-                bounds.first = PointHW(lowest.x, lowest.y, lowest.z); // / MAP_RESOLUTION;
-                bounds.second = normed_interpolation_vector;
+                msg.interpolation_start = PointHW(lowest.x, lowest.y, lowest.z);
+                msg.interpolation_step = normed_interpolation_vector;
 
-                value_fifo << tsdf;
-                index_fifo << index;
-                bounds_fifo << bounds;
-                iter_steps_fifo << iter_steps;
+                message_fifo << msg;
             }
         }
         // send a final dummy message to terminate the update_loop
-        value_fifo << TSDFValueHW{0, 0};
-        index_fifo << PointHW();
-        bounds_fifo << std::pair<PointHW, PointArith> {PointHW(), PointArith()};
-        iter_steps_fifo << std::pair<int, int>(0, 0);
+        StreamMessage dummy_msg;
+        dummy_msg.value.weight = 0;
+        message_fifo << dummy_msg;
     }
 
     /**
      * @brief interpolates a tsdf-value along a path to fill the area between rings
-     * 
+     *
      * @param map metadata of the LocalMap
      * @param new_entries temporary local map for newly generated values
      * @param value_fifo fifo to receive the calculated tsdf value from read_points
@@ -170,35 +175,30 @@ extern "C"
      */
     void update_tsdf(const LocalMapHW& map,
                      TSDFValueHW* new_entries,
-                     hls::stream<TSDFValueHW>& value_fifo,
-                     hls::stream<PointHW>& index_fifo,
-                     hls::stream<std::pair<PointHW, PointArith>>& bounds_fifo,
-                     hls::stream<std::pair<int, int>>& iter_steps_fifo)
+                     hls::stream<StreamMessage>& message_fifo)
     {
-        TSDFValueHW new_value;
+        StreamMessage msg;
+        msg.iter_steps = 0;
         PointHW index{0, 0, 0}, old_index{0, 0, 0};
-        std::pair<PointHW, PointArith> bounds{PointHW(), PointArith()};
-        std::pair<int, int> iter_steps{0, 0};
         int step = 1;
 
     update_loop:
         while (true)
         {
-#pragma HLS loop_tripcount max=NUM_POINTS/SPLIT_FACTOR*128*2
+#pragma HLS loop_tripcount max=NUM_POINTS/TSDF_SPLIT_FACTOR*128*2
 #pragma HLS pipeline II=1
 #pragma HLS dependence variable=new_entries inter false
 
-            if (step > iter_steps.first)
+            if (step > msg.iter_steps)
             {
                 old_index = index;
 
-                value_fifo >> new_value;
-                index_fifo >> index;
-                bounds_fifo >> bounds;
-                iter_steps_fifo >> iter_steps;
+                message_fifo >> msg;
+
+                index = msg.index;
 
                 // the weight is only 0 in the dummy message
-                if (new_value.weight == 0)
+                if (msg.value.weight == 0)
                 {
                     break;
                 }
@@ -209,7 +209,7 @@ extern "C"
             // this check used to be done at the beginning of the tsdf_loop, but that leads to timing violations
             if (index != old_index)
             {
-                auto index_arith = PointArith(bounds.first.x, bounds.first.y, bounds.first.z) + ((bounds.second * (step * MAP_RESOLUTION)) / MATRIX_RESOLUTION);
+                auto index_arith = PointArith(msg.interpolation_start.x, msg.interpolation_start.y, msg.interpolation_start.z) + ((msg.interpolation_step * (step * MAP_RESOLUTION)) / MATRIX_RESOLUTION);
                 index = PointHW(index_arith.x, index_arith.y, index_arith.z) / MAP_RESOLUTION;
 
                 int map_index = map.getIndex(index.x, index.y, index.z);
@@ -218,8 +218,8 @@ extern "C"
 
                 // interpolated values have a negative weight
                 bool old_is_interpolated = old_entry.weight <= 0;
-                bool current_is_interpolated = step != iter_steps.second;
-                bool current_is_better = hls_abs(new_value.value) < hls_abs(old_entry.value) || old_entry.weight == 0;
+                bool current_is_interpolated = step != msg.iter_middle;
+                bool current_is_better = hls_abs(msg.value.value) < hls_abs(old_entry.value) || old_entry.weight == 0;
 
                 if ((current_is_better || old_is_interpolated) && map.in_bounds(index.x, index.y, index.z))
                 {
@@ -227,13 +227,13 @@ extern "C"
                     // we always want the smallest tsdf value in each cell, even from interpolated values
                     if (current_is_better)
                     {
-                        tmp_value.value = new_value.value;
+                        tmp_value.value = msg.value.value;
                     }
 
                     if (old_is_interpolated)
                     {
                         // weight is only negative when old an new are both interpolated
-                        tmp_value.weight = new_value.weight * (current_is_interpolated ? -1 : 1);
+                        tmp_value.weight = msg.value.weight * (current_is_interpolated ? -1 : 1);
                     }
 
                     new_entries[map_index] = tmp_value;
@@ -245,16 +245,16 @@ extern "C"
             {
                 // The current Point has already been processed
                 // => skip interpolation and take next Point from fifo
-                step = iter_steps.first + 1;
+                step = msg.iter_steps + 1;
             }
         }
     }
 
     /**
      * @brief update the local map with the new values using floating average
-     * 
+     *
      * this function is called multiple times in parallel with different start and end indices
-     * 
+     *
      * @param mapData the local map
      * @param start the starting index of the range of this instance
      * @param end the end index of the range of this instance
@@ -271,7 +271,7 @@ extern "C"
         // Update the current map based on the new generated entries
         for (int index = start; index < end; index++)
         {
-#pragma HLS loop_tripcount min=8000000/SPLIT_FACTOR max=8000000/SPLIT_FACTOR
+#pragma HLS loop_tripcount min=NUM_CELLS/TSDF_SPLIT_FACTOR max=NUM_CELLS/TSDF_SPLIT_FACTOR
 #pragma HLS pipeline II=1
 #pragma HLS dependence variable=mapData inter false
 #pragma HLS dependence variable=new_entries inter false
@@ -286,7 +286,7 @@ extern "C"
             {
                 map_entry.value = (map_entry.value * map_entry.weight + new_entry.value * new_entry.weight) / new_weight;
 
-                // Upper bound for the total weight. Ensures, that later updates have still an impact. 
+                // Upper bound for the total weight. Ensures, that later updates have still an impact.
                 if (new_weight > max_weight)
                 {
                     new_weight = max_weight;
@@ -305,101 +305,52 @@ extern "C"
         }
     }
 
-    void tsdf_dataflower(PointHW* scanPoints0,
+    void tsdf_dataflower(PointHW* scanPoints0, // MARKER: TSDF SPLIT
                          PointHW* scanPoints1,
                          PointHW* scanPoints2,
                          PointHW* scanPoints3,
                          int step,
                          int last_step,
-                         TSDFValueHW* new_entries0,
+                         TSDFValueHW* new_entries0, // MARKER: TSDF SPLIT
                          TSDFValueHW* new_entries1,
                          TSDFValueHW* new_entries2,
                          TSDFValueHW* new_entries3,
                          const LocalMapHW& map,
                          TSDFValueHW::ValueType tau,
+                         int dz_per_distance,
                          const PointHW& up)
     {
 #pragma HLS dataflow
 
-        hls::stream<TSDFValueHW> value_fifo0;
-        hls::stream<PointHW> index_fifo0;
-        hls::stream<std::pair<PointHW, PointArith>> bounds_fifo0;
-        hls::stream<std::pair<int, int>> iter_steps_fifo0;
-#pragma HLS stream depth=16 variable=value_fifo0
-#pragma HLS stream depth=16 variable=index_fifo0
-#pragma HLS stream depth=16 variable=bounds_fifo0
+        // MARKER: TSDF SPLIT
+        hls::stream<StreamMessage> message_fifo0;
+#pragma HLS stream depth=16 variable=message_fifo0
         read_points(scanPoints0, step,
-                    map, tau, up,
-                    value_fifo0,
-                    index_fifo0,
-                    bounds_fifo0,
-                    iter_steps_fifo0);
-        update_tsdf(map,
-                    new_entries0,
-                    value_fifo0,
-                    index_fifo0,
-                    bounds_fifo0,
-                    iter_steps_fifo0);
+                    map, tau, dz_per_distance, up,
+                    message_fifo0);
+        update_tsdf(map, new_entries0, message_fifo0);
 
-        hls::stream<TSDFValueHW> value_fifo1;
-        hls::stream<PointHW> index_fifo1;
-        hls::stream<std::pair<PointHW, PointArith>> bounds_fifo1;
-        hls::stream<std::pair<int, int>> iter_steps_fifo1;
-#pragma HLS stream depth=16 variable=value_fifo1
-#pragma HLS stream depth=16 variable=index_fifo1
-#pragma HLS stream depth=16 variable=bounds_fifo1
+        hls::stream<StreamMessage> message_fifo1;
+#pragma HLS stream depth=16 variable=message_fifo1
         read_points(scanPoints1, step,
-                    map, tau, up,
-                    value_fifo1,
-                    index_fifo1,
-                    bounds_fifo1,
-                    iter_steps_fifo1);
-        update_tsdf(map,
-                    new_entries1,
-                    value_fifo1,
-                    index_fifo1,
-                    bounds_fifo1,
-                    iter_steps_fifo1);
+                    map, tau, dz_per_distance, up,
+                    message_fifo1);
+        update_tsdf(map, new_entries1, message_fifo1);
 
-        hls::stream<TSDFValueHW> value_fifo2;
-        hls::stream<PointHW> index_fifo2;
-        hls::stream<std::pair<PointHW, PointArith>> bounds_fifo2;
-        hls::stream<std::pair<int, int>> iter_steps_fifo2;
-#pragma HLS stream depth=16 variable=value_fifo2
-#pragma HLS stream depth=16 variable=index_fifo2
-#pragma HLS stream depth=16 variable=bounds_fifo2
+        hls::stream<StreamMessage> message_fifo2;
+#pragma HLS stream depth=16 variable=message_fifo2
         read_points(scanPoints2, step,
-                    map, tau, up,
-                    value_fifo2,
-                    index_fifo2,
-                    bounds_fifo2,
-                    iter_steps_fifo2);
-        update_tsdf(map,
-                    new_entries2,
-                    value_fifo2,
-                    index_fifo2,
-                    bounds_fifo2,
-                    iter_steps_fifo2);
+                    map, tau, dz_per_distance, up,
+                    message_fifo2);
+        update_tsdf(map, new_entries2, message_fifo2);
 
-        hls::stream<TSDFValueHW> value_fifo3;
-        hls::stream<PointHW> index_fifo3;
-        hls::stream<std::pair<PointHW, PointArith>> bounds_fifo3;
-        hls::stream<std::pair<int, int>> iter_steps_fifo3;
-#pragma HLS stream depth=16 variable=value_fifo3
-#pragma HLS stream depth=16 variable=index_fifo3
-#pragma HLS stream depth=16 variable=bounds_fifo3
+        hls::stream<StreamMessage> message_fifo3;
+#pragma HLS stream depth=16 variable=message_fifo3
         read_points(scanPoints3, last_step,
-                    map, tau, up,
-                    value_fifo3,
-                    index_fifo3,
-                    bounds_fifo3,
-                    iter_steps_fifo3);
-        update_tsdf(map,
-                    new_entries3,
-                    value_fifo3,
-                    index_fifo3,
-                    bounds_fifo3,
-                    iter_steps_fifo3);
+                    map, tau, dz_per_distance, up,
+                    message_fifo3);
+        update_tsdf(map, new_entries3, message_fifo3);
+
     }
 
     void sync_looper(TSDFValueHW* mapData0,
@@ -417,6 +368,7 @@ extern "C"
                      TSDFValueHW::WeightType max_weight)
     {
 #pragma HLS dataflow
+        // MARKER: TSDF SPLIT
         sync_loop(mapData0, 0, end0, new_entries0, max_weight);
         sync_loop(mapData1, end0, end1, new_entries1, max_weight);
         sync_loop(mapData2, end1, end2, new_entries2, max_weight);
@@ -426,11 +378,15 @@ extern "C"
     /**
      * @brief Hardware implementation of the TSDF generation and update algorithm using bresenham
      *
-     * @param scanPoints0 First point reference from which the TSDF data should be calculated
-     * @param scanPoints1 Second point reference from which the TSDF data should be calculated
+     * @param scanPoints0 Point reference from which the TSDF data should be calculated
+     * @param scanPoints1 Point reference from which the TSDF data should be calculated
+     * @param scanPoints2 Point reference from which the TSDF data should be calculated
+     * @param scanPoints3 Point reference from which the TSDF data should be calculated
      * @param numPoints Number of points which should be
-     * @param mapData0 First map reference which should be used for the update
-     * @param mapData1 Second map reference which should be used for the update
+     * @param mapData0 Map reference which should be used for the update
+     * @param mapData1 Map reference which should be used for the update
+     * @param mapData2 Map reference which should be used for the update
+     * @param mapData3 Map reference which should be used for the update
      * @param sizeX Number of map cells in x direction
      * @param sizeY Number of map cells in y direction
      * @param sizeZ Number of map cells in z direction
@@ -440,42 +396,49 @@ extern "C"
      * @param offsetX X offset of the local map
      * @param offsetY Y offset of the local map
      * @param offsetZ Z offset of the local map
-     * @param new_entries0 First reference to the temporal buffer for the calculated TSDF values
-     * @param new_entries1 Second reference to the temporal buffer for the calculated TSDF values
+     * @param new_entries0 Reference to the temporal buffer for the calculated TSDF values
+     * @param new_entries1 Reference to the temporal buffer for the calculated TSDF values
+     * @param new_entries2 Reference to the temporal buffer for the calculated TSDF values
+     * @param new_entries3 Reference to the temporal buffer for the calculated TSDF values
      * @param tau Truncation distance for the TSDF values (in map resolution)
      * @param max_weight Maximum for the weight of the map entries
      */
-    void krnl_tsdf(PointHW* scanPoints0,
+    void krnl_tsdf(PointHW* scanPoints0, // MARKER: TSDF SPLIT
                    PointHW* scanPoints1,
                    PointHW* scanPoints2,
                    PointHW* scanPoints3,
                    int numPoints,
-                   TSDFValueHW* mapData0,
+                   TSDFValueHW* mapData0, // MARKER: TSDF SPLIT
                    TSDFValueHW* mapData1,
                    TSDFValueHW* mapData2,
                    TSDFValueHW* mapData3,
                    int sizeX,   int sizeY,   int sizeZ,
                    int posX,    int posY,    int posZ,
                    int offsetX, int offsetY, int offsetZ,
-                   TSDFValueHW* new_entries0,
+                   TSDFValueHW* new_entries0, // MARKER: TSDF SPLIT
                    TSDFValueHW* new_entries1,
                    TSDFValueHW* new_entries2,
                    TSDFValueHW* new_entries3,
                    TSDFValueHW::ValueType tau,
                    TSDFValueHW::WeightType max_weight,
+                   int dz_per_distance,
                    int up_x, int up_y, int up_z)
     {
+        // MARKER: TSDF SPLIT
 #pragma HLS INTERFACE m_axi port=scanPoints0  offset=slave bundle=scan0mem  latency=22 depth=360
-#pragma HLS INTERFACE m_axi port=scanPoints1  offset=slave bundle=scan1mem  latency=22 depth=360
-#pragma HLS INTERFACE m_axi port=scanPoints2  offset=slave bundle=scan2mem  latency=22 depth=360
-#pragma HLS INTERFACE m_axi port=scanPoints3  offset=slave bundle=scan3mem  latency=22 depth=360
 #pragma HLS INTERFACE m_axi port=mapData0     offset=slave bundle=map0mem   latency=22 depth=18491
-#pragma HLS INTERFACE m_axi port=mapData1     offset=slave bundle=map1mem   latency=22 depth=18491
-#pragma HLS INTERFACE m_axi port=mapData2     offset=slave bundle=map2mem   latency=22 depth=18491
-#pragma HLS INTERFACE m_axi port=mapData3     offset=slave bundle=map3mem   latency=22 depth=18491
 #pragma HLS INTERFACE m_axi port=new_entries0 offset=slave bundle=entry0mem latency=22 depth=18491
+
+#pragma HLS INTERFACE m_axi port=scanPoints1  offset=slave bundle=scan1mem  latency=22 depth=360
+#pragma HLS INTERFACE m_axi port=mapData1     offset=slave bundle=map1mem   latency=22 depth=18491
 #pragma HLS INTERFACE m_axi port=new_entries1 offset=slave bundle=entry1mem latency=22 depth=18491
+
+#pragma HLS INTERFACE m_axi port=scanPoints2  offset=slave bundle=scan2mem  latency=22 depth=360
+#pragma HLS INTERFACE m_axi port=mapData2     offset=slave bundle=map2mem   latency=22 depth=18491
 #pragma HLS INTERFACE m_axi port=new_entries2 offset=slave bundle=entry2mem latency=22 depth=18491
+
+#pragma HLS INTERFACE m_axi port=scanPoints3  offset=slave bundle=scan3mem  latency=22 depth=360
+#pragma HLS INTERFACE m_axi port=mapData3     offset=slave bundle=map3mem   latency=22 depth=18491
 #pragma HLS INTERFACE m_axi port=new_entries3 offset=slave bundle=entry3mem latency=22 depth=18491
 
         PointHW up(up_x, up_y, up_z);
@@ -485,34 +448,32 @@ extern "C"
                        posX,    posY,    posZ,
                        offsetX, offsetY, offsetZ};
 
-        int step = numPoints / SPLIT_FACTOR;
-        int last_step = numPoints - (SPLIT_FACTOR - 1) * step;
-        tsdf_dataflower(scanPoints0,
+        int step = numPoints / TSDF_SPLIT_FACTOR;
+        int last_step = numPoints - (TSDF_SPLIT_FACTOR - 1) * step;
+        tsdf_dataflower(scanPoints0, // MARKER: TSDF SPLIT
                         scanPoints1 + 1 * step,
                         scanPoints2 + 2 * step,
                         scanPoints3 + 3 * step,
                         step,
                         last_step,
-                        new_entries0,
+                        new_entries0, // MARKER: TSDF SPLIT
                         new_entries1,
                         new_entries2,
                         new_entries3,
-                        map,
-                        tau,
-                        up);
+                        map, tau, dz_per_distance, up);
 
         int total_size = sizeX * sizeY * sizeZ;
-        int sync_step = total_size / SPLIT_FACTOR + 1;
+        int sync_step = total_size / TSDF_SPLIT_FACTOR + 1;
 
-        sync_looper(mapData0,
+        sync_looper(mapData0, // MARKER: TSDF SPLIT
                     mapData1,
                     mapData2,
                     mapData3,
-                    1 * sync_step,
+                    1 * sync_step, // MARKER: TSDF SPLIT
                     2 * sync_step,
                     3 * sync_step,
                     total_size,
-                    new_entries0,
+                    new_entries0, // MARKER: TSDF SPLIT
                     new_entries1,
                     new_entries2,
                     new_entries3,
