@@ -3,6 +3,7 @@
 /**
  * @file runner.h
  * @author Marcel Flottmann
+ * @author Juri Vana
  */
 
 /**
@@ -17,7 +18,7 @@ private:
     T& object;
 public:
     /**
-     * @brief Construct a new Runner object: start the thread
+     * @brief Construct a new Runner object: start the thread.
      * 
      * @param obj 
      */
@@ -27,7 +28,7 @@ public:
     }
 
     /**
-     * @brief Destroy the Runner object: stop the thread
+     * @brief Destroy the Runner object: stop the thread.
      */
     ~Runner()
     {

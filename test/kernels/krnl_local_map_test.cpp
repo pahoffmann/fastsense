@@ -1,6 +1,7 @@
 /**
- *
+ * @file krnl_local_map_test.cpp
  * @author Marcel Flottmann
+ * @author Juri Vana
  */
 
 #include <map/local_map_hw.h>
@@ -8,7 +9,9 @@
 
 extern "C"
 {
-
+    /**
+     * @brief Doubles all the values and halves all the weights in a local map to test the local map kernel.
+     */
     void krnl_local_map_test(TSDFValueHW* mapData,
                              int sizeX,
                              int sizeY,

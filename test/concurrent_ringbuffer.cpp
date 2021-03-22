@@ -1,7 +1,8 @@
 /**
  * @file concurrent_ringbuffer.cpp
  * @author Juri Vana
- * @date 2020-10-13
+ * 
+ * Test all functions of the concurrent ringbuffer.
  */
 
 #include "catch2_config.h"

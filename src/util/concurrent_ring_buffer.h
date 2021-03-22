@@ -5,6 +5,7 @@
  * @author Marcel Flottmann
  * @author Julian Gaal
  * @author Pascal Buschermoeller
+ * @author Juri Vana
  */
 
 #include <mutex>
@@ -68,7 +69,8 @@ public:
     void pop(T* val);
 
     /**
-     * Pop non blocking if function evaluates to true
+     * @brief Pop non blocking if function evaluates to true.
+     * 
      * @param val object to pop
      * @param func function to evaluate
      * @param timeout_ms timeout to wait before returning, if no data present
@@ -78,7 +80,8 @@ public:
     bool pop_nb_if(T* val, std::function<bool(T&)> func, uint32_t timeout_ms = 0);
 
     /**
-     * Pop (wait until data available) if function evaluates to true
+     * @brief Pop (wait until data available) if function evaluates to true.
+     * 
      * @param val object to pop
      * @param func Function to evaluate
      * @return true if popped
@@ -88,7 +91,8 @@ public:
 
 
     /**
-     * Peek a value (non blocking): aka don't pop from buffer, but provide a copy to look at
+     * @brief Peek a value (non blocking): aka don't pop from buffer, but provide a copy to look at.
+     * 
      * @param val saves copied object into val
      * @param timeout_ms timeout to wait for data
      * @return true if successfully peeked
@@ -97,19 +101,20 @@ public:
     bool peek_nb(T* val, uint32_t timeout_ms = 0);
 
     /**
-     * Peek a value: aka don't pop from buffer, but provide a copy to look at
+     * @brief Peek a value: aka don't pop from buffer, but provide a copy to look at.
+     * 
      * @param val value to save copy in
      */
     void peek(T* val);
 
     /**
-     * @brief Clear the buffer
-     *
+     * @brief Clear the buffer.
      */
     void clear();
 
     /**
-     * @brief return current buffer size
+     * @brief Return current buffer size.
+     * 
      * @return buffer size
      */
     inline size_t size() const
@@ -118,7 +123,8 @@ public:
     }
 
     /**
-     * @brief return total capacity of concurrent ring buffer
+     * @brief Return total capacity of concurrent ring buffer.
+     * 
      * @return buffer capacity
      */
     inline size_t capacity() const
@@ -127,7 +133,7 @@ public:
     }
 
     /**
-     * @brief Check if buffer is empty
+     * @brief Check if buffer is empty.
      * 
      * @return true if empty
      * @return false if not empty
@@ -138,7 +144,7 @@ public:
     }
 
     /**
-     * @brief Check if buffer is full
+     * @brief Check if buffer is full.
      * 
      * @return true if full
      * @return false if not full
@@ -152,14 +158,14 @@ public:
 
 private:
     /**
-     * @brief Actually do the push
+     * @brief Actually do the push.
      *
      * @param val Element to push.
      */
     void doPush(const T& val);
 
     /**
-     * @brief Actually do the pop
+     * @brief Actually do the pop.
      *
      * @param val Pointer to element to fill popped value. If val is a nullptr no value is assigned, but an element is popped nonetheless.
      */

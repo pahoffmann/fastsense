@@ -14,9 +14,7 @@ namespace fastsense::map
 {
 
 /**
- * Three dimensional array that can be shifted without needing to copy every entry.
- * This is done by implementing it as a ring in every dimension.
- * It is used to store truncated signed distance function (tsdf) values.
+ * @brief Local Map that holds the part of the global map that is currently needed.
  */
 class LocalMap
 {
@@ -53,10 +51,12 @@ private:
 public:
 
     /**
-     * Constructor of the local map.
+     * @brief Constructor of the local map.
+     * 
      * The position is initialized to (0, 0, 0).
      * The sizes are given as parameters. If they are even, they are initialized as s + 1.
      * The offsets are initialized to size / 2, so that the ring boundarys match the array bounds.
+     * 
      * @param sX Side length of the local map in the x direction
      * @param sY Side length of the local map in the y direction
      * @param sZ Side length of the local map in the z direction
@@ -65,33 +65,29 @@ public:
     LocalMap(unsigned int sX, unsigned int sY, unsigned int sZ, const std::shared_ptr<GlobalMap>& map, const CommandQueuePtr& queue);
 
     /**
-     * Destructor of the local map.
-     * Deletes the array in particular.
+     * @brief Destructor of the local map, deletes the array in particular.
      */
     ~LocalMap() = default;
 
     /**
-     * Copy constructor of the local map.
+     * @brief Copy constructor of the local map.
+     * 
      * This constructor is needed in the asynchronous shift, update and visualization.
      * In the beginning of the thread the local map is copied
      * so that the the cloud callback and the map thread can work simultaneously.
      */
     LocalMap(const LocalMap&) = default;
 
-    /**
-     * Deleted assignment operator of the local map.
-     */
+    
+    // Delete copy assignment operator of the local map.
     LocalMap& operator=(const LocalMap&) = delete;
 
-    /**
-     * Deleted move constructor of the local map.
-     */
+    // Delete move assignment operator of the local map.
+    LocalMap& operator=(LocalMap&&) = delete;
+
+    // Delete move constructor of the local map.
     LocalMap(LocalMap&&) = delete;
 
-    /**
-     * Deleted move assignment operator of the local map.
-     */
-    LocalMap& operator=(LocalMap&&) = delete;
 
     /**
      * @brief Swaps this local map with another one
@@ -101,15 +97,16 @@ public:
     void swap(LocalMap& rhs);
 
     /**
-     * @brief Swaps this local map with another one
+     * @brief Fills this local map with the data from another one
      *
      * @param rhs the other map
      */
     void fill_from(const LocalMap& rhs);
 
     /**
-     * Returns a value from the local map per reference.
-     * Throws an exception if the index is out of bounds i.e. if it is more than size / 2 away from the position.
+     * @brief Returns a value from the local map per reference.
+     *        Throws an exception if the index is out of bounds i.e. if it is more than size / 2 away from the position.
+     * 
      * @param x x-coordinate of the index in global coordinates
      * @param y y-coordinate of the index in global coordinates
      * @param z z-coordinate of the index in global coordinates
@@ -121,8 +118,9 @@ public:
     }
 
     /**
-     * Returns a value from the local map per reference.
-     * Throws an exception if the index is out of bounds i.e. if it is more than size / 2 away from the position.
+     * @brief Returns a value from the local map per reference.
+     *        Throws an exception if the index is out of bounds i.e. if it is more than size / 2 away from the position.
+     * 
      * @param x x-coordinate of the index in global coordinates
      * @param y y-coordinate of the index in global coordinates
      * @param z z-coordinate of the index in global coordinates
@@ -134,8 +132,9 @@ public:
     }
 
     /**
-     * Returns a value from the local map per reference.
-     * Throws an exception if the index is out of bounds i.e. if it is more than size / 2 away from the position.
+     * @brief Returns a value from the local map per reference.
+     *        Throws an exception if the index is out of bounds i.e. if it is more than size / 2 away from the position.
+     * 
      * @param p position of the index in global coordinates
      * @return value of the local map
      */
@@ -149,8 +148,9 @@ public:
     }
 
     /**
-     * Returns a value from the local map per reference.
-     * Throws an exception if the index is out of bounds i.e. if it is more than size / 2 away from the position.
+     * @brief Returns a value from the local map per reference.
+     *        Throws an exception if the index is out of bounds i.e. if it is more than size / 2 away from the position.
+     * 
      * @param p position of the index in global coordinates
      * @return value of the local map
      */
@@ -164,7 +164,8 @@ public:
     }
 
     /**
-     * Returns the size of the local map
+     * @brief Returns the size of the local map.
+     * 
      * @return size of the local map
      */
     inline const Vector3i& get_size() const
@@ -173,7 +174,8 @@ public:
     }
 
     /**
-     * Returns the pos of the local map
+     * @brief Returns the pos of the local map.
+     * 
      * @return pos of the local map
      */
     inline const Vector3i& get_pos() const
@@ -182,7 +184,8 @@ public:
     }
 
     /**
-     * Returns the offset of the local map
+     * @brief Returns the offset of the local map.
+     * 
      * @return offset of the local map
      */
     inline const Vector3i& get_offset() const
@@ -191,15 +194,17 @@ public:
     }
 
     /**
-     * Shifts the local map, so that a new position is the center of the cuboid.
+     * @brief Shifts the local map, so that a new position is the center of the cuboid.
+     * 
      * Entries, that stay in the buffer, stay in place.
      * Values outside of the buffer are loaded from and stored in the global map.
+     * 
      * @param new_pos the new position. Must not be more than get_size() units away from get_pos()
      */
     void shift(const Vector3i& new_pos);
 
     /**
-     * Checks if x, y and z are within the current range
+     * @brief Checks if x, y and z are within the current range.
      *
      * @param x x-coordinate to check
      * @param y y-coordinate to check
@@ -212,7 +217,7 @@ public:
     }
 
     /**
-     * Checks if x, y and z are within the current range
+     * @brief Checks if x-, y- and z-coordinates of the vector are within the current range.
      *
      * @param p position of the index in global coordinates
      * @return true if (x, y, z) is within the area of the buffer
@@ -224,8 +229,9 @@ public:
     }
 
     /**
-     * Returns the buffer in which the actual data of the local map is stored.
-     * It can be used with hardware kernels.
+     * @brief Returns the buffer in which the actual data of the local map is stored.
+     *        It can be used with hardware kernels.
+     * 
      * @return data buffer
      */
     buffer::InputOutputBuffer<TSDFValue>& getBuffer();
@@ -233,14 +239,14 @@ public:
     LocalMapHW get_hardware_representation() const;
 
     /**
-     * Writes all data into the global map.
-     * Calls write_back of the global map to store the data in the file.
+     * @brief Writes all data into the global map.
+     *        Calls write_back of the global map to store the data in the file.
      */
     void write_back();
 
 private:
     /**
-     * @brief writes to or reads from the global map in an area
+     * @brief Writes to or reads from the global map in an area.
      *
      * @param bottom_corner the "bottom" corner of the area (smallest values along all axes); inclusive
      * @param top_corner the "top" corner of the area (biggest values along all axes); inclusive
@@ -249,7 +255,7 @@ private:
     void save_load_area(const Vector3i& bottom_corner, const Vector3i& top_corner, bool save);
 
     /**
-     * @brief Calculate the Index of a Point
+     * @brief Calculate the index of the given point.
      *
      * @param point the Point
      * @return int the index in data_
@@ -263,7 +269,8 @@ private:
     }
 
     /**
-     * @brief see #value but without bounds checking
+     * @brief Returns a value from the local map per reference.
+     *        In contrast to #value, it does not check the bounds.
      *
      * @param p position of the index in global coordinates
      * @return value of the local map
@@ -274,7 +281,8 @@ private:
     }
 
     /**
-     * @brief see #value but without bounds checking
+     * @brief Returns a value from the local map per reference.
+     *        In contrast to #value, it does not check the bounds.
      *
      * @param p position of the index in global coordinates
      * @return value of the local map

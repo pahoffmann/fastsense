@@ -3,6 +3,7 @@
 /**
  * @file concurrent_ring_buffer.tcc
  * @author Marcel Flottmann
+ * @author Juri Vana
  */
 
 namespace fastsense::util
@@ -100,7 +101,7 @@ bool ConcurrentRingBuffer<T>::pop_nb_if(T* val, std::function<bool(T&)> func, ui
     {
         doPop(val);
     }
-    else //das ist kriminell
+    else
     {
         return false;
     }
@@ -124,7 +125,7 @@ bool ConcurrentRingBuffer<T>::pop_if(T* val, std::function<bool(T&)> func)
     {
         doPop(val);
     }
-    else //das ist kriminell
+    else
     {
         return false;
     }

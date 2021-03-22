@@ -138,7 +138,6 @@ void LocalMap::save_load_area(const Vector3i& bottom_corner, const Vector3i& top
     Vector3i start_delta = start - chunk_start * CHUNK_SIZE;
     Vector3i end_delta = end - chunk_end * CHUNK_SIZE;
 
-    // Is there any good way to iterate over 3 dimensions without 3 for-loops?
     for (int chunk_x = chunk_start.x(); chunk_x <= chunk_end.x(); ++chunk_x)
     {
         for (int chunk_y = chunk_start.y(); chunk_y <= chunk_end.y(); ++chunk_y)
