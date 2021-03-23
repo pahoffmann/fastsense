@@ -30,7 +30,7 @@ Preprocessing::Preprocessing(const std::shared_ptr<PointCloudBuffer>& in_buffer,
                              bool send_original,
                              bool send_preprocessed,
                              float scale)
-    : QueueBridge{in_buffer, out_buffer, 0, false}, send_original(send_original), send_preprocessed(send_preprocessed), send_buffer(send_buffer), scale(scale)
+    : QueueBridge{in_buffer, out_buffer, 0, false}, send_buffer(send_buffer), send_original(send_original), send_preprocessed(send_preprocessed), scale(scale)
 {
 
 }
