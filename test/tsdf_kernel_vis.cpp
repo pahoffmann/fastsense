@@ -5,6 +5,8 @@
  *
  * Visualize the results of the hardware implementation of the TSDF generation and update
  * based on a real point cloud via the TSDF bridge
+ * 
+ * The point cloud data is read from a PCD file 
  */
 #include "catch2_config.h"
 
@@ -24,12 +26,17 @@ TEST_CASE("TSDF_Kernel_Vis", "[tsdf_kernel_vis]")
     {
         std::cout << "    Section 'Visualize TSDF Data'" << std::endl;
         constexpr unsigned int SCALE = 1000;
+        
+        // Set Map parameters
+
         constexpr float TAU = 1 * SCALE;
         constexpr float MAX_WEIGHT = 10 * WEIGHT_RESOLUTION;
 
         constexpr int SIZE_X = 20 * SCALE / MAP_RESOLUTION + 1;
         constexpr int SIZE_Y = 20 * SCALE / MAP_RESOLUTION + 1;
         constexpr int SIZE_Z = 5 * SCALE / MAP_RESOLUTION + 1;
+
+        // Read point cloud, which should be added to the map
 
         std::vector<std::vector<Vector3f>> float_points;
         unsigned int num_points;
@@ -39,12 +46,12 @@ TEST_CASE("TSDF_Kernel_Vis", "[tsdf_kernel_vis]")
 
         auto count = 0u;
 
+        // Convert the the scan points to the fixed point hardware system
+
         ScanPoints_t scan_points(num_points);
 
         auto queue = fastsense::hw::FPGAManager::create_command_queue();
         fastsense::buffer::InputBuffer<PointHW> kernel_points(queue, num_points);
-
-        std::vector<PointHW> kernel_points_sw(num_points);
 
         for (const auto& ring : float_points)
         {
@@ -58,15 +65,13 @@ TEST_CASE("TSDF_Kernel_Vis", "[tsdf_kernel_vis]")
                 kernel_points[count].y = scan_points[count].y();
                 kernel_points[count].z = scan_points[count].z();
 
-                kernel_points_sw[count].x = kernel_points[count].x;
-                kernel_points_sw[count].y = kernel_points[count].y;
-                kernel_points_sw[count].z = kernel_points[count].z;
-
                 ++count;
             }
         }
 
         std::cout << "num points: " << count << std::endl;
+
+        // Create local and global map
 
         fastsense::CommandQueuePtr q = fastsense::hw::FPGAManager::create_command_queue();
         std::shared_ptr<fastsense::map::GlobalMap> global_map_ptr(new fastsense::map::GlobalMap("test_global_map", 0.0, 0.0));
@@ -74,8 +79,6 @@ TEST_CASE("TSDF_Kernel_Vis", "[tsdf_kernel_vis]")
         auto& size = local_map.get_size();
         auto& pos = local_map.get_pos();
         auto& offset = local_map.get_offset();
-
-        // fastsense::tsdf::update_tsdf(scan_points, Vector3i::Zero(), local_map, TAU, MAX_WEIGHT);
 
         auto tsdf_buffer = std::make_shared<fastsense::util::ConcurrentRingBuffer<fastsense::msg::TSDFBridgeMessage>>(2);
         fastsense::comm::QueueBridge<fastsense::msg::TSDFBridgeMessage, true> tsdf_bridge{tsdf_buffer, nullptr, 6666};
@@ -93,27 +96,11 @@ TEST_CASE("TSDF_Kernel_Vis", "[tsdf_kernel_vis]")
         auto q3 = fastsense::hw::FPGAManager::create_command_queue();
         fastsense::kernels::TSDFKernel krnl(q3, local_map.getBuffer().size());
 
+        // Start TSDF update
         krnl.run(local_map, kernel_points, kernel_points.size(), TAU, MAX_WEIGHT);
         krnl.waitComplete();
 
-        // fastsense::tsdf::krnl_tsdf_sw(kernel_points_sw.data(),
-        //                               kernel_points_sw.data(),
-        //                               kernel_points_sw.data(),
-        //                               kernel_points_sw.data(),
-        //                               num_points,
-        //                               (TSDFEntryHW*)local_map.getBuffer().getVirtualAddress(),
-        //                               (TSDFEntryHW*)local_map.getBuffer().getVirtualAddress(),
-        //                               (TSDFEntryHW*)local_map.getBuffer().getVirtualAddress(),
-        //                               (TSDFEntryHW*)local_map.getBuffer().getVirtualAddress(),
-        //                               size.x(), size.y(), size.z(),
-        //                               pos.x(), pos.y(), pos.z(),
-        //                               offset.x(), offset.y(), offset.z(),
-        //                               (TSDFEntryHW*)new_entries.getVirtualAddress(),
-        //                               (TSDFEntryHW*)new_entries.getVirtualAddress(),
-        //                               (TSDFEntryHW*)new_entries.getVirtualAddress(),
-        //                               (TSDFEntryHW*)new_entries.getVirtualAddress(),
-        //                               TAU,
-        //                               MAX_WEIGHT);
+        // Send local map to bridge
 
         fastsense::msg::TSDFBridgeMessage tsdf_msg;
 
