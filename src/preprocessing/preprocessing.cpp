@@ -33,14 +33,16 @@ Preprocessing::Preprocessing(const std::shared_ptr<PointCloudBuffer>& in_buffer,
                              bool send_original,
                              bool send_preprocessed,
                              float scale)
-    : QueueBridge{in_buffer, out_buffer, 0, false}, send_original(send_original), send_preprocessed(send_preprocessed), send_buffer(send_buffer), scale(scale)
+    : QueueBridge{in_buffer, out_buffer, 0, false}, send_original(send_original), send_preprocessed(send_preprocessed), send_buffer(send_buffer), scale(scale), 
+      map_bounds(util::config::ConfigManager::config().slam.map_size_x() / 2 * MAP_RESOLUTION, 
+                 util::config::ConfigManager::config().slam.map_size_y() / 2 * MAP_RESOLUTION, 
+                 util::config::ConfigManager::config().slam.map_size_z() / 2 * MAP_RESOLUTION)
 {
 
 }
 
 void Preprocessing::thread_run()
 {
-    int expected_rings = util::config::ConfigManager::config().lidar.rings();
     fastsense::msg::PointCloudPtrStamped in_cloud;
     while (this->running)
     {
@@ -54,14 +56,9 @@ void Preprocessing::thread_run()
             send_buffer->push_nb(in_cloud);
         }
 
-        assert(expected_rings == in_cloud.data_->rings_);
-
         fastsense::msg::PointCloudPtrStamped out_cloud;
         out_cloud.data_ = in_cloud.data_;
         out_cloud.timestamp_ = in_cloud.timestamp_;
-
-        //median_filter(out_cloud, 5);
-        reduction_filter_closest(out_cloud);
 
         if (scale != 1.0f)
         {
@@ -70,6 +67,11 @@ void Preprocessing::thread_run()
                 point = (point.cast<float>() * scale).cast<ScanPointType>();
             }
         }
+
+        //;
+        //median_filter(out_cloud, 5);
+        
+        reduction_filter_closest(out_cloud);
 
         if (!this->out_->push_nb(out_cloud, true))
         {
@@ -94,7 +96,7 @@ void Preprocessing::reduction_filter_average(fastsense::msg::PointCloudPtrStampe
 
     for (const auto& point : cloud_points)
     {
-        if (point.x() == 0 && point.y() == 0 && point.z() == 0)
+        if ((point.x() == 0 && point.y() == 0 && point.z() == 0) || map_bounds.x() < std::abs(point.x()) || map_bounds.y() < std::abs(point.y()) || map_bounds.z() < std::abs(point.z()))
         {
             continue;
         }
@@ -107,7 +109,7 @@ void Preprocessing::reduction_filter_average(fastsense::msg::PointCloudPtrStampe
 
         auto& avg_point = point_map.try_emplace(voxel, default_value).first->second;
         avg_point.first += point.cast<int>();
-        avg_point.second++;
+    avg_point.second++;
     }
 
     cloud_points.resize(point_map.size());
@@ -130,7 +132,7 @@ void Preprocessing::reduction_filter_closest(fastsense::msg::PointCloudPtrStampe
 
     for (const auto& point : cloud_points)
     {
-        if (point.x() == 0 && point.y() == 0 && point.z() == 0)
+        if ((point.x() == 0 && point.y() == 0 && point.z() == 0) || map_bounds.x() < std::abs(point.x()) || map_bounds.y() < std::abs(point.y()) || map_bounds.z() < std::abs(point.z()))
         {
             continue;
         }
@@ -167,7 +169,7 @@ void Preprocessing::reduction_filter_voxel_center(fastsense::msg::PointCloudPtrS
 
     for (const auto& point : cloud_points)
     {
-        if (point.x() == 0 && point.y() == 0 && point.z() == 0)
+        if ((point.x() == 0 && point.y() == 0 && point.z() == 0) || map_bounds.x() < std::abs(point.x()) || map_bounds.y() < std::abs(point.y()) || map_bounds.z() < std::abs(point.z()))
         {
             continue;
         }
@@ -241,6 +243,12 @@ uint8_t Preprocessing::median_from_array(std::vector<ScanPoint*> medians)
 
 void Preprocessing::median_filter(fastsense::msg::PointCloudPtrStamped& cloud, uint8_t window_size)
 {
+    if (util::config::ConfigManager::config().lidar.rings() != cloud.data_->rings_)
+    {
+        Logger::error("Expected rings not equal to received rings! Skipping median filter");
+        return;
+    }
+
     if (window_size % 2 == 0)
     {
         return;

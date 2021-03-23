@@ -83,6 +83,7 @@ private:
     bool send_preprocessed;
     const std::shared_ptr<PointCloudBuffer> send_buffer;
     float scale;
+    ScanPoint map_bounds;
 };
 
 }

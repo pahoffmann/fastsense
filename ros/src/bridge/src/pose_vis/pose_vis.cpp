@@ -1,6 +1,6 @@
 #include <ros/ros.h>
 #include <nav_msgs/Path.h>
-#include <sensor_msgs/PointCloud2.h>
+#include <sensor_msgs/PointCloud.h>
 
 #include <tf2/LinearMath/Matrix3x3.h>
 #include <tf2/LinearMath/Transform.h>
@@ -18,7 +18,7 @@ auto pose_counter = 0u;
 nav_msgs::Path original_pose_path;
 std::unique_ptr<tf2_ros::TransformBroadcaster> broadcaster;
 
-void cloud_callback(const sensor_msgs::PointCloud2ConstPtr& cloud)
+void cloud_callback(const sensor_msgs::PointCloud::ConstPtr& cloud)
 {
     if (broadcaster == nullptr)
     {
@@ -173,7 +173,7 @@ int main(int argc, char** argv)
     //tf2_ros::TransformBroadcaster broadcaster;
     broadcaster.reset(new tf2_ros::TransformBroadcaster());
 
-    auto cloud_sub = n.subscribe<sensor_msgs::PointCloud2>("/velodyne_points", 1, cloud_callback);
+    auto cloud_sub = n.subscribe<sensor_msgs::PointCloud>("/from_trenz_bridge/velodyne/points", 1, cloud_callback);
 
     while (pose_path.poses.size() >= 16380)
     {
