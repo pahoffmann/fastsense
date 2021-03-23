@@ -49,6 +49,8 @@ constexpr int MAX_ITERATIONS = 200;
  *
  * @param points_posttransform Transformed point cloud
  * @param points_pretransform Original point cloud
+ * 
+ * @return float Average error of the original and the transformed points
  */
 float check_computed_transform(const ScanPoints_t& points_posttransform, const ScanPoints_t& points_pretransform, bool print = true)
 {
@@ -122,7 +124,18 @@ static std::shared_ptr<fastsense::buffer::InputBuffer<PointHW>> scan_points_to_i
     return buffer_ptr;
 }
 
-static void transformation_test(const ScanPoints_t& points, const Eigen::Matrix4f& transformation_mat, fastsense::map::LocalMap& local_map, fastsense::registration::Registration& reg, const fastsense::CommandQueuePtr& q)
+/**
+ * @brief Perform a transformation test based on the given set on points, local map and registration lernel
+ * 
+ * @param points Point set, which should be used for registartion (stored in prototype system)
+ * @param transformation_mat Transformation, which should be applied on the point set for testing
+ * @param local_map Local map, whoch should be used for registration
+ * @param reg Registartion instance, which should be tested
+ * @param q Command queue pointer, which should be used to transform the points into the hardware representation
+ * 
+ * @return float Average error of the original and the transformed points
+ */
+static float transformation_test(const ScanPoints_t& points, const Eigen::Matrix4f& transformation_mat, fastsense::map::LocalMap& local_map, fastsense::registration::Registration& reg, const fastsense::CommandQueuePtr& q)
 {
     // Pretransform the scan points
     ScanPoints_t points_transformed(points);
@@ -138,7 +151,7 @@ static void transformation_test(const ScanPoints_t& points, const Eigen::Matrix4
 
     // Retransform the points with the result transformation and compare them with the original
     reg.transform_point_cloud(points_transformed, result_matrix);
-    check_computed_transform(points_transformed, points);
+    return check_computed_transform(points_transformed, points);
 }
 
 static const std::string error_message =
@@ -239,100 +252,23 @@ TEST_CASE("Kernel", "[kernel][slow]")
 
     {
         std::cout << "    Section 'Test Registration No Transform'" << std::endl;
-
-        // Copy from scan points to  inputbuffer
-        ScanPoints_t points_transformed(points_original);
-        auto buffer_ptr = scan_points_to_input_buffer(points_transformed, q);
-        auto& buffer = *buffer_ptr;
-        
-        // Register test scan
-        Matrix4f result_matrix = Matrix4f::Identity();
-        reg.register_cloud(local_map, buffer, buffer.size(), util::HighResTime::now(), result_matrix);
-
-        // Retransform the points with the result transformation and compare them with the original
-        reg.transform_point_cloud(points_transformed, result_matrix);
-        check_computed_transform(points_transformed, points_original);
-
+        transformation_test(points_original, idle_mat, local_map, reg, q);
     }
 
     {
         std::cout << "    Section 'Test Registration Translation'" << std::endl;
-
-        // // Pretransform the scan points
-        // ScanPoints_t points_transformed(points_original);
-        // reg.transform_point_cloud(points_transformed, translation_mat);
-
-        // // Copy from scan points to inputbuffer
-        // auto buffer_ptr = scan_points_to_input_buffer(points_transformed, q);
-        // auto& buffer = *buffer_ptr;
-        
-        // // Register test scan
-        // Matrix4f result_matrix = Matrix4f::Identity();
-        // reg.register_cloud(local_map, buffer, buffer.size(), util::HighResTime::now(), result_matrix);
-
-        // // Retransform the points with the result transformation and compare them with the original
-        // reg.transform_point_cloud(points_transformed, result_matrix);
-        // check_computed_transform(points_transformed, points_original);
-
         transformation_test(points_original, translation_mat, local_map, reg, q);
-
     }
 
     {
         std::cout << "    Section 'Registration test Rotation'" << std::endl;
-        
-        // Pretransform the scan points
-        ScanPoints_t points_transformed(points_original);
-        reg.transform_point_cloud(points_transformed, rotation_mat);
-        
-        // Copy from scan points to inputbuffer
-        auto buffer_ptr = scan_points_to_input_buffer(points_transformed, q);
-        auto& buffer = *buffer_ptr;
-        
-        // Register test scan
-        Matrix4f result_matrix = Matrix4f::Identity();
-        reg.register_cloud(local_map, buffer, buffer.size(), util::HighResTime::now(), result_matrix);
-
-        // Retransform the points with the result transformation and compare them with the original
-        reg.transform_point_cloud(points_transformed, result_matrix);
-        check_computed_transform(points_transformed, points_original);
+        transformation_test(points_original, rotation_mat, local_map, reg, q);
     }
 
     {
         std::cout << "    Section 'Registration test Rotation Drift'" << std::endl;
-
-        // Pretransform the scan points
-        ScanPoints_t points_transformed(points_original);
-        reg.transform_point_cloud(points_transformed, rotation_mat);
-        
-        // Copy from scan points to inputbuffer
-        auto buffer_ptr = scan_points_to_input_buffer(points_transformed, q);
-        auto& buffer = *buffer_ptr;
-        
-        // Register test scan
-        Matrix4f result_matrix = Matrix4f::Identity();
-        reg.register_cloud(local_map, buffer, buffer.size(), util::HighResTime::now(), result_matrix);
-
-        // Retransform the points with the result transformation and compare them with the original
-        reg.transform_point_cloud(points_transformed, result_matrix);
-        float result1 = check_computed_transform(points_transformed, points_original, false);
-
-
-        // Pretransform the scan points
-        ScanPoints_t points_transformed2(points_original);
-        reg.transform_point_cloud(points_transformed2, rotation_mat2);
-        
-        // Copy from scan points to inputbuffer
-        auto buffer_ptr2 = scan_points_to_input_buffer(points_transformed2, q);
-        auto& buffer2 = *buffer_ptr2;
-        
-        // Register test scan
-        Matrix4f result_matrix2 = Matrix4f::Identity();
-        reg.register_cloud(local_map, buffer2, buffer2.size(), util::HighResTime::now(), result_matrix2);
-
-        // Retransform the points with the result transformation and compare them with the original
-        reg.transform_point_cloud(points_transformed2, result_matrix2);
-        float result2 = check_computed_transform(points_transformed2, points_original);
+        auto result1 = transformation_test(points_original, rotation_mat, local_map, reg, q);
+        auto result2 = transformation_test(points_original, rotation_mat2, local_map, reg, q);
 
         // Check drift after multiple registration
         CHECK(fabsf(result1 - result2) < DRIFT_OFFSET);
