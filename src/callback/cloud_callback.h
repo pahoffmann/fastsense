@@ -11,7 +11,7 @@
 #include <eigen3/Eigen/Dense>
 #include <util/process_thread.h>
 #include <msg/tsdf_bridge_msg.h>
-#include <hw/kernels/tsdf_kernel.h>
+#include <tsdf/krnl_tsdf.h>
 #include <registration/registration.h>
 #include <util/config/config_manager.h>
 #include <util/concurrent_ring_buffer.h>

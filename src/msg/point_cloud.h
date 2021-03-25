@@ -33,7 +33,7 @@ public:
 
     PointCloud() 
     : points_{}
-    , rings_{RINGS}
+    , rings_{}
     {
     }
     

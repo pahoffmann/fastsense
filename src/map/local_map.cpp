@@ -90,7 +90,7 @@ void LocalMap::shift(const Vector3i& new_pos)
             // would be end - (abs(diff) - 1),  but diff < 0
             start[axis] = end[axis] + diff[axis] + 1;
         }
-        save_load_area(start, end, true);
+        save_area(start, end);
 
         // Step #2:
         // The actual 'shift' is simply adjusting pos and offset to new_pos
@@ -115,11 +115,12 @@ void LocalMap::shift(const Vector3i& new_pos)
             // end = start + abs(diff) - 1,  but diff < 0
             end[axis] = start[axis] - diff[axis] - 1;
         }
-        save_load_area(start, end, false);
+        load_area(start, end);
     }
 }
 
-void LocalMap::save_load_area(const Vector3i& bottom_corner, const Vector3i& top_corner, bool save)
+template<bool save>
+void LocalMap::save_load_area(const Vector3i& bottom_corner, const Vector3i& top_corner)
 {
     // Explanation: We only want to touch each Chunk once instead of every time that
     // GlobalMap::get/set_value is called.
@@ -181,7 +182,7 @@ void LocalMap::save_load_area(const Vector3i& bottom_corner, const Vector3i& top
                             index = index_x + index_y + dz;
                             global_pos.z() = chunk_z * CHUNK_SIZE + dz;
 
-                            if (save)
+                            if constexpr(save)
                             {
                                 // We did a bounds check at the start of the function => unchecked is fine
                                 chunk[index] = value_unchecked(global_pos).raw();
@@ -220,7 +221,7 @@ void LocalMap::write_back()
 {
     Vector3i start = pos_ - size_ / 2;
     Vector3i end = pos_ + size_ / 2;
-    save_load_area(start, end, true);
+    save_area(start, end);
 
     map_->write_back();
 }
