@@ -1,4 +1,4 @@
-connect -url tcp:localhost:1440
+connect -url $remote
 proc copy_file {src dst} {
     if {[file exists $src]} {
         tfile copy -from-host $src $dst

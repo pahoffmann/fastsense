@@ -132,16 +132,17 @@ HW_DEPS_FLAGS = $(HW_INC_FLAGS) -isystem $(XILINX_VIVADO)/include -MM -MP
 # Rules
 #
 
-.PHONY: all software hardware clean hls_% test clean_software clean_ros_nodes
+.PHONY: all software hardware clean hls_% test clean_software clean_ros_nodes package package_test open_vivado copy_binaries_to_board copy_binaries_to_qemu copy_test_to_qemu start_emulator start_emulator_test rsync format docs gen_docs open_docs
 
 all: software hardware
 
 test: test_software test_hardware
 
 clean:
-	@rm -rf _x .Xil *.log *.jou pl_script.sh start_simulation.sh
-	@rm -rf build/* build/.Xil
+	@rm -rf _x .Xil *.log *.jou .ipcache v++.*
+	@rm -rf build
 	@rm -rf app_image test_image
+	@rm -rf docs
 
 clean_software:
 	@rm -rf $(SW_OBJS) $(ENTRY_POINT_OBJS) $(SW_DEPS) $(ENTRY_POINT_DEPS) $(APP_EXE)
@@ -222,13 +223,13 @@ open_vivado:
 	@cd _x/link/vivado/vpl && $(VIVADO) -source openprj.tcl
 
 copy_binaries_to_board:
-	@rsync --ignore-missing-args -r $(APP_EXE) $(APP_XCLBIN) student@$(BOARD_ADDRESS):
+	xsct -eval 'set remote "tcp:192.168.1.123:1534"; set filelist {"build/FastSense.exe" "/mnt/FastSense.exe" "build/FastSense.xclbin" "/mnt/FastSense.xclbin" "app_data/config.json" "/mnt/config.json"}; source copy_to_remote.tcl'
 
 copy_binaries_to_qemu:
-	xsct -eval "set filelist {"build/FastSense.exe" "/mnt/FastSense.exe" "build/FastSense.xclbin" "/mnt/FastSense.xclbin" "app_data/config.json" "/mnt/config.json"}; source copy_to_qemu.tcl"
+	xsct -eval 'set remote "tcp:localhost:1440"; set filelist {"build/FastSense.exe" "/mnt/FastSense.exe" "build/FastSense.xclbin" "/mnt/FastSense.xclbin" "app_data/config.json" "/mnt/config.json"}; source copy_to_remote.tcl'
 
 copy_test_to_qemu: test_software test_hardware
-	xsct -eval 'set filelist {"build/FastSense_test.exe" "/mnt/FastSense_test.exe" "build/FastSense_test.xclbin" "/mnt/FastSense_test.xclbin" "test_data/config.json" "/mnt/config.json" "pcd_files/sim_cloud.pcd" "/mnt/sim_cloud.pcd" "pcd_files/robo_lab.pcd" "/mnt/robo_lab.pcd" "pcd_files/bagfile_cloud.pcd" "/mnt/bagfile_cloud.pcd"}; source copy_to_qemu.tcl'
+	xsct -eval 'set filelist {"build/FastSense_test.exe" "/mnt/FastSense_test.exe" "build/FastSense_test.xclbin" "/mnt/FastSense_test.xclbin" "test_data/config.json" "/mnt/config.json" "pcd_files/sim_cloud.pcd" "/mnt/sim_cloud.pcd" "pcd_files/robo_lab.pcd" "/mnt/robo_lab.pcd" "pcd_files/bagfile_cloud.pcd" "/mnt/bagfile_cloud.pcd"}; source copy_to_remote.tcl'
 	@echo "Successfully copied test"
 
 start_emulator: package
