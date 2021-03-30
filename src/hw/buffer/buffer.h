@@ -135,6 +135,11 @@ public:
         rhs.virtual_address_ = nullptr;
     }
 
+    /**
+     * @brief Swap this buffer with rhs
+     * 
+     * @param rhs the other buffer
+     */
     void swap(Buffer& rhs)
     {
         std::swap(this->queue_, rhs.queue_);
@@ -146,6 +151,11 @@ public:
         std::swap(this->virtual_address_, rhs.virtual_address_);
     }
 
+    /**
+     * @brief copy content from other Buffer to this buffer
+     * 
+     * @param rhs source of the copy
+     */
     void fill_from(const Buffer& rhs)
     {
         if (this->num_elements_ != rhs.num_elements_)

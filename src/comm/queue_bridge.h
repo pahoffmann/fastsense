@@ -16,6 +16,13 @@
 namespace fastsense::comm
 {
 
+/**
+ * @brief Intermediate thread that reads data from one ConcurrentRingBuffer forwards it to another ConcurrentRingBuffer as well as a remote receiver
+ * 
+ * @tparam T_QUEUE Type of the data in the ConcurrentRingBuffer
+ * @tparam T_MSG Type of the messages to send
+ * @tparam FORCE if true overwrite old data in the output ConcurrentRingBuffer, else wait for available slot
+ */
 template<typename T_QUEUE, typename T_MSG, bool FORCE>
 class QueueBridgeBase : public util::ProcessThread
 {

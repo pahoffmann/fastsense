@@ -242,7 +242,7 @@ public:
 
 } // namespace fastsense::util::config
 
-#define DECLARE_CONFIG_ENTRY(T, name, _documentation) ConfigEntry<T> name{#name, this}
+#define DECLARE_CONFIG_ENTRY(T, name) ConfigEntry<T> name{#name, this}
 #define DECLARE_CONFIG_GROUP(T, name) T name{#name, this}
 
 #include "config_types.tcc"

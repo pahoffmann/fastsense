@@ -11,6 +11,10 @@
 namespace fastsense::kernels
 {
 
+/**
+ * @brief Wrapper for the krnl_local_map_test kernel
+ * 
+ */
 class LocalMapTestKernel : public BaseKernel
 {
 public:

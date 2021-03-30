@@ -11,6 +11,12 @@
 namespace fastsense::kernels
 {
 
+/**
+ * @brief Base class for FPGA kernels from the software perspective.
+ * For every kernel there should be a derived class, that encapsulates the
+ * call to that kernel.
+ * 
+ */
 class BaseKernel
 {
 private:
@@ -28,6 +34,14 @@ protected:
         kernel_.setArg(narg_++, arg);
     }
 
+    /**
+     * @brief Set kernel args like a function call to the kernel
+     * 
+     * @tparam T First parameter type
+     * @tparam Args Other parameter types
+     * @param arg First parameter
+     * @param args Other parameters
+     */
     template <typename T, typename ...Args>
     inline void setArgs(const T& arg, const Args& ...args)
     {
@@ -35,6 +49,12 @@ protected:
         setArgs(args...);
     }
 
+    /**
+     * @brief Set kernel args like a function call to the kernel (single parameter or end of variadic template)
+     * 
+     * @tparam T Paramter type
+     * @param arg Parameter value
+     */
     template <typename T>
     inline void setArgs(const T& arg)
     {
@@ -53,15 +73,21 @@ protected:
     /// Pointer to Command Queue
     fastsense::CommandQueuePtr cmd_q_;
 
-    /// TODO
+    /// List of events to wait on before execution (e.g. memory transfers)
     std::vector<cl::Event> pre_events_;
 
-    /// TODO
+    /// List of events to wait on kernel execution
     std::vector<cl::Event> execute_events_;
 
-    /// eTODO
+    /// List of events to wait on to fully complete (e.g. memory transfers)
     std::vector<cl::Event> post_events_;
 public:
+    /**
+     * @brief Construct a kernel object
+     * 
+     * @param queue Command queue to enqueue the tasks on
+     * @param name Name of the kernel
+     */
     inline BaseKernel(const fastsense::CommandQueuePtr& queue, const char* name)
         :   narg_{0},
             kernel_{fastsense::hw::FPGAManager::get_program(), name},
