@@ -50,9 +50,9 @@ void VelodyneBridge::convert()
     std::transform(msg_points.begin(), msg_points.end(), std::back_inserter(points_), [](const ScanPoint& p)
     {
         geometry_msgs::Point32 out;
-        out.x = p.x() * 0.001f;
-        out.y = p.y() * 0.001f;
-        out.z = p.z() * 0.001f;
+        out.x = p.x() * 0.001f / 0.2;
+        out.y = p.y() * 0.001f / 0.2;
+        out.z = p.z() * 0.001f / 0.2;
         return out;
     });
 

@@ -69,7 +69,6 @@ int main(int argc, char** argv)
     n.getParam("matrix_mode", matrix_mode);
 
     std::ifstream pose_stream(pose_file);
-
     if(!pose_stream)
     {
         std::cerr << "Cannot open " << pose_file << '!' << std::endl;
@@ -89,6 +88,8 @@ int main(int argc, char** argv)
     // geometry_msgs::TransformStamped transform_data;
     // transform_data.header.frame_id = "map";
     // transform_data.child_frame_id = "ground_truth";
+
+    std::cout << "Loading poses..." << std::endl;
 
     while (!pose_stream.eof())
     {
@@ -175,6 +176,8 @@ int main(int argc, char** argv)
 
     auto cloud_sub = n.subscribe<sensor_msgs::PointCloud>("/from_trenz_bridge/velodyne/points", 1, cloud_callback);
 
+    std::cout << "Prepare for visualization..." << std::endl;
+
     while (pose_path.poses.size() >= 16380)
     {
         static std::default_random_engine rng((std::random_device())());
@@ -186,6 +189,8 @@ int main(int argc, char** argv)
     }
 
     ros::Duration duration(0.01);
+
+    std::cout << "Visualize poses..." << std::endl;
 
     while (ros::ok())
     {

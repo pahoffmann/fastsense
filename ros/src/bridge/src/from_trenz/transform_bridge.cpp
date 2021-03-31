@@ -8,21 +8,33 @@
 #include <random>
 #include <ros/ros.h>
 #include <bridge/util.h>
+#include <evaluation/SavePoseStamped.h>
 #include <bridge/from_trenz/transform_bridge.h>
+
+#include <tf2/LinearMath/Quaternion.h>
+#include <tf2/LinearMath/Matrix3x3.h>
+#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 
 using namespace fastsense::bridge;
 
-TransformBridge::TransformBridge(ros::NodeHandle& n, const std::string& board_addr, std::chrono::milliseconds timeout, bool discard_timestamp)
+TransformBridge::TransformBridge(
+        ros::NodeHandle& n,
+        const std::string& board_addr,
+        std::chrono::milliseconds timeout,
+        bool discard_timestamp,
+        bool save_poses
+)
     :   BridgeBase{n, "pose", board_addr, 1000, timeout},
         ProcessThread{},
         broadcaster{},
         broadcaster_thread{},
         mtx{},
         transform_data{},
-        first_smg{true},
+        first_msg{true},
         pose_path{},
         pose_stamped{},
-        discard_timestamp_{discard_timestamp}
+        discard_timestamp_{discard_timestamp},
+        save_poses_{save_poses}
 {
     transform_data.transform.rotation.w = 1.0;
 
@@ -80,10 +92,10 @@ void TransformBridge::convert()
     auto timestamp = timestamp_to_rostime(msg_.timestamp_, discard_timestamp_);
 
     // set pose_path header (once and only)
-    if (first_smg)
+    if (first_msg)
     {
-        first_smg = false;
-        pose_path.header.stamp = timestamp;
+//        first_msg = false;
+        pose_path.header.stamp = timestamp; // TODO NECESSARY?
     }
 
     transform_data.header.stamp = timestamp;
@@ -91,46 +103,38 @@ void TransformBridge::convert()
     transform_data.transform.rotation.y = msg_.data_.rotation.y();
     transform_data.transform.rotation.z = msg_.data_.rotation.z();
     transform_data.transform.rotation.w = msg_.data_.rotation.w();
-    transform_data.transform.translation.x = msg_.data_.translation.x() * 0.001;
-    transform_data.transform.translation.y = msg_.data_.translation.y() * 0.001;
-    transform_data.transform.translation.z = msg_.data_.translation.z() * 0.001;
+    transform_data.transform.translation.x = msg_.data_.translation.x() * 0.001 / 0.2;
+    transform_data.transform.translation.y = msg_.data_.translation.y() * 0.001 / 0.2;
+    transform_data.transform.translation.z = msg_.data_.translation.z() * 0.001 / 0.2;
 
     pose_stamped.header.stamp = timestamp;
     pose_stamped.pose.orientation.x = msg_.data_.rotation.x();
     pose_stamped.pose.orientation.y = msg_.data_.rotation.y();
     pose_stamped.pose.orientation.z = msg_.data_.rotation.z();
     pose_stamped.pose.orientation.w = msg_.data_.rotation.w();
-    pose_stamped.pose.position.x = msg_.data_.translation.x() * 0.001;
-    pose_stamped.pose.position.y = msg_.data_.translation.y() * 0.001;
-    pose_stamped.pose.position.z = msg_.data_.translation.z() * 0.001;
+    pose_stamped.pose.position.x = msg_.data_.translation.x() * 0.001 / 0.2;
+    pose_stamped.pose.position.y = msg_.data_.translation.y() * 0.001 / 0.2;
+    pose_stamped.pose.position.z = msg_.data_.translation.z() * 0.001 / 0.2;
 
 
     // If identity is received, we are in cloudcallback iteration 1
     // -> reset pose path
     if (msg_.data_.translation.isZero() && msg_.data_.rotation.isApprox(Eigen::Quaternionf::Identity()))
     {
-        std::ostringstream filename;
-        auto now = std::chrono::system_clock::now();
-        auto t = std::chrono::system_clock::to_time_t(now);
-        filename << "pose_" << std::put_time(std::localtime(&t), "%Y-%m-%d-%H-%M-%S") << ".txt";
-
-        pose_stream_.close();
-        pose_stream_.open(filename.str());
-
-        if (!pose_stream_)
-        {
-            ROS_ERROR_STREAM("Cannot save pose path!");
-        }
-
         ROS_WARN("Resetting pose path, registered new iteration");
         pose_path.poses.clear();
     }
 
-    if (pose_stream_)
+
+    if (save_poses_)
     {
-        pose_stream_ << pose_stamped.pose.position.x << " " << pose_stamped.pose.position.y << " " << pose_stamped.pose.position.z << " "
-                    << pose_stamped.pose.orientation.x << " " << pose_stamped.pose.orientation.y << " " << pose_stamped.pose.orientation.z << " " 
-                    << pose_stamped.pose.orientation.w << std::endl;
+        static auto save_path_pub = n.advertise<evaluation::SavePoseStamped>("/evaluation/save_pose", 1000);
+        static evaluation::SavePoseStamped save_pose;
+        save_pose.id = "fastsense";
+
+        save_pose.pose_stamped = pose_stamped;
+
+        save_path_pub.publish(save_pose);
     }
 
     pose_path.poses.push_back(pose_stamped);

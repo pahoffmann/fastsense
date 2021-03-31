@@ -20,6 +20,7 @@ find_package(catkin REQUIRED COMPONENTS
   tf2_ros
   message_filters
   rostest
+  evaluation
 )
 
 find_package(ZeroMQ 4.3.2 REQUIRED EXACT)
@@ -33,7 +34,9 @@ get_absolute(FASTSENSE_ROS_INCLUDE_PATH include)
 set(OpenMP_FLAGS ${OpenMP_CXX_FLAGS})
 set(OpenMP_LIBS gomp)
 
-catkin_package()
+catkin_package(
+  DEPENDS evaluation
+)
 
 add_subdirectory(src/from_trenz)
 add_subdirectory(src/to_trenz)

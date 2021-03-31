@@ -86,12 +86,16 @@ protected:
                       std::chrono::milliseconds timeout = 100)
     :   receiver_{board_addr, PORT, timeout},
         pub_{n.advertise<P>(topic, msg_buffer_size)},
-        msg_{}
+        msg_{},
+        n{n}
     {
     }
 
     /// msg of type T that is received via zeromq
     T msg_;
+
+    /// NodeHandle
+    ros::NodeHandle& n;
 
     /**
      * Receive a message (non blocking)

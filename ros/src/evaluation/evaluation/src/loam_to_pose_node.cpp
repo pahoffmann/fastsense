@@ -24,12 +24,7 @@ void updatePosePath(const geometry_msgs::PoseStamped& pose_stamped)
     static nav_msgs::Path pose_path;
     static bool first_msg = true;
 
-    if (first_msg)
-    {
-        pose_path.header = pose_stamped.header;
-        first_msg = false;
-    }
-
+    pose_path.header = pose_stamped.header;
     pose_path.poses.push_back(pose_stamped);
 
     // RViz crashes if path is longer than 16384 (~13 minutes at 20 Scans/sec)
@@ -45,7 +40,7 @@ void updatePosePath(const geometry_msgs::PoseStamped& pose_stamped)
     }
 
     pose_path_pub.publish(pose_path);
-    ROS_INFO_STREAM("Publish nav_msgs/Path from LOAM");
+    ROS_DEBUG_STREAM("Publish nav_msgs/Path from LOAM");
 }
 
 /**
@@ -65,7 +60,7 @@ void pointCloud2Callback(const sensor_msgs::PointCloud2::ConstPtr& pcl_path)
     pose_stamped.pose.position.y = point.y;
     pose_stamped.pose.position.z = point.z;
 
-    ROS_INFO_STREAM("Converted LOAM PCL to Pose");
+    ROS_DEBUG_STREAM("Converted LOAM PCL to Pose");
 
     evaluation::SavePoseStamped save_pose;
     save_pose.id = "loam";
@@ -76,13 +71,24 @@ void pointCloud2Callback(const sensor_msgs::PointCloud2::ConstPtr& pcl_path)
     save_path_pub.publish(save_pose);
 }
 
+/**
+ * This node converts LOAMs PointCloud that contains the current Pose (3d only!)
+ * into a nav_msgs/Path and publishes as evaluation/SavePose to the save_pose_node as well
+ *
+ * @param argc number of args
+ * @param argv args
+ * @return 0 if success
+ */
 int main(int argc, char **argv)
 {
     ros::init(argc, argv, "loam_pose_saver");
     ros::NodeHandle n("~");
     pose_path_pub = n.advertise<nav_msgs::Path>("/evaluation/loam_path", 1000);
     save_path_pub = n.advertise<evaluation::SavePoseStamped>("/evaluation/save_pose", 1000);
-    ros::Subscriber sub = n.subscribe("/key_pose_origin", 10000, pointCloud2Callback);
+    ros::Subscriber sub = n.subscribe("/key_pose_origin", 1000, pointCloud2Callback);
+
+    ROS_INFO_STREAM("Node listening to LOAM data at /key_pose_origin");
+
     ros::spin();
 
     return 0;

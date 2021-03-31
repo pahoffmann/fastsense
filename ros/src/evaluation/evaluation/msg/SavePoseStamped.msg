@@ -1,2 +1,2 @@
 string id
-geometry_msgs/Pose pose
+geometry_msgs/PoseStamped pose_stamped
