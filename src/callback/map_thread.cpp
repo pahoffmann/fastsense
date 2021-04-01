@@ -99,10 +99,7 @@ void MapThread::thread_run()
 
         // tsdf update
         eval.start("tsdf");
-        int tau = ConfigManager::config().slam.max_distance();
-        int max_weight = ConfigManager::config().slam.max_weight() * WEIGHT_RESOLUTION;
-        tsdf_krnl_.run(tmp_map, *points_ptr_, num_points_, tau, max_weight, up_hw);
-        tsdf_krnl_.waitComplete();
+        tsdf_krnl_.synchronized_run(tmp_map, *points_ptr_, num_points_, up_hw);
         eval.stop("tsdf");
 
         map_mutex_.lock();
@@ -116,7 +113,7 @@ void MapThread::thread_run()
         // visualize
         eval.start("vis");
         tsdf_msg_.update_time();
-        tsdf_msg_.data_.tau_ = tau;
+        tsdf_msg_.data_.tau_ = ConfigManager::config().slam.max_distance();
         tsdf_msg_.data_.size_ = local_map_->get_size();
         tsdf_msg_.data_.pos_ = local_map_->get_pos();
         tsdf_msg_.data_.offset_ = local_map_->get_offset();

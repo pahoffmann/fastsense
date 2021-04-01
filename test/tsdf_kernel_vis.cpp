@@ -10,12 +10,11 @@
  */
 #include "catch2_config.h"
 
-#include <tsdf/update_tsdf.h>
 #include <util/pcd/pcd_file.h>
 #include <comm/queue_bridge.h>
-#include <tsdf/krnl_tsdf_sw.h>
 #include <msg/tsdf_bridge_msg.h>
 #include <util/config/config_manager.h>
+#include <tsdf/krnl_tsdf.h>
 
 using namespace fastsense;
 
@@ -94,7 +93,7 @@ TEST_CASE("TSDF_Kernel_Vis", "[tsdf_kernel_vis]")
         }
 
         auto q3 = fastsense::hw::FPGAManager::create_command_queue();
-        fastsense::kernels::TSDFKernel krnl(q3, local_map.getBuffer().size());
+        fastsense::tsdf::TSDFKernel krnl(q3, local_map.getBuffer().size());
 
         // Start TSDF update
         krnl.run(local_map, kernel_points, kernel_points.size(), TAU, MAX_WEIGHT);

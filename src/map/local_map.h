@@ -240,13 +240,35 @@ public:
 
 private:
     /**
+     * @brief writes to the global map in an area
+     *
+     * @param bottom_corner the "bottom" corner of the area (smallest values along all axes); inclusive
+     * @param top_corner the "top" corner of the area (biggest values along all axes); inclusive
+     */
+    inline void save_area(const Vector3i& bottom_corner, const Vector3i& top_corner)
+    {
+        save_load_area<true>(bottom_corner, top_corner);
+    }
+
+    /**
+     * @brief reads from the global map in an area
+     *
+     * @param bottom_corner the "bottom" corner of the area (smallest values along all axes); inclusive
+     * @param top_corner the "top" corner of the area (biggest values along all axes); inclusive
+     */
+    inline void load_area(const Vector3i& bottom_corner, const Vector3i& top_corner)
+    {
+        save_load_area<false>(bottom_corner, top_corner);
+    }
+
+    /**
      * @brief writes to or reads from the global map in an area
      *
      * @param bottom_corner the "bottom" corner of the area (smallest values along all axes); inclusive
      * @param top_corner the "top" corner of the area (biggest values along all axes); inclusive
-     * @param save true: write to global map; false: read from global map
      */
-    void save_load_area(const Vector3i& bottom_corner, const Vector3i& top_corner, bool save);
+    template<bool save>
+    void save_load_area(const Vector3i& bottom_corner, const Vector3i& top_corner);
 
     /**
      * @brief Calculate the Index of a Point

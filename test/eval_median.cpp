@@ -10,7 +10,7 @@
 #include <hw/kernels/vadd_kernel.h>
 #include <registration/registration.h>
 #include <util/pcd/pcd_file.h>
-#include <hw/kernels/tsdf_kernel.h>
+#include <tsdf/krnl_tsdf.h>
 #include <preprocessing/preprocessing.h>
 
 #include "catch2_config.h"
@@ -36,7 +36,8 @@ constexpr float TZ = 0.0 * SCALE;
 constexpr float RY = 5 * (M_PI / 180); //radiants
 
 constexpr float TAU = 1 * SCALE;
-constexpr float MAX_WEIGHT = 10;// * WEIGHT_RESOLUTION;
+constexpr float MAX_WEIGHT = 10 * WEIGHT_RESOLUTION;
+constexpr int DZ_PER_DISTANCE = 572;
 
 constexpr int MAX_ITERATIONS = 200;
 
@@ -225,7 +226,7 @@ TEST_CASE("Eval_Median", "[eval_median][slow]")
     //calc tsdf values for the points from the pcd and store them in the local map
 
     auto q3 = fastsense::hw::FPGAManager::create_command_queue();
-    fastsense::kernels::TSDFKernel krnl(q3, local_map.getBuffer().size());
+    fastsense::tsdf::TSDFKernel krnl(q3, local_map.getBuffer().size());
 
     krnl.run(local_map, kernel_points, kernel_points.size(), TAU, MAX_WEIGHT);
     krnl.waitComplete();
