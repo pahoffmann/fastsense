@@ -66,7 +66,7 @@ private:
     bool in_bounds(int x, int y, int z) const;
 
     /// gets tsdf value at x y z
-    TSDFValue get_tsdf_value(int x, int y, int z) const;
+    TSDFEntry get_tsdf_value(int x, int y, int z) const;
 
     /// TSDF Point vector
     std::vector<geometry_msgs::Point> points_;

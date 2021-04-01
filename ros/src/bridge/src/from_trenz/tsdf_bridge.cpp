@@ -51,7 +51,7 @@ bool TSDFBridge::in_bounds(int x, int y, int z) const
     return abs(x - data.pos_[0] <= data.size_[0] / 2 && abs(y - data.pos_[1]) <= data.size_[1] / 2 && abs(z - data.pos_[2]) <= data.size_[2] / 2);
 }
 
-TSDFValue TSDFBridge::get_tsdf_value(int x, int y, int z) const
+TSDFEntry TSDFBridge::get_tsdf_value(int x, int y, int z) const
 {
     const auto& data = msg().data_;
 

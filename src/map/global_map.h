@@ -99,8 +99,8 @@ public:
      * It is initialized without chunks.
      * The chunks are instead created dynamically depending on which are used.
      * @param name name with path and extension (.h5) of the HDF5 file in which the map is stored
-     * @param initialTSDFValueinitial default tsdf value
-     * @param initialWeight initial default weight
+     * @param initial_tsdf_value default tsdf value
+     * @param initial_weight initial default weight
      */
     GlobalMap(std::string name, TSDFEntry::ValueType initial_tsdf_value, TSDFEntry::WeightType initial_weight);
 
