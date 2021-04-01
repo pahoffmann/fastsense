@@ -34,18 +34,8 @@ class GlobalMap
 {
 
 private:
- /**
-     * Saves a pose in the HDF5 file.
-     * @param t_x x-coordinate of the position of the pose
-     * @param t_y y-coordinate of the position of the pose
-     * @param t_z z-coordinate of the position of the pose
-     * @param quat_x x-value of the rotation quaternion of the pose
-     * @param quat_y y-value of the rotation quaternion of the pose
-     * @param quat_z z-value of the rotation quaternion of the pose
-     * @param quat_w w-value of the rotation quaternion of the pose
-     */
-    void save_pose(float t_x, float t_y, float t_z, float quat_x, float quat_y, float quat_z, float quat_w);
-
+    /**
+     * HDF5 file in which the chunks are stored.
      * The file structure looks like this:
      *
      * file.h5
@@ -59,18 +49,19 @@ private:
      * | |-1_0_0 /
      */
     HighFive::File file_;
- /**
-     * Saves a pose in the HDF5 file.
-     * @param t_x x-coordinate of the position of the pose
-     * @param t_y y-coordinate of the position of the pose
-     * @param t_z z-coordinate of the position of the pose
-     * @param quat_x x-value of the rotation quaternion of the pose
-     * @param quat_y y-value of the rotation quaternion of the pose
-     * @param quat_z z-value of the rotation quaternion of the pose
-     * @param quat_w w-value of the rotation quaternion of the pose
-     */
-    void save_pose(float t_x, float t_y, float t_z, float quat_x, float quat_y, float quat_z, float quat_w);
 
+    /// Initial default tsdf value.
+    TSDFEntry initial_tsdf_value_;
+
+    /**
+     * Vector of active chunks.
+     */
+    std::vector<ActiveChunk> active_chunks_;
+
+    /// Number of poses that are saved in the HDF5 file
+    int num_poses_;
+
+    /** 
      * Given a position in a chunk the tag of the chunk gets returned.
      * @param pos the position
      * @return tag of the chunk
