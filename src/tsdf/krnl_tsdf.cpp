@@ -22,7 +22,7 @@ constexpr int NUM_CELLS = 200 * 200 * 100;
 
 struct StreamMessage
 {
-    TSDFValueHW value;
+    TSDFEntryHW value;
     PointHW index;
     PointHW interpolation_start;
     PointArith interpolation_step;
@@ -48,7 +48,7 @@ extern "C"
     void read_points(PointHW* scanPoints,
                      int numPoints,
                      const LocalMapHW& map,
-                     TSDFValueHW::ValueType tau,
+                     TSDFEntryHW::ValueType tau,
                      int dz_per_distance,
                      const PointHW& up,
                      hls::stream<StreamMessage>& message_fifo)
@@ -57,7 +57,7 @@ extern "C"
         PointHW map_pos{map.posX, map.posY, map.posZ};
 
         // grace period around the Point before the weight of a Point decreases
-        TSDFValueHW::ValueType weight_epsilon = tau / 10;
+        TSDFEntryHW::ValueType weight_epsilon = tau / 10;
 
         // rough estimate for the maximum raymarching distance
         int max_distance = (map.sizeX / 2 + map.sizeY / 2 + map.sizeZ / 2) * MAP_RESOLUTION;
@@ -108,7 +108,7 @@ extern "C"
                     continue;
                 }
 
-                TSDFValueHW tsdf;
+                TSDFEntryHW tsdf;
                 auto value = (scan_point - index.to_mm()).norm();
                 if (value > tau)
                 {
@@ -174,7 +174,7 @@ extern "C"
      * @param iter_steps_fifo fifo to receive (number of interpolation steps, index of current cell) from read_points
      */
     void update_tsdf(const LocalMapHW& map,
-                     TSDFValueHW* new_entries,
+                     TSDFEntryHW* new_entries,
                      hls::stream<StreamMessage>& message_fifo)
     {
         StreamMessage msg;
@@ -214,7 +214,7 @@ extern "C"
 
                 int map_index = map.getIndex(index.x, index.y, index.z);
 
-                TSDFValueHW old_entry = new_entries[map_index];
+                TSDFEntryHW old_entry = new_entries[map_index];
 
                 // interpolated values have a negative weight
                 bool old_is_interpolated = old_entry.weight <= 0;
@@ -223,7 +223,7 @@ extern "C"
 
                 if ((current_is_better || old_is_interpolated) && map.in_bounds(index.x, index.y, index.z))
                 {
-                    TSDFValueHW tmp_value = old_entry;
+                    TSDFEntryHW tmp_value = old_entry;
                     // we always want the smallest tsdf value in each cell, even from interpolated values
                     if (current_is_better)
                     {
@@ -262,11 +262,11 @@ extern "C"
      * @param max_weight the maximum weight for the floating average
      */
     void sync_loop(
-        TSDFValueHW* mapData,
+        TSDFEntryHW* mapData,
         int start,
         int end,
-        TSDFValueHW* new_entries,
-        TSDFValueHW::WeightType max_weight)
+        TSDFEntryHW* new_entries,
+        TSDFEntryHW::WeightType max_weight)
     {
         // Update the current map based on the new generated entries
         for (int index = start; index < end; index++)
@@ -276,8 +276,8 @@ extern "C"
 #pragma HLS dependence variable=mapData inter false
 #pragma HLS dependence variable=new_entries inter false
 
-            TSDFValueHW map_entry = mapData[index];
-            TSDFValueHW new_entry = new_entries[index];
+            TSDFEntryHW map_entry = mapData[index];
+            TSDFEntryHW new_entry = new_entries[index];
 
             int new_weight = map_entry.weight + new_entry.weight;
 
@@ -311,12 +311,12 @@ extern "C"
                          PointHW* scanPoints3,
                          int step,
                          int last_step,
-                         TSDFValueHW* new_entries0, // MARKER: TSDF SPLIT
-                         TSDFValueHW* new_entries1,
-                         TSDFValueHW* new_entries2,
-                         TSDFValueHW* new_entries3,
+                         TSDFEntryHW* new_entries0, // MARKER: TSDF SPLIT
+                         TSDFEntryHW* new_entries1,
+                         TSDFEntryHW* new_entries2,
+                         TSDFEntryHW* new_entries3,
                          const LocalMapHW& map,
-                         TSDFValueHW::ValueType tau,
+                         TSDFEntryHW::ValueType tau,
                          int dz_per_distance,
                          const PointHW& up)
     {
@@ -353,19 +353,19 @@ extern "C"
 
     }
 
-    void sync_looper(TSDFValueHW* mapData0,
-                     TSDFValueHW* mapData1,
-                     TSDFValueHW* mapData2,
-                     TSDFValueHW* mapData3,
+    void sync_looper(TSDFEntryHW* mapData0,
+                     TSDFEntryHW* mapData1,
+                     TSDFEntryHW* mapData2,
+                     TSDFEntryHW* mapData3,
                      int end0,
                      int end1,
                      int end2,
                      int end3,
-                     TSDFValueHW* new_entries0,
-                     TSDFValueHW* new_entries1,
-                     TSDFValueHW* new_entries2,
-                     TSDFValueHW* new_entries3,
-                     TSDFValueHW::WeightType max_weight)
+                     TSDFEntryHW* new_entries0,
+                     TSDFEntryHW* new_entries1,
+                     TSDFEntryHW* new_entries2,
+                     TSDFEntryHW* new_entries3,
+                     TSDFEntryHW::WeightType max_weight)
     {
 #pragma HLS dataflow
         // MARKER: TSDF SPLIT
@@ -408,19 +408,19 @@ extern "C"
                    PointHW* scanPoints2,
                    PointHW* scanPoints3,
                    int numPoints,
-                   TSDFValueHW* mapData0, // MARKER: TSDF SPLIT
-                   TSDFValueHW* mapData1,
-                   TSDFValueHW* mapData2,
-                   TSDFValueHW* mapData3,
+                   TSDFEntryHW* mapData0, // MARKER: TSDF SPLIT
+                   TSDFEntryHW* mapData1,
+                   TSDFEntryHW* mapData2,
+                   TSDFEntryHW* mapData3,
                    int sizeX,   int sizeY,   int sizeZ,
                    int posX,    int posY,    int posZ,
                    int offsetX, int offsetY, int offsetZ,
-                   TSDFValueHW* new_entries0, // MARKER: TSDF SPLIT
-                   TSDFValueHW* new_entries1,
-                   TSDFValueHW* new_entries2,
-                   TSDFValueHW* new_entries3,
-                   TSDFValueHW::ValueType tau,
-                   TSDFValueHW::WeightType max_weight,
+                   TSDFEntryHW* new_entries0, // MARKER: TSDF SPLIT
+                   TSDFEntryHW* new_entries1,
+                   TSDFEntryHW* new_entries2,
+                   TSDFEntryHW* new_entries3,
+                   TSDFEntryHW::ValueType tau,
+                   TSDFEntryHW::WeightType max_weight,
                    int dz_per_distance,
                    int up_x, int up_y, int up_z)
     {

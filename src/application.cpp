@@ -139,12 +139,12 @@ int Application::run()
     int tau = config.slam.max_distance();
     int max_weight = config.slam.max_weight() * WEIGHT_RESOLUTION;
     int initial_weight = config.slam.initial_map_weight() * WEIGHT_RESOLUTION;
-    assert(tau >= std::numeric_limits<TSDFValue::ValueType>::min());
-    assert(tau <= std::numeric_limits<TSDFValue::ValueType>::max());
+    assert(tau >= std::numeric_limits<TSDFEntry::ValueType>::min());
+    assert(tau <= std::numeric_limits<TSDFEntry::ValueType>::max());
     assert(max_weight >= 0);
-    assert(max_weight <= std::numeric_limits<TSDFValue::WeightType>::max());
+    assert(max_weight <= std::numeric_limits<TSDFEntry::WeightType>::max());
     assert(initial_weight >= 0);
-    assert(initial_weight <= std::numeric_limits<TSDFValue::WeightType>::max());
+    assert(initial_weight <= std::numeric_limits<TSDFEntry::WeightType>::max());
 
     auto transform_buffer = std::make_shared<util::ConcurrentRingBuffer<msg::TransformStamped>>(16);
     auto vis_buffer = std::make_shared<util::ConcurrentRingBuffer<Matrix4f>>(2);

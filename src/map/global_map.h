@@ -21,7 +21,7 @@ namespace fastsense::map
 
 struct ActiveChunk
 {
-    std::vector<TSDFValue::RawType> data;
+    std::vector<TSDFEntry::RawType> data;
     Vector3i pos;
     int age;
 };
@@ -60,7 +60,7 @@ private:
     HighFive::File file_;
 
     /// Initial default tsdf value.
-    TSDFValue initial_tsdf_value_;
+    TSDFEntry initial_tsdf_value_;
 
     /**
      * Vector of active chunks.
@@ -99,24 +99,24 @@ public:
      * It is initialized without chunks.
      * The chunks are instead created dynamically depending on which are used.
      * @param name name with path and extension (.h5) of the HDF5 file in which the map is stored
-     * @param initialTsdfValue initial default tsdf value
-     * @param initialWeight initial default weight
+     * @param initial_tsdf_value default tsdf value
+     * @param initial_weight initial default weight
      */
-    GlobalMap(std::string name, TSDFValue::ValueType initial_tsdf_value, TSDFValue::WeightType initial_weight);
+    GlobalMap(std::string name, TSDFEntry::ValueType initial_tsdf_value, TSDFEntry::WeightType initial_weight);
 
     /**
      * Returns a value pair consisting of a tsdf value and a weight from the map.
      * @param pos the position
      * @return value pair from the map
      */
-    TSDFValue get_value(const Vector3i& pos);
+    TSDFEntry get_value(const Vector3i& pos);
 
     /**
      * Sets a value pair consisting of a tsdf value and a weight on the map.
      * @param pos the position
      * @param value value pair that is set
      */
-    void set_value(const Vector3i& pos, const TSDFValue& value);
+    void set_value(const Vector3i& pos, const TSDFEntry& value);
 
     /**
      * Saves a pose in the HDF5 file.
@@ -140,7 +140,7 @@ public:
      * @param chunk position of the chunk that gets activated
      * @return reference to the activated chunk
      */
-    std::vector<TSDFValue::RawType>& activate_chunk(const Vector3i& chunk);
+    std::vector<TSDFEntry::RawType>& activate_chunk(const Vector3i& chunk);
 
     /**
      * Writes all active chunks into the HDF5 file.

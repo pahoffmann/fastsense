@@ -12,7 +12,7 @@
 using namespace fastsense::map;
 using fastsense::util::logging::Logger;
 
-GlobalMap::GlobalMap(std::string name, TSDFValue::ValueType initial_tsdf_value, TSDFValue::WeightType initial_weight)
+GlobalMap::GlobalMap(std::string name, TSDFEntry::ValueType initial_tsdf_value, TSDFEntry::WeightType initial_weight)
     : file_{name, HighFive::File::OpenOrCreate | HighFive::File::Truncate}, // Truncate clears already existing file
       initial_tsdf_value_{initial_tsdf_value, initial_weight},
       active_chunks_{},
@@ -41,7 +41,7 @@ int GlobalMap::index_from_pos(Vector3i pos, const Vector3i& chunkPos)
     return (pos.x() * CHUNK_SIZE * CHUNK_SIZE + pos.y() * CHUNK_SIZE + pos.z());
 }
 
-std::vector<TSDFValue::RawType>& GlobalMap::activate_chunk(const Vector3i& chunkPos)
+std::vector<TSDFEntry::RawType>& GlobalMap::activate_chunk(const Vector3i& chunkPos)
 {
     int index = -1;
     int n = active_chunks_.size();
@@ -71,7 +71,7 @@ std::vector<TSDFValue::RawType>& GlobalMap::activate_chunk(const Vector3i& chunk
         else
         {
             // create new chunk
-            newChunk.data = std::vector<TSDFValue::RawType>(CHUNK_SIZE * CHUNK_SIZE * CHUNK_SIZE, initial_tsdf_value_.raw());
+            newChunk.data = std::vector<TSDFEntry::RawType>(CHUNK_SIZE * CHUNK_SIZE * CHUNK_SIZE, initial_tsdf_value_.raw());
         }
         // put new chunk into active_chunks_
         if (n < NUM_CHUNKS)
@@ -121,15 +121,15 @@ std::vector<TSDFValue::RawType>& GlobalMap::activate_chunk(const Vector3i& chunk
     return active_chunks_[index].data;
 }
 
-TSDFValue GlobalMap::get_value(const Vector3i& pos)
+TSDFEntry GlobalMap::get_value(const Vector3i& pos)
 {
     Vector3i chunkPos = floor_divide(pos, CHUNK_SIZE);
     const auto& chunk = activate_chunk(chunkPos);
     int index = index_from_pos(pos, chunkPos);
-    return TSDFValue(chunk[index]);
+    return TSDFEntry(chunk[index]);
 }
 
-void GlobalMap::set_value(const Vector3i& pos, const TSDFValue& value)
+void GlobalMap::set_value(const Vector3i& pos, const TSDFEntry& value)
 {
     Vector3i chunkPos = floor_divide(pos, CHUNK_SIZE);
     auto& chunk = activate_chunk(chunkPos);

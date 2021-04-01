@@ -65,7 +65,7 @@ struct LocalMapHW
         return index;
     }
 
-    TSDFValueHW get(TSDFValueHW* data, int x, int y, int z) const
+    TSDFEntryHW get(TSDFEntryHW* data, int x, int y, int z) const
     {
 #pragma HLS INLINE
         if (in_bounds(x, y, z))
@@ -73,10 +73,10 @@ struct LocalMapHW
             return data[getIndex(x, y, z)];
         }
 
-        return TSDFValueHW{0, 0};
+        return TSDFEntryHW{0, 0};
     }
 
-    void set(TSDFValueHW* data, int x, int y, int z, const TSDFValueHW& val) const
+    void set(TSDFEntryHW* data, int x, int y, int z, const TSDFEntryHW& val) const
     {
 #pragma HLS INLINE
         if (in_bounds(x, y, z))

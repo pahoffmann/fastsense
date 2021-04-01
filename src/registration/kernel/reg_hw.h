@@ -8,7 +8,17 @@
 namespace fastsense::registration
 {
 
-// Prototype of top level function for C-synthesis
+/**
+ * @brief Multiplication of two given matrices in hardware
+ * 
+ * @tparam T Datatype of the numbers stored in the matrices
+ * @tparam a_rows Number of rows for matrix a
+ * @tparam a_cols Number of columns for matrix b
+ * @tparam b_cols Number of columns for matrix b
+ * @param a First matrix, which should multiplicated
+ * @param b Second matrix, which should be multiplicated
+ * @param res Contains the result matrix of the multiplication of a and b
+ */
 template<typename T, int a_rows, int a_cols, int b_cols>
 void MatrixMul(
     const T a[a_rows][a_cols],
@@ -35,6 +45,14 @@ void MatrixMul(
     }
 }
 
+/**
+ * @brief Transforms a given point by a given transformation matrix in hardware
+ * 
+ * @tparam T Datatype for the numbers stored in the point and the matrix 
+ * @param mat Tranformations matrix
+ * @param point Point, which should be transformed
+ * @param res Result of the point transformation
+ */
 template<typename T>
 void transform_point(
     const T mat[4][4],

@@ -24,7 +24,7 @@ namespace fastsense::tsdf
 class TSDFKernel : public kernels::BaseKernel
 {
     /// Storage for the new TSDF Map before it is merged in the update process
-    buffer::InputOutputBuffer<TSDFValue> new_entries;
+    buffer::InputOutputBuffer<TSDFEntry> new_entries;
 
 public:
 
@@ -100,14 +100,14 @@ public:
     void run(map::LocalMap& map,
              const buffer::InputBuffer<PointHW>& scan_points,
              int num_points,
-             TSDFValue::ValueType tau,
-             TSDFValue::WeightType max_weight,
+             TSDFEntry::ValueType tau,
+             TSDFEntry::WeightType max_weight,
              int dz_per_distance = 572, // default with 16 Rings and 30 degrees fov
              PointHW up = PointHW(0, 0, MATRIX_RESOLUTION))
     {
         for (auto& v : new_entries)
         {
-            v = TSDFValue(0, 0);
+            v = TSDFEntry(0, 0);
         }
 
         auto m = map.get_hardware_representation();
