@@ -1,0 +1,12 @@
+<launch>
+  <arg name="bag" />
+  <arg name="args" default="" />
+
+  <node pkg="bridge" type="from_trenz" name="from_trenz_bridge"/>
+
+  <node pkg="bridge" type="to_trenz" name="to_trenz">
+    <remap from="/velodyne_legacy" to="/from_trenz/velodyne/points" />
+    <remap from="/imu/data_raw" to="/imu/data" />
+  </node>
+
+</launch>

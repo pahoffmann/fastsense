@@ -30,7 +30,7 @@ public:
      * @param board_addr ip addr of Trenz board
      * @param how long to wait for message before trying again
      */
-    VelodyneBridge(ros::NodeHandle& n, const std::string& board_addr, std::chrono::milliseconds timeout);
+    VelodyneBridge(ros::NodeHandle& n, const std::string& board_addr, std::chrono::milliseconds timeout, bool discard_timestamp);
 
     /**
      * @brief Destroy the Velodyne Bridge object
@@ -64,6 +64,9 @@ private:
 
     // local timestamp
     ros::Time timestamp_;
+
+    /// Whether or not to discard timestamps and replace with ros::Time::now()
+    bool discard_timestamp_;
 };
 
 } // namespace fastsense::bridge

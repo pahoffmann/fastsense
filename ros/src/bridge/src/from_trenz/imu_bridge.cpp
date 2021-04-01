@@ -16,7 +16,7 @@ using namespace fastsense::bridge;
 // TODO init covariance static?
 // TODO params
 
-ImuBridge::ImuBridge(ros::NodeHandle& n, const std::string& board_addr, std::chrono::milliseconds timeout)
+ImuBridge::ImuBridge(ros::NodeHandle& n, const std::string& board_addr, std::chrono::milliseconds timeout, bool discard_timestamp)
 :   BridgeBase{n, "imu/raw", board_addr, 1000, timeout},
     ProcessThread{},
     imu_ros_{},
@@ -24,7 +24,8 @@ ImuBridge::ImuBridge(ros::NodeHandle& n, const std::string& board_addr, std::chr
     mag_pub_{},
     angular_velocity_covariance_{},
     linear_acceleration_covariance_{},
-    magnetic_field_covariance_{}
+    magnetic_field_covariance_{},
+    discard_timestamp_{discard_timestamp}
 {
     mag_pub_ = n.advertise<sensor_msgs::MagneticField>("imu/mag", 5);
     initCovariance();
@@ -38,14 +39,14 @@ void ImuBridge::run()
         {
             if (receive())
             {
-                ROS_INFO_STREAM("Received imu msg\n");
+                ROS_DEBUG_STREAM("Received imu msg\n");
                 convert();
                 publish();
             }
         }
         catch(const std::exception& e)
         {
-            std::cerr << "imu bridge error: "  << e.what() << '\n';
+            ROS_ERROR_STREAM("imu bridge error: "  << e.what());
         }
     }
 }
@@ -99,7 +100,7 @@ void ImuBridge::convert()
 {  
     const auto& [ data, timestamp ] = msg();
 
-    ros::Time ros_timestamp = ros::Time::now();//timestamp_to_rostime(timestamp);
+    ros::Time ros_timestamp = timestamp_to_rostime(timestamp, discard_timestamp_);
 
     imu_ros_.header.frame_id = "base_link";
     imu_ros_.header.stamp = ros_timestamp;

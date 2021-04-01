@@ -93,7 +93,7 @@ public:
 
         imu_sender_.send(fs::msg::ImuStamped{std::move(imu), tp});
 
-        ROS_INFO("Sent imu\n");
+        ROS_DEBUG("Sent imu\n");
     }
 
     /**
@@ -132,7 +132,7 @@ public:
 
         pcl_sender_.send(fs::msg::PointCloudStamped{std::move(trenz_pcl), tp});
 
-        ROS_INFO("Sent pcl2\n");
+        ROS_DEBUG("Sent pcl2\n");
     }
 
     /**
@@ -168,7 +168,7 @@ public:
 
         pcl_sender_.send(fs::msg::PointCloudStamped{std::move(trenz_pcl), tp});
 
-        ROS_INFO("Sent pcl1\n");
+        ROS_DEBUG("Sent pcl1\n");
     }
 
 private:
@@ -198,6 +198,9 @@ int main(int argc, char **argv)
 {
     ros::init(argc, argv, "to_trenz_bridge");
     Bridge b;
+
+    ROS_INFO("Stared to trenz bridge");
+
     ros::waitForShutdown();
     return 0;
 }

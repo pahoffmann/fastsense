@@ -17,7 +17,10 @@ TEST_CASE("Preprocessing", "[Preprocessing]")
 {
     REQUIRE(1 == 1);
 
-    Preprocessing preprocessor;
+    auto pointcloud_buffer = std::make_shared<msg::PointCloudPtrStampedBuffer>(1);
+    auto pointcloud_bridge_buffer = std::make_shared<msg::PointCloudPtrStampedBuffer>(1);
+
+    Preprocessing preprocessor{pointcloud_buffer, pointcloud_bridge_buffer, 0, false, false};
     PointCloud::Ptr cloud = std::make_shared<PointCloud>();
     Stamped<PointCloud::Ptr> cloud_stamped;
     cloud_stamped.data_ = cloud;
@@ -98,7 +101,7 @@ TEST_CASE("Preprocessing", "[Preprocessing]")
 
 
 
-    SECTION("Test reduction filter"){
+    SECTION("Test reduction filter average"){
 
         //n = 5
         //x = 35,8
@@ -187,7 +190,7 @@ TEST_CASE("Preprocessing", "[Preprocessing]")
         cloud_stamped.data_->points_ = points;
         cloud_stamped.data_->rings_ = 2;
 
-        preprocessor.reduction_filter(cloud_stamped);
+        preprocessor.reduction_filter_average(cloud_stamped);
 
         std::vector<ScanPoint> result_reduction(10);
 
@@ -207,6 +210,69 @@ TEST_CASE("Preprocessing", "[Preprocessing]")
             auto f = std::find(result_reduction.begin(), result_reduction.end(), cloud_stamped.data_->points_[i]);
             REQUIRE(f != result_reduction.end());
         }
+    }
+
+
+    SECTION("Test reduction filter voxel center"){
+        points.resize(8);
+
+        points[0] = {50, 50, 50};
+        points[1] = {30, 30, 30};
+        points[2] = {-32, -53, 1};
+        points[3] = {-4, 40, 63};
+        points[4] = {-60, -60, -60};
+        points[5] = {70, 70, -70};
+        points[6] = {120, 78, 45};
+        points[7] = {140, 1, -1};
+
+        cloud_stamped.data_->points_ = points;
+        cloud_stamped.data_->rings_ = 2;
+
+        preprocessor.reduction_filter_voxel_center(cloud_stamped);
+
+        std::vector<ScanPoint> result_reduction(7);
+        result_reduction[0] = {32, 32, 32};
+        result_reduction[1] = {-32, -32, 32};
+        result_reduction[2] = {-32, 32, 32}; 
+        result_reduction[3] = {-32, -32, -32};
+        result_reduction[4] = {96, 96, -96}; 
+        result_reduction[5] = {96, 96, 32};
+        result_reduction[6] = {160, 32, -32};
+
+        for(uint32_t i = 0; i < result_reduction.size(); i++)
+        {
+            auto f = std::find(result_reduction.begin(), result_reduction.end(), cloud_stamped.data_->points_[i]);
+            REQUIRE(f != result_reduction.end());
+        }
+    }
+
+
+    SECTION("Test reduction filter voxel center"){
+
+        points.resize(8);
+
+        points[0] = {50, 50, 50};
+        points[1] = {30, 30, 30};
+        points[2] = {20, 20, 20};
+
+        points[3] = {-4, 40, 63};
+        points[4] = {-60, 60, 60};
+
+        points[5] = {70, 70, -70};
+
+        points[6] = {120, 78, 45};
+
+        points[7] = {140, 1, -1};
+
+        cloud_stamped.data_->points_ = points;
+        cloud_stamped.data_->rings_ = 2;
+
+        preprocessor.reduction_filter_random_point(cloud_stamped);
+
+        for(auto& point : cloud_stamped.data_->points_){
+            std::cout << "x: " << point.x() << " y: " << point.y() << "z: " << point.z() << std::endl;
+        }
+
     }
 
 }

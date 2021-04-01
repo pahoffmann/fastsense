@@ -24,6 +24,18 @@ protected:
     /// Default Destructor
     virtual ~Filter() = default;
 
+    /// delete copy assignment operator
+    Filter& operator=(const Filter& other) = delete;
+
+    /// delete move assignment operator
+    Filter& operator=(Filter&&) noexcept = delete;
+
+    // default copy constructor
+    Filter(const Filter&) = default;
+
+    /// delete move constructor
+    Filter(Filter&&) noexcept = delete;
+
     /**
      * Update performs one filter step
      * @param new_value new measurement

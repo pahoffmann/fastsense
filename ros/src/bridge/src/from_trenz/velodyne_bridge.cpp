@@ -12,10 +12,11 @@
 
 using namespace fastsense::bridge;
 
-VelodyneBridge::VelodyneBridge(ros::NodeHandle& n, const std::string& board_addr, std::chrono::milliseconds timeout)
+VelodyneBridge::VelodyneBridge(ros::NodeHandle& n, const std::string& board_addr, std::chrono::milliseconds timeout, bool discard_timestamp)
     :   BridgeBase{n, "velodyne/points", board_addr, 1000, timeout},
         ProcessThread{},
-        points_{}
+        points_{},
+        discard_timestamp_{discard_timestamp}
 {
 }
 
@@ -27,14 +28,14 @@ void VelodyneBridge::run()
         {
             if (receive())
             {
-                ROS_INFO_STREAM("Received " << msg_.data_.points_.size() << " points\n");
+                ROS_DEBUG_STREAM("Received " << msg_.data_.points_.size() << " points");
                 convert();
                 publish();
             }
         }
         catch(const std::exception& e)
         {
-            std::cerr << "velo bridge error: " << e.what() << '\n';
+            ROS_ERROR_STREAM("velo bridge error: " << e.what());
         }
     }
 }
@@ -43,7 +44,7 @@ void VelodyneBridge::convert()
 {
     points_.clear();
 
-    timestamp_ = ros::Time::now();//timestamp_to_rostime(msg_.timestamp_);
+    timestamp_ = timestamp_to_rostime(msg_.timestamp_, discard_timestamp_);
     const auto& msg_points = msg_.data_.points_;
 
     std::transform(msg_points.begin(), msg_points.end(), std::back_inserter(points_), [](const ScanPoint& p)
@@ -55,7 +56,7 @@ void VelodyneBridge::convert()
         return out;
     });
 
-    ROS_INFO_STREAM("Converted points: " << msg_points.size() << "->" << points_.size() << " points\n");
+    ROS_DEBUG_STREAM("Converted points: " << msg_points.size() << "->" << points_.size() << " points\n");
 }
 
 void VelodyneBridge::publish()
@@ -66,5 +67,5 @@ void VelodyneBridge::publish()
     pc.points = points_;
     pub().publish(pc);
 
-    ROS_INFO_STREAM("Published points values\n");
+    ROS_DEBUG_STREAM("Published points values\n");
 }

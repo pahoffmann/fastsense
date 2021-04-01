@@ -5,22 +5,40 @@
  */
 
 #include "preprocessing.h"
+#include <util/config/config_manager.h>
+
+#include <unordered_set>
 
 using namespace fastsense::preprocessing;
 using fastsense::buffer::InputBuffer;
 
+namespace std
+{
+template<> struct hash<fastsense::ScanPoint>
+{
+    std::size_t operator()(fastsense::ScanPoint const& p) const noexcept
+    {
+        long long v = ((long long)p.x() << 32) ^ ((long long)p.y() << 16) ^ (long long)p.z();
+        return std::hash<long long>()(v);
+    }
+};
+}
+
+
 Preprocessing::Preprocessing(const std::shared_ptr<PointCloudBuffer>& in_buffer,
                              const std::shared_ptr<PointCloudBuffer>& out_buffer,
-                             uint16_t port,
-                             bool send,
-                             bool send_preprocessed)
-    : QueueBridge{in_buffer, out_buffer, port, send}, send_preprocessed(send_preprocessed)
+                             const std::shared_ptr<PointCloudBuffer>& send_buffer,
+                             bool send_original,
+                             bool send_preprocessed,
+                             float scale)
+    : QueueBridge{in_buffer, out_buffer, 0, false}, send_buffer(send_buffer), send_original(send_original), send_preprocessed(send_preprocessed), scale(scale)
 {
 
 }
 
 void Preprocessing::thread_run()
 {
+    int expected_rings = util::config::ConfigManager::config().lidar.rings();
     fastsense::msg::PointCloudPtrStamped in_cloud;
     while (this->running)
     {
@@ -29,50 +47,61 @@ void Preprocessing::thread_run()
             continue;
         }
 
-        if (this->send_ && !send_preprocessed)
+        if (send_original)
         {
-            this->send(in_cloud);
+            send_buffer->push_nb(in_cloud);
         }
+
+        assert(expected_rings == in_cloud.data_->rings_);
 
         fastsense::msg::PointCloudPtrStamped out_cloud;
         out_cloud.data_ = in_cloud.data_;
         out_cloud.timestamp_ = in_cloud.timestamp_;
 
+        if (scale != 1.0f)
+        {
+            for (auto& point : out_cloud.data_->points_)
+            {
+                point = (point.cast<float>() * scale).cast<ScanPointType>();
+            }
+        }
+
         median_filter(out_cloud, 5);
-        reduction_filter(out_cloud);
+        reduction_filter_closest(out_cloud);
 
         this->out_->push_nb(out_cloud, true);
 
-        if (this->send_ && send_preprocessed)
+        if (send_preprocessed)
         {
-            this->send(out_cloud);
+            send_buffer->push_nb(out_cloud);
         }
     }
 }
 
-void Preprocessing::reduction_filter(fastsense::msg::PointCloudPtrStamped& cloud)
+void Preprocessing::reduction_filter_average(fastsense::msg::PointCloudPtrStamped& cloud)
 {
     auto& cloud_points = cloud.data_->points_;
 
-    std::unordered_map<uint64_t, std::pair<Vector3i, int>> point_map;
+    std::unordered_map<ScanPoint, std::pair<Vector3i, int>> point_map;
     std::pair<Vector3i, int> default_value = std::make_pair(Vector3i::Zero(), 0);
 
     point_map.reserve(cloud_points.size());
 
-    for (uint32_t i = 0; i < cloud_points.size(); i++)
+    for (const auto& point : cloud_points)
     {
-        if (cloud_points[i].x() == 0 && cloud_points[i].y() == 0 && cloud_points[i].z() == 0)
+        if (point.x() == 0 && point.y() == 0 && point.z() == 0)
         {
             continue;
         }
 
-        uint64_t key = 0;
-        int16_t* key_ptr = (int16_t*)&key;
-        key_ptr[0] = std::floor(((float)cloud_points[i].x()) / (float)MAP_RESOLUTION);
-        key_ptr[1] = std::floor(((float)cloud_points[i].y()) / (float)MAP_RESOLUTION);
-        key_ptr[2] = std::floor(((float)cloud_points[i].z()) / (float)MAP_RESOLUTION);
-        auto& avg_point = point_map.try_emplace(key, default_value).first->second;
-        avg_point.first += cloud_points[i].cast<int>();
+        ScanPoint voxel(
+            std::floor((float)point.x() / MAP_RESOLUTION),
+            std::floor((float)point.y() / MAP_RESOLUTION),
+            std::floor((float)point.z() / MAP_RESOLUTION)
+        );
+
+        auto& avg_point = point_map.try_emplace(voxel, default_value).first->second;
+        avg_point.first += point.cast<int>();
         avg_point.second++;
     }
 
@@ -84,6 +113,108 @@ void Preprocessing::reduction_filter(fastsense::msg::PointCloudPtrStamped& cloud
         counter++;
     }
 }
+
+void Preprocessing::reduction_filter_closest(fastsense::msg::PointCloudPtrStamped& cloud)
+{
+    auto& cloud_points = cloud.data_->points_;
+
+    std::unordered_map<ScanPoint, std::pair<ScanPoint, int>> point_map;
+    std::pair<ScanPoint, int> default_value = std::make_pair(ScanPoint::Zero(), MAP_RESOLUTION * 2);
+
+    point_map.reserve(cloud_points.size());
+
+    for (const auto& point : cloud_points)
+    {
+        if (point.x() == 0 && point.y() == 0 && point.z() == 0)
+        {
+            continue;
+        }
+
+        ScanPoint voxel_center(
+            std::floor((float)point.x() / MAP_RESOLUTION) * MAP_RESOLUTION + MAP_RESOLUTION / 2,
+            std::floor((float)point.y() / MAP_RESOLUTION) * MAP_RESOLUTION + MAP_RESOLUTION / 2,
+            std::floor((float)point.z() / MAP_RESOLUTION) * MAP_RESOLUTION + MAP_RESOLUTION / 2
+        );
+        int distance = (point - voxel_center).norm();
+
+        auto& closest = point_map.try_emplace(voxel_center, default_value).first->second;
+        if (distance < closest.second)
+        {
+            closest.first = point;
+            closest.second = distance;
+        }
+    }
+
+    cloud_points.resize(point_map.size());
+    int counter = 0;
+    for (auto& avg_point : point_map)
+    {
+        cloud_points[counter] = avg_point.second.first;
+        counter++;
+    }
+}
+
+void Preprocessing::reduction_filter_voxel_center(fastsense::msg::PointCloudPtrStamped& cloud)
+{
+    auto& cloud_points = cloud.data_->points_;
+
+    std::unordered_set<ScanPoint> point_set;
+
+    for (const auto& point : cloud_points)
+    {
+        if (point.x() == 0 && point.y() == 0 && point.z() == 0)
+        {
+            continue;
+        }
+
+        ScanPoint voxel_center(
+            std::floor((float)point.x() / MAP_RESOLUTION) * MAP_RESOLUTION + MAP_RESOLUTION / 2,
+            std::floor((float)point.y() / MAP_RESOLUTION) * MAP_RESOLUTION + MAP_RESOLUTION / 2,
+            std::floor((float)point.z() / MAP_RESOLUTION) * MAP_RESOLUTION + MAP_RESOLUTION / 2
+        );
+
+        point_set.insert(voxel_center);
+    }
+
+    cloud_points.resize(point_set.size());
+    std::copy(point_set.begin(), point_set.end(), cloud_points.begin());
+}
+
+
+void Preprocessing::reduction_filter_random_point(fastsense::msg::PointCloudPtrStamped& cloud)
+{
+
+    auto& cloud_points = cloud.data_->points_;
+
+    std::unordered_map<ScanPoint, ScanPoint> point_map;
+
+    std::random_shuffle(cloud_points.begin(), cloud_points.end());
+
+    for (const auto& point : cloud_points)
+    {
+        if (point.x() == 0 && point.y() == 0 && point.z() == 0)
+        {
+            continue;
+        }
+
+        ScanPoint voxel(
+            std::floor((float)point.x() / MAP_RESOLUTION),
+            std::floor((float)point.y() / MAP_RESOLUTION),
+            std::floor((float)point.z() / MAP_RESOLUTION)
+        );
+
+        point_map.try_emplace(voxel, point);
+    }
+
+    cloud_points.resize(point_map.size());
+    int counter = 0;
+    for (auto& c_point : point_map)
+    {
+        cloud_points[counter] = c_point.second;
+        counter++;
+    }
+}
+
 
 uint8_t Preprocessing::median_from_array(std::vector<ScanPoint*> medians)
 {

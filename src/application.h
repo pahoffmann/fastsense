@@ -26,6 +26,18 @@ public:
     Application();
     ~Application() = default;
 
+    /// delete copy assignment operator
+    Application& operator=(const Application& other) = delete;
+
+    /// delete move assignment operator
+    Application& operator=(Application&&) noexcept = delete;
+
+    /// delete copy constructor
+    Application(const Application&) = delete;
+
+    /// delete move constructor
+    Application(Application&&) = delete;
+
     int run();
 };
 

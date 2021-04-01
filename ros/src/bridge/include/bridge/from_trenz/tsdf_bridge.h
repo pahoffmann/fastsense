@@ -20,7 +20,7 @@ namespace fastsense::bridge
 /**
  * @brief TSDFBridge converts TSDF data of type msg::TSDFBridgeMessage into ROS Markers
  */
-class TSDFBridge :  public BridgeBase<msg::TSDFBridgeMessage, visualization_msgs::Marker, 6666>, 
+class TSDFBridge :  public BridgeBase<msg::TSDFBridgeMessageStamped, visualization_msgs::Marker, 6666>, 
                     public util::ProcessThread
 {
 public:
@@ -30,8 +30,9 @@ public:
      * @param n nodehandle
      * @param board_addr ip addr of Trenz board
      * @param timeout how long to wait for message before trying again
+     * @param discard_timestamp Whether or not to discard timestamps and replace with ros::Time::now()
      */
-    TSDFBridge(ros::NodeHandle& n, const std::string& board_addr, std::chrono::milliseconds timeout);
+    TSDFBridge(ros::NodeHandle& n, const std::string& board_addr, std::chrono::milliseconds timeout, bool discard_timestamp);
 
     /**
      * @brief Destroy the TSDFBridge object
@@ -65,13 +66,16 @@ private:
     bool in_bounds(int x, int y, int z) const;
 
     /// gets tsdf value at x y z
-    TSDFValue get_tsdf_value(int x, int y, int z) const;
+    TSDFEntry get_tsdf_value(int x, int y, int z) const;
 
     /// TSDF Point vector
     std::vector<geometry_msgs::Point> points_;
 
     /// Color vector
     std::vector<std_msgs::ColorRGBA> colors_;
+
+    /// Whether or not to discard timestamps and replace with ros::Time::now()
+    bool discard_timestamp_;
 };
 
 } // namespace fastsense::bridge

@@ -43,7 +43,6 @@ SW_SRCS = src/application.cpp \
 	src/driver/imu/imu.cpp \
 	src/driver/lidar/velodyne.cpp \
 	$(wildcard src/map/*.cpp) \
-	$(wildcard src/tsdf/*.cpp) \
 	$(wildcard src/callback/*.cpp) \
 	$(wildcard src/registration/*.cpp) \
 	$(wildcard src/preprocessing/*.cpp) \
@@ -104,7 +103,7 @@ POST_LINK_TCL = $(CURDIR)/postSysLink.tcl
 HW_TARGET ?= sw_emu
 HW_PLATFORM = $(PLATFORM_DIR)/FastSense_platform.xpfm
 
-HW_SRCS = src/registration/kernel/krnl_reg.cpp src/tsdf/kernel/krnl_tsdf.cpp
+HW_SRCS = src/registration/kernel/krnl_reg.cpp src/tsdf/krnl_tsdf.cpp
 HW_OBJS = $(HW_SRCS:%.cpp=$(BUILD_DIR)/%.xo)
 HW_DEPS = $(HW_OBJS:.xo=.d)
 

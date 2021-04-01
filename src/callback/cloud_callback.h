@@ -11,7 +11,7 @@
 #include <eigen3/Eigen/Dense>
 #include <util/process_thread.h>
 #include <msg/tsdf_bridge_msg.h>
-#include <hw/kernels/tsdf_kernel.h>
+#include <tsdf/krnl_tsdf.h>
 #include <registration/registration.h>
 #include <util/config/config_manager.h>
 #include <util/concurrent_ring_buffer.h>
@@ -37,6 +37,8 @@ public:
                   const std::shared_ptr<LocalMap>& local_map,
                   const std::shared_ptr<GlobalMap>& global_map,
                   const msg::TransformStampedBuffer::Ptr& transform_buffer,
+                  const msg::PointCloudPtrStampedBuffer::Ptr& pointcloud_buffer,
+                  bool send_after_registration,
                   const fastsense::CommandQueuePtr& q,
                   MapThread& map_thread,
                   std::mutex& map_mutex);
@@ -65,9 +67,10 @@ private:
     std::shared_ptr<GlobalMap> global_map;
     Matrix4f pose;
     msg::TransformStampedBuffer::Ptr transform_buffer;
+    std::shared_ptr<PointCloudBuffer> pointcloud_buffer;
+    bool send_after_registration;
     bool first_iteration;
     fastsense::CommandQueuePtr q;
-    fastsense::kernels::TSDFKernel tsdf_krnl;
     MapThread& map_thread;
     std::mutex& map_mutex;
 };

@@ -30,7 +30,7 @@ private:
     Vector3i size_;
 
     /// Actual data of the local map.
-    buffer::InputOutputBuffer<TSDFValue> data_;
+    buffer::InputOutputBuffer<TSDFEntry> data_;
 
     /// Position (x, y, z) of the center of the cuboid in global coordinates.
     Vector3i pos_;
@@ -84,19 +84,28 @@ public:
     LocalMap& operator=(const LocalMap&) = delete;
 
     /**
-     * Deleted move copy constructor of the local map.
+     * Deleted move constructor of the local map.
      */
     LocalMap(LocalMap&&) = delete;
 
     /**
-     * Move assignment operator of the local map.
-     * This operator is needed in the asynchronous shift, update and visualization.
-     * It is used to write back the local map of the thread to the cloud callback.
-     * This operation needs to be fast because it must be executed synchronous.
-     * A copy would be too slow and bending the pointer is not possible because it is used in other places too.
-     * Therefore the local map is moved.
+     * Deleted move assignment operator of the local map.
      */
-    LocalMap& operator=(LocalMap&&) = default;
+    LocalMap& operator=(LocalMap&&) = delete;
+
+    /**
+     * @brief Swaps this local map with another one
+     *
+     * @param rhs the other map
+     */
+    void swap(LocalMap& rhs);
+
+    /**
+     * @brief Swaps this local map with another one
+     *
+     * @param rhs the other map
+     */
+    void fill_from(const LocalMap& rhs);
 
     /**
      * Returns a value from the local map per reference.
@@ -106,7 +115,10 @@ public:
      * @param z z-coordinate of the index in global coordinates
      * @return Value of the local map
      */
-    TSDFValue& value(int x, int y, int z);
+    inline TSDFEntry& value(int x, int y, int z)
+    {
+        return value(Vector3i(x, y, z));
+    }
 
     /**
      * Returns a value from the local map per reference.
@@ -116,7 +128,10 @@ public:
      * @param z z-coordinate of the index in global coordinates
      * @return Value of the local map
      */
-    const TSDFValue& value(int x, int y, int z) const;
+    inline const TSDFEntry& value(int x, int y, int z) const
+    {
+        return value(Vector3i(x, y, z));
+    }
 
     /**
      * Returns a value from the local map per reference.
@@ -124,7 +139,14 @@ public:
      * @param p position of the index in global coordinates
      * @return value of the local map
      */
-    TSDFValue& value(Vector3i p);
+    inline TSDFEntry& value(const Vector3i& p)
+    {
+        if (!in_bounds(p))
+        {
+            throw std::out_of_range("Index out of bounds");
+        }
+        return value_unchecked(p);
+    }
 
     /**
      * Returns a value from the local map per reference.
@@ -132,35 +154,49 @@ public:
      * @param p position of the index in global coordinates
      * @return value of the local map
      */
-    const TSDFValue& value(Vector3i p) const;
+    inline const TSDFEntry& value(const Vector3i& p) const
+    {
+        if (!in_bounds(p))
+        {
+            throw std::out_of_range("Index out of bounds");
+        }
+        return value_unchecked(p);
+    }
 
     /**
      * Returns the size of the local map
      * @return size of the local map
      */
-    const Vector3i& get_size() const;
+    inline const Vector3i& get_size() const
+    {
+        return size_;
+    }
 
     /**
      * Returns the pos of the local map
      * @return pos of the local map
      */
-    const Vector3i& get_pos() const;
+    inline const Vector3i& get_pos() const
+    {
+        return pos_;
+    }
 
     /**
      * Returns the offset of the local map
      * @return offset of the local map
      */
-    const Vector3i& get_offset() const;
+    inline const Vector3i& get_offset() const
+    {
+        return offset_;
+    }
 
     /**
      * Shifts the local map, so that a new position is the center of the cuboid.
      * Entries, that stay in the buffer, stay in place.
      * Values outside of the buffer are loaded from and stored in the global map.
-     * @param x x-coordinate of the new position
-     * @param y y-coordinate of the new position
-     * @param z z-coordinate of the new position
+     * @param new_pos the new position. Must not be more than get_size() units away from get_pos()
      */
-    void shift(int x, int y, int z);
+    void shift(const Vector3i& new_pos);
 
     /**
      * Checks if x, y and z are within the current range
@@ -170,7 +206,10 @@ public:
      * @param z z-coordinate to check
      * @return true if (x, y, z) is within the area of the buffer
      */
-    bool in_bounds(int x, int y, int z) const;
+    inline bool in_bounds(int x, int y, int z) const
+    {
+        return in_bounds(Vector3i(x, y, z));
+    }
 
     /**
      * Checks if x, y and z are within the current range
@@ -178,14 +217,18 @@ public:
      * @param p position of the index in global coordinates
      * @return true if (x, y, z) is within the area of the buffer
      */
-    bool in_bounds(Vector3i p) const;
+    inline bool in_bounds(Vector3i p) const
+    {
+        p = (p - pos_).cwiseAbs();
+        return p.x() <= size_.x() / 2 && p.y() <= size_.y() / 2 && p.z() <= size_.z() / 2;
+    }
 
     /**
      * Returns the buffer in which the actual data of the local map is stored.
      * It can be used with hardware kernels.
      * @return data buffer
      */
-    buffer::InputOutputBuffer<TSDFValue>& getBuffer();
+    buffer::InputOutputBuffer<TSDFEntry>& getBuffer();
 
     LocalMapHW get_hardware_representation() const;
 
@@ -194,6 +237,74 @@ public:
      * Calls write_back of the global map to store the data in the file.
      */
     void write_back();
+
+private:
+    /**
+     * @brief writes to the global map in an area
+     *
+     * @param bottom_corner the "bottom" corner of the area (smallest values along all axes); inclusive
+     * @param top_corner the "top" corner of the area (biggest values along all axes); inclusive
+     */
+    inline void save_area(const Vector3i& bottom_corner, const Vector3i& top_corner)
+    {
+        save_load_area<true>(bottom_corner, top_corner);
+    }
+
+    /**
+     * @brief reads from the global map in an area
+     *
+     * @param bottom_corner the "bottom" corner of the area (smallest values along all axes); inclusive
+     * @param top_corner the "top" corner of the area (biggest values along all axes); inclusive
+     */
+    inline void load_area(const Vector3i& bottom_corner, const Vector3i& top_corner)
+    {
+        save_load_area<false>(bottom_corner, top_corner);
+    }
+
+    /**
+     * @brief writes to or reads from the global map in an area
+     *
+     * @param bottom_corner the "bottom" corner of the area (smallest values along all axes); inclusive
+     * @param top_corner the "top" corner of the area (biggest values along all axes); inclusive
+     */
+    template<bool save>
+    void save_load_area(const Vector3i& bottom_corner, const Vector3i& top_corner);
+
+    /**
+     * @brief Calculate the Index of a Point
+     *
+     * @param point the Point
+     * @return int the index in data_
+     */
+    inline int get_index(const Vector3i& point) const
+    {
+        Vector3i p = point - pos_ + offset_ + size_;
+        return (p.x() % size_.x()) * size_.y() * size_.z() +
+               (p.y() % size_.y()) * size_.z() +
+               p.z() % size_.z();
+    }
+
+    /**
+     * @brief see #value but without bounds checking
+     *
+     * @param p position of the index in global coordinates
+     * @return value of the local map
+     */
+    inline TSDFEntry& value_unchecked(const Vector3i& p)
+    {
+        return data_[get_index(p)];
+    }
+
+    /**
+     * @brief see #value but without bounds checking
+     *
+     * @param p position of the index in global coordinates
+     * @return value of the local map
+     */
+    inline const TSDFEntry& value_unchecked(const Vector3i& p) const
+    {
+        return data_[get_index(p)];
+    }
 };
 
 } // namespace fastsense::map

@@ -19,7 +19,7 @@ namespace fastsense::map
 
 struct ActiveChunk
 {
-    std::vector<TSDFValue::RawType> data;
+    std::vector<TSDFEntry::RawType> data;
     Vector3i pos;
     int age;
 };
@@ -34,9 +34,18 @@ class GlobalMap
 {
 
 private:
+ /**
+     * Saves a pose in the HDF5 file.
+     * @param t_x x-coordinate of the position of the pose
+     * @param t_y y-coordinate of the position of the pose
+     * @param t_z z-coordinate of the position of the pose
+     * @param quat_x x-value of the rotation quaternion of the pose
+     * @param quat_y y-value of the rotation quaternion of the pose
+     * @param quat_z z-value of the rotation quaternion of the pose
+     * @param quat_w w-value of the rotation quaternion of the pose
+     */
+    void save_pose(float t_x, float t_y, float t_z, float quat_x, float quat_y, float quat_z, float quat_w);
 
-    /**
-     * HDF5 file in which the chunks are stored.
      * The file structure looks like this:
      *
      * file.h5
@@ -50,19 +59,18 @@ private:
      * | |-1_0_0 /
      */
     HighFive::File file_;
-
-    /// Initial default tsdf value.
-    TSDFValue initial_tsdf_value_;
-
-    /**
-     * Vector of active chunks.
+ /**
+     * Saves a pose in the HDF5 file.
+     * @param t_x x-coordinate of the position of the pose
+     * @param t_y y-coordinate of the position of the pose
+     * @param t_z z-coordinate of the position of the pose
+     * @param quat_x x-value of the rotation quaternion of the pose
+     * @param quat_y y-value of the rotation quaternion of the pose
+     * @param quat_z z-value of the rotation quaternion of the pose
+     * @param quat_w w-value of the rotation quaternion of the pose
      */
-    std::vector<ActiveChunk> active_chunks_;
+    void save_pose(float t_x, float t_y, float t_z, float quat_x, float quat_y, float quat_z, float quat_w);
 
-    /// Number of poses that are saved in the HDF5 file
-    int num_poses_;
-
-    /**
      * Given a position in a chunk the tag of the chunk gets returned.
      * @param pos the position
      * @return tag of the chunk
@@ -78,6 +86,38 @@ private:
      */
     int index_from_pos(Vector3i pos, const Vector3i& chunkPos);
 
+public:
+
+    /// Side length of the cube-shaped chunks
+    static constexpr int CHUNK_SIZE = 64;
+
+    /// Maximum number of active chunks.
+    static constexpr int NUM_CHUNKS = 64;
+
+    /**
+     * Constructor of the global map.
+     * It is initialized without chunks.
+     * The chunks are instead created dynamically depending on which are used.
+     * @param name name with path and extension (.h5) of the HDF5 file in which the map is stored
+     * @param initial_tsdf_value default tsdf value
+     * @param initial_weight initial default weight
+     */
+    GlobalMap(std::string name, TSDFEntry::ValueType initial_tsdf_value, TSDFEntry::WeightType initial_weight);
+
+    /**
+     * Returns a value pair consisting of a tsdf value and a weight from the map.
+     * @param pos the position
+     * @return value pair from the map
+     */
+    TSDFEntry get_value(const Vector3i& pos);
+
+    /**
+     * Sets a value pair consisting of a tsdf value and a weight on the map.
+     * @param pos the position
+     * @param value value pair that is set
+     */
+    void set_value(const Vector3i& pos, const TSDFEntry& value);
+
     /**
      * Activates a chunk and returns it by reference.
      * If the chunk was already active, it is simply returned.
@@ -88,48 +128,7 @@ private:
      * @param chunk position of the chunk that gets activated
      * @return reference to the activated chunk
      */
-    std::vector<TSDFValue::RawType>& activate_chunk(const Vector3i& chunk);
-
-public:
-
-    /**
-     * log(CHUNK_SIZE).
-     * The side length is a power of 2 so that divisions by the side length can be accomplished by shifting.
-     */
-    static constexpr int CHUNK_SHIFT = 6;
-
-    /// Side length of the cube-shaped chunks (2^CHUNK_SHIFT).
-    static constexpr int CHUNK_SIZE = 1 << CHUNK_SHIFT;
-
-    /// Number of voxels in one chunk (CHUNK_SIZE^3).
-    static constexpr int TOTAL_CHUNK_SIZE = 1 << (3 * CHUNK_SHIFT); // = CHUNK_SIZE * CHUNK_SIZE * CHUNK_SIZE
-
-    /// Maximum number of active chunks.
-    static constexpr int NUM_CHUNKS = 64;
-
-    /**
-     * Constructor of the global map.
-     * It is initialized without chunks.
-     * The chunks are instead created dynamically depending on which are used.
-     * @param name name with path and extension (.h5) of the HDF5 file in which the map is stored
-     * @param initialTsdfValue initial default tsdf value
-     * @param initialWeight initial default weight
-     */
-    GlobalMap(std::string name, TSDFValue::ValueType initial_tsdf_value, TSDFValue::WeightType initial_weight);
-
-    /**
-     * Returns a value pair consisting of a tsdf value and a weight from the map.
-     * @param pos the position
-     * @return value pair from the map
-     */
-    TSDFValue get_value(const Vector3i& pos);
-
-    /**
-     * Sets a value pair consisting of a tsdf value and a weight on the map.
-     * @param pos the position
-     * @param value value pair that is set
-     */
-    void set_value(const Vector3i& pos, const TSDFValue& value);
+    std::vector<TSDFEntry::RawType>& activate_chunk(const Vector3i& chunk);
 
     /**
      * Writes all active chunks into the HDF5 file.

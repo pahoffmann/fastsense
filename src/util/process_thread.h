@@ -22,6 +22,11 @@ public:
     {
         stop();
     }
+    
+    ProcessThread(ProcessThread&) = delete;
+    ProcessThread(ProcessThread&&) = delete;
+    ProcessThread& operator=(const ProcessThread&) = delete;
+    ProcessThread& operator=(ProcessThread&&) = delete;
 
     virtual void start()
     {

@@ -33,6 +33,8 @@ struct Stamped : public ZMQConverter
     /**
      * @brief Construct a new Stamped object
      * 
+     * Constructing with pointer type is forbidden
+     * 
      * @param data Data to store with given timestamp
      * @param timepoint timestamp of data creation/recording
      */
@@ -40,7 +42,20 @@ struct Stamped : public ZMQConverter
     : data_(std::move(data))
     , timestamp_(timepoint)
     {
+          static_assert(!std::is_pointer<DATA_T>::value, "The data type of Stamped<T> must not be a pointer.");
     }
+
+    /// default copy assignment operator
+    Stamped& operator=(const Stamped& other) = default;
+
+    /// dedault move assignment operator
+    Stamped& operator=(Stamped&&) noexcept = default;
+
+    /// dedault copy constructor
+    Stamped(const Stamped&) = default;
+
+    /// dedault move constructor
+    Stamped(Stamped&&) noexcept = default;
 
     /**
      * @brief Destroy the Stamped object
@@ -134,6 +149,14 @@ struct Stamped : public ZMQConverter
         multi.addtyp(timestamp_);
         multi.addtyp(data_);
         return multi;
+    }
+
+    /**
+     * @brief Update Time to NOW
+     */
+    inline void update_time()
+    {
+        timestamp_ = util::HighResTime::now();
     }
 
     /// Data to refer timestamp to

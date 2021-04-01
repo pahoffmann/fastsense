@@ -24,6 +24,9 @@ struct LidarConfig : public ConfigGroup
 
     DECLARE_CONFIG_ENTRY(size_t, bufferSize, "Size of the Buffer for incoming values");
     DECLARE_CONFIG_ENTRY(uint16_t, port, "The Port to listen to");
+    DECLARE_CONFIG_ENTRY(float, pointScale, "A Factor to apply to the entire Cloud");
+    DECLARE_CONFIG_ENTRY(int, rings, "The number of rings that the lidar has");
+    DECLARE_CONFIG_ENTRY(float, vertical_fov_angle, "The field of view in vertical direction in degrees");
 };
 
 struct BridgeConfig : public ConfigGroup
@@ -32,7 +35,10 @@ struct BridgeConfig : public ConfigGroup
 
     DECLARE_CONFIG_ENTRY(bool, use_from, "true: take input from PC, false: use Sensors");
     DECLARE_CONFIG_ENTRY(bool, use_to, "true: send output to PC");
-    DECLARE_CONFIG_ENTRY(bool, send_preprocessed, "true: send PointCloud after Preprocessing; false: send original PointCloud");
+
+    DECLARE_CONFIG_ENTRY(bool, send_original, "send PointCloud before Preprocessing. Only one send_* option can be active");
+    DECLARE_CONFIG_ENTRY(bool, send_preprocessed, "send PointCloud after Preprocessing. Only one send_* option can be active");
+    DECLARE_CONFIG_ENTRY(bool, send_after_registration, "send PointCloud after Registration. Only one send_* option can be active");
 
     DECLARE_CONFIG_ENTRY(std::string, host_from, "IP Address of the PC when 'use_from' is true");
     DECLARE_CONFIG_ENTRY(uint16_t, recv_timeout, "Timeout for the receiver");

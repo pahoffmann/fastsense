@@ -23,6 +23,18 @@ public:
 
     ~RegistrationKernel() override = default;
 
+    /// delete copy assignment operator
+    RegistrationKernel& operator=(const RegistrationKernel& other) = delete;
+
+    /// delete move assignment operator
+    RegistrationKernel& operator=(RegistrationKernel&&) noexcept = delete;
+
+    /// delete copy constructor
+    RegistrationKernel(const RegistrationKernel&) = delete;
+
+    /// delete move constructor
+    RegistrationKernel(RegistrationKernel&&) = delete;
+
     /**
      * @brief interface between the software and the hw, calls the run method of the kernel, writes all the data coming from the kernel
      *        into the datatypes used by the software
@@ -37,6 +49,7 @@ public:
      */
     void synchronized_run(map::LocalMap& map,
                           buffer::InputBuffer<PointHW>& point_data,
+                          int num_points,
                           int max_iterations,
                           float it_weight_gradient,
                           float epsilon,
@@ -59,7 +72,7 @@ public:
         in_transform[16] = epsilon;
 
         //run the encapsulated kernel
-        run(map, point_data, max_iterations, it_weight_gradient, in_transform, out_transform);
+        run(map, point_data, num_points, max_iterations, it_weight_gradient, in_transform, out_transform);
 
         waitComplete();
 
@@ -91,8 +104,13 @@ public:
      * @param outbuf
      * @param queue
      */
-    void run(map::LocalMap& map, buffer::InputBuffer<PointHW>& point_data, int max_iterations, float it_weight_gradient,
-             buffer::InputBuffer<float>& in_transform, buffer::OutputBuffer<float>& out_transform)
+    void run(map::LocalMap& map,
+             buffer::InputBuffer<PointHW>& point_data,
+             int num_points,
+             int max_iterations,
+             float it_weight_gradient,
+             buffer::InputBuffer<float>& in_transform,
+             buffer::OutputBuffer<float>& out_transform)
     {
         resetNArg();
 
@@ -107,7 +125,7 @@ public:
         {
             setArg(point_data.getBuffer());
         }
-        setArg(static_cast<int>(point_data.size()));
+        setArg(num_points);
 
         for (int i = 0; i < SPLIT_FACTOR; i++)
         {

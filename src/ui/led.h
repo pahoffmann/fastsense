@@ -41,6 +41,11 @@ public:
     ~Led();
     Led(const Led&) = delete;
     Led& operator=(const Led&) = delete;
+    /// delete move assignment operator
+    Led& operator=(Led&&) noexcept = delete;
+
+    /// delete move constructor
+    Led(Led&&) = delete;
 
     /**
      * @brief Set the frequency. 0: LED is off, inf: LED is completly on

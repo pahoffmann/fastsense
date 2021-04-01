@@ -19,22 +19,22 @@ using Eigen::Matrix4i;
 using Eigen::Matrix4f;
 using Eigen::Quaternionf;
 using ScanPoints_t = std::vector<Vector3i>;
-using ScanPointType = int16_t;
+using ScanPointType = int32_t;
 using ScanPoint = Eigen::Matrix<ScanPointType, 3, 1>;
 
 /**
- * @brief calculates floor(a / b), except that a is a Vector of integers and b is a power of 2
+ * @brief calculates floor(a / b), except that a is a Vector and all values are integers
  *
  * @param a the numerator
- * @param shift the power of the denominator b, such that b = 2^shift
- * @return floor((float)a / pow(2, shift))
+ * @param b the denominator
+ * @return floor(a / b)
  */
-static inline Vector3i floor_shift(const Vector3i& a, int shift)
+static inline Vector3i floor_divide(const Vector3i& a, int b)
 {
     return Vector3i(
-               a[0] >> shift,
-               a[1] >> shift,
-               a[2] >> shift
+               std::floor(static_cast<float>(a[0]) / b),
+               std::floor(static_cast<float>(a[1]) / b),
+               std::floor(static_cast<float>(a[2]) / b)
            );
 }
 

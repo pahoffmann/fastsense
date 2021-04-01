@@ -119,7 +119,7 @@ public:
      *
      * @param rhs moved buffer
      */
-    Buffer(Buffer&& rhs)
+    Buffer(Buffer&& rhs) noexcept
         : queue_{std::move(rhs.queue_)},
           num_elements_{rhs.num_elements_},
           size_in_bytes_{rhs.size_in_bytes_},
@@ -133,6 +133,30 @@ public:
         rhs.mem_flag_ = 0;
         rhs.map_flag_ = 0;
         rhs.virtual_address_ = nullptr;
+    }
+
+    void swap(Buffer& rhs)
+    {
+        std::swap(this->queue_, rhs.queue_);
+        std::swap(this->buffer_, rhs.buffer_);
+        std::swap(this->num_elements_, rhs.num_elements_);
+        std::swap(this->size_in_bytes_, rhs.size_in_bytes_);
+        std::swap(this->mem_flag_, rhs.mem_flag_);
+        std::swap(this->map_flag_, rhs.map_flag_);
+        std::swap(this->virtual_address_, rhs.virtual_address_);
+    }
+
+    void fill_from(const Buffer& rhs)
+    {
+        if (this->num_elements_ != rhs.num_elements_)
+        {
+            throw std::runtime_error("clone with different sizes not implemented");
+        }
+
+        for (size_t index = 0; index < num_elements_; ++index)
+        {
+            (*this)[index] = rhs[index];
+        }
     }
 
     /**
@@ -156,7 +180,7 @@ public:
      * @param rhs moved other buffer
      * @return Buffer& reference to *this
      */
-    Buffer& operator=(Buffer&& rhs)
+    Buffer& operator=(Buffer&& rhs) noexcept
     {
         //Cleanup
         unmap_memory();
@@ -214,6 +238,16 @@ public:
     }
 
     /**
+     * @brief Get the Queue object
+     * 
+     * @return const CommandQueuePtr 
+     */
+    const CommandQueuePtr getQueue() const
+    {
+        return queue_;
+    }
+
+    /**
      * @brief Return the size of the buffer in bytes
      *
      * @return size_t size in bytes
@@ -233,6 +267,12 @@ public:
         return num_elements_;
     }
 
+    /**
+     * @brief access operator
+     * 
+     * @param index get buffer at index 'index'
+     * @return T& buffer at index
+     */
     T& operator[](size_type index)
     {
         if (index >= num_elements_)
@@ -242,6 +282,12 @@ public:
         return virtual_address_[index];
     }
 
+    /**
+     * @brief const access operator
+     * 
+     * @param index get buffer at index 'index'
+     * @return const T& buffer at index
+     */
     const T& operator[](size_type index) const
     {
         if (index >= num_elements_)
@@ -251,21 +297,25 @@ public:
         return virtual_address_[index];
     }
 
+    /// return begin iterator
     iterator begin()
     {
         return iterator(virtual_address_);
     }
 
+    /// return end iterator
     iterator end()
     {
         return iterator(virtual_address_ + num_elements_);
     }
 
+    /// return const begin iterator
     const_iterator cbegin() const
     {
         return const_iterator(virtual_address_);
     }
 
+    /// return const end iterator
     const_iterator cend() const
     {
         return const_iterator(virtual_address_ + num_elements_);
@@ -291,15 +341,24 @@ public:
         :   Buffer<T>(queue, num_elements, CL_MEM_READ_ONLY, CL_MAP_WRITE)
     {}
 
-    ~InputBuffer() override = default;
+    /// destructor
+    ~InputBuffer() override final = default;
 
+    /// delete assignment operator 
     InputBuffer& operator=(InputBuffer&) = delete;
+
+    /// copy constructor, call Buffer<T> copy constructor
     InputBuffer(const InputBuffer& rhs) : Buffer<T>(rhs) {}
 
-    /**
-     * @brief Ensure that this buffer can be moved 
-     */
-    InputBuffer& operator=(InputBuffer&&) = default;
+    /// Ensure that this buffer can be moved: move operator
+    InputBuffer& operator=(InputBuffer&& rhs) noexcept 
+    { 
+        Buffer<T>::operator=(std::move(rhs)); 
+        return *this;
+    };
+
+    /// Ensure that this buffer can be moved: move constructor
+    InputBuffer(InputBuffer&& rhs) noexcept : Buffer<T>(std::move(rhs)) {}
 };
 
 /**
@@ -321,15 +380,24 @@ public:
         :   Buffer<T>(queue, num_elements, CL_MEM_WRITE_ONLY, CL_MAP_READ)
     {}
 
-    ~OutputBuffer() override = default;
+    /// destructor
+    ~OutputBuffer() override final = default;
 
+    /// delete assignment operator
     OutputBuffer& operator=(OutputBuffer&) = delete;
+
+    /// copy constructor: call Buffer<T> copy constructor
     OutputBuffer(const OutputBuffer& rhs) : Buffer<T>(rhs) {}
 
-    /**
-     * @brief Ensure that this buffer can be moved 
-     */
-    OutputBuffer& operator=(OutputBuffer&&) = default;
+    /// Ensure buffer can be moved
+    OutputBuffer& operator=(OutputBuffer&& rhs) noexcept
+    {
+        Buffer<T>::operator=(std::move(rhs));
+        return *this;
+    };
+
+    /// Ensure that this buffer can be moved: move constructor
+    OutputBuffer(OutputBuffer&& rhs) noexcept : Buffer<T>(std::move(rhs)) {}
 };
 
 /**
@@ -351,15 +419,24 @@ public:
         :   Buffer<T>(queue, num_elements, CL_MEM_READ_WRITE, CL_MAP_READ | CL_MAP_WRITE)
     {}
 
-    ~InputOutputBuffer() override = default;
+    /// destructor
+    ~InputOutputBuffer() override final = default;
 
+    /// delete assigment operator
     InputOutputBuffer& operator=(InputOutputBuffer&) = delete;
+
+    /// copy constructor
     InputOutputBuffer(const InputOutputBuffer& rhs) : Buffer<T>(rhs) {}
     
-    /**
-     * @brief Ensure that this buffer can be moved 
-     */
-    InputOutputBuffer& operator=(InputOutputBuffer&&) = default;
+    /// Ensure buffer can be moved
+    InputOutputBuffer& operator=(InputOutputBuffer&& rhs) noexcept
+    {
+        Buffer<T>::operator=(std::move(rhs));
+        return *this;
+    };
+
+    /// Ensure that this buffer can be moved: move constructor
+    InputOutputBuffer(InputOutputBuffer&& rhs) noexcept : Buffer<T>(std::move(rhs)) {}
 };
 
 } // namespace fastsense::buffer

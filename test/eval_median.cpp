@@ -10,13 +10,14 @@
 #include <hw/kernels/vadd_kernel.h>
 #include <registration/registration.h>
 #include <util/pcd/pcd_file.h>
-#include <hw/kernels/tsdf_kernel.h>
+#include <tsdf/krnl_tsdf.h>
 #include <preprocessing/preprocessing.h>
 
 #include "catch2_config.h"
 
 using fastsense::util::PCDFile;
 using namespace fastsense::msg;
+using namespace fastsense::preprocessing;
 
 namespace fastsense::registration
 {
@@ -35,7 +36,8 @@ constexpr float TZ = 0.0 * SCALE;
 constexpr float RY = 5 * (M_PI / 180); //radiants
 
 constexpr float TAU = 1 * SCALE;
-constexpr float MAX_WEIGHT = 10;// * WEIGHT_RESOLUTION;
+constexpr float MAX_WEIGHT = 10 * WEIGHT_RESOLUTION;
+constexpr int DZ_PER_DISTANCE = 572;
 
 constexpr int MAX_ITERATIONS = 200;
 
@@ -117,7 +119,7 @@ static EvalStats eval_registration(fastsense::map::LocalMap& local_map, fastsens
     auto buffer_ptr = scan_points_to_input_buffer(pretransformed, q);
     auto& buffer = *buffer_ptr;
     Matrix4f result_matrix = Matrix4f::Identity();
-    reg.register_cloud(local_map, buffer, util::HighResTime::now(), result_matrix);
+    reg.register_cloud(local_map, buffer, buffer.size(), util::HighResTime::now(), result_matrix);
 
     reg.transform_point_cloud(pretransformed, result_matrix);
     return get_transform_error(pretransformed, original);
@@ -132,7 +134,10 @@ TEST_CASE("Eval_Median", "[eval_median][slow]")
 {
     std::cout << "Testing 'Eval Median'" << std::endl;
 
-    fastsense::preprocessing::Preprocessing preprocessor;
+    auto pointcloud_buffer = std::make_shared<msg::PointCloudPtrStampedBuffer>(1);
+    auto pointcloud_bridge_buffer = std::make_shared<msg::PointCloudPtrStampedBuffer>(1);
+
+    Preprocessing preprocessor{pointcloud_buffer, pointcloud_bridge_buffer, 0, false, false};
 
     fastsense::CommandQueuePtr q = fastsense::hw::FPGAManager::create_command_queue();
 
@@ -221,12 +226,12 @@ TEST_CASE("Eval_Median", "[eval_median][slow]")
     //calc tsdf values for the points from the pcd and store them in the local map
 
     auto q3 = fastsense::hw::FPGAManager::create_command_queue();
-    fastsense::kernels::TSDFKernel krnl(q3, local_map.getBuffer().size());
+    fastsense::tsdf::TSDFKernel krnl(q3, local_map.getBuffer().size());
 
-    krnl.run(local_map, kernel_points, TAU, MAX_WEIGHT);
+    krnl.run(local_map, kernel_points, kernel_points.size(), TAU, MAX_WEIGHT);
     krnl.waitComplete();
 
-    krnl.run(local_map_preprocessed, kernel_points_preprocessed, TAU, MAX_WEIGHT);
+    krnl.run(local_map_preprocessed, kernel_points_preprocessed, kernel_points_preprocessed.size(), TAU, MAX_WEIGHT);
     krnl.waitComplete();
 
     SECTION("Test Registration No Transform")

@@ -8,74 +8,112 @@
 
 #include "tsdf_hw.h"
 
-class TSDFValue
+/**
+ * @brief Interface for a TSDF entry in hardware.
+ *        Entry can accessed via the complete datatype or the hardware representation, 
+ *        which constists of a value and a weight
+ */
+class TSDFEntry
 {
 public:
     using RawType = uint32_t;
-    using ValueType = TSDFValueHW::ValueType;
-    using WeightType = TSDFValueHW::WeightType;
+    using ValueType = TSDFEntryHW::ValueType;
+    using WeightType = TSDFEntryHW::WeightType;
 
 private:
+
+    /// Internally managed datatype
     union
     {
         RawType raw;
-        TSDFValueHW tsdf;
+        TSDFEntryHW tsdf;
     } data;
-    static_assert(sizeof(RawType) == sizeof(TSDFValueHW));            // raw and TSDF types must be of the same size
+    static_assert(sizeof(RawType) == sizeof(TSDFEntryHW));            // raw and TSDF types must be of the same size
 
 public:
 
-    TSDFValue(ValueType value, WeightType weight)
+    /**
+     * @brief Initialize the entry through a weight and a value
+     */
+    TSDFEntry(ValueType value, WeightType weight)
     {
         data.tsdf.value = value;
         data.tsdf.weight = weight;
     }
 
-    explicit TSDFValue(RawType raw)
+    /**
+     * @brief Initialize the entry through the raw data
+     */
+    explicit TSDFEntry(RawType raw)
     {
         data.raw = raw;
     }
 
-    TSDFValue() = default;
-    TSDFValue(const TSDFValue&) = default;
-    ~TSDFValue() = default;
-    TSDFValue& operator=(const TSDFValue&) = default;
+    // Default behaviour for copy and move
 
-    bool operator==(const TSDFValue& rhs) const
+    TSDFEntry() = default;
+    TSDFEntry(const TSDFEntry&) = default;
+    TSDFEntry(TSDFEntry&&) = default;
+    ~TSDFEntry() = default;
+    TSDFEntry& operator=(const TSDFEntry&) = default;
+    TSDFEntry& operator=(TSDFEntry&&) = default;
+
+    /**
+     * @brief Are the two TSDF entries equal? 
+     */
+    bool operator==(const TSDFEntry& rhs) const
     {
         return raw() == rhs.raw();
     }
 
+    /**
+     * @brief Get the complete data as raw type 
+     */
     RawType raw() const
     {
         return data.raw;
     }
 
+    /**
+     * @brief Set the TSDF entry through the raw type 
+     */
     void raw(RawType val)
     {
         data.raw = val;
     }
 
+    /**
+     * @brief Get the value from the TSDF entry
+     */
     ValueType value() const
     {
         return data.tsdf.value;
     }
 
+    /**
+     * @brief Set th value of the TSDF entry 
+     */
     void value(ValueType val)
     {
         data.tsdf.value = val;
     }
 
+    /**
+     * @brief Get the weight of the TSDF entry
+     */
     WeightType weight() const
     {
         return data.tsdf.weight;
     }
 
+    /**
+     * @brief Set the weight of the TSDF entry 
+     */
     void weight(WeightType val)
     {
         data.tsdf.weight = val;
     }
 };
 
-static_assert(sizeof(TSDFValue) == sizeof(TSDFValueHW));          // HW and SW types must be of the same size
+static_assert(sizeof(TSDFEntry) == sizeof(TSDFEntryHW));          // HW and SW types must be of the same size
 

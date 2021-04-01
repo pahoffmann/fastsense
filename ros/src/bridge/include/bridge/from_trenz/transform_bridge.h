@@ -32,8 +32,9 @@ public:
      * @param n ros::NodeHandle
      * @param board_addr ip addr of Trenz board
      * @param timeout how long to wait for new messages before trying again
+     * @param discard_timestamp Whether or not to discard timestamps and replace with ros::Time::now()
      */
-    TransformBridge(ros::NodeHandle& n, const std::string& board_addr, std::chrono::milliseconds timeout);
+    TransformBridge(ros::NodeHandle& n, const std::string& board_addr, std::chrono::milliseconds timeout, bool discard_timestamp);
 
     /**
      * @brief Destroy the Transform Bridge object
@@ -96,6 +97,9 @@ private:
 
     /// Single PoseStamped to append to path
     geometry_msgs::PoseStamped pose_stamped;
+
+    /// Whether or not to discard timestamps and replace with ros::Time::now()
+    bool discard_timestamp_;
 };
 
 } // namespace fastsense::bridge

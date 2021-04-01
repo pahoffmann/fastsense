@@ -12,21 +12,56 @@
 
 #include <util/point.h>
 #include <util/tsdf.h>
+#include <msg/stamped.h>
 
 namespace fastsense::msg
 {
 
+/**
+ * @brief Represents TSDF Bridge Message
+ * 
+ * Inherits from ZMQConverter, because it contains a dynamic data type (std::vector)
+ */
 struct TSDFBridgeMessage : public ZMQConverter
 {
+    /// default constructor
     TSDFBridgeMessage() = default;
+
+    /// default destructor
     ~TSDFBridgeMessage() override = default;
 
-    float tau_;
-    Vector3i size_;
-    Vector3i pos_;
-    Vector3i offset_;
-    std::vector<TSDFValue> tsdf_data_;
+    /// copy assignment operator
+    TSDFBridgeMessage& operator=(const TSDFBridgeMessage& other) = default;
 
+    /// default move assignment operator
+    TSDFBridgeMessage& operator=(TSDFBridgeMessage&&) noexcept = default;
+
+    /// default copy constructor
+    TSDFBridgeMessage(const TSDFBridgeMessage&) = default;
+
+    /// default move constructor
+    TSDFBridgeMessage(TSDFBridgeMessage&&) noexcept = default;
+
+    /// truncation distance
+    float tau_;
+
+    /// size of map 
+    Vector3i size_;
+
+    /// global position
+    Vector3i pos_;
+    
+    /// shift offset
+    Vector3i offset_;
+
+    /// actual tsdf data
+    std::vector<TSDFEntry> tsdf_data_;
+
+    /**
+     * @brief Convert zmq_multipart to TSDFBridgeMessage
+     * 
+     * @param msg multipart message
+     */
     void from_zmq_msg(zmq::multipart_t& msg)
     {
         tau_ = msg.poptyp<float>();
@@ -35,12 +70,17 @@ struct TSDFBridgeMessage : public ZMQConverter
         offset_ = msg.poptyp<Vector3i>();
 
         zmq::message_t tsdf_data_msg = msg.pop();
-        size_t n_tsdf_values = tsdf_data_msg.size() / sizeof(TSDFValue);
+        size_t n_tsdf_values = tsdf_data_msg.size() / sizeof(TSDFEntry);
         tsdf_data_.clear();
         tsdf_data_.reserve(n_tsdf_values);
-        std::copy_n(static_cast<TSDFValue*>(tsdf_data_msg.data()), n_tsdf_values, std::back_inserter(tsdf_data_));
+        std::copy_n(static_cast<TSDFEntry*>(tsdf_data_msg.data()), n_tsdf_values, std::back_inserter(tsdf_data_));
     }
 
+    /**
+     * @brief Convert TSDFBridgeMessage to multipart
+     * 
+     * @return zmq::multipart_t zmw multipart message
+     */
     zmq::multipart_t to_zmq_msg() const
     {
         zmq::multipart_t multi;
@@ -52,5 +92,7 @@ struct TSDFBridgeMessage : public ZMQConverter
         return multi;
     }
 };
+
+using TSDFBridgeMessageStamped = Stamped<TSDFBridgeMessage>;
 
 } // namespace fastsense::msg

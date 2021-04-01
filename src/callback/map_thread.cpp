@@ -16,9 +16,9 @@ using fastsense::util::logging::Logger;
 
 MapThread::MapThread(const std::shared_ptr<fastsense::map::LocalMap>& local_map,
                      std::mutex& map_mutex,
-                     std::shared_ptr<TSDFBuffer> tsdf_buffer,
                      unsigned int period,
                      float position_threshold,
+                     uint16_t port,
                      fastsense::CommandQueuePtr& q)
     : ProcessThread(),
       local_map_(local_map),
@@ -28,7 +28,8 @@ MapThread::MapThread(const std::shared_ptr<fastsense::map::LocalMap>& local_map,
       period_(period),
       position_threshold_(position_threshold),
       reg_cnt_(0),
-      tsdf_buffer_(tsdf_buffer)
+      tsdf_msg_(),
+      sender_(port)
 {
     /*
     Use the mutex as a 1-semaphore.
@@ -36,9 +37,11 @@ MapThread::MapThread(const std::shared_ptr<fastsense::map::LocalMap>& local_map,
     The mutex starts in the wrong state.
     */
     start_mutex_.lock();
+
+    tsdf_msg_.data_.tsdf_data_.resize(local_map->getBuffer().size());
 }
 
-void MapThread::go(const Vector3i& pos, const Eigen::Matrix4f& pose, const fastsense::buffer::InputBuffer<PointHW>& points)
+void MapThread::go(const Vector3i& pos, const Eigen::Matrix4f& pose, const fastsense::buffer::InputBuffer<PointHW>& points, int num_points)
 {
     reg_cnt_++;
     const Vector3i& old_pos = local_map_->get_pos();
@@ -50,7 +53,16 @@ void MapThread::go(const Vector3i& pos, const Eigen::Matrix4f& pose, const fasts
     {
         pos_ = pos;
         pose_ = pose;
-        points_ptr_.reset(new fastsense::buffer::InputBuffer<PointHW>(points));
+        if (points_ptr_ == nullptr || points_ptr_->size() != points.size())
+        {
+            points_ptr_.reset();
+            points_ptr_.reset(new fastsense::buffer::InputBuffer<PointHW>(points));
+        }
+        else
+        {
+            points_ptr_->fill_from(points);
+        }
+        num_points_ = num_points;
         active_ = true;
         start_mutex_.unlock(); // signal
         reg_cnt_ = 0;
@@ -61,6 +73,7 @@ void MapThread::thread_run()
 {
     // Second runtime evaluator for measurements in this thread
     util::RuntimeEvaluator eval;
+    map::LocalMap tmp_map(*local_map_);
 
     while (running)
     {
@@ -71,13 +84,9 @@ void MapThread::thread_run()
         }
         Logger::info("Starting SUV");
 
-        eval.start("copy");
-        map::LocalMap tmp_map(*local_map_);
-        eval.stop("copy");
-
         // shift
         eval.start("shift");
-        tmp_map.shift(pos_.x(), pos_.y(), pos_.z());
+        tmp_map.shift(pos_);
         eval.stop("shift");
 
         // tsdf update
@@ -88,26 +97,27 @@ void MapThread::thread_run()
         v << Vector3i(0, 0, MATRIX_RESOLUTION), 1;
         Vector3i up = (rotation_mat * v).block<3, 1>(0, 0) / MATRIX_RESOLUTION;
         PointHW up_hw(up.x(), up.y(), up.z());
-        int tau = ConfigManager::config().slam.max_distance();
-        int max_weight = ConfigManager::config().slam.max_weight() * WEIGHT_RESOLUTION;
-        tsdf_krnl_.run(tmp_map, *points_ptr_, tau, max_weight, up_hw);
-        tsdf_krnl_.waitComplete();
+
+        tsdf_krnl_.synchronized_run(tmp_map, *points_ptr_, num_points_, up_hw);
         eval.stop("tsdf");
 
         map_mutex_.lock();
-        *local_map_ = std::move(tmp_map);
+        local_map_->swap(tmp_map);
         map_mutex_.unlock();
+
+        eval.start("copy");
+        tmp_map.fill_from(*local_map_);
+        eval.stop("copy");
 
         // visualize
         eval.start("vis");
-        msg::TSDFBridgeMessage tsdf_msg;
-        tsdf_msg.tau_ = tau;
-        tsdf_msg.size_ = local_map_->get_size();
-        tsdf_msg.pos_ = local_map_->get_pos();
-        tsdf_msg.offset_ = local_map_->get_offset();
-        tsdf_msg.tsdf_data_.reserve(local_map_->getBuffer().size());
-        std::copy(local_map_->getBuffer().cbegin(), local_map_->getBuffer().cend(), std::back_inserter(tsdf_msg.tsdf_data_));
-        tsdf_buffer_->push_nb(tsdf_msg, true);
+        tsdf_msg_.update_time();
+        tsdf_msg_.data_.tau_ = ConfigManager::config().slam.max_distance();
+        tsdf_msg_.data_.size_ = local_map_->get_size();
+        tsdf_msg_.data_.pos_ = local_map_->get_pos();
+        tsdf_msg_.data_.offset_ = local_map_->get_offset();
+        std::copy(local_map_->getBuffer().cbegin(), local_map_->getBuffer().cend(), tsdf_msg_.data_.tsdf_data_.data());
+        sender_.send(tsdf_msg_);
         eval.stop("vis");
 
         Logger::info("Map Thread:\n", eval.to_string(), "\nStopping SUV");

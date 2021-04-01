@@ -35,12 +35,15 @@ public:
      */
     explicit EventHandlerHandle(typename std::list<std::function<T>>::iterator it);
 
+    /// default destructor
+    ~EventHandlerHandle() = default;
+
     /**
      * @brief Create new handle from moved object
      *
      * @param rhs Object to move from
      */
-    EventHandlerHandle(EventHandlerHandle&& rhs);
+    EventHandlerHandle(EventHandlerHandle&& rhs) noexcept;
 
     /**
      * @brief Move assign with other object
@@ -48,7 +51,13 @@ public:
      * @param rhs Object to move from
      * @return EventHandlerHandle<T>& Reference to *this
      */
-    EventHandlerHandle<T>& operator=(EventHandlerHandle&& rhs);
+    EventHandlerHandle<T>& operator=(EventHandlerHandle&& rhs) noexcept;
+
+    /// delete copy assignment operator
+    EventHandlerHandle& operator=(const EventHandlerHandle& other) = delete;
+
+    /// delete copy constructor
+    EventHandlerHandle(const EventHandlerHandle&) = delete;
 };
 
 /**
@@ -67,6 +76,18 @@ class EventHandlerList
 public:
     EventHandlerList() = default;
     ~EventHandlerList() = default;
+    
+    /// delete copy assignment operator
+    EventHandlerList& operator=(const EventHandlerList& other) = delete;
+
+    /// delete move assignment operator
+    EventHandlerList& operator=(EventHandlerList&&) noexcept = delete;
+
+    /// delete copy constructor
+    EventHandlerList(const EventHandlerList&) = delete;
+
+    /// delete move constructor
+    EventHandlerList(EventHandlerList&&) = delete;
 
     /**
      * @brief Add event handler
