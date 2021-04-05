@@ -38,6 +38,9 @@ public:
     /// delete move constructor
     Application(Application&&) = delete;
 
+    /**
+     * @brief This function starts the SLAM-Algorithm. It initalizes all buffers, imu/lidar driver, global map, local map and starts all threads.
+     */
     int run();
 };
 

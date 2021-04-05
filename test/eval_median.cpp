@@ -22,16 +22,15 @@ using namespace fastsense::preprocessing;
 namespace fastsense::registration
 {
 
-//static const int DATA_SIZE = 4096;
-
 constexpr unsigned int SCALE = 1000;
 
-constexpr float MAX_OFFSET = 100; // TODO: this is too much
+constexpr float MAX_OFFSET = 100;
 
 // Test Translation
 constexpr float TX = 0.3 * SCALE;
 constexpr float TY = 0.3 * SCALE;
 constexpr float TZ = 0.0 * SCALE;
+
 // Test Rotation
 constexpr float RY = 5 * (M_PI / 180); //radiants
 
@@ -142,6 +141,7 @@ TEST_CASE("Eval_Median", "[eval_median][slow]")
     fastsense::CommandQueuePtr q = fastsense::hw::FPGAManager::create_command_queue();
 
     auto buffer = std::make_shared<msg::ImuStampedBuffer>(0);
+    
     //test registration
     fastsense::registration::Registration reg(q, buffer, MAX_ITERATIONS);
 
@@ -165,7 +165,6 @@ TEST_CASE("Eval_Median", "[eval_median][slow]")
     cloud_stamped.data_->points_.resize(num_points);
     cloud_stamped.data_->rings_ = float_points.size();
 
-
     // Prepare normal registartion points
     for (const auto& ring : float_points)
     {
@@ -186,7 +185,7 @@ TEST_CASE("Eval_Median", "[eval_median][slow]")
     }
 
     // Preprocessed points
-    preprocessor.median_filter(cloud_stamped, 5);
+    preprocessor.median_filter_average(cloud_stamped, 5);
 
     for (auto index = 0u; index < num_points; ++index)
     {
@@ -208,9 +207,7 @@ TEST_CASE("Eval_Median", "[eval_median][slow]")
     std::shared_ptr<fastsense::map::GlobalMap> global_map_preprocessed_ptr(new fastsense::map::GlobalMap("test_global_map2.h5", 0.0, 0.0));
     fastsense::map::LocalMap local_map_preprocessed(SIZE_Y, SIZE_Y, SIZE_Z, global_map_preprocessed_ptr, q);
     
-
     // Initialize temporary testing variables
-
     Eigen::Matrix4f translation_mat;
     translation_mat << 1, 0, 0, TX,
                     0, 1, 0, TY,
@@ -223,8 +220,7 @@ TEST_CASE("Eval_Median", "[eval_median][slow]")
                  0,             0,       1, 0,
                  0,             0,       0, 1;
 
-    //calc tsdf values for the points from the pcd and store them in the local map
-
+    // Calculate tsdf values for the points from the pcd and store them in the local map
     auto q3 = fastsense::hw::FPGAManager::create_command_queue();
     fastsense::tsdf::TSDFKernel krnl(q3, local_map.getBuffer().size());
 
@@ -271,5 +267,4 @@ TEST_CASE("Eval_Median", "[eval_median][slow]")
         REQUIRE(with.average - without.average < MAX_DIFFERENCE);
     }
 }
-
-} //namespace fastsense::registration
+}

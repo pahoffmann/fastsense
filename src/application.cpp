@@ -42,8 +42,7 @@ using fastsense::preprocessing::Preprocessing;
 
 Application::Application()
     : config{ConfigManager::config()}
-{
-}
+{}
 
 std::unique_ptr<util::ProcessThread> Application::init_imu(msg::ImuStampedBuffer::Ptr imu_buffer)
 {
@@ -116,6 +115,7 @@ int Application::run()
     bool send_original = config.bridge.send_original();
     bool send_preprocessed = config.bridge.send_preprocessed();
     bool send_after_registration = config.bridge.send_after_registration();
+
     if (send_original + send_preprocessed + send_after_registration > 1)
     {
         throw std::runtime_error("More than one send option active in config.json/bridge/send_*");
@@ -139,6 +139,7 @@ int Application::run()
     int tau = config.slam.max_distance();
     int max_weight = config.slam.max_weight() * WEIGHT_RESOLUTION;
     int initial_weight = config.slam.initial_map_weight() * WEIGHT_RESOLUTION;
+
     assert(tau >= std::numeric_limits<TSDFEntry::ValueType>::min());
     assert(tau <= std::numeric_limits<TSDFEntry::ValueType>::max());
     assert(max_weight >= 0);
@@ -263,7 +264,6 @@ int Application::run()
             Runner run_pointcloud_send_bridge(pointcloud_send_bridge);
             Runner run_map_thread(map_thread);
 
-            // clear any remaining messages FIXME: WHY IS THIS NECESSARY???
             std::this_thread::sleep_for(1s);
             imu_buffer->clear();
             imu_bridge_buffer->clear();

@@ -15,20 +15,16 @@ using namespace std::chrono_literals;
 
 static void transform_point_cloud(std::vector<Vector3f>& in_cloud, const Matrix4f& mat)
 {
-    // #pragma omp parallel for schedule(static)
     for (auto i = 0u; i < in_cloud.size(); ++i)
     {
         Eigen::Vector4f v;
         v << in_cloud[i], 1;
         in_cloud[i] = (mat * v).block<3,1>(0, 0);
-
     }
 }
 
 TEST_CASE("AccumulatorPos", "[Accumulator]")
 {
-
-    //msg::ImuStampedBuffer imu_buffer(10);
     auto imu_buffer = std::make_shared<msg::ImuStampedBuffer>(10);
 
     auto stamp = util::HighResTime::now();
@@ -36,6 +32,7 @@ TEST_CASE("AccumulatorPos", "[Accumulator]")
 
     msg::Imu imu{msg::LinearAcceleration{0,0,0}, msg::AngularVelocity{0,0,M_PI}, msg::MagneticField{0,0,0}};
 
+    // Put imu messages into the imu buffer
     for (const auto& i: {1, 2, 3, 4, 5, 6, 7})
     {
         msg::ImuStamped imu_msg{imu, util::HighResTimePoint(stamp + i * diff)};
@@ -46,10 +43,11 @@ TEST_CASE("AccumulatorPos", "[Accumulator]")
 
     Eigen::Matrix4f acc = imu_acc.acc_transform(util::HighResTimePoint(stamp + 5 * diff));
 
-    // target rotation in deg
+    // Target rotation in deg
     auto target = 180; 
-    // target rotation r in radians
-    float r = target * (M_PI / 180); 
+    // Target rotation r in radians
+    float r = target * (M_PI / 180);
+
     Eigen::Matrix4f rotation_mat;
     rotation_mat <<  cos(r), -sin(r), 0, 0,
                      sin(r),  cos(r), 0, 0,
@@ -70,7 +68,8 @@ TEST_CASE("AccumulatorPos", "[Accumulator]")
     
     acc = imu_acc.acc_transform(util::HighResTimePoint(stamp + 7 * diff));
 
-    // 2 imu messages left in buffer -> -90 grad rotation around z axis
+    // 2 imu messages left in buffer -> 90 grad rotation around z axis
+    
     // target rotation in deg
     target = 90; 
     // target rotation r in radians
@@ -96,7 +95,6 @@ TEST_CASE("AccumulatorPos", "[Accumulator]")
 
 TEST_CASE("AccumulatorNeg", "[Accumulator]")
 {
-
     auto imu_buffer = std::make_shared<msg::ImuStampedBuffer>(10);
 
     auto stamp = util::HighResTime::now();
@@ -118,6 +116,7 @@ TEST_CASE("AccumulatorNeg", "[Accumulator]")
     auto target = -180; 
     // target rotation r in radians
     float r = target * (M_PI / 180); 
+
     Eigen::Matrix4f rotation_mat;
     rotation_mat <<  cos(r), -sin(r), 0, 0,
                      sin(r),  cos(r), 0, 0,

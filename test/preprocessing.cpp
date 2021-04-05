@@ -15,8 +15,6 @@ using fastsense::ScanPoint;
 
 TEST_CASE("Preprocessing", "[Preprocessing]")
 {
-    REQUIRE(1 == 1);
-
     auto pointcloud_buffer = std::make_shared<msg::PointCloudPtrStampedBuffer>(1);
     auto pointcloud_bridge_buffer = std::make_shared<msg::PointCloudPtrStampedBuffer>(1);
 
@@ -26,6 +24,7 @@ TEST_CASE("Preprocessing", "[Preprocessing]")
     cloud_stamped.data_ = cloud;
 
     std::vector<ScanPoint> points(24);
+    
     //RING 1
     points[0] = {0, 0, 10}; //d = 10
     points[2] = {20, 20, 30}; //d = 41.231056
@@ -54,15 +53,11 @@ TEST_CASE("Preprocessing", "[Preprocessing]")
     points[21] = {50, 50, 40}; //d = 81.240384
     points[23] = {50, 50, 20}; //d = 73.484692
     
-
-
-    //cloud->rings_ = 2;
-    //cloud->points_ = points;
     cloud_stamped.data_->points_ = points;
     cloud_stamped.data_->rings_ = 2;
 
-    SECTION("Test median filter"){
-
+    SECTION("Test median filter")
+    {
         preprocessor.median_filter(cloud_stamped, 5);
 
         std::vector<ScanPoint> result(24);
@@ -92,17 +87,15 @@ TEST_CASE("Preprocessing", "[Preprocessing]")
         result[21] = {10, 10, 40}; //d = 42.426407
         result[23] = {10, 10, 40}; //d = 42.426407
 
-        for(uint32_t i = 0; i < result.size(); i++)
+        for (uint32_t i = 0; i < result.size(); i++)
         {
             REQUIRE(cloud_stamped.data_->points_[i] == result[i]);
         }
     }
 
 
-
-
-    SECTION("Test reduction filter average"){
-
+    SECTION("Test reduction filter average")
+    {
         //n = 5
         //x = 35,8
         //y = 33,4
@@ -205,7 +198,7 @@ TEST_CASE("Preprocessing", "[Preprocessing]")
         result_reduction[8] = {150, 150, 150}; //
         result_reduction[9] = {-23, 33, -28};
 
-        for(uint32_t i = 0; i < result_reduction.size(); i++)
+        for (uint32_t i = 0; i < result_reduction.size(); i++)
         {
             auto f = std::find(result_reduction.begin(), result_reduction.end(), cloud_stamped.data_->points_[i]);
             REQUIRE(f != result_reduction.end());
@@ -247,7 +240,7 @@ TEST_CASE("Preprocessing", "[Preprocessing]")
     }
 
 
-    SECTION("Test reduction filter voxel center"){
+    SECTION("Test reduction filter random point"){
 
         points.resize(8);
 
@@ -269,7 +262,8 @@ TEST_CASE("Preprocessing", "[Preprocessing]")
 
         preprocessor.reduction_filter_random_point(cloud_stamped);
 
-        for(auto& point : cloud_stamped.data_->points_){
+        for (auto& point : cloud_stamped.data_->points_)
+        {
             std::cout << "x: " << point.x() << " y: " << point.y() << "z: " << point.z() << std::endl;
         }
 

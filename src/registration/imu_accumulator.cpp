@@ -16,26 +16,29 @@ ImuAccumulator::ImuAccumulator(msg::ImuStampedBuffer::Ptr& buffer)
 {}
 
 
-bool ImuAccumulator::before(fastsense::util::HighResTimePoint& ts_1, fastsense::util::HighResTimePoint& ts_2){
+bool ImuAccumulator::before(fastsense::util::HighResTimePoint& ts_1, fastsense::util::HighResTimePoint& ts_2)
+{
     return std::chrono::duration_cast<std::chrono::milliseconds>(ts_2 - ts_1).count() >= 0;
 }
 
-Eigen::Matrix4f ImuAccumulator::acc_transform(util::HighResTimePoint pcl_timestamp) {
-    
+Eigen::Matrix4f ImuAccumulator::acc_transform(util::HighResTimePoint pcl_timestamp) 
+{    
     msg::ImuStamped imu_msg;
     Matrix4f acc_transform = Matrix4f::Identity();
     
     auto imu_before_pcl = [&](msg::ImuStamped& msg){ return before(msg.timestamp_, pcl_timestamp); };
 
-    while(buffer_->pop_nb_if(&imu_msg, imu_before_pcl)) 
+    //iterate through all imu messages which were published before the current pointcloud
+    while (buffer_->pop_nb_if(&imu_msg, imu_before_pcl)) 
     {
-        if(first_imu_msg_)
+        if (first_imu_msg_)
         {
             last_imu_timestamp_ = imu_msg.timestamp_;
             first_imu_msg_ = false;
             continue;
         }
         
+        //add imu message to accumulation matrix
         apply_transform(acc_transform, imu_msg);
         last_imu_timestamp_ = imu_msg.timestamp_;
     }

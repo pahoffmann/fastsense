@@ -58,6 +58,9 @@ public:
     void set_local_map(const std::shared_ptr<LocalMap>& local_map);
 
 protected:
+    /**
+     * @brief Contains main functionality of the cloud callback. Mainly gets the current pointcloud out of the buffer and calls the registration and map update step.
+     */
     void thread_run() override;
 
 private:
