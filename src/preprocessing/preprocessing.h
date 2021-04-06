@@ -103,9 +103,16 @@ private:
      */
     uint8_t median_from_array(std::vector<ScanPoint*> medians);
 
+    // Pointer to the buffer where the pointcloud (at various states through preprocessing) can be written into in order to send it to the host pc 
     const std::shared_ptr<PointCloudBuffer> send_buffer;
+    
+    // Boolean that determines whether the input point cloud should be send to the host pc or not
     bool send_original;
+
+    // Boolean that determines whether the preprocessed point cloud should be send to the host pc or not
     bool send_preprocessed;
+
+    // The value the pointcloud should be scaled with
     float scale;
 };
 
