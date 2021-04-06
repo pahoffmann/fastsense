@@ -122,7 +122,6 @@ static EvalStats eval_registration(fastsense::map::LocalMap& local_map, fastsens
 
     reg.transform_point_cloud(pretransformed, result_matrix);
     return get_transform_error(pretransformed, original);
-
 }
 
 static const std::string error_message =
@@ -142,12 +141,13 @@ TEST_CASE("Eval_Median", "[eval_median][slow]")
 
     auto buffer = std::make_shared<msg::ImuStampedBuffer>(0);
     
-    //test registration
+    // Test registration
     fastsense::registration::Registration reg(q, buffer, MAX_ITERATIONS);
 
     std::vector<std::vector<Vector3f>> float_points;
     unsigned int num_points;
 
+    // Read pointcloud from .pcd file
     fastsense::util::PCDFile file("robo_lab.pcd");
     file.readPoints(float_points, num_points);
 

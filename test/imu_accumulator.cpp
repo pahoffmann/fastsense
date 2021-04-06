@@ -32,7 +32,7 @@ TEST_CASE("AccumulatorPos", "[Accumulator]")
 
     msg::Imu imu{msg::LinearAcceleration{0,0,0}, msg::AngularVelocity{0,0,M_PI}, msg::MagneticField{0,0,0}};
 
-    // Put imu messages into the imu buffer
+    // Put test imu messages into the imu buffer
     for (const auto& i: {1, 2, 3, 4, 5, 6, 7})
     {
         msg::ImuStamped imu_msg{imu, util::HighResTimePoint(stamp + i * diff)};
@@ -45,7 +45,7 @@ TEST_CASE("AccumulatorPos", "[Accumulator]")
 
     // Target rotation in deg
     auto target = 180; 
-    // Target rotation r in radians
+    // Target rotation in radians
     float r = target * (M_PI / 180);
 
     Eigen::Matrix4f rotation_mat;

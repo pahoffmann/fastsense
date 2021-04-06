@@ -266,7 +266,5 @@ TEST_CASE("Preprocessing", "[Preprocessing]")
         {
             std::cout << "x: " << point.x() << " y: " << point.y() << "z: " << point.z() << std::endl;
         }
-
     }
-
 }
