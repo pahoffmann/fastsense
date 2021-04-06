@@ -46,13 +46,14 @@ void VelodyneBridge::convert()
 
     timestamp_ = timestamp_to_rostime(msg_.timestamp_, discard_timestamp_);
     const auto& msg_points = msg_.data_.points_;
+    const auto& scaling = msg_.data_.scaling_;
 
     std::transform(msg_points.begin(), msg_points.end(), std::back_inserter(points_), [](const ScanPoint& p)
     {
         geometry_msgs::Point32 out;
-        out.x = p.x() * 0.001f / 0.2;
-        out.y = p.y() * 0.001f / 0.2;
-        out.z = p.z() * 0.001f / 0.2;
+        out.x = p.x() * 0.001f / scaling;
+        out.y = p.y() * 0.001f / scaling;
+        out.z = p.z() * 0.001f / scaling;
         return out;
     });
 

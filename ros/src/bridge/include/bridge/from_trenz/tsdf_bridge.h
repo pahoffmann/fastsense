@@ -11,16 +11,16 @@
 #include <std_msgs/ColorRGBA.h>
 
 #include "bridge_base.h"
-#include <msg/tsdf_bridge_msg.h>
+#include <msg/tsdf.h>
 #include <util/tsdf.h>
 
 namespace fastsense::bridge
 {
 
 /**
- * @brief TSDFBridge converts TSDF data of type msg::TSDFBridgeMessage into ROS Markers
+ * @brief TSDFBridge converts TSDF data of type msg::TSDF into ROS Markers
  */
-class TSDFBridge :  public BridgeBase<msg::TSDFBridgeMessageStamped, visualization_msgs::Marker, 6666>, 
+class TSDFBridge :  public BridgeBase<msg::TSDFStamped, visualization_msgs::Marker, 6666>, 
                     public util::ProcessThread
 {
 public:
@@ -46,12 +46,12 @@ private:
     void publish() final;
 
     /**
-     * @brief Converts msg::TSDFBridgeMessage to visualization_msgs::Marker
+     * @brief Converts msg::TSDF to visualization_msgs::Marker
      */
     void convert() final;
 
     /**
-     * @brief Run listens for TSDFBridgeMessages, converts it to ROS Marker
+     * @brief Run listens for TSDFs, converts it to ROS Marker
      * and publishes in an endless loop (running in its own thread)
      */
     void run() final;

@@ -1,7 +1,7 @@
 #pragma once
 
 /**
- * @file tsdf_bridge_msg.h
+ * @file tsdf.h
  * @author Julian Gaal
  * @date 2020-09-29
  */
@@ -22,25 +22,25 @@ namespace fastsense::msg
  * 
  * Inherits from ZMQConverter, because it contains a dynamic data type (std::vector)
  */
-struct TSDFBridgeMessage : public ZMQConverter
+struct TSDF : public ZMQConverter
 {
     /// default constructor
-    TSDFBridgeMessage() = default;
+    TSDF() = default;
 
     /// default destructor
-    ~TSDFBridgeMessage() override = default;
+    ~TSDF() override = default;
 
     /// copy assignment operator
-    TSDFBridgeMessage& operator=(const TSDFBridgeMessage& other) = default;
+    TSDF& operator=(const TSDF& other) = default;
 
     /// default move assignment operator
-    TSDFBridgeMessage& operator=(TSDFBridgeMessage&&) noexcept = default;
+    TSDF& operator=(TSDF&&) noexcept = default;
 
     /// default copy constructor
-    TSDFBridgeMessage(const TSDFBridgeMessage&) = default;
+    TSDF(const TSDF&) = default;
 
     /// default move constructor
-    TSDFBridgeMessage(TSDFBridgeMessage&&) noexcept = default;
+    TSDF(TSDF&&) noexcept = default;
 
     /// truncation distance
     float tau_;
@@ -58,7 +58,7 @@ struct TSDFBridgeMessage : public ZMQConverter
     std::vector<TSDFValue> tsdf_data_;
 
     /**
-     * @brief Convert zmq_multipart to TSDFBridgeMessage
+     * @brief Convert zmq_multipart to TSDF
      * 
      * @param msg multipart message
      */
@@ -77,7 +77,7 @@ struct TSDFBridgeMessage : public ZMQConverter
     }
 
     /**
-     * @brief Convert TSDFBridgeMessage to multipart
+     * @brief Convert TSDF to multipart
      * 
      * @return zmq::multipart_t zmw multipart message
      */
@@ -93,6 +93,6 @@ struct TSDFBridgeMessage : public ZMQConverter
     }
 };
 
-using TSDFBridgeMessageStamped = Stamped<TSDFBridgeMessage>;
+using TSDFStamped = Stamped<TSDF>;
 
 } // namespace fastsense::msg

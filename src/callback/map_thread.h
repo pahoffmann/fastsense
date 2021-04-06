@@ -10,7 +10,7 @@
 #include <atomic>
 
 #include <msg/transform.h>
-#include <msg/tsdf_bridge_msg.h>
+#include <msg/tsdf.h>
 #include <map/local_map.h>
 #include <tsdf/krnl_tsdf.h>
 #include <util/point_hw.h>
@@ -23,7 +23,7 @@ namespace fastsense::callback
 {
 
 using Eigen::Vector3i;
-using TSDFBuffer = util::ConcurrentRingBuffer<msg::TSDFBridgeMessage>;
+using TSDFBuffer = util::ConcurrentRingBuffer<msg::TSDF>;
 
 /**
  * @brief This class encapsulates the asynchronous map shift, tsdf update and visualization of the map.
@@ -132,9 +132,9 @@ private:
     /// Counter for the number of performed registrations after the last thread activation
     unsigned int reg_cnt_;
     /// Message to send with the tsdf values
-    msg::TSDFBridgeMessageStamped tsdf_msg_;
+    msg::TSDFStamped tsdf_msg_;
     /// Buffer for starting the map visualization thread
-    comm::Sender<msg::TSDFBridgeMessageStamped> sender_;
+    comm::Sender<msg::TSDFStamped> sender_;
 };
 
 } // namespace fastsense::callback

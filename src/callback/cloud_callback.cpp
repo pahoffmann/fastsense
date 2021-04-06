@@ -25,20 +25,22 @@ CloudCallback::CloudCallback(Registration& registration,
                              bool send_after_registration,
                              const fastsense::CommandQueuePtr& q,
                              MapThread& map_thread,
-                             std::mutex& map_mutex)
+                             std::mutex& map_mutex,
+                             float point_scale)
     : ProcessThread(),
       registration{registration},
       cloud_buffer{cloud_buffer},
       local_map{local_map},
       global_map{global_map},
       pose{Matrix4f::Identity()},
-    transform_buffer{transform_buffer},
+      transform_buffer{transform_buffer},
       pointcloud_buffer{pointcloud_buffer},
       send_after_registration{send_after_registration},
       first_iteration{true},
       q{q},
       map_thread{map_thread},
-      map_mutex{map_mutex}
+      map_mutex{map_mutex},
+      point_scale{point_scale}
 {
 
 }
@@ -56,6 +58,8 @@ void CloudCallback::set_local_map(const std::shared_ptr<LocalMap>& local_map)
 void CloudCallback::thread_run()
 {
     fastsense::msg::PointCloudPtrStamped point_cloud;
+    point_cloud.data_->scaling_ = point_scale;
+
     std::unique_ptr<InputBuffer<PointHW>> scan_point_buffer;
     auto& eval = RuntimeEvaluator::get_instance();
 #ifdef TIME_MEASUREMENT
@@ -99,8 +103,6 @@ void CloudCallback::thread_run()
             eval.stop("reg");
             map_mutex.unlock();
 
-            // Logger::info("Pose:\n", std::fixed, std::setprecision(4), pose);
-
             if (std::isnan(pose(0, 0)))
             {
                 Logger::error("Registration gave NaN");
@@ -115,12 +117,10 @@ void CloudCallback::thread_run()
 
         Eigen::Quaternionf quat(pose.block<3, 3>(0, 0));
 
-        // global_map->save_pose(pose(0, 3), pose(1, 3), pose(2, 3),
-        //                       quat.x(), quat.y(), quat.z(), quat.w());
-
         msg::TransformStamped transform;
         transform.data_.translation = pose.block<3, 1>(0, 3);
         transform.data_.rotation = quat;
+        transform.data_.scaling = point_scale;
         transform_buffer->push_nb(transform, true);
 
         if (send_after_registration)

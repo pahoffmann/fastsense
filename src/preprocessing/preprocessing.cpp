@@ -68,9 +68,7 @@ void Preprocessing::thread_run()
             }
         }
 
-        //;
-        //median_filter(out_cloud, 5);
-        
+        median_filter(out_cloud, 5);
         reduction_filter_closest(out_cloud);
 
         if (!this->out_->push_nb(out_cloud, true))
@@ -109,7 +107,7 @@ void Preprocessing::reduction_filter_average(fastsense::msg::PointCloudPtrStampe
 
         auto& avg_point = point_map.try_emplace(voxel, default_value).first->second;
         avg_point.first += point.cast<int>();
-    avg_point.second++;
+        avg_point.second++;
     }
 
     cloud_points.resize(point_map.size());
@@ -251,6 +249,7 @@ void Preprocessing::median_filter(fastsense::msg::PointCloudPtrStamped& cloud, u
 
     if (window_size % 2 == 0)
     {
+        Logger::warning("Median filter window must be % 2 == 1, but isn't. Skipping.");
         return;
     }
 
