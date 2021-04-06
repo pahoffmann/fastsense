@@ -19,7 +19,7 @@ TEST_CASE("ConcRingBuffer", "[ConcRingBuffer]")
 
     ConcurrentRingBuffer<size_t> crb(buffer_size);
 
-    std::cout << "    Section 'Test push, size, capacit, empty'" << std::endl;
+    std::cout << "    Section 'Test push, size, capacity, empty'" << std::endl;
     REQUIRE(crb.size() == 0);
     REQUIRE(crb.capacity() == buffer_size);
     REQUIRE(crb.empty());
