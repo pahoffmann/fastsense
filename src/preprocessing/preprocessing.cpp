@@ -68,13 +68,17 @@ void Preprocessing::thread_run()
             }
         }
 
-        median_filter(out_cloud, 5);
-        reduction_filter_closest(out_cloud);
-
-        if (!this->out_->push_nb(out_cloud, true))
+        if (util::config::ConfigManager::config().lidar.rings() == out_cloud.data_->rings_)
         {
-            Logger::info("Cloud was discarded");
+            // median_filter(out_cloud, 5);
         }
+        else
+        {
+            Logger::warning("Expected rings not equal to received rings! Skipping median filter");
+        }
+        
+        reduction_filter_closest(out_cloud);
+        this->out_->push_nb(out_cloud, true);
 
         if (send_preprocessed)
         {
@@ -94,7 +98,7 @@ void Preprocessing::reduction_filter_average(fastsense::msg::PointCloudPtrStampe
 
     for (const auto& point : cloud_points)
     {
-        if ((point.x() == 0 && point.y() == 0 && point.z() == 0) || map_bounds.x() < std::abs(point.x()) || map_bounds.y() < std::abs(point.y()) || map_bounds.z() < std::abs(point.z()))
+        if ((point.x() == 0 && point.y() == 0 && point.z() == 0) )//|| map_bounds.x() < std::abs(point.x()) || map_bounds.y() < std::abs(point.y()) || map_bounds.z() < std::abs(point.z()))
         {
             continue;
         }
@@ -130,7 +134,7 @@ void Preprocessing::reduction_filter_closest(fastsense::msg::PointCloudPtrStampe
 
     for (const auto& point : cloud_points)
     {
-        if ((point.x() == 0 && point.y() == 0 && point.z() == 0) || map_bounds.x() < std::abs(point.x()) || map_bounds.y() < std::abs(point.y()) || map_bounds.z() < std::abs(point.z()))
+        if ((point.x() == 0 && point.y() == 0 && point.z() == 0)) //|| map_bounds.x() < std::abs(point.x()) || map_bounds.y() < std::abs(point.y()) || map_bounds.z() < std::abs(point.z()))
         {
             continue;
         }
@@ -167,7 +171,7 @@ void Preprocessing::reduction_filter_voxel_center(fastsense::msg::PointCloudPtrS
 
     for (const auto& point : cloud_points)
     {
-        if ((point.x() == 0 && point.y() == 0 && point.z() == 0) || map_bounds.x() < std::abs(point.x()) || map_bounds.y() < std::abs(point.y()) || map_bounds.z() < std::abs(point.z()))
+        if ((point.x() == 0 && point.y() == 0 && point.z() == 0)) //|| map_bounds.x() < std::abs(point.x()) || map_bounds.y() < std::abs(point.y()) || map_bounds.z() < std::abs(point.z()))
         {
             continue;
         }
@@ -241,12 +245,6 @@ uint8_t Preprocessing::median_from_array(std::vector<ScanPoint*> medians)
 
 void Preprocessing::median_filter(fastsense::msg::PointCloudPtrStamped& cloud, uint8_t window_size)
 {
-    if (util::config::ConfigManager::config().lidar.rings() != cloud.data_->rings_)
-    {
-        Logger::error("Expected rings not equal to received rings! Skipping median filter");
-        return;
-    }
-
     if (window_size % 2 == 0)
     {
         Logger::warning("Median filter window must be % 2 == 1, but isn't. Skipping.");
