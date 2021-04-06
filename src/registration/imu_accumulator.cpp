@@ -28,9 +28,10 @@ Eigen::Matrix4f ImuAccumulator::acc_transform(util::HighResTimePoint pcl_timesta
     
     auto imu_before_pcl = [&](msg::ImuStamped& msg){ return before(msg.timestamp_, pcl_timestamp); };
 
-    //iterate through all imu messages which were published before the current pointcloud
+    // Iterate through all imu messages which were published before the current pointcloud
     while (buffer_->pop_nb_if(&imu_msg, imu_before_pcl)) 
     {
+        // The first imu_msg has to be discarded because there is no delta time difference to a previous imu message in order to calculate a rotation estimation
         if (first_imu_msg_)
         {
             last_imu_timestamp_ = imu_msg.timestamp_;
@@ -38,7 +39,7 @@ Eigen::Matrix4f ImuAccumulator::acc_transform(util::HighResTimePoint pcl_timesta
             continue;
         }
         
-        //add imu message to accumulation matrix
+        // Add imu message to accumulation matrix
         apply_transform(acc_transform, imu_msg);
         last_imu_timestamp_ = imu_msg.timestamp_;
     }
