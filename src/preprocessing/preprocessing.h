@@ -97,7 +97,7 @@ public:
 private:
 
     /**
-     * @brief Finds the median value inside a std:vector
+     * @brief Finds the median value (based of distance to scanner origin) inside a std:vector
      *
      * @param medians std::vector of type ScanPoint
      */
