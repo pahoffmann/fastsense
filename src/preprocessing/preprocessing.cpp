@@ -68,15 +68,16 @@ void Preprocessing::thread_run()
             }
         }
 
-        //;
         //median_filter(out_cloud, 5);
         
         reduction_filter_closest(out_cloud);
 
-        if (!this->out_->push_nb(out_cloud, true))
-        {
-            Logger::info("Cloud was discarded");
-        }
+        // if (!this->out_->push_nb(out_cloud, true))
+        // {
+        //     Logger::info("Cloud was discarded");
+        // }
+
+        this->out_->push_nb(out_cloud, true);
 
         if (send_preprocessed)
         {
