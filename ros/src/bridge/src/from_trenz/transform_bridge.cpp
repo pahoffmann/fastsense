@@ -91,14 +91,7 @@ void TransformBridge::convert()
 
     auto timestamp = timestamp_to_rostime(msg_.timestamp_, discard_timestamp_);
 
-    // set pose_path header (once and only)
-    if (first_msg)
-    {
-//        first_msg = false;
-        pose_path.header.stamp = timestamp; // TODO NECESSARY?
-    }
-
-    const auto& scaling = msg_.data_.scaling_;
+    const auto& scaling = msg_.data_.scaling;
 
     transform_data.header.stamp = timestamp;
     transform_data.transform.rotation.x = msg_.data_.rotation.x();
@@ -139,6 +132,7 @@ void TransformBridge::convert()
         save_path_pub.publish(save_pose);
     }
 
+    pose_path.header.stamp = timestamp; 
     pose_path.poses.push_back(pose_stamped);
 
     // RViz crashes if path is longer than 16384 (~13 minutes at 20 Scans/sec)

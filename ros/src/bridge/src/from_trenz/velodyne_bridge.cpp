@@ -48,7 +48,7 @@ void VelodyneBridge::convert()
     const auto& msg_points = msg_.data_.points_;
     const auto& scaling = msg_.data_.scaling_;
 
-    std::transform(msg_points.begin(), msg_points.end(), std::back_inserter(points_), [](const ScanPoint& p)
+    std::transform(msg_points.begin(), msg_points.end(), std::back_inserter(points_), [&](const ScanPoint& p)
     {
         geometry_msgs::Point32 out;
         out.x = p.x() * 0.001f / scaling;
