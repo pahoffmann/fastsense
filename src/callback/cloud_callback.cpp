@@ -63,6 +63,7 @@ void CloudCallback::thread_run()
 #endif
     while (running)
     {
+        // Wait until buffer is not empty
         if (!cloud_buffer->pop_nb(&point_cloud, DEFAULT_POP_TIMEOUT))
         {
             continue;
@@ -71,12 +72,16 @@ void CloudCallback::thread_run()
         eval.start("total");
 
         int num_points = point_cloud.data_->points_.size();
+
+        // If InputBuffer does not yet exist or is not big enough, create one
         if (scan_point_buffer == nullptr || num_points > (int)scan_point_buffer->size())
         {
             // IMPORTANT: Delete old buffer first
             scan_point_buffer.reset();
             scan_point_buffer.reset(new InputBuffer<PointHW>(q, num_points * 1.5));
         }
+
+        // Convert PointCloud points into Hardware Points and write them into the PointHW Buffer
         for (int i = 0; i < num_points; i++)
         {
             auto& point = point_cloud.data_->points_[i];
@@ -85,12 +90,16 @@ void CloudCallback::thread_run()
 
         if (first_iteration)
         {
+            // For the first point cloud that is processed it is not possible to call registration because no map exists yet
+            // So only the TSDF kernel is called to create an inital map to registrate against with following pointclouds
             first_iteration = false;
 
             map_thread.get_tsdf_krnl().synchronized_run(*local_map, *scan_point_buffer, num_points);
         }
         else
         {
+            // This is called if its not the first pointcloud
+            // In this case the registration is called
             Matrix4f old_pose = pose;
 
             map_mutex.lock();
@@ -108,13 +117,15 @@ void CloudCallback::thread_run()
             }
         }
 
+        // Call map thread with the current pose
+        // map_thread.go() will shift the localmap and decide if a map update is necessary
         Vector3i pos((int)std::floor(pose(0, 3) / MAP_RESOLUTION),
                      (int)std::floor(pose(1, 3) / MAP_RESOLUTION),
                      (int)std::floor(pose(2, 3) / MAP_RESOLUTION));
         map_thread.go(pos, pose, *scan_point_buffer, num_points);
 
+        // Write the current transform into the transform buffer which is used to send the transform to the host pc
         Eigen::Quaternionf quat(pose.block<3, 3>(0, 0));
-
         msg::TransformStamped transform;
         transform.data_.translation = pose.block<3, 1>(0, 3);
         transform.data_.rotation = quat;
