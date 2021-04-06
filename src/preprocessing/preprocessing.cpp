@@ -68,14 +68,14 @@ void Preprocessing::thread_run()
             }
         }
 
-        if (util::config::ConfigManager::config().lidar.rings() == out_cloud.data_->rings_)
+        /*if (util::config::ConfigManager::config().lidar.rings() == out_cloud.data_->rings_)
         {
-            // median_filter(out_cloud, 5);
+            median_filter(out_cloud, 5);
         }
         else
         {
             Logger::warning("Expected rings not equal to received rings! Skipping median filter");
-        }
+        }*/
         
         reduction_filter_closest(out_cloud);
         this->out_->push_nb(out_cloud, true);
@@ -98,7 +98,7 @@ void Preprocessing::reduction_filter_average(fastsense::msg::PointCloudPtrStampe
 
     for (const auto& point : cloud_points)
     {
-        if ((point.x() == 0 && point.y() == 0 && point.z() == 0) )//|| map_bounds.x() < std::abs(point.x()) || map_bounds.y() < std::abs(point.y()) || map_bounds.z() < std::abs(point.z()))
+        if ((point.x() == 0 && point.y() == 0 && point.z() == 0) || map_bounds.x() < std::abs(point.x()) || map_bounds.y() < std::abs(point.y()) || map_bounds.z() < std::abs(point.z()))
         {
             continue;
         }
@@ -134,7 +134,7 @@ void Preprocessing::reduction_filter_closest(fastsense::msg::PointCloudPtrStampe
 
     for (const auto& point : cloud_points)
     {
-        if ((point.x() == 0 && point.y() == 0 && point.z() == 0)) //|| map_bounds.x() < std::abs(point.x()) || map_bounds.y() < std::abs(point.y()) || map_bounds.z() < std::abs(point.z()))
+        if ((point.x() == 0 && point.y() == 0 && point.z() == 0) || map_bounds.x() < std::abs(point.x()) || map_bounds.y() < std::abs(point.y()) || map_bounds.z() < std::abs(point.z()))
         {
             continue;
         }
@@ -171,7 +171,7 @@ void Preprocessing::reduction_filter_voxel_center(fastsense::msg::PointCloudPtrS
 
     for (const auto& point : cloud_points)
     {
-        if ((point.x() == 0 && point.y() == 0 && point.z() == 0)) //|| map_bounds.x() < std::abs(point.x()) || map_bounds.y() < std::abs(point.y()) || map_bounds.z() < std::abs(point.z()))
+        if ((point.x() == 0 && point.y() == 0 && point.z() == 0) || map_bounds.x() < std::abs(point.x()) || map_bounds.y() < std::abs(point.y()) || map_bounds.z() < std::abs(point.z()))
         {
             continue;
         }
