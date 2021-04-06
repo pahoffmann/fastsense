@@ -65,15 +65,34 @@ protected:
 
 private:
     Registration& registration;
+
+    // pointer to the buffer that holds the pointcloud from the lidar
     std::shared_ptr<PointCloudBuffer> cloud_buffer;
+
+    // pointer to the local map
     std::shared_ptr<LocalMap> local_map;
+
+    // pointer to the global map
     std::shared_ptr<GlobalMap> global_map;
+
+    // 4x4 Matrix that contains the current pose the system inside the map
     Matrix4f pose;
+
+    // pointer to the buffer that the transform object is written into in order to send it to the host pc
     msg::TransformStampedBuffer::Ptr transform_buffer;
+
+    // pointer to the buffer that the pointcloud is written into (after preprocessing and registration) in order to send it to the host pc
     std::shared_ptr<PointCloudBuffer> pointcloud_buffer;
+
+    // boolean that controls whether or not the pointcloud (after preprocessing and registration) should be send to the host pc or not    
     bool send_after_registration;
+
+    // boolean that holds the information whether a pointcloud is the first one being processed or not 
     bool first_iteration;
+
+    // pointer to the commandqueue (needed in order to start registration and tsdf map update on the FPGA)
     fastsense::CommandQueuePtr q;
+
     MapThread& map_thread;
     std::mutex& map_mutex;
 };
