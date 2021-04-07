@@ -91,30 +91,25 @@ void TransformBridge::convert()
 
     auto timestamp = timestamp_to_rostime(msg_.timestamp_, discard_timestamp_);
 
-    // set pose_path header (once and only)
-    if (first_msg)
-    {
-//        first_msg = false;
-        pose_path.header.stamp = timestamp; // TODO NECESSARY?
-    }
+    const auto& scaling = msg_.data_.scaling;
 
     transform_data.header.stamp = timestamp;
     transform_data.transform.rotation.x = msg_.data_.rotation.x();
     transform_data.transform.rotation.y = msg_.data_.rotation.y();
     transform_data.transform.rotation.z = msg_.data_.rotation.z();
     transform_data.transform.rotation.w = msg_.data_.rotation.w();
-    transform_data.transform.translation.x = msg_.data_.translation.x() * 0.001 / 0.2;
-    transform_data.transform.translation.y = msg_.data_.translation.y() * 0.001 / 0.2;
-    transform_data.transform.translation.z = msg_.data_.translation.z() * 0.001 / 0.2;
+    transform_data.transform.translation.x = msg_.data_.translation.x() * 0.001 / scaling;
+    transform_data.transform.translation.y = msg_.data_.translation.y() * 0.001 / scaling;
+    transform_data.transform.translation.z = msg_.data_.translation.z() * 0.001 / scaling;
 
     pose_stamped.header.stamp = timestamp;
     pose_stamped.pose.orientation.x = msg_.data_.rotation.x();
     pose_stamped.pose.orientation.y = msg_.data_.rotation.y();
     pose_stamped.pose.orientation.z = msg_.data_.rotation.z();
     pose_stamped.pose.orientation.w = msg_.data_.rotation.w();
-    pose_stamped.pose.position.x = msg_.data_.translation.x() * 0.001 / 0.2;
-    pose_stamped.pose.position.y = msg_.data_.translation.y() * 0.001 / 0.2;
-    pose_stamped.pose.position.z = msg_.data_.translation.z() * 0.001 / 0.2;
+    pose_stamped.pose.position.x = msg_.data_.translation.x() * 0.001 / scaling;
+    pose_stamped.pose.position.y = msg_.data_.translation.y() * 0.001 / scaling;
+    pose_stamped.pose.position.z = msg_.data_.translation.z() * 0.001 / scaling;
 
     tf2::Vector3 position_corrected;
     tf2::Matrix3x3 rotation_corrected;
@@ -201,6 +196,7 @@ void TransformBridge::convert()
         save_path_pub.publish(save_pose);
     }
 
+    pose_path.header.stamp = timestamp; 
     pose_path.poses.push_back(pose_stamped);
 
     // RViz crashes if path is longer than 16384 (~13 minutes at 20 Scans/sec)

@@ -10,7 +10,7 @@
 #include <atomic>
 
 #include <msg/transform.h>
-#include <msg/tsdf_bridge_msg.h>
+#include <msg/tsdf.h>
 #include <map/local_map.h>
 #include <tsdf/krnl_tsdf.h>
 #include <util/point_hw.h>
@@ -23,7 +23,7 @@ namespace fastsense::callback
 {
 
 using Eigen::Vector3i;
-using TSDFBuffer = util::ConcurrentRingBuffer<msg::TSDFBridgeMessage>;
+using TSDFBuffer = util::ConcurrentRingBuffer<msg::TSDF>;
 
 /**
  * @brief This class encapsulates the asynchronous map shift, tsdf update and visualization of the map.
@@ -43,6 +43,7 @@ public:
      * @param position_threshold Parameter for the map thread.
      *                           Distance from the current position to the last activated position at which the thread is activated (in mm).
      * @param tsdf_buffer Buffer for communication to the visualization thread.
+     * @param scaling point cloud scaling
      * @param q Program command queue.
      */
     MapThread(const std::shared_ptr<fastsense::map::LocalMap>& local_map, 
@@ -50,6 +51,7 @@ public:
               unsigned int period,
               float position_threshold,
               uint16_t port,
+              float scaling,
               fastsense::CommandQueuePtr& q);
 
     /// Default destructor of the map thread.
@@ -132,9 +134,11 @@ private:
     /// Counter for the number of performed registrations after the last thread activation
     unsigned int reg_cnt_;
     /// Message to send with the tsdf values
-    msg::TSDFBridgeMessageStamped tsdf_msg_;
+    msg::TSDFStamped tsdf_msg_;
     /// Buffer for starting the map visualization thread
-    comm::Sender<msg::TSDFBridgeMessageStamped> sender_;
+    comm::Sender<msg::TSDFStamped> sender_;
+    /// point cloud scaling
+    float scaling_;
 };
 
 } // namespace fastsense::callback

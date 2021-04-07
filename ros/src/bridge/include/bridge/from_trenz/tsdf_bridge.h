@@ -11,16 +11,16 @@
 #include <std_msgs/ColorRGBA.h>
 
 #include "bridge_base.h"
-#include <msg/tsdf_bridge_msg.h>
+#include <msg/tsdf.h>
 #include <util/tsdf.h>
 
 namespace fastsense::bridge
 {
 
 /**
- * @brief TSDFBridge converts TSDF data of type msg::TSDFBridgeMessage into ROS Markers
+ * @brief TSDFBridge converts TSDF data of type msg::TSDF into ROS Markers
  */
-class TSDFBridge :  public BridgeBase<msg::TSDFBridgeMessageStamped, visualization_msgs::Marker, 6666>, 
+class TSDFBridge :  public BridgeBase<msg::TSDFStamped, visualization_msgs::Marker, 6666>, 
                     public util::ProcessThread
 {
 public:
@@ -32,7 +32,10 @@ public:
      * @param timeout how long to wait for message before trying again
      * @param discard_timestamp Whether or not to discard timestamps and replace with ros::Time::now()
      */
-    TSDFBridge(ros::NodeHandle& n, const std::string& board_addr, std::chrono::milliseconds timeout, bool discard_timestamp);
+    TSDFBridge( ros::NodeHandle& n, 
+                const std::string& board_addr, 
+                std::chrono::milliseconds timeout, 
+                bool discard_timestamp);
 
     /**
      * @brief Destroy the TSDFBridge object
@@ -46,12 +49,12 @@ private:
     void publish() final;
 
     /**
-     * @brief Converts msg::TSDFBridgeMessage to visualization_msgs::Marker
+     * @brief Converts msg::TSDF to visualization_msgs::Marker
      */
     void convert() final;
 
     /**
-     * @brief Run listens for TSDFBridgeMessages, converts it to ROS Marker
+     * @brief Run listens for TSDFs, converts it to ROS Marker
      * and publishes in an endless loop (running in its own thread)
      */
     void run() final;
@@ -76,6 +79,9 @@ private:
 
     /// Whether or not to discard timestamps and replace with ros::Time::now()
     bool discard_timestamp_;
+
+    /// scaling of pointcloud
+    float scaling_;
 };
 
 } // namespace fastsense::bridge

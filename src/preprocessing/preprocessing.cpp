@@ -247,6 +247,7 @@ void Preprocessing::median_filter(fastsense::msg::PointCloudPtrStamped& cloud, u
 {
     if (window_size % 2 == 0)
     {
+        Logger::warning("Median filter window must be % 2 == 1, but isn't. Skipping.");
         return;
     }
 
