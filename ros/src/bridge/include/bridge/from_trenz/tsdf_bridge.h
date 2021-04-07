@@ -32,7 +32,10 @@ public:
      * @param timeout how long to wait for message before trying again
      * @param discard_timestamp Whether or not to discard timestamps and replace with ros::Time::now()
      */
-    TSDFBridge(ros::NodeHandle& n, const std::string& board_addr, std::chrono::milliseconds timeout, bool discard_timestamp);
+    TSDFBridge( ros::NodeHandle& n, 
+                const std::string& board_addr, 
+                std::chrono::milliseconds timeout, 
+                bool discard_timestamp);
 
     /**
      * @brief Destroy the TSDFBridge object
@@ -76,6 +79,9 @@ private:
 
     /// Whether or not to discard timestamps and replace with ros::Time::now()
     bool discard_timestamp_;
+
+    /// scaling of pointcloud
+    float scaling_;
 };
 
 } // namespace fastsense::bridge

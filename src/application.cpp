@@ -244,6 +244,7 @@ int Application::run()
                              config.slam.map_update_period(),
                              config.slam.map_update_position_threshold(),
                              config.bridge.tsdf_port_to(),
+                             point_scale,
                              command_queue};
         CloudCallback cloud_callback{registration,
                                      pointcloud_bridge_buffer,

@@ -19,6 +19,7 @@ MapThread::MapThread(const std::shared_ptr<fastsense::map::LocalMap>& local_map,
                      unsigned int period,
                      float position_threshold,
                      uint16_t port,
+                     float scaling,
                      fastsense::CommandQueuePtr& q)
     : ProcessThread(),
       local_map_(local_map),
@@ -29,7 +30,8 @@ MapThread::MapThread(const std::shared_ptr<fastsense::map::LocalMap>& local_map,
       position_threshold_(position_threshold),
       reg_cnt_(0),
       tsdf_msg_(),
-      sender_(port)
+      sender_(port),
+      scaling_(scaling)
 {
     /*
     Use the mutex as a 1-semaphore.
@@ -117,6 +119,7 @@ void MapThread::thread_run()
         tsdf_msg_.data_.size_ = local_map_->get_size();
         tsdf_msg_.data_.pos_ = local_map_->get_pos();
         tsdf_msg_.data_.offset_ = local_map_->get_offset();
+        tsdf_msg_.data_.scaling_ = scaling_;
         std::copy(local_map_->getBuffer().cbegin(), local_map_->getBuffer().cend(), tsdf_msg_.data_.tsdf_data_.data());
         sender_.send(tsdf_msg_);
         eval.stop("vis");

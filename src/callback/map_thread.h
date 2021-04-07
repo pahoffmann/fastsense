@@ -43,6 +43,7 @@ public:
      * @param position_threshold Parameter for the map thread.
      *                           Distance from the current position to the last activated position at which the thread is activated (in mm).
      * @param tsdf_buffer Buffer for communication to the visualization thread.
+     * @param scaling point cloud scaling
      * @param q Program command queue.
      */
     MapThread(const std::shared_ptr<fastsense::map::LocalMap>& local_map, 
@@ -50,6 +51,7 @@ public:
               unsigned int period,
               float position_threshold,
               uint16_t port,
+              float scaling,
               fastsense::CommandQueuePtr& q);
 
     /// Default destructor of the map thread.
@@ -135,6 +137,8 @@ private:
     msg::TSDFStamped tsdf_msg_;
     /// Buffer for starting the map visualization thread
     comm::Sender<msg::TSDFStamped> sender_;
+    /// point cloud scaling
+    float scaling_;
 };
 
 } // namespace fastsense::callback

@@ -13,7 +13,10 @@
 
 using namespace fastsense::bridge;
 
-TSDFBridge::TSDFBridge(ros::NodeHandle& n, const std::string& board_addr, std::chrono::milliseconds timeout, bool discard_timestamp)
+TSDFBridge::TSDFBridge( ros::NodeHandle& n, 
+                        const std::string& board_addr, 
+                        std::chrono::milliseconds timeout, 
+                        bool discard_timestamp)
 :   BridgeBase{n, "tsdf", board_addr, 1000, timeout},
     ProcessThread{},
     points_{},
@@ -78,6 +81,7 @@ void TSDFBridge::convert()
     int left[3], right[3];
 
     const auto& data = msg().data_;
+    const float& scaling = data.scaling_;
 
     for (size_t i = 0; i < 3; i++)
     {
@@ -106,9 +110,9 @@ void TSDFBridge::convert()
                     }
 
                     geometry_msgs::Point point;
-                    point.x = x * MAP_RESOLUTION * 0.001;
-                    point.y = y * MAP_RESOLUTION * 0.001;
-                    point.z = z * MAP_RESOLUTION * 0.001;
+                    point.x = x * MAP_RESOLUTION * 0.001 / scaling;
+                    point.y = y * MAP_RESOLUTION * 0.001 / scaling;
+                    point.z = z * MAP_RESOLUTION * 0.001 / scaling;
 
                     // color.a = std::min(val.weight(), 1.0f);
                     if (val.value() >= 0)
@@ -160,6 +164,7 @@ void TSDFBridge::convert()
 void TSDFBridge::publish()
 {
     const auto& timestamp = msg().timestamp_;
+    const float& scaling = msg().data_.scaling_;
 
     visualization_msgs::Marker marker;
     marker.header = std_msgs::Header{};
@@ -169,7 +174,7 @@ void TSDFBridge::publish()
     marker.action = visualization_msgs::Marker::ADD;
     marker.ns = "window";
     marker.id = 0;
-    marker.scale.x = marker.scale.y = MAP_RESOLUTION * 0.6 * 0.001;
+    marker.scale.x = marker.scale.y = MAP_RESOLUTION * 0.6 * 0.001 / scaling;
     marker.points = points_;
     marker.colors = colors_;
     pub().publish(marker);

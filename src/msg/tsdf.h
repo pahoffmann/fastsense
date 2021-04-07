@@ -25,7 +25,15 @@ namespace fastsense::msg
 struct TSDF : public ZMQConverter
 {
     /// default constructor
-    TSDF() = default;
+    TSDF()
+    : tau_{}
+    , size_{}
+    , pos_{}
+    , offset_{}
+    , scaling_{1.f}
+    , tsdf_data_{}
+    {
+    }
 
     /// default destructor
     ~TSDF() override = default;
@@ -54,6 +62,9 @@ struct TSDF : public ZMQConverter
     /// shift offset
     Vector3i offset_;
 
+    /// scaling
+    float scaling_;
+
     /// actual tsdf data
     std::vector<TSDFValue> tsdf_data_;
 
@@ -68,6 +79,7 @@ struct TSDF : public ZMQConverter
         size_ = msg.poptyp<Vector3i>();
         pos_ = msg.poptyp<Vector3i>();
         offset_ = msg.poptyp<Vector3i>();
+        scaling_ = msg.poptyp<float>();
 
         zmq::message_t tsdf_data_msg = msg.pop();
         size_t n_tsdf_values = tsdf_data_msg.size() / sizeof(TSDFValue);
@@ -88,6 +100,7 @@ struct TSDF : public ZMQConverter
         multi.addtyp(size_);
         multi.addtyp(pos_);
         multi.addtyp(offset_);
+        multi.addtyp(scaling_);
         multi.add(zmq::message_t(tsdf_data_.begin(), tsdf_data_.end()));
         return multi;
     }
