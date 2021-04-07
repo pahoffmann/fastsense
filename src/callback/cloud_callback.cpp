@@ -58,7 +58,6 @@ void CloudCallback::set_local_map(const std::shared_ptr<LocalMap>& local_map)
 void CloudCallback::thread_run()
 {
     fastsense::msg::PointCloudPtrStamped point_cloud;
-    point_cloud.data_->scaling_ = point_scale;
 
     std::unique_ptr<InputBuffer<PointHW>> scan_point_buffer;
     auto& eval = RuntimeEvaluator::get_instance();
@@ -73,14 +72,17 @@ void CloudCallback::thread_run()
         }
 
         eval.start("total");
-
+        
+        point_cloud.data_->scaling_ = point_scale;
         int num_points = point_cloud.data_->points_.size();
+
         if (scan_point_buffer == nullptr || num_points > (int)scan_point_buffer->size())
         {
             // IMPORTANT: Delete old buffer first
             scan_point_buffer.reset();
             scan_point_buffer.reset(new InputBuffer<PointHW>(q, num_points * 1.5));
         }
+        
         for (int i = 0; i < num_points; i++)
         {
             auto& point = point_cloud.data_->points_[i];
