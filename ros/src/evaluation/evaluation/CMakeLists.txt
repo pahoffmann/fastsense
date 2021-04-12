@@ -47,6 +47,12 @@ target_include_directories(imu_interpolation_node PRIVATE ${catkin_INCLUDE_DIRS}
 target_link_libraries(imu_interpolation_node PRIVATE ${catkin_LIBRARIES} ${PCL_LIBRARIES})
 add_dependencies(imu_interpolation_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
+add_executable(live_imu_interpolation_node src/live_interpolate_imu.cpp)
+target_include_directories(live_imu_interpolation_node PRIVATE ${catkin_INCLUDE_DIRS} ${PCL_INCLUDE_DIRS})
+target_link_libraries(live_imu_interpolation_node PRIVATE ${catkin_LIBRARIES} ${PCL_LIBRARIES})
+add_dependencies(live_imu_interpolation_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+
+
 add_executable(reduce_pcl_node src/reduce_pcl.cpp)
 target_include_directories(reduce_pcl_node PRIVATE ${catkin_INCLUDE_DIRS} ${PCL_INCLUDE_DIRS})
 target_link_libraries(reduce_pcl_node PRIVATE ${catkin_LIBRARIES} ${PCL_LIBRARIES})
