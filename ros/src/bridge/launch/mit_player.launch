@@ -22,4 +22,6 @@
     <remap from="/imu_correct" to="/from_trenz/imu/raw"/>
   </node> 
 
+  <node pkg="rviz" type="rviz" name="rviz_bag_player" required="true" args="-d $(find evaluation)/config/decay.rviz"/>
+
 </launch>

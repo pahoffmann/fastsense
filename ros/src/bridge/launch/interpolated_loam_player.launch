@@ -14,15 +14,20 @@
 
   <node pkg="bridge" type="to_trenz" name="to_trenz" output="screen">
     <remap from="/velodyne_points" to="/from_trenz/velodyne/points" />
-    <remap from="/imu/data_raw" to="/from_trenz/imu/raw" />
+    <remap from="/imu/data_raw" to="/interpolation_imu" />
   </node>
-  
-  <node pkg="rosbag" type="play" name="fastsense_player_imu" output="screen" args="$(arg bag) -r 3 --clock --topics /imu/data">
+
+  <node pkg="evaluation" type="live_imu_interpolation_node" name="live_imu_interpolation_node" output="screen">
+    <remap from="/imu/data" to="/faster_imu" />
+    <remap from="/from_trenz/imu/raw" to="/interpolation_imu" />
+  </node>
+
+  <node pkg="rosbag" type="play" name="fastsense_player_imu" output="screen" args="$(arg bag) -r 4 --topics /imu/data">
     <!-- <remap from="/velodyne_points" to="/from_trenz/velodyne/points"/> -->
-    <!-- <remap from="/imu/data" to="/from_trenz/imu/raw"/> -->
+    <remap from="/imu/data" to="/faster_imu"/>
   </node> 
 
-  <node pkg="rosbag" type="play" name="fastsense_player_cloud" output="screen" args="$(arg bag) --clock --topics /velodyne_points">
+  <node pkg="rosbag" type="play" name="fastsense_player_cloud" output="screen" args="$(arg bag) $(arg args) --clock --topics /velodyne_points">
     <remap from="/velodyne_points" to="/from_trenz/velodyne/points"/>
     <!-- <remap from="/imu/data" to="/from_trenz/imu/raw"/> $(arg args)  -->
   </node> 

@@ -10,11 +10,9 @@
 ros::Publisher imu_pub;
 std::queue<sensor_msgs::Imu> imu_queue;
 std::queue<sensor_msgs::Imu, std::list<sensor_msgs::Imu>> imu_pub_queue;
-std::mutex imu_mutex;
+std::queue<double, std::list<double>> imu_times_queue;
 
-ros::Publisher cloud_pub;
-std::queue<sensor_msgs::PointCloud2, std::list<sensor_msgs::PointCloud2>> cloud_pub_queue;
-std::mutex cloud_mutex;
+std::mutex imu_mutex;
 
 void imuCallBack(const sensor_msgs::Imu::ConstPtr& imu_msg)
 {
@@ -56,10 +54,17 @@ void imuCallBack(const sensor_msgs::Imu::ConstPtr& imu_msg)
         two.angular_velocity.y = ang_vel_2.y;
         two.angular_velocity.z = ang_vel_2.z;
         
+        auto part_diff = diff.toSec() / 3.0;
+
         imu_mutex.lock();
         imu_pub_queue.push(first_data);
         imu_pub_queue.push(one);
         imu_pub_queue.push(two);
+
+        imu_times_queue.push(part_diff);
+        imu_times_queue.push(part_diff);
+        imu_times_queue.push(part_diff);
+
         imu_mutex.unlock();
         
         imu_queue.pop(); // pop the data, after getting the front
@@ -78,7 +83,6 @@ int main(int argc, char **argv)
     ros::init(argc, argv, "live_imu_interpolater");
     ros::NodeHandle n("~");
     auto imu_topic = n.param<std::string>("imu", "/imu/data");
-    auto cloud_topic = n.param<std::string>("cloud", "/velodyne_points");
 
     ROS_INFO_STREAM("Got IMU Topic: " << imu_topic);
 
@@ -89,7 +93,7 @@ int main(int argc, char **argv)
     ros::AsyncSpinner spinner(2);
     spinner.start();
 
-    ros::Rate rate(220);
+    auto time_out = 0.0;
 
     while (ros::ok())
     {
@@ -97,14 +101,19 @@ int main(int argc, char **argv)
         {
             imu_mutex.lock();
             auto to_pub = imu_pub_queue.front();
+            auto next_time_out = imu_times_queue.front();
             imu_pub_queue.pop();
+            imu_times_queue.pop();
             imu_mutex.unlock();
 
+            ros::Rate(1.0 / time_out).sleep();
+            
             to_pub.header.stamp = ros::Time::now();
             imu_pub.publish(to_pub);
-        }
 
-        rate.sleep();
+
+            time_out = next_time_out;
+        }
     }
 
     return 0;
