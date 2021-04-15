@@ -27,7 +27,7 @@
     <remap from="/imu/data" to="/faster_imu"/>
   </node> 
 
-  <node pkg="rosbag" type="play" name="fastsense_player_cloud" output="screen" args="$(arg bag) $(arg args) --clock --topics /velodyne_points">
+  <node pkg="rosbag" type="play" name="fastsense_player_cloud" output="screen" args="$(arg bag) $(arg args) --clock --topics /velodyne_points /imu/data">
     <remap from="/velodyne_points" to="/from_trenz/velodyne/points"/>
     <!-- <remap from="/imu/data" to="/from_trenz/imu/raw"/> $(arg args)  -->
   </node> 
