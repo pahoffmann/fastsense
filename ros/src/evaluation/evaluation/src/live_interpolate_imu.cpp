@@ -71,6 +71,22 @@ void imuCallBack(const sensor_msgs::Imu::ConstPtr& imu_msg)
     }
 }
 
+void timedCallback(const ros::TimerEvent&)
+{
+    if (imu_pub_queue.size() != 0)
+    {
+        imu_mutex.lock();
+        auto to_pub = imu_pub_queue.front();
+        auto next_time_out = imu_times_queue.front();
+        imu_pub_queue.pop();
+        imu_times_queue.pop();
+        imu_mutex.unlock();
+        
+        to_pub.header.stamp = ros::Time::now();
+        imu_pub.publish(to_pub);
+    }
+}
+
 /**
  * This node subscribes to the bagfile of a ... topic and interpolates the imu data 
  *
@@ -86,35 +102,13 @@ int main(int argc, char **argv)
 
     ROS_INFO_STREAM("Got IMU Topic: " << imu_topic);
 
-    ros::Subscriber imu_sub = n.subscribe(imu_topic, 1, imuCallBack);
+    ros::Subscriber imu_sub = n.subscribe(imu_topic, 100, imuCallBack);
 
-    imu_pub = n.advertise<sensor_msgs::Imu>("/from_trenz/imu/raw", 1);
+    imu_pub = n.advertise<sensor_msgs::Imu>("/from_trenz/imu/raw", 100);
+    ros::Timer timer = n.createTimer(ros::Duration(1.0 / (73 * 3)), timedCallback);
 
-    ros::AsyncSpinner spinner(2);
-    spinner.start();
-
-    auto time_out = 0.0;
-
-    while (ros::ok())
-    {
-        if (imu_pub_queue.size() != 0)
-        {
-            imu_mutex.lock();
-            auto to_pub = imu_pub_queue.front();
-            auto next_time_out = imu_times_queue.front();
-            imu_pub_queue.pop();
-            imu_times_queue.pop();
-            imu_mutex.unlock();
-
-            ros::Rate(1.0 / time_out).sleep();
-            
-            to_pub.header.stamp = ros::Time::now();
-            imu_pub.publish(to_pub);
-
-
-            time_out = next_time_out;
-        }
-    }
+    ros::MultiThreadedSpinner spinner(2);
+    spinner.spin();
 
     return 0;
 }
