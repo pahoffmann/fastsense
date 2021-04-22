@@ -111,7 +111,28 @@ void TransformBridge::convert()
     pose_stamped.pose.position.y = msg_.data_.translation.y() * 0.001 / scaling;
     pose_stamped.pose.position.z = msg_.data_.translation.z() * 0.001 / scaling;
 
-    tf2::Vector3 position_corrected;
+    /***** Begin global drift fix *****/
+
+    // tf2::Vector3 position_corrected;
+
+    // tf2::Vector3 position;
+    // tf2::Matrix3x3 rotation;
+
+    // rotation.setRPY(0.0, -0.1, 0.0);
+
+    // position[0] = pose_stamped.pose.position.x;
+    // position[1] = pose_stamped.pose.position.y;
+    // position[2] = pose_stamped.pose.position.z;
+
+    // position_corrected = rotation * position;
+
+    // pose_stamped.pose.position.x = position_corrected[0];
+    // pose_stamped.pose.position.y = position_corrected[1];
+    // pose_stamped.pose.position.z = position_corrected[2];
+
+    /***** End global drift fix *****/
+
+    /*tf2::Vector3 position_corrected;
     tf2::Matrix3x3 rotation_corrected;
 
     if (first_pose_)
@@ -120,12 +141,17 @@ void TransformBridge::convert()
         position_corrected[1] = 0.0f;
         position_corrected[2] = 0.0f;
 
-        rotation_corrected.setIdentity();
+        //rotation_corrected.setIdentity();
+
+        //rotation_corrected.setRPY(0.0, -0.08, 0.0);
 
         tf2::Quaternion q;
         tf2::convert(pose_stamped.pose.orientation, q);
         last_rotation_ = tf2::Matrix3x3(q);
-        last_rotation_.getRPY(rot_drift_[0], rot_drift_[1], rot_drift_[2]);
+        
+
+
+        //last_rotation_.getRPY(rot_drift_[0], rot_drift_[1], rot_drift_[2]);
         
         first_pose_ = false;
     }
@@ -147,7 +173,7 @@ void TransformBridge::convert()
 
         tf2::Matrix3x3 drift;
         drift.setRPY(-rot_drift_[0], -rot_drift_[1], -rot_drift_[2]);
-        //drift.setRPY(0, -0.0015, 0);
+        //drift.setRPY(0, -0.001, 0);
 
         position_corrected = last_rotation_corrected_ * delta_position + last_position_corrected_;
         rotation_corrected = drift * delta_rotation * last_rotation_corrected_;
@@ -173,7 +199,8 @@ void TransformBridge::convert()
     tf2::Quaternion q;
     q.setRPY(r, p, y);
 
-    tf2::convert(q, pose_stamped.pose.orientation);
+    tf2::convert(q, pose_stamped.pose.orientation);*/
+
 
 
     // If identity is received, we are in cloudcallback iteration 1
