@@ -51,11 +51,6 @@ void Preprocessing::thread_run()
             continue;
         }
 
-        if (send_original)
-        {
-            send_buffer->push_nb(in_cloud);
-        }
-
         fastsense::msg::PointCloudPtrStamped out_cloud;
         out_cloud.data_ = in_cloud.data_;
         out_cloud.timestamp_ = in_cloud.timestamp_;
@@ -67,6 +62,13 @@ void Preprocessing::thread_run()
                 point = (point.cast<float>() * scale).cast<ScanPointType>();
             }
         }
+
+        if (send_original)
+        {
+            in_cloud.data_->scaling_ = scale;
+            send_buffer->push_nb(in_cloud);
+        }
+
 
         /*if (util::config::ConfigManager::config().lidar.rings() == out_cloud.data_->rings_)
         {
@@ -82,6 +84,7 @@ void Preprocessing::thread_run()
 
         if (send_preprocessed)
         {
+            out_cloud.data_->scaling_ = scale;
             send_buffer->push_nb(out_cloud);
         }
     }
