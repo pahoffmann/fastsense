@@ -41,3 +41,8 @@ add_executable(loam_to_pose_node src/loam_to_pose_node.cpp)
 target_include_directories(loam_to_pose_node PRIVATE ${catkin_INCLUDE_DIRS} ${PCL_INCLUDE_DIRS})
 target_link_libraries(loam_to_pose_node PRIVATE ${catkin_LIBRARIES} ${PCL_LIBRARIES})
 add_dependencies(loam_to_pose_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+
+add_executable(pcl2pcl2 src/pcl2pcl2.cpp)
+target_include_directories(pcl2pcl2 PRIVATE ${catkin_INCLUDE_DIRS} ${PCL_INCLUDE_DIRS})
+target_link_libraries(pcl2pcl2 PRIVATE ${catkin_LIBRARIES} ${PCL_LIBRARIES})
+add_dependencies(pcl2pcl2 ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
