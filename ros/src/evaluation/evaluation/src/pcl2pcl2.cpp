@@ -2,8 +2,11 @@
 #include <ros/ros.h>
 #include <sensor_msgs/PointCloud.h>
 #include <sensor_msgs/PointCloud2.h>
+#include <sensor_msgs/point_cloud2_iterator.h>
 #include <sensor_msgs/point_cloud_conversion.h>
 #include <geometry_msgs/Point32.h>
+
+constexpr auto TOTAL_RINGS = 16u;
 
 struct PCL2PCL2
 {   
@@ -18,65 +21,131 @@ struct PCL2PCL2
     /// default destructor
     ~PCL2PCL2() = default;
 
+    double opening_angle(const geometry_msgs::Point32& point)
+    {
+        double norm = std::sqrt(point.x * point.x + point.y * point.y + point.z * point.z);
+        return std::acos(point.z / norm);
+    }
+
+
+
     /**
      * @brief Convert PointCloud to PointCloud2
      * 
      * @param pcl incoming PointCloud
      */
-    void pclCallback(const sensor_msgs::PointCloud::ConstPtr& input)
+    void pclCallback(const sensor_msgs::PointCloud::ConstPtr& pc_ptr)
     {
-        // convert pcl to pcl2 manually, as sensor_msgs::convertPointCloudToPointCloud2 seems to be fishy
-        // see: http://docs.ros.org/en/api/sensor_msgs/html/point__cloud__conversion_8h_source.html, l93
-        // is dense is set to false automatically -> loam assumes pointcloud contains nan points
+        sensor_msgs::PointCloud2 pc2;
 
-        sensor_msgs::PointCloud2 output;
-        output.header = input->header;
-        output.width  = input->points.size ();
-        output.height = 1;
-        output.fields.resize (3 + input->channels.size ());
-
-        // Convert x/y/z to fields
-        output.fields[0].name = "x"; output.fields[1].name = "y"; output.fields[2].name = "z";
-
-        int offset = 0;
-        // All offsets are *4, as all field data types are float32
-        for (size_t d = 0; d < output.fields.size (); ++d, offset += 4)
-        {
-            output.fields[d].offset = offset;
-            output.fields[d].datatype = sensor_msgs::PointField::FLOAT32;
-            output.fields[d].count  = 1;
-        }
-        output.point_step = offset;
-        output.row_step   = output.point_step * output.width;
+        pc2.header = pc_ptr->header;
+        pc2.height = 1;
+        pc2.width = pc_ptr->points.size();
         
-        // Convert the remaining of the channels to fields
-        for (size_t d = 0; d < input->channels.size (); ++d)
+        pc2.fields.resize(4);
+
+        pc2.fields[0].name = "x";
+        pc2.fields[1].name = "y";
+        pc2.fields[2].name = "z";
+        pc2.fields[3].name = "ring";
+
+        auto offset = 0u;
+
+        for (auto index = 0u; index < 3; ++index, offset += sizeof(float))
         {
-            output.fields[3 + d].name = input->channels[d].name;
+            pc2.fields[index].offset = offset;
+            pc2.fields[index].datatype = sensor_msgs::PointField::FLOAT32;
+            pc2.fields[index].count = 1;
         }
 
-        output.data.resize (input->points.size () * output.point_step);
-        output.is_bigendian = false;
-        output.is_dense     = true;
+        pc2.fields[3].offset = offset;
+        pc2.fields[3].datatype = sensor_msgs::PointField::INT16;
+        pc2.fields[3].count = 1;
+
+        pc2.is_bigendian = false;
+        pc2.point_step = offset + 2;
+        pc2.row_step = pc2.width * pc2.point_step;
+        pc2.data.resize(pc2.row_step * pc2.height);
+        pc2.is_dense = true;
+
+        sensor_msgs::PointCloud2Iterator<float> iter_x(pc2, "x");
+        sensor_msgs::PointCloud2Iterator<int> iter_ring(pc2, "ring");
+
+        const auto& pc_points = pc_ptr->points;
+
+        std::vector<std::vector<std::vector<float>>> points(TOTAL_RINGS);
+        std::map<double, int> ring_order;
         
-        // Copy the data points
-        for (size_t cp = 0; cp < input->points.size (); ++cp)
+        std::array<bool, TOTAL_RINGS> ring_valid;
+        ring_valid.fill(false);
+
+        for (auto index = 0u; index < pc_points.size(); ++index)
         {
-            memcpy (&output.data[cp * output.point_step + output.fields[0].offset], &input->points[cp].x, sizeof (float));
-            memcpy (&output.data[cp * output.point_step + output.fields[1].offset], &input->points[cp].y, sizeof (float));
-            memcpy (&output.data[cp * output.point_step + output.fields[2].offset], &input->points[cp].z, sizeof (float));
-            
-            for (size_t d = 0; d < input->channels.size (); ++d)
+            std::vector<float> point(3);
+
+            point[0] = pc_points[index].x;
+            point[1] = pc_points[index].y;
+            point[2] = pc_points[index].z;
+
+            auto ring = index % TOTAL_RINGS;
+
+            if (!ring_valid[ring] && (point[0] != 0.0 || point[1] != 0.0 || point[2] != 0.0))
             {
-                if (input->channels[d].values.size() == input->points.size())
-                {
-                    memcpy (&output.data[cp * output.point_step + output.fields[3 + d].offset], &input->channels[d].values[cp], sizeof (float));
-                }
+                double angle = opening_angle(pc_points[index]);
+
+                ring_order.insert(std::make_pair(angle, ring));
+                ring_valid[ring] = true;
+            }
+
+            points[ring].push_back(point);
+        }
+
+        std::vector<std::vector<std::vector<float>>> ring_order_points(TOTAL_RINGS);
+
+        auto index = 0u;
+
+        if (ring_order.size() == 0)
+        {
+            std::cerr << "Could not find valid points in the cloud!" << std::endl;
+            return;
+        }
+
+        for (const auto& entry : ring_order)
+        {
+            auto ring = entry.second;
+
+            if ( ring_valid[ring])
+            {
+                ring_order_points[index] = std::move(points[ring]);
+            }
+
+            ++index;
+        }
+
+        for(; index < TOTAL_RINGS; ++index)
+        {
+            ring_order_points[index] = std::vector<std::vector<float>>(ring_order_points[0].size(), std::vector<float>(3, 0.0));
+        }
+
+
+
+        for (auto ring = 0u; ring < ring_order_points.size(); ++ring)
+        {
+            for (const auto& point : ring_order_points[ring])
+            {
+                iter_x[0] = point[0];
+                iter_x[1] = point[1];
+                iter_x[2] = point[2];
+                iter_ring[0] = ring;
+
+                ++iter_x;
+                ++iter_ring;
             }
         }
 
+
         // publish the generated pcl
-        pcl2pub.publish(output);
+        pcl2pub.publish(pc2);
     }
 
     // publishes PointCloud2
