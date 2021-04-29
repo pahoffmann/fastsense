@@ -42,12 +42,13 @@ struct PCL2PCL2
         pc2.height = 1;
         pc2.width = pc_ptr->points.size();
         
-        pc2.fields.resize(4);
+        pc2.fields.resize(5);
 
         pc2.fields[0].name = "x";
         pc2.fields[1].name = "y";
         pc2.fields[2].name = "z";
-        pc2.fields[3].name = "ring";
+        pc2.fields[3].name = "intensity";
+        pc2.fields[4].name = "ring";
 
         auto offset = 0u;
 
@@ -58,17 +59,22 @@ struct PCL2PCL2
             pc2.fields[index].count = 1;
         }
 
-        pc2.fields[3].offset = offset;
-        pc2.fields[3].datatype = sensor_msgs::PointField::INT16;
-        pc2.fields[3].count = 1;
+        pc2.fields[3].offset = 16;
+        pc2.fields[3].datatype = sensor_msgs::PointField::FLOAT32;
+        pc2.fields[4].count = 1;
+
+        pc2.fields[4].offset = 20;
+        pc2.fields[4].datatype = sensor_msgs::PointField::UINT16;
+        pc2.fields[4].count = 1;
 
         pc2.is_bigendian = false;
-        pc2.point_step = offset + 2;
+        pc2.point_step = 22;
         pc2.row_step = pc2.width * pc2.point_step;
         pc2.data.resize(pc2.row_step * pc2.height);
         pc2.is_dense = true;
 
         sensor_msgs::PointCloud2Iterator<float> iter_x(pc2, "x");
+        sensor_msgs::PointCloud2Iterator<float> iter_intensity(pc2, "intensity");
         sensor_msgs::PointCloud2Iterator<int> iter_ring(pc2, "ring");
 
         const auto& pc_points = pc_ptr->points;
@@ -135,14 +141,17 @@ struct PCL2PCL2
             {
                 iter_x[0] = point[0];
                 iter_x[1] = point[1];
-                iter_x[2] = point[2];
+                iter_x[2] =  1.0 / (ring + 1.0);
+                iter_intensity[0] = 1.0 / (ring + 1.0);
                 iter_ring[0] = ring;
 
                 ++iter_x;
+                ++iter_intensity;
                 ++iter_ring;
             }
         }
 
+        pc2.header.stamp = ros::Time::now();
 
         // publish the generated pcl
         pcl2pub.publish(pc2);

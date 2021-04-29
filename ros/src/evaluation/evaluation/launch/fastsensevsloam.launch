@@ -11,26 +11,26 @@
   <node pkg="nodelet" type="nodelet" name="imu_manager"
     args="manager" output="screen" />
 
-  <!-- <include file="$(find bridge)/launch/bridge.launch">
+  <include file="$(find bridge)/launch/bridge.launch">
     <arg name="board_addr" value="192.168.1.123"/>
     <arg name="timeout" value="10"/>
     <arg name="discard_timestamp" value="true"/>
     <arg name="save_poses" value="true"/>
-  </include> -->
+  </include> 
 
   <!-- Send data -->
-  <!-- <node pkg="bridge" type="to_trenz" name="to_trenz" output="screen">
-    <remap from="/imu/data_raw" to="/imu/data" />
-  </node> -->
+  <node pkg="bridge" type="to_trenz" name="to_trenz" output="screen">
+    <!--<remap from="/imu/data_raw" to="/imu/data" />-->
+  </node>
 
-  <!-- Play bagfiles -->
+  <!-- Play bagfiles -->s
   <node pkg="rosbag" type="play" name="fastsense_player" output="screen" args="$(arg bag) $(arg args) --clock --topics /from_trenz_bridge/imu/raw /from_trenz_bridge/velodyne/points">
     <remap from="/from_trenz_bridge/imu/raw" to="/imu/data_raw" />
   </node>
 
   <!--Subscribes to imu/data_raw and publishes orientation to imu/data 
       Needed for load compatibility. -->
-  <node pkg="nodelet" type="nodelet" name="ImuFilterNodelet"
+  <!--<node pkg="nodelet" type="nodelet" name="ImuFilterNodelet"
     args="load imu_filter_madgwick/ImuFilterNodelet imu_manager"
     output="screen">
 
@@ -41,7 +41,7 @@
     <param name="fixed_frame" value="imu" />
 
     <param name="publish_tf" value="false" />
-  </node>
+  </node> -->
 
   <node pkg="evaluation" type="pcl2pcl2" name="pcl2pcl2" output="screen">
     <param name="intopic" type="str" value="/from_trenz_bridge/velodyne/points"/>
