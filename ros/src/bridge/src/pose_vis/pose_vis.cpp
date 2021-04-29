@@ -91,6 +91,8 @@ int main(int argc, char** argv)
 
     std::cout << "Loading poses..." << std::endl;
 
+    auto pose_count = 0u;
+
     while (!pose_stream.eof())
     {
         std::string line;
@@ -163,9 +165,13 @@ int main(int argc, char** argv)
         // }
 
         pose_path.poses.push_back(pose_stamped);
+        ++pose_counter;
     }
 
+
     pose_stream.close();
+
+    ROS_INFO_STREAM("Read " << pose_counter << " poses");
 
     original_pose_path = pose_path;
 
