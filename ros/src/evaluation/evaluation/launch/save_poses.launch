@@ -1,4 +1,4 @@
 <?xml version="1.0"?>
 <launch>
-  <node pkg="evaluation" type="pose_saver_subscriber" name="pose_saver_subscriber" output="screen"/>
+  <node pkg="evaluation" type="save_poses_node" name="save_poses_node" output="screen"/>
 </launch>

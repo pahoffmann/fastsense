@@ -51,11 +51,6 @@ void Preprocessing::thread_run()
             continue;
         }
 
-        if (send_original)
-        {
-            send_buffer->push_nb(in_cloud);
-        }
-
         fastsense::msg::PointCloudPtrStamped out_cloud;
         out_cloud.data_ = in_cloud.data_;
         out_cloud.timestamp_ = in_cloud.timestamp_;
@@ -68,18 +63,28 @@ void Preprocessing::thread_run()
             }
         }
 
-        //;
-        //median_filter(out_cloud, 5);
+        if (send_original)
+        {
+            in_cloud.data_->scaling_ = scale;
+            send_buffer->push_nb(in_cloud);
+        }
+
+
+        /*if (util::config::ConfigManager::config().lidar.rings() == out_cloud.data_->rings_)
+        {
+            median_filter(out_cloud, 5);
+        }
+        else
+        {
+            Logger::warning("Expected rings not equal to received rings! Skipping median filter");
+        }*/
         
         reduction_filter_closest(out_cloud);
-
-        if (!this->out_->push_nb(out_cloud, true))
-        {
-            Logger::info("Cloud was discarded");
-        }
+        this->out_->push_nb(out_cloud, true);
 
         if (send_preprocessed)
         {
+            out_cloud.data_->scaling_ = scale;
             send_buffer->push_nb(out_cloud);
         }
     }
@@ -109,7 +114,7 @@ void Preprocessing::reduction_filter_average(fastsense::msg::PointCloudPtrStampe
 
         auto& avg_point = point_map.try_emplace(voxel, default_value).first->second;
         avg_point.first += point.cast<int>();
-    avg_point.second++;
+        avg_point.second++;
     }
 
     cloud_points.resize(point_map.size());
@@ -243,14 +248,9 @@ uint8_t Preprocessing::median_from_array(std::vector<ScanPoint*> medians)
 
 void Preprocessing::median_filter(fastsense::msg::PointCloudPtrStamped& cloud, uint8_t window_size)
 {
-    if (util::config::ConfigManager::config().lidar.rings() != cloud.data_->rings_)
-    {
-        Logger::error("Expected rings not equal to received rings! Skipping median filter");
-        return;
-    }
-
     if (window_size % 2 == 0)
     {
+        Logger::warning("Median filter window must be % 2 == 1, but isn't. Skipping.");
         return;
     }
 

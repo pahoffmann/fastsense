@@ -10,7 +10,7 @@
 
 #include <util/pcd/pcd_file.h>
 #include <comm/queue_bridge.h>
-#include <msg/tsdf_bridge_msg.h>
+#include <msg/tsdf.h>
 #include <util/config/config_manager.h>
 #include <tsdf/krnl_tsdf.h>
 
@@ -74,8 +74,8 @@ TEST_CASE("TSDF_Kernel_Vis", "[tsdf_kernel_vis]")
         auto& pos = local_map.get_pos();
         auto& offset = local_map.get_offset();
 
-        auto tsdf_buffer = std::make_shared<fastsense::util::ConcurrentRingBuffer<fastsense::msg::TSDFBridgeMessage>>(2);
-        fastsense::comm::QueueBridge<fastsense::msg::TSDFBridgeMessage, true> tsdf_bridge{tsdf_buffer, nullptr, 6666};
+        auto tsdf_buffer = std::make_shared<fastsense::util::ConcurrentRingBuffer<fastsense::msg::TSDF>>(2);
+        fastsense::comm::QueueBridge<fastsense::msg::TSDF, true> tsdf_bridge{tsdf_buffer, nullptr, 6666};
 
         tsdf_bridge.start();
 
@@ -93,7 +93,7 @@ TEST_CASE("TSDF_Kernel_Vis", "[tsdf_kernel_vis]")
         krnl.run(local_map, kernel_points, kernel_points.size(), TAU, MAX_WEIGHT);
         krnl.waitComplete();
 
-        fastsense::msg::TSDFBridgeMessage tsdf_msg;
+        fastsense::msg::TSDF tsdf_msg;
 
         tsdf_msg.tau_ = TAU;
         tsdf_msg.size_ = size;

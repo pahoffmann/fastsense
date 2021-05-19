@@ -18,6 +18,9 @@
 #include <mutex>
 #include <fstream>
 
+#include <tf2/LinearMath/Vector3.h>
+#include <tf2/LinearMath/Matrix3x3.h>
+
 namespace fastsense::bridge
 {
 
@@ -111,6 +114,16 @@ private:
 
     /// whether or not to save poses
     bool save_poses_;
+
+    tf2::Vector3 rot_drift_;
+
+    tf2::Vector3 last_position_corrected_;
+    tf2::Matrix3x3 last_rotation_corrected_;
+
+    tf2::Vector3 last_position_;
+    tf2::Matrix3x3 last_rotation_;
+
+    bool first_pose_;
 };
 
 } // namespace fastsense::bridge

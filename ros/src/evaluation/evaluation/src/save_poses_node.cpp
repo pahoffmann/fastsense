@@ -7,6 +7,10 @@
 #include <string>
 #include <chrono>
 
+#include <tf2/LinearMath/Matrix3x3.h>
+#include <tf2/LinearMath/Quaternion.h>
+#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
+
 /**
  * This Class saves incoming geometry_msgs/SavePoseStamped (id + PoseStamped) in a file called
  * poses_<ID>_<TIMESTAMP>.txt
@@ -61,9 +65,20 @@ struct PoseSaver
     void savePose(const std::string& id, const geometry_msgs::PoseStamped& pose_stamped)
     {
         auto& pose_stream = pose_streams.at(id);
-        pose_stream << pose_stamped.pose.position.x << " " << pose_stamped.pose.position.y << " " << pose_stamped.pose.position.z << " "
-                     << pose_stamped.pose.orientation.x << " " << pose_stamped.pose.orientation.y << " " << pose_stamped.pose.orientation.z << " "
-                     << pose_stamped.pose.orientation.w << std::endl;
+        // pose_stream << pose_stamped.pose.position.x << " " << pose_stamped.pose.position.y << " " << pose_stamped.pose.position.z << " "
+        //              << pose_stamped.pose.orientation.x << " " << pose_stamped.pose.orientation.y << " " << pose_stamped.pose.orientation.z << " "
+        //              << pose_stamped.pose.orientation.w << std::endl;
+    
+        tf2::Quaternion q(-pose_stamped.pose.orientation.y, 
+                          -pose_stamped.pose.orientation.z, 
+                          -pose_stamped.pose.orientation.x, 
+                           pose_stamped.pose.orientation.w);
+
+        tf2::Matrix3x3 rot_matrix(q);
+
+        pose_stream << rot_matrix[0][0] << " " << rot_matrix[0][1] << " " << rot_matrix[0][2] << " " <<  -pose_stamped.pose.position.y << " "
+                    << rot_matrix[1][0] << " " << rot_matrix[1][1] << " " << rot_matrix[1][2] << " " <<   pose_stamped.pose.position.z << " "
+                    << rot_matrix[2][0] << " " << rot_matrix[2][1] << " " << rot_matrix[2][2] << " " <<   pose_stamped.pose.position.x << std::endl;
     }
 
     /**

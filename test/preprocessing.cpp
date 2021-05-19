@@ -54,12 +54,9 @@ TEST_CASE("Preprocessing", "[Preprocessing]")
     points[21] = {50, 50, 40}; //d = 81.240384
     points[23] = {50, 50, 20}; //d = 73.484692
     
-
-
-    //cloud->rings_ = 2;
-    //cloud->points_ = points;
     cloud_stamped.data_->points_ = points;
     cloud_stamped.data_->rings_ = 2;
+    cloud_stamped.data_->scaling_ = 1.0f;
 
     SECTION("Test median filter"){
 
@@ -97,9 +94,6 @@ TEST_CASE("Preprocessing", "[Preprocessing]")
             REQUIRE(cloud_stamped.data_->points_[i] == result[i]);
         }
     }
-
-
-
 
     SECTION("Test reduction filter average"){
 
@@ -212,7 +206,6 @@ TEST_CASE("Preprocessing", "[Preprocessing]")
         }
     }
 
-
     SECTION("Test reduction filter voxel center"){
         points.resize(8);
 
@@ -246,7 +239,6 @@ TEST_CASE("Preprocessing", "[Preprocessing]")
         }
     }
 
-
     SECTION("Test reduction filter voxel center"){
 
         points.resize(8);
@@ -272,7 +264,5 @@ TEST_CASE("Preprocessing", "[Preprocessing]")
         for(auto& point : cloud_stamped.data_->points_){
             std::cout << "x: " << point.x() << " y: " << point.y() << "z: " << point.z() << std::endl;
         }
-
     }
-
 }

@@ -10,7 +10,7 @@
 #include <map/local_map.h>
 #include <eigen3/Eigen/Dense>
 #include <util/process_thread.h>
-#include <msg/tsdf_bridge_msg.h>
+#include <msg/tsdf.h>
 #include <tsdf/krnl_tsdf.h>
 #include <registration/registration.h>
 #include <util/config/config_manager.h>
@@ -41,7 +41,8 @@ public:
                   bool send_after_registration,
                   const fastsense::CommandQueuePtr& q,
                   MapThread& map_thread,
-                  std::mutex& map_mutex);
+                  std::mutex& map_mutex,
+                  float point_scale);
 
     /**
      * @brief Set the global map
@@ -73,6 +74,7 @@ private:
     fastsense::CommandQueuePtr q;
     MapThread& map_thread;
     std::mutex& map_mutex;
+    float point_scale;
 };
 
 }
