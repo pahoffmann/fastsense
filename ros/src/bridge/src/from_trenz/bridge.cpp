@@ -39,10 +39,15 @@ int main(int argc, char** argv)
         ROS_WARN("Do not record bagfiles with 'discard_timestamp' enabled!\n");
     }
 
+    // Setup save_poses
+    bool save_poses;
+    n.param("save_poses", save_poses, false);
+    ROS_INFO_STREAM("Save poses: " << std::boolalpha << save_poses);
+
     fs::bridge::TSDFBridge tsdf_bridge{n, board_addr, timeout, discard_timestamp};
     fs::bridge::ImuBridge imu_bridge{n, board_addr, timeout, discard_timestamp};
     fs::bridge::VelodyneBridge velodyne_bridge{n, board_addr, timeout, discard_timestamp};
-    fs::bridge::TransformBridge transform_bridge{n, board_addr, timeout, discard_timestamp};
+    fs::bridge::TransformBridge transform_bridge{n, board_addr, timeout, discard_timestamp, save_poses};
     
     tsdf_bridge.start();
     imu_bridge.start();

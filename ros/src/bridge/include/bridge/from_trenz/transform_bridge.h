@@ -1,6 +1,8 @@
 /**
  * @file velodyne_bridge.h
  * @author Marcel Flottmann
+ * @author Julian Gaal
+ * @author Marc Eisoldt
  * @date 2020-09-29
  */
 
@@ -14,6 +16,7 @@
 #include "bridge_base.h"
 
 #include <mutex>
+#include <fstream>
 
 namespace fastsense::bridge
 {
@@ -33,13 +36,18 @@ public:
      * @param board_addr ip addr of Trenz board
      * @param timeout how long to wait for new messages before trying again
      * @param discard_timestamp Whether or not to discard timestamps and replace with ros::Time::now()
+     * @param save_poses Whether or not to save_poses by publishing to evaluation/SavePoseStamped
      */
-    TransformBridge(ros::NodeHandle& n, const std::string& board_addr, std::chrono::milliseconds timeout, bool discard_timestamp);
+    TransformBridge(ros::NodeHandle& n,
+                    const std::string& board_addr,
+                    std::chrono::milliseconds timeout,
+                    bool discard_timestamp,
+                    bool save_poses);
 
     /**
      * @brief Destroy the Transform Bridge object
      */
-    ~TransformBridge() override = default;
+    ~TransformBridge() = default;
 
     /**
      * @brief Starts the Transform Bridge in its own thread
@@ -90,7 +98,7 @@ private:
     geometry_msgs::TransformStamped transform_data;
 
     /// first message received: used to detect first timestamp
-    bool first_smg;
+    bool first_msg;
 
     /// Path message
     nav_msgs::Path pose_path;
@@ -100,6 +108,9 @@ private:
 
     /// Whether or not to discard timestamps and replace with ros::Time::now()
     bool discard_timestamp_;
+
+    /// whether or not to save poses
+    bool save_poses_;
 };
 
 } // namespace fastsense::bridge

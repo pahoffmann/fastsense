@@ -1,0 +1,4 @@
+<?xml version="1.0"?>
+<launch>
+  <node pkg="evaluation" type="pose_saver_subscriber" name="pose_saver_subscriber" output="screen"/>
+</launch>

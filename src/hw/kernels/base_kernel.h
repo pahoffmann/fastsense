@@ -28,6 +28,19 @@ protected:
         kernel_.setArg(narg_++, arg);
     }
 
+    template <typename T, typename ...Args>
+    inline void setArgs(const T& arg, const Args& ...args)
+    {
+        setArg(arg);
+        setArgs(args...);
+    }
+
+    template <typename T>
+    inline void setArgs(const T& arg)
+    {
+        setArg(arg);
+    }
+
     /// reset narg to 0
     void resetNArg()
     {
