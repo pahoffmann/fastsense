@@ -37,6 +37,48 @@ You can either [download a pre built base-design]() for the specific board, or b
 
 ## Runtime Parameters
 
+All parameters are read when the program is started from the *config.json* located in *app_data/*. After copying the files to the SD card, this file should be copied into the */mnt* directory alongside the executable.
+
+In the following, the runtime parameters are listed and described shorly:
+
+* **imu**: Parameters for the IMU driver and the IMU average filter
+  * **bufferSize**: Buffer size for the incoming imu data
+  * **filterSize**: Size of the sliding window for the average filter
+* **lidar**: Parameters for the LiDAR driver to configurate the network communication and the algorithm based on the properties of the laserscanner
+  * **bufferSize**: Buffer size for the incoming LiDAR data
+  * **port**: Port for the network communication of the sensor
+  * **pointscale**: Scaling that should be applied on every point of the received cloud. This can indirectly adjust the resolution of the map without changing the hardware
+  * **rings**: Expected scan rings in the received point clouds
+  * **vertical_fov_angle**: Expected vertical field of view of the sensor (in degree)
+* **registartion**: Parameters for the registration of the incoming sensor data based on the current TSDF map
+  * **max_iterations**: Maximum number of iterations spent for every matching procedure
+  * **it_weight_gradient**: Weight for the changing decay, increasing with every iteration 
+  * **epsilon**: Registartion error from which the matching procedure should be stopped
+* **gpio**: Parameters for the GPIO pins
+* **bridge**: Parameters for the ROS bridge
+  * **use_from**: Should the the sensor data be used from the ROS bridge?
+  * **use_to**: Should the output data of the SLAM-Box be sent via the ROS bridge?
+  * **send_original**: Send the unprocessed sensor data provided by the laserscanner 
+  * **send_preprocessed**: Send the scaled and filtered sensor data
+  * **send_after_registartion***: Send the registered sensor data
+  * **host_from**: IP address of the host
+  * **imu_port_from**: Port to receive IMU data from the host
+  * **imu_port_to**: Port to send IMU data send data to the host
+  * **pcl_port_from**: Port to receive point cloud data from the host
+  * **pcl_port_to**: Port to send point cloud data to the host
+  * **transform_port_to**: Port to send the current pose of the SLAM-Box to the host
+  * **tsdf_port_to**: Port to send the local TSDF map to the host
+* **slam**: Parameters for the mapping procedure
+  * **max_distance**: Truncation value for the distance values in the TSDF map (in mm)
+  * **map_size_x**: Size of the local TSDF map in x direction (in cells)
+  * **map_size_y**: Size of the local TSDF map in y direction (in cells)
+  * **map_size_z**: Size of the local TSDF map in z direction (in cells)
+  * **max_weight**: Upper bound for the weights of every cell for the averaging
+  * **initial_map_weight**: Initial weight for every cell in the TSDF map
+  * **map_update_period**: Skipped scans until the next map update
+  * **map_update_position_threshold**: Distance from which a new map update is to be performed
+  * **map_path**: Save directory for the global map
+  
 Example:
 
 ```
