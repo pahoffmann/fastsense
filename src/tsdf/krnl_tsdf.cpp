@@ -376,7 +376,7 @@ extern "C"
     }
 
     /**
-     * @brief Hardware implementation of the TSDF generation and update algorithm using bresenham
+     * @brief Hardware implementation of the TSDF generation and update algorithm using quasi bresenham
      *
      * @param scanPoints0 Point reference from which the TSDF data should be calculated
      * @param scanPoints1 Point reference from which the TSDF data should be calculated
