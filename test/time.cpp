@@ -21,7 +21,7 @@ using namespace fastsense::util;
 void check_time(unsigned long long time, unsigned long long lower_bound)
 {
     CHECK(time >= lower_bound);
-    CHECK(time < 1.1 * lower_bound + 1000);
+    CHECK(time < 1.1 * lower_bound + 2000);
 }
 
 TEST_CASE("Time", "[Time]")
@@ -29,6 +29,7 @@ TEST_CASE("Time", "[Time]")
     std::cout << "Testing 'Time'" << std::endl;
 
 #ifdef TIME_MEASUREMENT
+    // Measurements
     auto& re = RuntimeEvaluator::get_instance();
     re.clear();
 
@@ -53,6 +54,7 @@ TEST_CASE("Time", "[Time]")
 
     std::cout << re << std::endl;
 
+    // Expected values
     int test_1_duration = 21 * 1000;
     int test_1_sum = test_1_duration * 10;
 

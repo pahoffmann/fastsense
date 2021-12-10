@@ -73,6 +73,7 @@ void MapThread::go(const Vector3i& pos, const Eigen::Matrix4f& pose, const fasts
 
 void MapThread::thread_run()
 {
+    // Second runtime evaluator for measurements in this thread
     util::RuntimeEvaluator eval;
     map::LocalMap tmp_map(*local_map_);
 
@@ -90,17 +91,15 @@ void MapThread::thread_run()
         tmp_map.shift(pos_);
         eval.stop("shift");
 
+        // tsdf update
+        eval.start("tsdf");
         Matrix4i rotation_mat = Matrix4i::Identity();
         rotation_mat.block<3, 3>(0, 0) = ((pose_ * MATRIX_RESOLUTION).cast<int>()).block<3, 3>(0, 0);
-
         Eigen::Vector4i v;
         v << Vector3i(0, 0, MATRIX_RESOLUTION), 1;
         Vector3i up = (rotation_mat * v).block<3, 1>(0, 0) / MATRIX_RESOLUTION;
-
         PointHW up_hw(up.x(), up.y(), up.z());
 
-        // tsdf update
-        eval.start("tsdf");
         tsdf_krnl_.synchronized_run(tmp_map, *points_ptr_, num_points_, up_hw);
         eval.stop("tsdf");
 

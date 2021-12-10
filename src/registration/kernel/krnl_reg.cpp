@@ -20,6 +20,14 @@ constexpr int SPLIT_FACTOR = 3; // MARKER: SPLIT
 extern "C"
 {
 
+    /**
+     * @brief Convert the motion representation into a transformation matrix
+     * 
+     * @param xi        Motion representation, which should be converted into a transformatio matrix.
+     *                  It is represented as a 6D-vector with three linear velocity and three angular velocity entries (for every axis) 
+     * @param transform Transformation matrix built from the motion representation
+     * @param center    Current center of the scan in global coordinates
+     */
     void xi_to_transform(const float xi[6], float transform[4][4], PointHW& center)
     {
         // Formula 3.9 on Page 40 of "Truncated Signed Distance Fields Applied To Robotics"
@@ -92,9 +100,26 @@ extern "C"
         transform[2][3] = shift[2] + center.z + xi[5];
     }
 
+    /**
+     * @brief Perfom a registration iteration step, where a H and g matrix is built based 
+     *        on every scan point which can be used to determine an intermediat transformation
+     * 
+     * @param pointData        Current set of scan points, which should matched against the map
+     * @param numPoints        Number of points in the current scan
+     * @param mapData0         First map data reference, which is used to get the TSDF value of the grid the points lie in
+     * @param mapData1         Second map data reference, which is used to get rear TSDF value of an axis around a point to build a TSDF gradient
+     * @param mapData2         Third map data reference, which is used to get front TSDF value of an axis around a point to build a TSDF gradient
+     * @param map              Map representation to access the raw map data
+     * @param transform_matrix Current total transformation
+     * @param center           Current center of the scan in global coordinates
+     * @param h                H matrix, which is built from the scan points and the map
+     * @param g                g matrix, which is built from the scan points and the map
+     * @param error            Determined registration error of the scan points to the map 
+     * @param count            Number of point, which were considered for the registration step
+     */
     void registration_step(const PointHW* pointData,
                            int numPoints,
-                           TSDFValueHW* mapData0, TSDFValueHW* mapData1, TSDFValueHW* mapData2,
+                           TSDFEntryHW* mapData0, TSDFEntryHW* mapData1, TSDFEntryHW* mapData2,
                            const LocalMapHW& map,
                            const int transform_matrix[4][4],
                            const PointHW& center,
@@ -152,6 +177,7 @@ extern "C"
             //get value of local map
             const auto& current = map.get(mapData0, buf.x, buf.y, buf.z);
 
+            // If the TSDF value was not set, we have no information about it and so the point cannot be considered for registration
             if (current.weight == 0)
             {
                 continue;
@@ -160,6 +186,7 @@ extern "C"
             int gradient[3] = {0, 0, 0};
 #pragma HLS array_partition variable=gradient complete
 
+        // Build the TSDF gradient based on the local TSDF neighborhood of a point
         gradient_loop:
             for (size_t axis = 0; axis < 3; axis++)
             {
@@ -210,7 +237,7 @@ extern "C"
 // Declares the parameters for variables ending with 'n'. Macro Syntax: ## means concat variable name with the contents of 'n'
 #define DECLARE_PARAMS(n) \
     const PointHW* pointData##n, \
-    TSDFValueHW* mapData##n##0, TSDFValueHW* mapData##n##1, TSDFValueHW* mapData##n##2, \
+    TSDFEntryHW* mapData##n##0, TSDFEntryHW* mapData##n##1, TSDFEntryHW* mapData##n##2, \
     long h##n[6][6], long g##n[6], long& error##n, long& count##n
 
 #define USE_PARAMS(n) \
@@ -218,6 +245,10 @@ extern "C"
     mapData##n##0, mapData##n##1, mapData##n##2, \
     h##n, g##n, error##n, count##n
 
+    /**
+     * @brief Create a dataflow from the registration process 
+     * 
+     */
     void reg_dataflow(DECLARE_PARAMS(0), // MARKER: SPLIT
                       DECLARE_PARAMS(1),
                       DECLARE_PARAMS(2),
@@ -242,13 +273,33 @@ extern "C"
         CALL_STEP(2, last_step);
     }
 
+    /**
+     * @brief Perform a complete registration of the given point data to the current TSDF map
+     *  
+     * @param pointDataX Point data assigned to different memory points, which should be registered
+     * @param numPoints  Number of points in the current scan
+     * @param mapDataXX  Map data assigned to different memory ports. which should be used to register the scan points
+     * @param sizeX Map size in x direction
+     * @param sizeY Map size in y direction
+     * @param sizeZ Map size in z direction
+     * @param posX  X coordinate of the scanner in the global system
+     * @param posY  Y coordinate of the scanner in the global system
+     * @param posZ  Z coordinate of the scanner in the global system
+     * @param offsetX Offset for the x axis regarding the current map shift 
+     * @param offsetY Offset for the y axis regarding the current map shift
+     * @param offsetZ Offset for the z axis regarding the current map shift
+     * @param max_iterations Maximum number of iteration for determining the transfomormation of the current scan to the map
+     * @param it_weight_gradient Decay variable for the iteration influence
+     * @param in_transform Initial transformation for scan point
+     * @param out_transform Result transformation for the scan into the global coordinate system
+     */
     void krnl_reg(const PointHW* pointData0, // MARKER: SPLIT
                   const PointHW* pointData1,
                   const PointHW* pointData2,
                   int numPoints,
-                  TSDFValueHW* mapData00, TSDFValueHW* mapData01, TSDFValueHW* mapData02, // MARKER: SPLIT
-                  TSDFValueHW* mapData10, TSDFValueHW* mapData11, TSDFValueHW* mapData12,
-                  TSDFValueHW* mapData20, TSDFValueHW* mapData21, TSDFValueHW* mapData22,
+                  TSDFEntryHW* mapData00, TSDFEntryHW* mapData01, TSDFEntryHW* mapData02, // MARKER: SPLIT
+                  TSDFEntryHW* mapData10, TSDFEntryHW* mapData11, TSDFEntryHW* mapData12,
+                  TSDFEntryHW* mapData20, TSDFEntryHW* mapData21, TSDFEntryHW* mapData22,
                   int sizeX,   int sizeY,   int sizeZ,
                   int posX,    int posY,    int posZ,
                   int offsetX, int offsetY, int offsetZ,
@@ -386,14 +437,15 @@ extern "C"
                 h_float[row][row] += alpha_bonus;
             }
 
+            // Invert H matrix und multiplicate it with g to receive the next motion
             lu_decomposition<float, 6>(h_float);
             lu_solve<float, 6>(h_float, g_float, xi);
 
+            // Convert the current motion iterion into a transformation matrix and add it to the total transformation
             xi_to_transform(xi, next_transform, center);
             MatrixMul<float, 4, 4, 4>(next_transform, total_transform, temp_transform);
 
             // copy temp_transform to total_transform
-            // TODO: multiply in-place to avoid copy?
             for (int row = 0; row < 4; row++)
             {
 #pragma HLS unroll
@@ -408,8 +460,6 @@ extern "C"
             float err = (float)error0 / count0;
             float d1 = err - previous_errors[2];
             float d2 = err - previous_errors[0];
-
-            //std::cout << d1 << " " << d2 << std::endl;
 
             if (d1 >= -epsilon && d1 <= epsilon && d2 >= -epsilon && d2 <= epsilon)
             {

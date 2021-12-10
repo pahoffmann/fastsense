@@ -30,7 +30,7 @@ private:
     Vector3i size_;
 
     /// Actual data of the local map.
-    buffer::InputOutputBuffer<TSDFValue> data_;
+    buffer::InputOutputBuffer<TSDFEntry> data_;
 
     /// Position (x, y, z) of the center of the cuboid in global coordinates.
     Vector3i pos_;
@@ -115,7 +115,7 @@ public:
      * @param z z-coordinate of the index in global coordinates
      * @return Value of the local map
      */
-    inline TSDFValue& value(int x, int y, int z)
+    inline TSDFEntry& value(int x, int y, int z)
     {
         return value(Vector3i(x, y, z));
     }
@@ -128,7 +128,7 @@ public:
      * @param z z-coordinate of the index in global coordinates
      * @return Value of the local map
      */
-    inline const TSDFValue& value(int x, int y, int z) const
+    inline const TSDFEntry& value(int x, int y, int z) const
     {
         return value(Vector3i(x, y, z));
     }
@@ -139,7 +139,7 @@ public:
      * @param p position of the index in global coordinates
      * @return value of the local map
      */
-    inline TSDFValue& value(const Vector3i& p)
+    inline TSDFEntry& value(const Vector3i& p)
     {
         if (!in_bounds(p))
         {
@@ -154,7 +154,7 @@ public:
      * @param p position of the index in global coordinates
      * @return value of the local map
      */
-    inline const TSDFValue& value(const Vector3i& p) const
+    inline const TSDFEntry& value(const Vector3i& p) const
     {
         if (!in_bounds(p))
         {
@@ -228,7 +228,7 @@ public:
      * It can be used with hardware kernels.
      * @return data buffer
      */
-    buffer::InputOutputBuffer<TSDFValue>& getBuffer();
+    buffer::InputOutputBuffer<TSDFEntry>& getBuffer();
 
     LocalMapHW get_hardware_representation() const;
 
@@ -290,7 +290,7 @@ private:
      * @param p position of the index in global coordinates
      * @return value of the local map
      */
-    inline TSDFValue& value_unchecked(const Vector3i& p)
+    inline TSDFEntry& value_unchecked(const Vector3i& p)
     {
         return data_[get_index(p)];
     }
@@ -301,7 +301,7 @@ private:
      * @param p position of the index in global coordinates
      * @return value of the local map
      */
-    inline const TSDFValue& value_unchecked(const Vector3i& p) const
+    inline const TSDFEntry& value_unchecked(const Vector3i& p) const
     {
         return data_[get_index(p)];
     }

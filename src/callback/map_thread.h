@@ -118,9 +118,9 @@ private:
     std::mutex start_mutex_;
     /// Flag that indicates if the thread is active
     std::atomic<bool> active_;
-    /// Position that is used for shifting, updating and visualization
+    /// Position that is used for shifting
     Vector3i pos_;
-
+    /// Pose that is used for updating
     Eigen::Matrix4f pose_;
 
     /// Scan points that are used for shifting, updating and visualization
