@@ -75,7 +75,7 @@ LIBS = \
 	-L$(SYSROOT)/usr/lib/ \
 	-fopenmp \
 	-lgpiod \
-	-lgpiodcxx
+	-lgpiodcxx 
 
 INC_DIRS = \
 	src \
