@@ -42,7 +42,9 @@ ENTRY_POINT_DEPS = $(ENTRY_POINT_OBJS:.o=.d)
 SW_SRCS = src/application.cpp \
 	src/driver/imu/imu.cpp \
 	src/driver/lidar/velodyne.cpp \
+	src/driver/lidar/ouster.cpp \
 	$(wildcard src/map/*.cpp) \
+	$(wildcard src/driver/lidar/ouster/*.cpp) \
 	$(wildcard src/callback/*.cpp) \
 	$(wildcard src/registration/*.cpp) \
 	$(wildcard src/preprocessing/*.cpp) \
@@ -75,7 +77,8 @@ LIBS = \
 	-L$(SYSROOT)/usr/lib/ \
 	-fopenmp \
 	-lgpiod \
-	-lgpiodcxx 
+	-lgpiodcxx \
+	-ljsoncpp
 
 INC_DIRS = \
 	src \
