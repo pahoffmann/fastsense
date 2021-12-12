@@ -28,6 +28,8 @@
 #include <ui/button.h>
 #include <ui/led.h>
 
+#include <driver/lidar/ouster.h>
+
 using namespace fastsense;
 using namespace fastsense::util::config;
 using namespace fastsense::util::logging;
@@ -86,8 +88,11 @@ std::unique_ptr<util::ProcessThread> Application::init_lidar(msg::PointCloudPtrS
     }
     else
     {
-        Logger::info("Launching Velodyne Driver");
-        return std::make_unique<driver::VelodyneDriver>(config.lidar.port(), pcl_buffer);
+        // Logger::info("Launching Velodyne Driver");
+        // return std::make_unique<driver::VelodyneDriver>(config.lidar.port(), pcl_buffer);
+        
+        Logger::info("Launching Ouster Driver");
+        return std::make_unique<driver::OusterDriver>("192.168.1.235", pcl_buffer);
     }
 }
 

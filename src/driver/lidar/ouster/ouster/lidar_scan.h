@@ -111,7 +111,7 @@ class LidarScan {
      */
     template <typename Iterator>
     LidarScan(size_t w, size_t h, Iterator begin, Iterator end)
-        : LidarScan(w, h, {begin, end}){};
+        : LidarScan(w, h, {begin, end}) {}
 
     /*
      * Special member functions

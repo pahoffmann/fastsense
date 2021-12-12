@@ -91,7 +91,7 @@ INC_FLAGS = $(addprefix -I,$(INC_DIRS))
 CXX_STD = c++17
 CXX_OPTFGLAGS ?= -O2 -ftree-loop-vectorize
 GCCFLAGS = -Wall -Wextra -Wnon-virtual-dtor -ansi -pedantic -Wfatal-errors  -fexceptions -Wno-unknown-pragmas -fopenmp
-CXXFLAGS = $(INC_FLAGS) $(GCCFLAGS) $(CXX_OPTFGLAGS) -MMD -MP -D__USE_XOPEN2K8 -c -fmessage-length=0 -std=$(CXX_STD) --sysroot=$(SYSROOT)
+CXXFLAGS = $(INC_FLAGS) $(GCCFLAGS) $(CXX_OPTFGLAGS) -MMD -MP -D__USE_XOPEN2K8 -c -fmessage-length=0 -std=$(CXX_STD) --sysroot=$(SYSROOT) -Wno-deprecated-declarations
 
 LDFLAGS = $(LIBS) --sysroot=$(SYSROOT) $(LD_EXTRA)
 

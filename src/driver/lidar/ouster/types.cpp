@@ -1023,7 +1023,7 @@ version version_of_string(const std::string& s) {
         return v;
     else
         return invalid_version;
-};
+}
 
 }  // namespace util
 }  // namespace ouster
