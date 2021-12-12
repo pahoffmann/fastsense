@@ -9,7 +9,7 @@ namespace fastsense::driver
 const size_t UDP_BUF_SIZE = 65536;
 
 OusterDriver::OusterDriver(const std::string& hostname, const fastsense::msg::PointCloudPtrStampedBuffer::Ptr& buffer, const std::string& metadata, uint16_t lidar_port)
-: handle_{sensor::init_client(hostname)}, scan_buffer_(buffer)
+: handle_{sensor::init_client(hostname, "")}, scan_buffer_(buffer), current_scan_{std::make_shared<PointCloud>()}
 {
     if (!handle_)
     {
@@ -59,7 +59,7 @@ void OusterDriver::thread_run()
 {
     // buffer to store raw packet data
     std::unique_ptr<uint8_t[]> lidar_packet_buf(new uint8_t[UDP_BUF_SIZE]);
-    LidarScan scan;
+    LidarScan scan(w_, h_, info_.format.udp_profile_lidar);
     XYZLut lut = ouster::make_xyz_lut(info_);
 
     while (running)
@@ -88,11 +88,41 @@ void OusterDriver::thread_run()
                 std::cerr << "Failed to read a packet of the expected size!" << std::endl;
                 continue;
             }
-                
+            
             // batcher will return "true" when the current scan is complete
             if ((*batch_to_scan_ptr_)(lidar_packet_buf.get(), scan)) 
             {
-                auto ouster_cloud = cartesian(scan, lut);
+                auto ouster_points = cartesian(scan, lut);
+            
+                current_scan_->rings_ = 128;
+                current_scan_->scaling_ = 1.0f;
+
+                current_scan_->points_.resize(scan.w * scan.h);
+
+                size_t count = 0;
+
+                for (auto u = 0; u < scan.h; u++) 
+                {
+                    for (auto v = 0; v < scan.w; v++) 
+                    {
+                        const auto xyz = ouster_points.row(u * scan.w + v);
+                        
+                        auto& new_point = current_scan_->points_[count];
+
+                        new_point.x() = xyz(0) * 1000;
+                        new_point.y() = xyz(1) * 1000;
+                        new_point.z() = xyz(2) * 1000;
+
+                        ++count;
+                    }
+                }
+
+                scan_buffer_->push_nb(Stamped<PointCloud::Ptr>{current_scan_, util::HighResTime::now()}, true);
+                current_scan_ = std::make_shared<PointCloud>();
+            }
+
+            if (st & sensor::IMU_DATA) 
+            {
             }
         }
     }
