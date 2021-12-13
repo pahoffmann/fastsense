@@ -11,6 +11,11 @@
 #include "ouster/ouster/lidar_scan.h"
 #include "ouster/ouster/types.h"
 
+#include <msg/imu.h>
+#include <util/filter.h>
+
+#include <optional>
+
 namespace fastsense::driver
 {
 
@@ -20,6 +25,8 @@ public:
     using UPtr = std::unique_ptr<OusterDriver>;
 
     OusterDriver(const std::string& hostname, const fastsense::msg::PointCloudPtrStampedBuffer::Ptr& buffer, const std::string& metadata = "", uint16_t lidar_port = 0);
+
+    OusterDriver(const std::string& hostname, const fastsense::msg::PointCloudPtrStampedBuffer::Ptr& buffer, const fastsense::msg::ImuStampedBuffer::Ptr& ringbuffer, size_t filter_size, const std::string& metadata = "", uint16_t lidar_port = 0);
 
     ~OusterDriver() = default;
 
@@ -57,6 +64,10 @@ protected:
 
     /// Buffer to write scans to
     fastsense::util::ConcurrentRingBuffer<fastsense::msg::PointCloudPtrStamped>::Ptr scan_buffer_;
+
+    fastsense::msg::ImuStampedBuffer::Ptr imu_buffer_;
+
+    std::optional<util::SlidingWindowFilter<msg::Imu>> imu_filter_;
 
     /// Current scan
     fastsense::msg::PointCloud::Ptr current_scan_;

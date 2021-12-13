@@ -8,6 +8,13 @@ namespace fastsense::driver
 
 const size_t UDP_BUF_SIZE = 65536;
 
+OusterDriver::OusterDriver(const std::string& hostname, const fastsense::msg::PointCloudPtrStampedBuffer::Ptr& buffer, const fastsense::msg::ImuStampedBuffer::Ptr& imu_buffer, size_t imu_filter_size, const std::string& metadata, uint16_t lidar_port) 
+: OusterDriver(hostname, buffer, metadata, lidar_port)
+{
+    imu_buffer_ = fastsense::msg::ImuStampedBuffer::Ptr(imu_buffer);
+    imu_filter_ = std::make_optional<util::SlidingWindowFilter<msg::Imu>>(imu_filter_size);
+}
+
 OusterDriver::OusterDriver(const std::string& hostname, const fastsense::msg::PointCloudPtrStampedBuffer::Ptr& buffer, const std::string& metadata, uint16_t lidar_port)
 : handle_{sensor::init_client(hostname, "")}, scan_buffer_(buffer), current_scan_{std::make_shared<PointCloud>()}
 {
@@ -123,6 +130,37 @@ void OusterDriver::thread_run()
 
             if (st & sensor::IMU_DATA) 
             {
+                if (!imu_filter_)
+                {
+                    continue;
+                }
+
+                if (!sensor::read_imu_packet(*handle_, lidar_packet_buf.get(), *pf_ptr_))
+                {
+                    std::cerr << "Failed to read a packet of the expected size!" << std::endl;
+                    continue;
+                }
+
+                constexpr double STANDARD_G = 9.80665;
+
+                double acceleration[3];
+                double angular_rate[3]; 
+                double magnetic_field[3];
+
+                acceleration[0] = (*pf_ptr_).imu_la_x(lidar_packet_buf.get()) * STANDARD_G;
+                acceleration[1] = (*pf_ptr_).imu_la_y(lidar_packet_buf.get()) * STANDARD_G;
+                acceleration[2] = (*pf_ptr_).imu_la_z(lidar_packet_buf.get()) * STANDARD_G;
+
+                angular_rate[0] = (*pf_ptr_).imu_av_x(lidar_packet_buf.get()) * M_PI / 180.0;
+                angular_rate[1] = (*pf_ptr_).imu_av_y(lidar_packet_buf.get()) * M_PI / 180.0;
+                angular_rate[2] = (*pf_ptr_).imu_av_z(lidar_packet_buf.get()) * M_PI / 180.0;
+
+                magnetic_field[0] = 0.0;
+                magnetic_field[1] = 0.0;
+                magnetic_field[2] = 0.0;
+
+                const auto filtered_msg = (*imu_filter_).update(msg::Imu{acceleration, angular_rate, magnetic_field});
+                imu_buffer_->push_nb(msg::ImuStamped{std::move(filtered_msg), util::HighResTime::now()}, true);
             }
         }
     }
