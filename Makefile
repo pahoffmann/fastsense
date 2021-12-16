@@ -15,10 +15,13 @@ VIVADO = vivado
 
 # Global
 BUILD_DIR = $(CURDIR)/build
+RECORDER_BUILD_DIR = $(CURDIR)/build_recorder
 APP_NAME ?= FastSense
+RECORDER_APP_NAME ?= Recorder
 PLATFORM_DIR ?= $(CURDIR)/base_design/platform/FastSense_platform/export/FastSense_platform
 
 APP_EXE = $(BUILD_DIR)/$(APP_NAME).exe
+RECORDER_EXE = $(RECORDER_BUILD_DIR)/$(RECORDER_APP_NAME).exe
 APP_TEST_EXE = $(BUILD_DIR)/$(APP_NAME)_test.exe
 APP_XCLBIN = $(BUILD_DIR)/$(APP_NAME).xclbin
 APP_TEST_XCLBIN = $(BUILD_DIR)/$(APP_NAME)_test.xclbin
@@ -37,6 +40,10 @@ SYSROOT = $(PLATFORM_DIR)/sw/FastSense_platform/linux_domain/sysroot/aarch64-xil
 ENTRY_POINT_SRCS ?= src/main.cpp
 ENTRY_POINT_OBJS = $(ENTRY_POINT_SRCS:%.cpp=$(BUILD_DIR)/%.o)
 ENTRY_POINT_DEPS = $(ENTRY_POINT_OBJS:.o=.d)
+
+RECORDER_ENTRY_POINT_SRCS ?= src/recorder.cpp
+RECORDER_ENTRY_POINT_OBJS = $(RECORDER_ENTRY_POINT_SRCS:%.cpp=$(RECORDER_BUILD_DIR)/%.o)
+RECORDER_ENTRY_POINT_DEPS = $(RECORDER_ENTRY_POINT_OBJS:.o=.d)
 
 # Software sources
 SW_SRCS = src/application.cpp \
@@ -58,8 +65,12 @@ SW_SRCS = src/application.cpp \
 	$(wildcard src/driver/imu/api/*.cpp) \
 	$(wildcard src/ui/*.cpp) \
 
+RECORDER_SW_SRCS = src/driver/lidar/ouster.cpp
+
 SW_OBJS = $(SW_SRCS:%.cpp=$(BUILD_DIR)/%.o)
+RECORDER_SW_OBJS = $(RECORDER_SW_SRCS:%.cpp=$(RECORDER_BUILD_DIR)/%.o)
 SW_DEPS = $(SW_OBJS:.o=.d)
+RECORDER_SW_DEPS = $(RECORDER_SW_OBJS:.o=.d)
 
 # Test sources
 TEST_SRCS = $(wildcard test/*.cpp)
@@ -80,6 +91,8 @@ LIBS = \
 	-lgpiodcxx \
 	-ljsoncpp
 
+RECORDER_LIBS = -ljsoncpp
+
 INC_DIRS = \
 	src \
 	ext/Catch2/single_include \
@@ -94,6 +107,7 @@ GCCFLAGS = -Wall -Wextra -Wnon-virtual-dtor -ansi -pedantic -Wfatal-errors  -fex
 CXXFLAGS = $(INC_FLAGS) $(GCCFLAGS) $(CXX_OPTFGLAGS) -MMD -MP -D__USE_XOPEN2K8 -c -fmessage-length=0 -std=$(CXX_STD) --sysroot=$(SYSROOT) -Wno-deprecated-declarations
 
 LDFLAGS = $(LIBS) --sysroot=$(SYSROOT) $(LD_EXTRA)
+RECORDER_LDFLAGS = $(RECORDER_LIBS) --sysroot=$(SYSROOT) $(LD_EXTRA)
 
 # Hardware
 LINK_CFG = $(CURDIR)/link.cfg
@@ -137,17 +151,20 @@ HW_DEPS_FLAGS = $(HW_INC_FLAGS) -isystem $(XILINX_VIVADO)/include -MM -MP
 
 .PHONY: all software hardware clean hls_% test clean_software clean_ros_nodes
 
-all: software hardware
+all: software hardware recorder
 
 test: test_software test_hardware
 
 clean:
 	@rm -rf _x .Xil *.log *.jou pl_script.sh start_simulation.sh
-	@rm -rf build/* build/.Xil
-	@rm -rf app_image test_image
+	@rm -rf build/* build/.Xil build_recorder/* build_recorder/.Xil
+	@rm -rf app_image test_image record_image
 
 clean_software:
 	@rm -rf $(SW_OBJS) $(ENTRY_POINT_OBJS) $(SW_DEPS) $(ENTRY_POINT_DEPS) $(APP_EXE)
+
+clean_recorder:
+	@rm -rf $(RECORDER_SW_OBJS) $(RECORDER_ENTRY_POINT_OBJS) $(RECORDER_SW_DEPS) $(RECORDER_ENTRY_POINT_DEPS) $(RECORDER_APP_EXE)
 
 clean_test:
 	@rm -rf $(TEST_OBJS) $(SW_OBJS) $(TEST_DEPS) $(SW_DEPS) $(APP_TEST_EXE)
@@ -162,9 +179,17 @@ software: $(APP_EXE)
 
 hardware: $(APP_XCLBIN)
 
+recorder: $(RECORDER_APP_EXE)
+
 test_software: $(APP_TEST_EXE)
 
 test_hardware: $(APP_TEST_XCLBIN)
+
+# Link recorder
+$(RECORDER_APP_EXE) : $(RECORDER_ENTRY_POINT_OBJS) $(RECORDER_SW_OBJS)
+	@echo "Link: $(RECORDER_APP_EXE)"
+	@$(MKDIR_P) $(dir $@)
+	@$(CXX) $(RECORDER_ENTRY_POINT_OBJS) $(RECORDER_SW_OBJS) -o $@ $(RECORDER_LDFLAGS)
 
 # Link software
 $(APP_EXE): $(ENTRY_POINT_OBJS) $(SW_OBJS)
@@ -180,6 +205,12 @@ $(APP_TEST_EXE): $(TEST_OBJS) $(SW_OBJS)
 
 # Compile software
 $(BUILD_DIR)/%.o: %.cpp
+	@echo "Compile: $<"
+	@$(MKDIR_P) $(dir $@)
+	@$(CXX) $(CXXFLAGS) $< -o $@
+
+# Compile recorder
+$(RECORDER_BUILD_DIR)/%.o: %.cpp
 	@echo "Compile: $<"
 	@$(MKDIR_P) $(dir $@)
 	@$(CXX) $(CXXFLAGS) $< -o $@
@@ -260,7 +291,9 @@ open_docs: gen_docs
 	@xdg-open docs/html/index.html
 
 -include $(ENTRY_POINT_DEPS)
+-include $(RECORDER_ENTRY_POINT_DEPS)
 -include $(SW_DEPS)
+-include $(RECORDER_SW_DEPS)
 -include $(TEST_DEPS)
 -include $(HW_DEPS)
 -include $(HW_TEST_DEPS)
