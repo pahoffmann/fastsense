@@ -19,7 +19,7 @@ class OusterDriver : public fastsense::util::ProcessThread
 public:
     using UPtr = std::unique_ptr<OusterDriver>;
 
-    OusterDriver(const std::string& hostname, const fastsense::msg::PointCloudPtrStampedBuffer::Ptr& buffer, const std::string& metadata = "", uint16_t lidar_port = 0);
+    OusterDriver(const std::string& hostname, const fastsense::msg::PointCloudPtrStampedBuffer::Ptr& buffer, ouster::sensor::lidar_mode mode, const std::string& metadata = "", uint16_t lidar_port = 0);
 
     ~OusterDriver() = default;
 
@@ -34,6 +34,10 @@ public:
     void start() override;
 
     fastsense::msg::PointCloudPtrStampedBuffer getScan();
+
+    void fill_scan_full(ouster::LidarScan& scan, const ouster::LidarScan::Points& ouster_points);
+
+    void fill_scan_partial(ouster::LidarScan& scan, const ouster::LidarScan::Points& ouster_points);
 
 protected:
 
@@ -55,11 +59,20 @@ protected:
     std::unique_ptr<ouster::sensor::packet_format> pf_ptr_;
     std::unique_ptr<ouster::ScanBatcher> batch_to_scan_ptr_;
 
+    /// function to process laserscan
+    std::function<void(ouster::LidarScan& scan, const ouster::LidarScan::Points& ouster_points)> fill_scan_function_;
+
     /// Buffer to write scans to
     fastsense::util::ConcurrentRingBuffer<fastsense::msg::PointCloudPtrStamped>::Ptr scan_buffer_;
 
     /// Current scan
     fastsense::msg::PointCloud::Ptr current_scan_;
+
+    /// Target Height
+    int target_height_;
+
+    /// Which ring to skip
+    int skip_index_;
 };
 
 } // namespace fastsense::driver

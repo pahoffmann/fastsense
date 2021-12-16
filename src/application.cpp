@@ -88,11 +88,28 @@ std::unique_ptr<util::ProcessThread> Application::init_lidar(msg::PointCloudPtrS
     }
     else
     {
-        // Logger::info("Launching Velodyne Driver");
-        // return std::make_unique<driver::VelodyneDriver>(config.lidar.port(), pcl_buffer);
+        double ring = std::log2(config.lidar.rings());
+        int ringi = static_cast<int>(ring);
+        if (!(ring > 0 && std::abs(ring - ringi) == 0 && ringi >= 4 && ringi <= 7))
+        {
+            throw std::runtime_error("Only 16, 32, 64 or 128 lidar rings are supported options for ouster");
+        }
+
+        double ring_reduced = std::log2(config.lidar.rings_reduced());
+        int ringi_reduced = static_cast<int>(ring_reduced);
+        if (!(ring_reduced > 0 && std::abs(ring_reduced - ringi_reduced) == 0 && ringi_reduced >= 4 && ringi_reduced <= 7))
+        {
+            throw std::runtime_error("Only 16, 32, 64 or 128 lidar rings are supported options to reduce horizontal lines");
+        }
+
+        const std::string& lidar_mode_arg = config.lidar.mode();
+        auto lidar_mode = ouster::sensor::lidar_mode_of_string(lidar_mode_arg);
+        if (!lidar_mode) {
+            throw std::runtime_error("Invalid lidar mode! 512x10, 512x20, 1024x10, 1024x20, or 2048x10 are allowed");
+        }
         
         Logger::info("Launching Ouster Driver");
-        return std::make_unique<driver::OusterDriver>("192.168.1.235", pcl_buffer);
+        return std::make_unique<driver::OusterDriver>("192.168.1.235", pcl_buffer, lidar_mode);
     }
 }
 

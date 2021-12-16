@@ -9,6 +9,8 @@
         "port": 2368,
         "pointScale": 1.0,
         "rings": 16,
+        "mode": "1024x10",
+        "rings_reduced": 128,
         "vertical_fov_angle": 30.0
     },
 

@@ -26,6 +26,8 @@ struct LidarConfig : public ConfigGroup
     DECLARE_CONFIG_ENTRY(uint16_t, port, "The Port to listen to");
     DECLARE_CONFIG_ENTRY(float, pointScale, "A Factor to apply to the entire Cloud");
     DECLARE_CONFIG_ENTRY(int, rings, "The number of rings that the lidar has");
+    DECLARE_CONFIG_ENTRY(std::string, mode, "resolution and rate: either 512x10, 512x20, 1024x10, 1024x20, or 2048x10");
+    DECLARE_CONFIG_ENTRY(int, rings_reduced, "The number of rings that the lidar should use, separat from rings for testing");
     DECLARE_CONFIG_ENTRY(float, vertical_fov_angle, "The field of view in vertical direction in degrees");
 };
 
