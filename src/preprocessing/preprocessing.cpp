@@ -70,7 +70,7 @@ void Preprocessing::thread_run()
         }
 
 
-        /*if (util::config::ConfigManager::config().lidar.rings() == out_cloud.data_->rings_)
+        /*if (util::config::ConfigManager::config().lidar.config.lidar.height()() == out_cloud.data_->height_)
         {
             median_filter(out_cloud, 5);
         }
@@ -259,16 +259,16 @@ void Preprocessing::median_filter(fastsense::msg::PointCloudPtrStamped& cloud, u
     int half_window_size = window_size / 2;
 
     #pragma omp parallel for schedule(static) shared(result)
-    for (uint8_t ring = 0; ring < cloud.data_->rings_; ring++)
+    for (uint8_t ring = 0; ring < cloud.data_->height_; ring++)
     {
         std::vector<ScanPoint*> window(window_size);
-        for (uint32_t point = 0; point < (cloud.data_->points_.size() / cloud.data_->rings_); point++)
+        for (uint32_t point = 0; point < (cloud.data_->points_.size() / cloud.data_->height_); point++)
         {
-            int i = (point * cloud.data_->rings_) + ring;
-            int first_element = (i - (half_window_size * cloud.data_->rings_));
+            int i = (point * cloud.data_->height_) + ring;
+            int first_element = (i - (half_window_size * cloud.data_->height_));
             for (uint8_t j = 0; j < window_size; j++)
             {
-                int index = ((first_element + (j * cloud.data_->rings_)) + cloud.data_->points_.size()) % cloud.data_->points_.size();
+                int index = ((first_element + (j * cloud.data_->height_)) + cloud.data_->points_.size()) % cloud.data_->points_.size();
                 window[j] = (ScanPoint*)&cloud.data_->points_[index];
             }
 

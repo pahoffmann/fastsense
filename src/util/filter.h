@@ -28,13 +28,13 @@ protected:
     Filter& operator=(const Filter& other) = delete;
 
     /// delete move assignment operator
-    Filter& operator=(Filter&&) noexcept = delete;
+    Filter& operator=(Filter&&) noexcept = default;
 
     // default copy constructor
     Filter(const Filter&) = default;
 
     /// delete move constructor
-    Filter(Filter&&) noexcept = delete;
+    Filter(Filter&&) noexcept = default;
 
     /**
      * Update performs one filter step

@@ -34,7 +34,8 @@ public:
     /// default constructor
     PointCloud() 
     : points_{}
-    , rings_{}
+    , height_{}
+    , width_{}
     , scaling_{1.0f}
     {
     }
@@ -42,7 +43,8 @@ public:
     /// constructor with scaling
     PointCloud(float scaling) 
     : points_{}
-    , rings_{}
+    , height_{}
+    , width_{}
     , scaling_{scaling}
     {
     }
@@ -50,7 +52,8 @@ public:
     /// move constructor
     PointCloud(PointCloud&& pcl) noexcept
     : points_{std::move(pcl.points_)}
-    , rings_{pcl.rings_}
+    , height_{pcl.height_}
+    , width_{pcl.width_}
     , scaling_{pcl.scaling_}
     {
     }
@@ -59,7 +62,8 @@ public:
     PointCloud& operator=(PointCloud&& other) noexcept
     {
         points_ = std::move(other.points_);
-        rings_ = other.rings_;
+        height_ = other.height_;
+        width_ = other.width_;
         scaling_ = other.scaling_;
         return *this;
     }
@@ -68,7 +72,8 @@ public:
     PointCloud& operator=(const PointCloud& other)
     {
         points_ = other.points_;
-        rings_ = other.rings_;
+        height_ = other.height_;
+        width_ = other.width_;
         scaling_ = other.scaling_;
         return *this;
     }
@@ -76,7 +81,8 @@ public:
     /// Copy constructor
     PointCloud(const PointCloud &p)
     : points_{p.points_}
-    , rings_{p.rings_}
+    , height_{p.height_}
+    , width_{p.width_}
     , scaling_{p.scaling_}
     {
     }
@@ -87,8 +93,11 @@ public:
     /// Points
     std::vector<fastsense::ScanPoint> points_;
 
-    /// Rings
-    uint16_t rings_;
+    /// height
+    uint16_t height_;
+
+    /// width
+    uint16_t width_;
 
     /// Scaling factor
     float scaling_;
@@ -100,7 +109,8 @@ public:
      */
     void from_zmq_msg(zmq::multipart_t& msg) override
     {
-        rings_ = msg.poptyp<uint16_t>();
+        height_ = msg.poptyp<uint16_t>();
+        width_ = msg.poptyp<uint16_t>();
 
         zmq::message_t point_msg = msg.pop();
         size_t n_points = point_msg.size() / sizeof(fastsense::ScanPoint);
@@ -120,7 +130,8 @@ public:
     zmq::multipart_t to_zmq_msg() const override
     {
         zmq::multipart_t multi;
-        multi.addtyp(rings_);
+        multi.addtyp(height_);
+        multi.addtyp(width_);
         multi.add(zmq::message_t(points_.begin(), points_.end()));
         multi.addtyp(scaling_);
         return multi;

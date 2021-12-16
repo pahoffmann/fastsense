@@ -8,7 +8,7 @@
 #include <ros/ros.h>
 #include <bridge/from_trenz/tsdf_bridge.h>
 #include <bridge/from_trenz/imu_bridge.h>
-#include <bridge/from_trenz/velodyne_bridge.h>
+#include <bridge/from_trenz/lidar_bridge.h>
 #include <bridge/from_trenz/transform_bridge.h>
 
 namespace fs = fastsense;
@@ -46,12 +46,12 @@ int main(int argc, char** argv)
 
     fs::bridge::TSDFBridge tsdf_bridge{n, board_addr, timeout, discard_timestamp};
     fs::bridge::ImuBridge imu_bridge{n, board_addr, timeout, discard_timestamp};
-    fs::bridge::VelodyneBridge velodyne_bridge{n, board_addr, timeout, discard_timestamp};
+    fs::bridge::LidarBridge lidar_bridge{n, board_addr, timeout, discard_timestamp};
     fs::bridge::TransformBridge transform_bridge{n, board_addr, timeout, discard_timestamp, save_poses};
     
     tsdf_bridge.start();
     imu_bridge.start();
-    velodyne_bridge.start();
+    lidar_bridge.start();
     transform_bridge.start();
     
     ROS_INFO_STREAM("Timeout for bridge (ms): " << timeout_ros);
@@ -66,7 +66,7 @@ int main(int argc, char** argv)
 
     tsdf_bridge.stop();
     imu_bridge.stop();
-    velodyne_bridge.stop();
+    lidar_bridge.stop();
     transform_bridge.stop();
 
     ROS_INFO_STREAM("from_trenz bridge stopped");

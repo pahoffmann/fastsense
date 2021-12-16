@@ -239,7 +239,7 @@ void VelodyneDriver::decode_packet()
             // add new scan to queue when azimuth overflows
             if (az_block < az_last_)
             {
-                current_scan_->rings_ = 16;
+                current_scan_->height_ = 16;
                 current_scan_->scaling_ = 1.0f;
                 // TODO std::move()
                 scan_buffer_->push_nb(Stamped<PointCloud::Ptr>{current_scan_, util::HighResTime::now()}, true);
