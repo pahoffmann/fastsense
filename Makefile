@@ -21,7 +21,7 @@ RECORDER_APP_NAME ?= Recorder
 PLATFORM_DIR ?= $(CURDIR)/base_design/platform/FastSense_platform/export/FastSense_platform
 
 APP_EXE = $(BUILD_DIR)/$(APP_NAME).exe
-RECORDER_EXE = $(RECORDER_BUILD_DIR)/$(RECORDER_APP_NAME).exe
+RECORDER_APP_EXE = $(RECORDER_BUILD_DIR)/$(RECORDER_APP_NAME).exe
 APP_TEST_EXE = $(BUILD_DIR)/$(APP_NAME)_test.exe
 APP_XCLBIN = $(BUILD_DIR)/$(APP_NAME).xclbin
 APP_TEST_XCLBIN = $(BUILD_DIR)/$(APP_NAME)_test.xclbin
