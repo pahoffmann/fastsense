@@ -8,19 +8,19 @@
 #include <iterator>
 #include <ros/ros.h>
 #include <bridge/util.h>
-#include <bridge/from_trenz/velodyne_bridge.h>
+#include <bridge/from_trenz/lidar_bridge.h>
 
 using namespace fastsense::bridge;
 
-VelodyneBridge::VelodyneBridge(ros::NodeHandle& n, const std::string& board_addr, std::chrono::milliseconds timeout, bool discard_timestamp)
+LidarBridge::LidarBridge(ros::NodeHandle& n, const std::string& board_addr, std::chrono::milliseconds timeout, bool discard_timestamp)
     :   BridgeBase{n, "velodyne/points", board_addr, 1000, timeout},
         ProcessThread{},
-        points_{},
+        cloud_{},
         discard_timestamp_{discard_timestamp}
 {
 }
 
-void VelodyneBridge::run()
+void LidarBridge::run()
 {
     while (running && ros::ok())
     {
@@ -40,33 +40,35 @@ void VelodyneBridge::run()
     }
 }
 
-void VelodyneBridge::convert()
+void LidarBridge::convert()
 {
-    points_.clear();
-
     timestamp_ = timestamp_to_rostime(msg_.timestamp_, discard_timestamp_);
     const auto& msg_points = msg_.data_.points_;
     const auto& scaling = msg_.data_.scaling_;
+    const auto& h = msg_.data_.height_;
+    const auto& w = msg_.data_.width_;
 
-    std::transform(msg_points.begin(), msg_points.end(), std::back_inserter(points_), [&](const ScanPoint& p)
+    cloud_.clear();
+    cloud_.resize(h * w);
+
+    for (int u = 0; u < h; u++) 
     {
-        geometry_msgs::Point32 out;
-        out.x = p.x() * 0.001f / scaling;
-        out.y = p.y() * 0.001f / scaling;
-        out.z = p.z() * 0.001f / scaling;
-        return out;
-    });
-
-    ROS_DEBUG_STREAM("Converted points: " << msg_points.size() << "->" << points_.size() << " points\n");
+        for (int v = 0; v < w; v++) 
+        {
+            const auto& p = msg_points[u * w + v];
+            cloud_[u * w + v] = PointOuster{p.x() * 0.001f / scaling, p.y() * 0.001f / scaling, p.z() * 0.001f / scaling, 1.0f};
+        }
+    }
 }
 
-void VelodyneBridge::publish()
+void LidarBridge::publish()
 {
-    sensor_msgs::PointCloud pc;
-    pc.header.stamp = timestamp_;
-    pc.header.frame_id = "base_link";
-    pc.points = points_;
-    pub().publish(pc);
+    sensor_msgs::PointCloud2 msg;
+    pcl::toROSMsg(cloud_, msg);
+    msg.header.frame_id = "base_link";
+    msg.header.stamp = timestamp_;
+
+    pub().publish(msg);
 
     ROS_DEBUG_STREAM("Published points values\n");
 }

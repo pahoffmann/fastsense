@@ -88,16 +88,9 @@ std::unique_ptr<util::ProcessThread> Application::init_lidar(msg::PointCloudPtrS
     }
     else
     {
-        double ring = std::log2(config.lidar.rings());
-        int ringi = static_cast<int>(ring);
-        if (!(ring > 0 && std::abs(ring - ringi) == 0 && ringi >= 4 && ringi <= 7))
-        {
-            throw std::runtime_error("Only 16, 32, 64 or 128 lidar rings are supported options for ouster");
-        }
-
-        double ring_reduced = std::log2(config.lidar.rings_reduced());
-        int ringi_reduced = static_cast<int>(ring_reduced);
-        if (!(ring_reduced > 0 && std::abs(ring_reduced - ringi_reduced) == 0 && ringi_reduced >= 4 && ringi_reduced <= 7))
+        double height = std::log2(config.lidar.height());
+        int height_int = static_cast<int>(height);
+        if (!(height > 0 && std::abs(height - height_int) == 0 && height_int >= 4 && height_int <= 7))
         {
             throw std::runtime_error("Only 16, 32, 64 or 128 lidar rings are supported options to reduce horizontal lines");
         }

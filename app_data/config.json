@@ -8,9 +8,8 @@
         "bufferSize": 1,
         "port": 2368,
         "pointScale": 1.0,
-        "rings": 16,
+        "height": 16,
         "mode": "1024x10",
-        "rings_reduced": 128,
         "vertical_fov_angle": 30.0
     },
 

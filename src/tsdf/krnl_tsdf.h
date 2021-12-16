@@ -72,7 +72,7 @@ public:
         int tau = config.slam.max_distance();
         int max_weight = config.slam.max_weight() * WEIGHT_RESOLUTION;
         float vertical_fov = config.lidar.vertical_fov_angle() / 180.0 * M_PI;
-        int rings = config.lidar.rings();
+        int rings = config.lidar.height();
         int dz_per_distance = std::tan(vertical_fov / (rings - 1.0) / 2.0) * MATRIX_RESOLUTION;
 
         run(map,

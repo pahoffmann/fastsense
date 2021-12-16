@@ -18,6 +18,8 @@ find_package(catkin REQUIRED COMPONENTS
   visualization_msgs
   tf2
   tf2_ros
+  pcl_ros
+  pcl_conversions
   message_filters
   rostest
   evaluation

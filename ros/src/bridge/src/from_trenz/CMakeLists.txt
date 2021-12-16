@@ -1,7 +1,7 @@
 add_executable(from_trenz
   imu_bridge.cpp
   tsdf_bridge.cpp
-  velodyne_bridge.cpp
+  lidar_bridge.cpp
   bridge.cpp
   transform_bridge.cpp
 )

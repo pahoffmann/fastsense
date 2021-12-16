@@ -7,19 +7,25 @@
 #pragma once
 
 #include <ros/time.h>
-#include <sensor_msgs/PointCloud.h>
+#include <sensor_msgs/PointCloud2.h>
 #include <msg/point_cloud.h>
+
+#include <pcl/point_cloud.h>
+#include <pcl/point_types.h>
+#include <pcl_conversions/pcl_conversions.h>
+
 #include "bridge_base.h"
+#include "point.h"
 
 namespace fastsense::bridge
 {
 
 /**
- * @brief VelodyneBridge converts Velodyne data from custom driver running 
+ * @brief LidarBridge converts Velodyne data from custom driver running 
  * on Trenz board and publishes a sensor_msgs::PointCloud
  * 
  */
-class VelodyneBridge :  public BridgeBase<msg::PointCloudStamped, sensor_msgs::PointCloud, 7777>,
+class LidarBridge :  public BridgeBase<msg::PointCloudStamped, sensor_msgs::PointCloud2, 7777>,
     public util::ProcessThread
 {
 public:
@@ -30,12 +36,12 @@ public:
      * @param board_addr ip addr of Trenz board
      * @param how long to wait for message before trying again
      */
-    VelodyneBridge(ros::NodeHandle& n, const std::string& board_addr, std::chrono::milliseconds timeout, bool discard_timestamp);
+    LidarBridge(ros::NodeHandle& n, const std::string& board_addr, std::chrono::milliseconds timeout, bool discard_timestamp);
 
     /**
      * @brief Destroy the Velodyne Bridge object
      */
-    ~VelodyneBridge() override = default;
+    ~LidarBridge() override = default;
 private:
 
     /**
@@ -59,8 +65,8 @@ private:
         run();
     }
 
-    /// Local vector of lidar points that are published
-    std::vector<geometry_msgs::Point32> points_;
+    /// Point cloud that will be published
+    pcl::PointCloud<PointOuster> cloud_;
 
     // local timestamp
     ros::Time timestamp_;
