@@ -41,7 +41,7 @@ public:
     }
 
     /// constructor with scaling
-    PointCloud(float scaling) 
+    explicit PointCloud(float scaling)
     : points_{}
     , height_{}
     , width_{}

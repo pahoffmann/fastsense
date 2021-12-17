@@ -20,8 +20,10 @@ class Application
 private:
     util::config::Config& config;
 
-    util::ProcessThread::UPtr init_imu(msg::ImuStampedBuffer::Ptr imu_buffer);
-    util::ProcessThread::UPtr init_lidar(msg::PointCloudPtrStampedBuffer::Ptr pcl_buffer);
+    std::unique_ptr<util::ProcessThread> init_imu(msg::ImuStampedBuffer::Ptr imu_buffer, bool use_phidgets);
+    std::unique_ptr<util::ProcessThread>
+    init_ouster(msg::PointCloudPtrStampedBuffer::Ptr pcl_buffer, msg::ImuStampedBuffer::Ptr imu_buffer,
+                bool activate_imu);
 public:
     Application();
     ~Application() = default;

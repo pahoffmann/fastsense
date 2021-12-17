@@ -10,17 +10,15 @@ namespace fastsense::driver
 
 const size_t UDP_BUF_SIZE = 65536;
 
-OusterDriver::OusterDriver(const std::string& hostname,
-                           const fastsense::msg::PointCloudPtrStampedBuffer::Ptr& pcl_buffer,
-                           const fastsense::msg::ImuStampedBuffer::Ptr& imu_buffer,
-                           size_t imu_filter_size,
+OusterDriver::OusterDriver(const std::string &hostname,
+                           const fastsense::msg::PointCloudPtrStampedBuffer::Ptr &pcl_buffer,
                            ouster::sensor::lidar_mode mode,
-                           const std::string& metadata,
-                           uint16_t lidar_port)
+                           const fastsense::msg::ImuStampedBuffer::Ptr &imu_buffer,
+                           size_t filter_size, const std::string &metadata, uint16_t lidar_port)
 : OusterDriver(hostname, pcl_buffer, mode, metadata, lidar_port)
 {
     imu_buffer_ = fastsense::msg::ImuStampedBuffer::Ptr(imu_buffer);
-    imu_filter_ = std::make_optional<util::SlidingWindowFilter<msg::Imu>>(imu_filter_size);
+    imu_filter_ = std::make_optional<util::SlidingWindowFilter<msg::Imu>>(filter_size);
 }
 
 OusterDriver::OusterDriver(const std::string& hostname,
@@ -59,7 +57,7 @@ OusterDriver::OusterDriver(const std::string& hostname,
             ,"\n  Scan dimensions:   ", w_, " x ", h_
             ,"\n  Column window:     [", column_window_.first, ", "
             , column_window_.second, "]"
-            ,"\n  Scan lines: ", target_height_, "/", 128);
+            ,"\n  Target Scan lines: ", target_height_, "/", 128);
 
     pf_ptr_ = std::make_unique<ouster::sensor::packet_format>(sensor::get_format(info_));
     batch_to_scan_ptr_.reset(new ScanBatcher(info_.format.columns_per_frame, *pf_ptr_));

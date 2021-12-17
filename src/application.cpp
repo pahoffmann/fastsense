@@ -47,8 +47,9 @@ Application::Application()
 {
 }
 
-std::unique_ptr<util::ProcessThread> Application::init_imu(msg::ImuStampedBuffer::Ptr imu_buffer)
+std::unique_ptr<util::ProcessThread> Application::init_imu(msg::ImuStampedBuffer::Ptr imu_buffer, bool use_phidgets)
 {
+
     std::chrono::milliseconds recv_timeout(config.bridge.recv_timeout());
 
     if (config.bridge.use_from())
@@ -68,12 +69,26 @@ std::unique_ptr<util::ProcessThread> Application::init_imu(msg::ImuStampedBuffer
     }
     else
     {
-        Logger::info("Launching Imu Driver");
+        if (!use_phidgets)
+        {
+            Logger::info("Skipping Phidgets Driver");
+            return nullptr;
+        }
+
+        const size_t filter_size = config.imu.filterSize();
+        if (filter_size < 2)
+        {
+            throw std::runtime_error("Imu window filter < 2 make no sense, du muruk.");
+        }
+
+        Logger::info("Launching Phidgets Driver");
         return std::make_unique<driver::Imu>(imu_buffer, config.imu.filterSize());
     }
 }
 
-std::unique_ptr<util::ProcessThread> Application::init_lidar(msg::PointCloudPtrStampedBuffer::Ptr pcl_buffer)
+std::unique_ptr<util::ProcessThread>
+Application::init_ouster(msg::PointCloudPtrStampedBuffer::Ptr pcl_buffer, msg::ImuStampedBuffer::Ptr imu_buffer,
+                         bool activate_imu)
 {
     std::chrono::milliseconds recv_timeout(config.bridge.recv_timeout());
 
@@ -86,22 +101,34 @@ std::unique_ptr<util::ProcessThread> Application::init_lidar(msg::PointCloudPtrS
                    recv_timeout,
                    pcl_buffer);
     }
-    else
-    {
+    else {
         double height = std::log2(config.lidar.height());
         int height_int = static_cast<int>(height);
-        if (!(height > 0 && std::abs(height - height_int) == 0 && height_int >= 4 && height_int <= 7))
-        {
-            throw std::runtime_error("Only 16, 32, 64 or 128 lidar rings are supported options to reduce horizontal lines");
+        if (!(height > 0 && std::abs(height - height_int) == 0 && height_int >= 4 && height_int <= 7)) {
+            throw std::runtime_error(
+                    "Only 16, 32, 64 or 128 lidar rings are supported options to reduce horizontal lines");
         }
 
-        const std::string& lidar_mode_arg = config.lidar.mode();
+        const std::string &lidar_mode_arg = config.lidar.mode();
         auto lidar_mode = ouster::sensor::lidar_mode_of_string(lidar_mode_arg);
-        if (!lidar_mode) {
+        if (!lidar_mode)
+        {
             throw std::runtime_error("Invalid lidar mode! 512x10, 512x20, 1024x10, 1024x20, or 2048x10 are allowed");
         }
-        
-        Logger::info("Launching Ouster Driver");
+
+        const size_t filter_size = config.imu.filterSize();
+        if (filter_size < 2)
+        {
+            throw std::runtime_error("Imu window filter < 2 make no sense, du muruk.");
+        }
+
+        if (activate_imu) {
+            Logger::info("Launching Ouster Driver including IMU");
+            return std::make_unique<driver::OusterDriver>("192.168.1.235", pcl_buffer, lidar_mode, imu_buffer,
+                                                          filter_size);
+        }
+
+        Logger::info("Launching Ouster Driver *ex*cluding IMU");
         return std::make_unique<driver::OusterDriver>("192.168.1.235", pcl_buffer, lidar_mode);
     }
 }
@@ -122,8 +149,9 @@ int Application::run()
     auto pointcloud_bridge_buffer = std::make_shared<msg::PointCloudPtrStampedBuffer>(config.lidar.bufferSize());
     auto pointcloud_send_buffer = std::make_shared<msg::PointCloudPtrStampedBuffer>(1);
 
-    util::ProcessThread::UPtr imu_driver = init_imu(imu_buffer);
-    util::ProcessThread::UPtr lidar_driver = init_lidar(pointcloud_buffer);
+    bool use_phidgets = config.imu.use_phidgets();
+    util::ProcessThread::UPtr imu_driver = init_imu(imu_buffer, use_phidgets);
+    util::ProcessThread::UPtr lidar_driver = init_ouster(pointcloud_buffer, imu_buffer, !use_phidgets);
 
     bool send = config.bridge.use_to();
     comm::QueueBridge<msg::ImuStamped, true> imu_bridge{imu_buffer, imu_bridge_buffer, config.bridge.imu_port_to(), send};
@@ -177,7 +205,6 @@ int Application::run()
     ui::Led led{led_chip.get_line(config.gpio.led_line())};
 
     Logger::info("Application initialized!");
-    Logger::info("Wait for calibration...");
 
     auto running_condition = [&]()
     {
@@ -202,8 +229,9 @@ int Application::run()
         return false;
     };
 
-    if (!config.bridge.use_from())
+    if (!config.bridge.use_from() && config.imu.use_phidgets())
     {
+        Logger::info("Wait for calibration (hit ENTER)");
         led.setFrequency(1.0);
         if (!button.wait_for_press_or_condition(running_condition))
         {
@@ -211,14 +239,14 @@ int Application::run()
         }
         led.setFrequency(5.0);
 
-        Logger::info("Calibrating IMU...");
+        Logger::info("Calibrating IMU");
         imu_driver->start();
         imu_driver->stop();
-        Logger::info("IMU calibrated!");
+        Logger::info("Phidgets calibrated");
     }
     else
     {
-        Logger::info("No need to calibrate IMU: Using bridge");
+        Logger::info("Using data sent from bridge");
     }
 
     while (true)
@@ -276,7 +304,10 @@ int Application::run()
         {
             Runner run_lidar_driver(*lidar_driver);
             Runner run_lidar_bridge(preprocessing);
-            Runner run_imu_driver(*imu_driver);
+            if (imu_driver)
+            {
+                Runner run_imu_driver(*imu_driver);
+            }
             Runner run_imu_bridge(imu_bridge);
             Runner run_transform_bridge(transform_bridge);
             Runner run_pointcloud_send_bridge(pointcloud_send_bridge);

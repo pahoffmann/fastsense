@@ -16,6 +16,7 @@ struct ImuConfig : public ConfigGroup
 
     DECLARE_CONFIG_ENTRY(size_t, bufferSize, "Size of the Buffer for incoming values");
     DECLARE_CONFIG_ENTRY(size_t, filterSize, "Size of the Window for the SlidingWindowFilter");
+    DECLARE_CONFIG_ENTRY(bool, use_phidgets, "Whether or not to use phidgets Imu or ouster Imu");
 };
 
 struct LidarConfig : public ConfigGroup

@@ -42,19 +42,18 @@ public:
      * Ouster Driver Lidar+IMU constructor
      * @param hostname hostname of ouster
      * @param pcl_buffer buffer for pointcloud
+     * @param mode lidar mode: 512x10, 512x20, 1024x10, 1024x20, or 2048x10
      * @param imu_buffer buffer for imu
      * @param filter_size filter width of imu
-     * @param mode lidar mode: 512x10, 512x20, 1024x10, 1024x20, or 2048x10
      * @param metadata metadata path
      * @param lidar_port networking port
      */
-    OusterDriver(const std::string& hostname,
-                 const fastsense::msg::PointCloudPtrStampedBuffer::Ptr& pcl_buffer,
-                 const fastsense::msg::ImuStampedBuffer::Ptr& imu_buffer,
-                 size_t filter_size,
+    OusterDriver(const std::string &hostname,
+                 const fastsense::msg::PointCloudPtrStampedBuffer::Ptr &pcl_buffer,
                  ouster::sensor::lidar_mode mode,
-                 const std::string& metadata = "",
-                 uint16_t lidar_port = 0);
+                 const fastsense::msg::ImuStampedBuffer::Ptr &imu_buffer,
+                 size_t filter_size,
+                 const std::string &metadata = "", uint16_t lidar_port = 0);
 
     ~OusterDriver() override = default;
 
