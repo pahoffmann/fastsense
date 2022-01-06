@@ -85,6 +85,16 @@ void TransformBridge::run()
     }
 }
 
+void TransformBridge::normalize_quaternion(geometry_msgs::Quaternion& q)
+{
+    float f = 1.0f / std::sqrt(q.x * q.x + q.y * q.y + q.z * q.z + q.w * q.w);
+    q.x = static_cast<double>(msg_.data_.rotation.x() * f);
+    q.y = static_cast<double>(msg_.data_.rotation.y() * f);
+    q.z = static_cast<double>(msg_.data_.rotation.z() * f);
+    q.w = static_cast<double>(msg_.data_.rotation.w() * f);
+}
+
+
 void TransformBridge::convert()
 {
     std::lock_guard guard(mtx);
@@ -94,10 +104,7 @@ void TransformBridge::convert()
     const auto& scaling = msg_.data_.scaling;
 
     transform_data.header.stamp = timestamp;
-    transform_data.transform.rotation.x = msg_.data_.rotation.x();
-    transform_data.transform.rotation.y = msg_.data_.rotation.y();
-    transform_data.transform.rotation.z = msg_.data_.rotation.z();
-    transform_data.transform.rotation.w = msg_.data_.rotation.w();
+    normalize_quaternion(transform_data.transform.rotation);
     transform_data.transform.translation.x = msg_.data_.translation.x() * 0.001 / scaling;
     transform_data.transform.translation.y = msg_.data_.translation.y() * 0.001 / scaling;
     transform_data.transform.translation.z = msg_.data_.translation.z() * 0.001 / scaling;
@@ -110,97 +117,6 @@ void TransformBridge::convert()
     pose_stamped.pose.position.x = msg_.data_.translation.x() * 0.001 / scaling;
     pose_stamped.pose.position.y = msg_.data_.translation.y() * 0.001 / scaling;
     pose_stamped.pose.position.z = msg_.data_.translation.z() * 0.001 / scaling;
-
-    /***** Begin global drift fix *****/
-
-    // tf2::Vector3 position_corrected;
-
-    // tf2::Vector3 position;
-    // tf2::Matrix3x3 rotation;
-
-    // rotation.setRPY(0.0, -0.1, 0.0);
-
-    // position[0] = pose_stamped.pose.position.x;
-    // position[1] = pose_stamped.pose.position.y;
-    // position[2] = pose_stamped.pose.position.z;
-
-    // position_corrected = rotation * position;
-
-    // pose_stamped.pose.position.x = position_corrected[0];
-    // pose_stamped.pose.position.y = position_corrected[1];
-    // pose_stamped.pose.position.z = position_corrected[2];
-
-    /***** End global drift fix *****/
-
-    /*tf2::Vector3 position_corrected;
-    tf2::Matrix3x3 rotation_corrected;
-
-    if (first_pose_)
-    {
-        position_corrected[0] = 0.0f;
-        position_corrected[1] = 0.0f;
-        position_corrected[2] = 0.0f;
-
-        //rotation_corrected.setIdentity();
-
-        //rotation_corrected.setRPY(0.0, -0.08, 0.0);
-
-        tf2::Quaternion q;
-        tf2::convert(pose_stamped.pose.orientation, q);
-        last_rotation_ = tf2::Matrix3x3(q);
-        
-
-
-        //last_rotation_.getRPY(rot_drift_[0], rot_drift_[1], rot_drift_[2]);
-        
-        first_pose_ = false;
-    }
-    else
-    {
-        tf2::Vector3 position;
-        tf2::Matrix3x3 rotation;
-
-        position[0] = pose_stamped.pose.position.x;
-        position[1] = pose_stamped.pose.position.y;
-        position[2] = pose_stamped.pose.position.z;
-
-        tf2::Quaternion q;
-        tf2::convert(pose_stamped.pose.orientation, q);
-        rotation = tf2::Matrix3x3(q);
-
-        auto delta_rotation = rotation * last_rotation_.inverse();
-        auto delta_position = last_rotation_.inverse() * (position - last_position_);
-
-        tf2::Matrix3x3 drift;
-        drift.setRPY(-rot_drift_[0], -rot_drift_[1], -rot_drift_[2]);
-        //drift.setRPY(0, -0.001, 0);
-
-        position_corrected = last_rotation_corrected_ * delta_position + last_position_corrected_;
-        rotation_corrected = drift * delta_rotation * last_rotation_corrected_;
-
-        //rotation_corrected = delta_rotation * last_rotation_corrected_;
-        //position_corrected = rotation_corrected * delta_position + last_position_corrected_;
-
-        last_position_ = position;
-        last_rotation_ = rotation;
-    }
-
-    last_position_corrected_ = position_corrected;
-    last_rotation_corrected_ = rotation_corrected;
-
-    pose_stamped.pose.position.x = position_corrected[0];
-    pose_stamped.pose.position.y = position_corrected[1];
-    pose_stamped.pose.position.z = position_corrected[2];
-
-    double r, p, y;
-
-    rotation_corrected.getRPY(r, p, y);
-
-    tf2::Quaternion q;
-    q.setRPY(r, p, y);
-
-    tf2::convert(q, pose_stamped.pose.orientation);*/
-
 
 
     // If identity is received, we are in cloudcallback iteration 1
@@ -250,9 +166,11 @@ void TransformBridge::publish()
 
 void TransformBridge::broadcast()
 {
+    ros::Rate r(100);
+
     while (running && ros::ok())
     {
-        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        r.sleep();
         publish();
     }
 }

@@ -79,6 +79,11 @@ private:
      */
     void run() override;
 
+    /**
+     * @brief normalize Quaternion
+     */
+    void normalize_quaternion(geometry_msgs::Quaternion& quat); 
+
     /// Run one "iteration" of thread
     void thread_run() override
     {
