@@ -111,10 +111,10 @@ void TransformBridge::convert()
     update_queue(transform_data.header);
 
     pose_stamped.header.stamp = timestamp;
-    pose_stamped.pose.orientation.x = msg_.data_.rotation.x();
-    pose_stamped.pose.orientation.y = msg_.data_.rotation.y();
-    pose_stamped.pose.orientation.z = msg_.data_.rotation.z();
-    pose_stamped.pose.orientation.w = msg_.data_.rotation.w();
+    pose_stamped.pose.orientation.x = transform_data.transform.rotation.x;
+    pose_stamped.pose.orientation.y = transform_data.transform.rotation.y;
+    pose_stamped.pose.orientation.z = transform_data.transform.rotation.z;
+    pose_stamped.pose.orientation.w = transform_data.transform.rotation.w;
     pose_stamped.pose.position.x = msg_.data_.translation.x() * 0.001 / scaling;
     pose_stamped.pose.position.y = msg_.data_.translation.y() * 0.001 / scaling;
     pose_stamped.pose.position.z = msg_.data_.translation.z() * 0.001 / scaling;
