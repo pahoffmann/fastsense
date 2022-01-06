@@ -17,6 +17,8 @@
 
 #include <mutex>
 #include <fstream>
+#include <queue>
+
 
 #include <tf2/LinearMath/Vector3.h>
 #include <tf2/LinearMath/Matrix3x3.h>
@@ -64,6 +66,11 @@ public:
 private:
 
     /**
+     * @brief Returns true when new header received by bridge is younger than last header
+     */
+    bool new_transform() const;
+
+    /**
      * @brief Publishes a geometry_msgs::TransformStamped (convert() FIRST for newest data)
      */
     void publish() override;
@@ -82,7 +89,12 @@ private:
     /**
      * @brief normalize Quaternion
      */
-    void normalize_quaternion(geometry_msgs::Quaternion& quat); 
+    void normalize_quaternion(geometry_msgs::Quaternion& quat) const; 
+
+    /**
+     * @brief update queue: if size == 2, pop head and append to tail. Else append to tail.
+     */
+    void update_queue(std_msgs::Header header);
 
     /// Run one "iteration" of thread
     void thread_run() override
@@ -120,15 +132,8 @@ private:
     /// whether or not to save poses
     bool save_poses_;
 
-    tf2::Vector3 rot_drift_;
-
-    tf2::Vector3 last_position_corrected_;
-    tf2::Matrix3x3 last_rotation_corrected_;
-
-    tf2::Vector3 last_position_;
-    tf2::Matrix3x3 last_rotation_;
-
-    bool first_pose_;
+    /// queue for transform headers
+    std::queue<std_msgs::Header> transform_header_q_;
 };
 
 } // namespace fastsense::bridge

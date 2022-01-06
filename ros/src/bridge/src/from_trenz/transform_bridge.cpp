@@ -34,11 +34,10 @@ TransformBridge::TransformBridge(
         pose_stamped{},
         discard_timestamp_{discard_timestamp},
         save_poses_{save_poses},
-        first_pose_(true)
+        transform_header_q_{}
 {
     transform_data.transform.rotation.w = 1.0;
 
-    // set unchanging frames
     pose_path.header.frame_id = "map";
     pose_stamped.header.frame_id = "map";
     transform_data.header.frame_id = "map";
@@ -85,7 +84,7 @@ void TransformBridge::run()
     }
 }
 
-void TransformBridge::normalize_quaternion(geometry_msgs::Quaternion& q)
+void TransformBridge::normalize_quaternion(geometry_msgs::Quaternion& q) const
 {
     float f = 1.0f / std::sqrt(q.x * q.x + q.y * q.y + q.z * q.z + q.w * q.w);
     q.x = static_cast<double>(msg_.data_.rotation.x() * f);
@@ -109,6 +108,8 @@ void TransformBridge::convert()
     transform_data.transform.translation.y = msg_.data_.translation.y() * 0.001 / scaling;
     transform_data.transform.translation.z = msg_.data_.translation.z() * 0.001 / scaling;
 
+    update_queue(transform_data.header);
+
     pose_stamped.header.stamp = timestamp;
     pose_stamped.pose.orientation.x = msg_.data_.rotation.x();
     pose_stamped.pose.orientation.y = msg_.data_.rotation.y();
@@ -117,8 +118,7 @@ void TransformBridge::convert()
     pose_stamped.pose.position.x = msg_.data_.translation.x() * 0.001 / scaling;
     pose_stamped.pose.position.y = msg_.data_.translation.y() * 0.001 / scaling;
     pose_stamped.pose.position.z = msg_.data_.translation.z() * 0.001 / scaling;
-
-
+    
     // If identity is received, we are in cloudcallback iteration 1
     // -> reset pose path
     if (msg_.data_.translation.isZero() && msg_.data_.rotation.isApprox(Eigen::Quaternionf::Identity()))
@@ -155,13 +155,39 @@ void TransformBridge::convert()
     }
 }
 
+bool TransformBridge::new_transform() const
+{
+    if (transform_header_q_.size() < 2)
+    {
+        return false;
+    }
+
+    const auto& stamp_old = transform_header_q_.front().stamp;
+    const auto& stamp_new = transform_header_q_.back().stamp;
+    return stamp_old < stamp_new;
+}
+
+void TransformBridge::update_queue(std_msgs::Header header)
+{
+    if (transform_header_q_.size() == 2)
+    {
+        transform_header_q_.pop();
+    }
+
+    transform_header_q_.push(std::move(header));
+}
+
 void TransformBridge::publish()
 {
     std::lock_guard guard(mtx);
 
-    broadcaster.sendTransform(transform_data);    
+    if (new_transform())
+    {
+        broadcaster.sendTransform(transform_data);
+        pub().publish(pose_path);
+    }
 
-    pub().publish(pose_path);
+    update_queue(transform_data.header);
 }
 
 void TransformBridge::broadcast()
