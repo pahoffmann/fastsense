@@ -11,6 +11,7 @@
 #include <evaluation/SavePoseStamped.h>
 #include <bridge/from_trenz/transform_bridge.h>
 
+#include <tf/transform_datatypes.h>
 #include <tf2/LinearMath/Quaternion.h>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 
@@ -86,11 +87,17 @@ void TransformBridge::run()
 
 void TransformBridge::normalize_quaternion(geometry_msgs::Quaternion& q) const
 {
-    float f = 1.0f / std::sqrt(q.x * q.x + q.y * q.y + q.z * q.z + q.w * q.w);
-    q.x = static_cast<double>(msg_.data_.rotation.x() * f);
-    q.y = static_cast<double>(msg_.data_.rotation.y() * f);
-    q.z = static_cast<double>(msg_.data_.rotation.z() * f);
-    q.w = static_cast<double>(msg_.data_.rotation.w() * f);
+    auto tfq = tf2::Quaternion(q.x, q.y, q.z, q.w); 
+    if (fabs(tfq.length2() - 1) > tf::QUATERNION_TOLERANCE) 
+    {
+       ROS_WARN_THROTTLE(1, "TF: Quaternion Not Properly Normalized. Normalizing");
+       tfq.normalize();
+    }
+
+    q.x = tfq.x();
+    q.y = tfq.y();
+    q.z = tfq.z();
+    q.w = tfq.w();
 }
 
 
@@ -103,18 +110,19 @@ void TransformBridge::convert()
     const auto& scaling = msg_.data_.scaling;
 
     transform_data.header.stamp = timestamp;
-    normalize_quaternion(transform_data.transform.rotation);
     transform_data.transform.translation.x = msg_.data_.translation.x() * 0.001 / scaling;
     transform_data.transform.translation.y = msg_.data_.translation.y() * 0.001 / scaling;
     transform_data.transform.translation.z = msg_.data_.translation.z() * 0.001 / scaling;
+    auto& quat = transform_data.transform.rotation;
+    normalize_quaternion(quat);
 
     update_queue(transform_data.header);
 
     pose_stamped.header.stamp = timestamp;
-    pose_stamped.pose.orientation.x = transform_data.transform.rotation.x;
-    pose_stamped.pose.orientation.y = transform_data.transform.rotation.y;
-    pose_stamped.pose.orientation.z = transform_data.transform.rotation.z;
-    pose_stamped.pose.orientation.w = transform_data.transform.rotation.w;
+    pose_stamped.pose.orientation.x = quat.x;
+    pose_stamped.pose.orientation.y = quat.y;
+    pose_stamped.pose.orientation.z = quat.z;
+    pose_stamped.pose.orientation.w = quat.w;
     pose_stamped.pose.position.x = msg_.data_.translation.x() * 0.001 / scaling;
     pose_stamped.pose.position.y = msg_.data_.translation.y() * 0.001 / scaling;
     pose_stamped.pose.position.z = msg_.data_.translation.z() * 0.001 / scaling;
