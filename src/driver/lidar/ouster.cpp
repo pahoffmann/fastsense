@@ -51,7 +51,7 @@ OusterDriver::OusterDriver(const std::string& hostname,
     column_window_length_ = (column_window_.second - column_window_.first + w_) % w_ + 1;
 
     util::logging::Logger::info(
-             "  Firmware version:  ", info_.fw_rev
+             "\n  Firmware version:  ", info_.fw_rev
             ,"\n  Serial number:     ", info_.sn
             ,"\n  Product line:      ", info_.prod_line
             ,"\n  Scan dimensions:   ", w_, " x ", h_

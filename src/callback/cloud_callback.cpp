@@ -123,13 +123,15 @@ void CloudCallback::thread_run()
         transform.data_.translation = pose.block<3, 1>(0, 3);
         transform.data_.rotation = quat;
         transform.data_.scaling = point_scale;
-        transform_buffer->push_nb(transform, true);
 
         if (send_after_registration)
         {
             point_cloud.timestamp_ = util::HighResTime::now();
             pointcloud_buffer->push_nb(point_cloud, true);
         }
+
+        transform.timestamp_ = point_cloud.timestamp_;
+        transform_buffer->push_nb(transform, true);
 
         eval.stop("total");
 #ifdef TIME_MEASUREMENT

@@ -87,7 +87,8 @@ private:
     void run() override;
 
     /**
-     * @brief normalize Quaternion
+     * @brief normalize Quaternion, adapted from 
+     * http://docs.ros.org/en/api/tf/html/c++/transform__datatypes_8h_source.html#l00105
      */
     void normalize_quaternion(geometry_msgs::Quaternion& quat) const; 
 
