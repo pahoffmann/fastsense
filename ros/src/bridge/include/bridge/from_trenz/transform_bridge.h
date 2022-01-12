@@ -89,7 +89,7 @@ private:
     /**
      * @brief normalize Quaternion
      */
-    void normalize_quaternion(geometry_msgs::Quaternion& quat) const; 
+    geometry_msgs::Quaternion ros_quaternion() const; 
 
     /**
      * @brief update queue: if size == 2, pop head and append to tail. Else append to tail.

@@ -11,6 +11,7 @@
 #include <evaluation/SavePoseStamped.h>
 #include <bridge/from_trenz/transform_bridge.h>
 
+#include <tf/transform_datatypes.h>
 #include <tf2/LinearMath/Quaternion.h>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 
@@ -84,13 +85,17 @@ void TransformBridge::run()
     }
 }
 
-void TransformBridge::normalize_quaternion(geometry_msgs::Quaternion& q) const
+geometry_msgs::Quaternion TransformBridge::ros_quaternion() const
 {
-    float f = 1.0f / std::sqrt(q.x * q.x + q.y * q.y + q.z * q.z + q.w * q.w);
-    q.x = static_cast<double>(msg_.data_.rotation.x() * f);
-    q.y = static_cast<double>(msg_.data_.rotation.y() * f);
-    q.z = static_cast<double>(msg_.data_.rotation.z() * f);
-    q.w = static_cast<double>(msg_.data_.rotation.w() * f);
+    const auto& q = msg_.data_.rotation;
+    float f = 1.0f / std::sqrt(q.x() * q.x() + q.y() * q.y() + q.z() * q.z() + q.w() * q.w());
+    
+    geometry_msgs::Quaternion out;
+    out.x = static_cast<double>(q.x() * f);
+    out.y = static_cast<double>(q.y() * f);
+    out.z = static_cast<double>(q.z() * f);
+    out.w = static_cast<double>(q.w() * f);
+    return out;
 }
 
 
@@ -103,18 +108,18 @@ void TransformBridge::convert()
     const auto& scaling = msg_.data_.scaling;
 
     transform_data.header.stamp = timestamp;
-    normalize_quaternion(transform_data.transform.rotation);
     transform_data.transform.translation.x = msg_.data_.translation.x() * 0.001 / scaling;
     transform_data.transform.translation.y = msg_.data_.translation.y() * 0.001 / scaling;
     transform_data.transform.translation.z = msg_.data_.translation.z() * 0.001 / scaling;
+    transform_data.transform.rotation = ros_quaternion();
 
     update_queue(transform_data.header);
 
     pose_stamped.header.stamp = timestamp;
-    pose_stamped.pose.orientation.x = msg_.data_.rotation.x();
-    pose_stamped.pose.orientation.y = msg_.data_.rotation.y();
-    pose_stamped.pose.orientation.z = msg_.data_.rotation.z();
-    pose_stamped.pose.orientation.w = msg_.data_.rotation.w();
+    pose_stamped.pose.orientation.x = transform_data.transform.rotation.x;
+    pose_stamped.pose.orientation.y = transform_data.transform.rotation.y;
+    pose_stamped.pose.orientation.z = transform_data.transform.rotation.z;
+    pose_stamped.pose.orientation.w = transform_data.transform.rotation.w;
     pose_stamped.pose.position.x = msg_.data_.translation.x() * 0.001 / scaling;
     pose_stamped.pose.position.y = msg_.data_.translation.y() * 0.001 / scaling;
     pose_stamped.pose.position.z = msg_.data_.translation.z() * 0.001 / scaling;
