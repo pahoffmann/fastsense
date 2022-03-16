@@ -10,7 +10,7 @@
 #include <sensor_msgs/PointCloud.h>
 #include <sensor_msgs/PointCloud2.h>
 #include <sensor_msgs/point_cloud2_iterator.h>
-
+#include <nav_msgs/Odometry.h>
 
 #include <util/time.h>
 #include <util/point.h>
@@ -20,8 +20,19 @@
 
 #include <msg/imu.h>
 #include <msg/point_cloud.h>
+#include <msg/transform.h>
 
 #include <registration/imu_accumulator.h>
+
+#include <tf2_ros/transform_listener.h>
+#include <tf2_ros/transform_broadcaster.h>
+#include <geometry_msgs/TransformStamped.h>
+#include <geometry_msgs/Point.h>
+#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
+#include <tf2_sensor_msgs/tf2_sensor_msgs.h>
+
+#include <tf2/LinearMath/Quaternion.h>
+#include <tf2/LinearMath/Matrix3x3.h>
 
 namespace fs = fastsense;
 
@@ -51,15 +62,18 @@ public:
         : nh_{}
         , spinner_{3}
         , imu_sub_{}
+        , gt_sub_{}
         , pcl1_sub_{}
         , pcl2_sub_{}
         , imu_sender_{4444}
+        , gt_sender_{4444}
         , pcl_sender_{3333}
     {
         spinner_.start();
         imu_sub_ = nh_.subscribe<sensor_msgs::Imu>("/imu/data_raw", 1000, &Bridge::imu_callback, this);
         pcl1_sub_ = nh_.subscribe<sensor_msgs::PointCloud>("/velodyne_legacy", 1, &Bridge::pcl1_callback, this);
         pcl2_sub_ = nh_.subscribe<sensor_msgs::PointCloud2>("/velodyne_points", 1, &Bridge::pcl2_callback, this);
+        gt_sub_   = nh_.subscribe<nav_msgs::Odometry>("/ground_truth", 1, &Bridge::gt_callback, this);
         ROS_INFO("to_trenz bridge initiated");
     }
 
@@ -72,6 +86,30 @@ public:
     {
         spinner_.stop();
     };
+
+    void gt_callback(const nav_msgs::Odometry::ConstPtr& ground_truth)
+    {
+        fs::msg::Transform transform;
+
+        double roll, pitch, yaw;
+        tf2::Quaternion tf_quaternion;
+
+        tf2::convert(ground_truth->pose.pose.orientation, tf_quaternion);
+        tf2::Matrix3x3(tf_quaternion).getRPY(roll, pitch, yaw);
+
+        transform.rotation.x() = roll;
+        transform.rotation.y() = pitch;
+        transform.rotation.z() = yaw;
+
+        transform.translation.x() = ground_truth->pose.pose.position.x;
+        transform.translation.y() = ground_truth->pose.pose.position.y;
+        transform.translation.z() = ground_truth->pose.pose.position.z;
+
+        auto tp = fs::util::HighResTimePoint{std::chrono::nanoseconds{ground_truth->header.stamp.toNSec()}};
+        gt_sender_.send(fs::msg::TransformStamped{std::move(transform), tp});
+        
+        ROS_DEBUG("Sent ground truth\n");
+    }
 
     /**
      * @brief ImuCallback waits for Imu Data and converts sensor_msgs/Imu to fastsense/msg/Imu 
@@ -181,6 +219,8 @@ private:
     /// Imu Subscriber
     ros::Subscriber imu_sub_;
 
+    ros::Subscriber gt_sub_;
+
     /// PointCloud Subscriber
     ros::Subscriber pcl1_sub_;
 
@@ -189,6 +229,7 @@ private:
 
     /// fastsense::msg::ImuStamped sender
     fs::comm::Sender<fs::msg::ImuStamped> imu_sender_;
+    fs::comm::Sender<fs::msg::TransformStamped> gt_sender_;
 
     /// fastsense::msg::PointCloud sender
     fs::comm::Sender<fs::msg::PointCloudStamped> pcl_sender_;
