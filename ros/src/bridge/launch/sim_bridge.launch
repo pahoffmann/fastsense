@@ -11,7 +11,7 @@
 
   <node pkg="bridge" type="to_trenz" name="to_trenz">
     <remap from="/velodyne_legacy" to="/from_trenz/velodyne/points" />
-    <remap from="/imu/data_raw" to="/imu/data" />
+    <remap from="/imu/data_raw" to="/imu/data_invalid" />
   </node>
 
 </launch>

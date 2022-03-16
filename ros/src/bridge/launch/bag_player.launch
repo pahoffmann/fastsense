@@ -12,7 +12,7 @@
   </include>
 
   <node pkg="bridge" type="to_trenz" name="to_trenz" output="screen">
-    <remap from="/velodyne_legacy" to="/from_trenz/velodyne/points" />
+    <remap from="/velodyne_points" to="/from_trenz/velodyne/points" />
     <remap from="/imu/data_raw" to="/from_trenz/imu/raw" />
   </node>
 
