@@ -10,6 +10,7 @@
 #include <util/concurrent_ring_buffer.h>
 #include <comm/receiver.h>
 #include <msg/imu.h>
+#include <msg/transform.h>
 #include <msg/point_cloud.h>
 #include <iostream>
 
@@ -136,6 +137,48 @@ public:
     }
 
     using UPtr = std::unique_ptr<BufferedImuStampedReceiver>;
+};
+
+class BufferedTransformStampedReceiver : public BufferedReceiver<msg::ImuStamped, msg::ImuStamped>
+{
+public:
+    /**
+     * @brief Construct a new Buffered ImuStamped Receiver object
+     * 
+     * @param addr address the receiver connects to
+     * @param port port the receiver connects to 
+     * @param timeout timeout for receiver
+     * @param buffer buffer to write the incoming messages
+     */
+    BufferedTransformStampedReceiver( const std::string& addr, 
+                                uint16_t port, 
+                                std::chrono::milliseconds timeout,
+                                msg::ImuStampedBuffer::Ptr buffer)
+    : BufferedReceiver{addr, port, timeout, buffer}
+    {}
+
+    /**
+     * @brief Destroy the Buffered Imu Stamped Receiver object
+     */
+    ~BufferedTransformStampedReceiver() final = default;
+
+    /**
+     * @brief Receive ImuStamped (non blocking) and write into buffer, if received
+     *
+     * @return
+     */
+    bool receive() final
+    {
+        if (receiver_.receive(msg_))
+        {
+            buffer_->push_nb(std::move(msg_));
+            return true;
+        }
+
+        return false;
+    }
+
+    using UPtr = std::unique_ptr<BufferedTransformStampedReceiver>;
 };
 
 /**

@@ -66,15 +66,17 @@ public:
         , pcl1_sub_{}
         , pcl2_sub_{}
         , imu_sender_{4444}
-        , gt_sender_{4444}
+        , gt_sender_{4440}
         , pcl_sender_{3333}
     {
-        spinner_.start();
+        //spinner_.start();
         imu_sub_ = nh_.subscribe<sensor_msgs::Imu>("/imu/data_raw", 1000, &Bridge::imu_callback, this);
         pcl1_sub_ = nh_.subscribe<sensor_msgs::PointCloud>("/velodyne_legacy", 1, &Bridge::pcl1_callback, this);
         pcl2_sub_ = nh_.subscribe<sensor_msgs::PointCloud2>("/velodyne_points", 1, &Bridge::pcl2_callback, this);
-        gt_sub_   = nh_.subscribe<nav_msgs::Odometry>("/ground_truth", 1, &Bridge::gt_callback, this);
+        gt_sub_   = nh_.subscribe<nav_msgs::Odometry>("/base_footprint_pose_ground_truth", 1, &Bridge::gt_callback, this);
         ROS_INFO("to_trenz bridge initiated");
+   
+        ros::spin();
     }
 
     /**
@@ -84,31 +86,53 @@ public:
      */
     ~Bridge()
     {
-        spinner_.stop();
+        //spinner_.stop();
     };
 
     void gt_callback(const nav_msgs::Odometry::ConstPtr& ground_truth)
     {
-        fs::msg::Transform transform;
+        static tf2_ros::TransformBroadcaster broadcaster;
+        static tf2_ros::Buffer tf_buffer;
+        static tf2_ros::TransformListener tf_listener(tf_buffer);
+
+        geometry_msgs::TransformStamped base_to_scan;
+
+        try
+        {
+            base_to_scan = tf_buffer.lookupTransform("base_link", "velodyne", ground_truth->header.stamp, ros::Duration(0.5));
+        }
+        catch (tf2::TransformException& e)
+        {
+            ROS_WARN_STREAM("Couldn't transform from '" << "velodyne" << "' to '" << "base_link" << "'." );
+            ros::Duration(0.1).sleep();
+            return;
+        }
+
+        tf2::Transform tf_base_to_scan;
+        tf2::convert(base_to_scan.transform, tf_base_to_scan);
+        
+        tf2::Transform tf_map_to_base;
+        tf2::convert(ground_truth->pose.pose, tf_map_to_base);
+
+        //std::cout << base_to_scan.transform.translation.x << " " << base_to_scan.transform.translation.z << std::endl;
+
+        auto scanner_transform = tf_base_to_scan * tf_map_to_base;
+
+        geometry_msgs::Transform scanner_pose;
+        tf2::convert(scanner_transform, scanner_pose);
 
         double roll, pitch, yaw;
         tf2::Quaternion tf_quaternion;
 
         tf2::convert(ground_truth->pose.pose.orientation, tf_quaternion);
         tf2::Matrix3x3(tf_quaternion).getRPY(roll, pitch, yaw);
+        transform.ang.x() = roll;
+        transform.ang.y() = pitch;
+        transform.ang.z() = yaw;
 
-        transform.rotation.x() = roll;
-        transform.rotation.y() = pitch;
-        transform.rotation.z() = yaw;
-
-        transform.translation.x() = ground_truth->pose.pose.position.x;
-        transform.translation.y() = ground_truth->pose.pose.position.y;
-        transform.translation.z() = ground_truth->pose.pose.position.z;
-
-        auto tp = fs::util::HighResTimePoint{std::chrono::nanoseconds{ground_truth->header.stamp.toNSec()}};
-        gt_sender_.send(fs::msg::TransformStamped{std::move(transform), tp});
-        
-        ROS_DEBUG("Sent ground truth\n");
+        transform.acc.x() = scanner_pose.translation.x; //ground_truth->pose.pose.position.x;
+        transform.acc.y() = scanner_pose.translation.y; //ground_truth->pose.pose.position.y;
+        transform.acc.z() = scanner_pose.translation.z; //ground_truth->pose.pose.position.z;
     }
 
     /**
@@ -142,6 +166,7 @@ public:
      */
     void pcl2_callback(const sensor_msgs::PointCloud2ConstPtr &pcl)
     {
+
         auto tp = fs::util::HighResTimePoint{std::chrono::nanoseconds{pcl->header.stamp.toNSec()}};
 
         fastsense::msg::PointCloud trenz_pcl;
@@ -169,6 +194,8 @@ public:
         }
 
         pcl_sender_.send(fs::msg::PointCloudStamped{std::move(trenz_pcl), tp});
+
+        gt_sender_.send(fs::msg::ImuStamped{std::move(transform), tp});
 
         ROS_DEBUG("Sent pcl2\n");
     }
@@ -229,7 +256,9 @@ private:
 
     /// fastsense::msg::ImuStamped sender
     fs::comm::Sender<fs::msg::ImuStamped> imu_sender_;
-    fs::comm::Sender<fs::msg::TransformStamped> gt_sender_;
+    fs::comm::Sender<fs::msg::ImuStamped> gt_sender_;
+
+    fs::msg::Imu transform;
 
     /// fastsense::msg::PointCloud sender
     fs::comm::Sender<fs::msg::PointCloudStamped> pcl_sender_;

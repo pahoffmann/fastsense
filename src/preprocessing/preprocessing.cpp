@@ -30,10 +30,12 @@ template<> struct hash<fastsense::ScanPoint>
 Preprocessing::Preprocessing(const std::shared_ptr<PointCloudBuffer>& in_buffer,
                              const std::shared_ptr<PointCloudBuffer>& out_buffer,
                              const std::shared_ptr<PointCloudBuffer>& send_buffer,
+                             const msg::ImuStampedBuffer::Ptr& ground_truth_buffer,
+                             const msg::ImuStampedBuffer::Ptr& futher_ground_truth_buffer,
                              bool send_original,
                              bool send_preprocessed,
                              float scale)
-    : QueueBridge{in_buffer, out_buffer, 0, false}, send_original(send_original), send_preprocessed(send_preprocessed), send_buffer(send_buffer), scale(scale), 
+    : QueueBridge{in_buffer, out_buffer, 0, false}, send_original(send_original), send_preprocessed(send_preprocessed), send_buffer(send_buffer), ground_truth_buffer(ground_truth_buffer), futher_ground_truth_buffer(futher_ground_truth_buffer), scale(scale), 
       map_bounds(util::config::ConfigManager::config().slam.map_size_x() / 2 * MAP_RESOLUTION, 
                  util::config::ConfigManager::config().slam.map_size_y() / 2 * MAP_RESOLUTION, 
                  util::config::ConfigManager::config().slam.map_size_z() / 2 * MAP_RESOLUTION)
@@ -44,12 +46,21 @@ Preprocessing::Preprocessing(const std::shared_ptr<PointCloudBuffer>& in_buffer,
 void Preprocessing::thread_run()
 {
     fastsense::msg::PointCloudPtrStamped in_cloud;
+    fastsense::msg::ImuStamped ground_truth;
+
     while (this->running)
     {
         if (!this->in_->pop_nb(&in_cloud, DEFAULT_POP_TIMEOUT))
         {
             continue;
         }
+
+        if (!ground_truth_buffer->pop_nb(&ground_truth, DEFAULT_POP_TIMEOUT))
+        {
+            continue;
+        }
+
+
 
         fastsense::msg::PointCloudPtrStamped out_cloud;
         out_cloud.data_ = in_cloud.data_;
@@ -81,6 +92,7 @@ void Preprocessing::thread_run()
         
         reduction_filter_closest(out_cloud);
         this->out_->push_nb(out_cloud, true);
+        futher_ground_truth_buffer->push_nb(ground_truth, true);
 
         if (send_preprocessed)
         {

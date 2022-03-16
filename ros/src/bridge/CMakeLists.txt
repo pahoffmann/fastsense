@@ -19,10 +19,12 @@ find_package(catkin REQUIRED COMPONENTS
   tf2
   tf2_ros
   pcl_ros
+  tf2_sensor_msgs
   pcl_conversions
   message_filters
   rostest
   evaluation
+  geometry_msgs
 )
 
 find_package(ZeroMQ 4.3.2 REQUIRED EXACT)
@@ -38,6 +40,13 @@ set(OpenMP_LIBS gomp)
 
 catkin_package(
   DEPENDS evaluation
+  tf2_sensor_msgs
+  geometry_msgs
+  roscpp
+  sensor_msgs
+  visualization_msgs
+  nav_msgs
+  tf2
 )
 
 add_subdirectory(src/from_trenz)

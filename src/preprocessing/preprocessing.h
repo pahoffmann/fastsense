@@ -11,6 +11,8 @@
 #include <hw/buffer/buffer.h>
 #include <util/point.h>
 
+#include <msg/imu.h>
+
 #include <stdlib.h>
 #include <algorithm>
 
@@ -32,6 +34,8 @@ public:
     Preprocessing(const std::shared_ptr<PointCloudBuffer>& in_buffer,
                   const std::shared_ptr<PointCloudBuffer>& out_buffer,
                   const std::shared_ptr<PointCloudBuffer>& send_buffer,
+                  const msg::ImuStampedBuffer::Ptr& ground_truth_buffer,
+                  const msg::ImuStampedBuffer::Ptr& futher_ground_truth_buffer,
                   bool send_original,
                   bool send_preprocessed,
                   float scale = 1.0);
@@ -82,6 +86,10 @@ private:
     bool send_original;
     bool send_preprocessed;
     const std::shared_ptr<PointCloudBuffer> send_buffer;
+
+    const msg::ImuStampedBuffer::Ptr& ground_truth_buffer;
+    const msg::ImuStampedBuffer::Ptr& futher_ground_truth_buffer;
+
     float scale;
     ScanPoint map_bounds;
 };

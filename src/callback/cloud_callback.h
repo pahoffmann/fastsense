@@ -17,6 +17,7 @@
 #include <util/concurrent_ring_buffer.h>
 #include <msg/point_cloud.h>
 #include <callback/map_thread.h>
+#include <msg/imu.h>
 
 namespace fastsense::callback
 {
@@ -38,6 +39,7 @@ public:
                   const std::shared_ptr<GlobalMap>& global_map,
                   const msg::TransformStampedBuffer::Ptr& transform_buffer,
                   const msg::PointCloudPtrStampedBuffer::Ptr& pointcloud_buffer,
+                  const msg::ImuStampedBuffer::Ptr& ground_truth_buffer,
                   bool send_after_registration,
                   const fastsense::CommandQueuePtr& q,
                   MapThread& map_thread,
@@ -69,12 +71,16 @@ private:
     Matrix4f pose;
     msg::TransformStampedBuffer::Ptr transform_buffer;
     std::shared_ptr<PointCloudBuffer> pointcloud_buffer;
+    msg::ImuStampedBuffer::Ptr ground_truth_buffer;
     bool send_after_registration;
     bool first_iteration;
     fastsense::CommandQueuePtr q;
     MapThread& map_thread;
     std::mutex& map_mutex;
     float point_scale;
+
+    size_t cloud_count;
+    size_t ground_count;
 };
 
 }

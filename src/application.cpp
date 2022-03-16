@@ -133,6 +133,22 @@ Application::init_ouster(msg::PointCloudPtrStampedBuffer::Ptr pcl_buffer, msg::I
     }
 }
 
+std::unique_ptr<util::ProcessThread> Application::init_ground_truth(msg::ImuStampedBuffer::Ptr ground_truth_buffer)
+{
+    std::chrono::milliseconds recv_timeout(config.bridge.recv_timeout());
+
+    if (config.bridge.use_from())
+    {
+        return std::make_unique<comm::BufferedImuStampedReceiver>(
+                   config.bridge.host_from(),
+                   4440,
+                   recv_timeout,
+                   ground_truth_buffer);    
+    }
+
+    return nullptr;
+}
+
 int Application::run()
 {
     Logger::info("Initialize Application...");
@@ -149,9 +165,13 @@ int Application::run()
     auto pointcloud_bridge_buffer = std::make_shared<msg::PointCloudPtrStampedBuffer>(config.lidar.bufferSize());
     auto pointcloud_send_buffer = std::make_shared<msg::PointCloudPtrStampedBuffer>(1);
 
+    auto ground_truth_buffer = std::make_shared<msg::ImuStampedBuffer>(config.lidar.bufferSize());
+    auto further_ground_truth_buffer = std::make_shared<msg::ImuStampedBuffer>(config.lidar.bufferSize());
+
     bool use_phidgets = config.imu.use_phidgets();
     util::ProcessThread::UPtr imu_driver = init_imu(imu_buffer, use_phidgets);
     util::ProcessThread::UPtr lidar_driver = init_ouster(pointcloud_buffer, imu_buffer, !use_phidgets);
+    util::ProcessThread::UPtr ground_truth_driver = init_ground_truth(ground_truth_buffer);
 
     bool send = config.bridge.use_to();
     comm::QueueBridge<msg::ImuStamped, true> imu_bridge{imu_buffer, imu_bridge_buffer, config.bridge.imu_port_to(), send};
@@ -169,6 +189,8 @@ int Application::run()
     Preprocessing preprocessing{pointcloud_buffer,
                                 pointcloud_bridge_buffer,
                                 pointcloud_send_buffer,
+                                ground_truth_buffer,
+                                further_ground_truth_buffer,
                                 send_original,
                                 send_preprocessed,
                                 point_scale};
@@ -267,6 +289,8 @@ int Application::run()
         pointcloud_bridge_buffer->clear();
         transform_buffer->clear();
         vis_buffer->clear();
+        ground_truth_buffer->clear();
+        further_ground_truth_buffer->clear();
 
         std::ostringstream filename;
         auto now = std::chrono::system_clock::now();
@@ -295,6 +319,7 @@ int Application::run()
                                      global_map,
                                      transform_buffer,
                                      pointcloud_send_buffer,
+                                     further_ground_truth_buffer,
                                      send_after_registration,
                                      command_queue,
                                      map_thread,
@@ -312,7 +337,11 @@ int Application::run()
             Runner run_transform_bridge(transform_bridge);
             Runner run_pointcloud_send_bridge(pointcloud_send_bridge);
             Runner run_map_thread(map_thread);
+            //Runner run_gt_thread(ground_truth_buffer);
 
+           
+            Runner run_ground_truth_driver(*ground_truth_driver);
+            
             // clear any remaining messages FIXME: WHY IS THIS NECESSARY???
             std::this_thread::sleep_for(1s);
             imu_buffer->clear();
@@ -321,6 +350,8 @@ int Application::run()
             pointcloud_bridge_buffer->clear();
             transform_buffer->clear();
             vis_buffer->clear();
+            ground_truth_buffer->clear();
+            further_ground_truth_buffer->clear();
 
             Runner run_cloud_callback{cloud_callback};
 

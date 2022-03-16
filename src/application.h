@@ -8,6 +8,7 @@
 #include <driver/lidar/velodyne.h>
 #include <driver/imu/imu.h>
 #include <msg/imu.h>
+#include <msg/transform.h>
 #include <msg/point_cloud.h>
 #include <util/config/config.h>
 #include <util/process_thread.h>
@@ -24,6 +25,7 @@ private:
     std::unique_ptr<util::ProcessThread>
     init_ouster(msg::PointCloudPtrStampedBuffer::Ptr pcl_buffer, msg::ImuStampedBuffer::Ptr imu_buffer,
                 bool activate_imu);
+    std::unique_ptr<util::ProcessThread> init_ground_truth(msg::ImuStampedBuffer::Ptr ground_truth_buffer);
 public:
     Application();
     ~Application() = default;
