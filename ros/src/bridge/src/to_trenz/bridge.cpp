@@ -34,6 +34,10 @@
 #include <tf2/LinearMath/Quaternion.h>
 #include <tf2/LinearMath/Matrix3x3.h>
 
+#include <message_filters/subscriber.h>
+#include <message_filters/synchronizer.h>
+#include <message_filters/sync_policies/approximate_time.h>
+
 namespace fs = fastsense;
 
 /**
@@ -51,6 +55,85 @@ namespace fs = fastsense;
 class Bridge
 {
 public:
+
+    void scanOdomCallback(const sensor_msgs::PointCloud2::ConstPtr& pcl, const nav_msgs::Odometry::ConstPtr& ground_truth)
+    {
+        static tf2_ros::TransformBroadcaster broadcaster;
+        static tf2_ros::Buffer tf_buffer;
+        static tf2_ros::TransformListener tf_listener(tf_buffer);
+
+        geometry_msgs::TransformStamped base_to_scan;
+
+        try
+        {
+            base_to_scan = tf_buffer.lookupTransform("base_link", "velodyne", ground_truth->header.stamp, ros::Duration(0.5));
+        }
+        catch (tf2::TransformException& e)
+        {
+            ROS_WARN_STREAM("Couldn't transform from '" << "velodyne" << "' to '" << "base_link" << "'." );
+            ros::Duration(0.1).sleep();
+            return;
+        }
+
+        tf2::Transform tf_base_to_scan;
+        tf2::convert(base_to_scan.transform, tf_base_to_scan);
+        
+        tf2::Transform tf_map_to_base;
+        tf2::convert(ground_truth->pose.pose, tf_map_to_base);
+
+        //std::cout << base_to_scan.transform.translation.x << " " << base_to_scan.transform.translation.z << std::endl;
+
+        auto scanner_transform = tf_map_to_base * tf_base_to_scan;
+
+        geometry_msgs::Transform scanner_pose;
+        tf2::convert(scanner_transform, scanner_pose);
+
+        double roll, pitch, yaw;
+        tf2::Quaternion tf_quaternion;
+
+        tf2::convert(ground_truth->pose.pose.orientation, tf_quaternion);
+        tf2::Matrix3x3(tf_quaternion).getRPY(roll, pitch, yaw);
+        transform.ang.x() = roll;
+        transform.ang.y() = pitch;
+        transform.ang.z() = yaw;
+
+        transform.acc.x() = scanner_pose.translation.x; //ground_truth->pose.pose.position.x;
+        transform.acc.y() = scanner_pose.translation.y; //ground_truth->pose.pose.position.y;
+        transform.acc.z() = scanner_pose.translation.z; //ground_truth->pose.pose.position.z;
+
+        auto tp = fs::util::HighResTimePoint{std::chrono::nanoseconds{pcl->header.stamp.toNSec()}};
+
+        fastsense::msg::PointCloud trenz_pcl;
+        auto& trenz_points = trenz_pcl.points_;
+
+        size_t n_points = pcl->width * pcl->height;
+
+        if (pcl->data.empty())
+        {
+            ROS_WARN_STREAM("Received empty pointcloud");
+        }
+        else
+        {
+            trenz_points.resize(n_points);
+
+            auto pcl_start = sensor_msgs::PointCloud2ConstIterator<float>(*pcl, "x");
+
+
+            #pragma omp parallel for schedule(static)
+            for (size_t i = 0; i < n_points; ++i)
+            {
+                const auto it = pcl_start + i;
+                trenz_points[i] = fs::ScanPoint(it[0] * 1000.f, it[1] * 1000.f, it[2] * 1000.f);
+            }
+        }
+
+        pcl_sender_.send(fs::msg::PointCloudStamped{std::move(trenz_pcl), tp});
+
+        gt_sender_.send(fs::msg::ImuStamped{std::move(transform), tp});
+
+        ROS_DEBUG("Sent pcl2\n");
+    }
+
     /**
      * @brief Construct a new Bridge object
      * 
@@ -72,10 +155,18 @@ public:
         //spinner_.start();
         imu_sub_ = nh_.subscribe<sensor_msgs::Imu>("/imu/data_raw", 1000, &Bridge::imu_callback, this);
         pcl1_sub_ = nh_.subscribe<sensor_msgs::PointCloud>("/velodyne_legacy", 1, &Bridge::pcl1_callback, this);
-        pcl2_sub_ = nh_.subscribe<sensor_msgs::PointCloud2>("/velodyne_points", 1, &Bridge::pcl2_callback, this);
-        gt_sub_   = nh_.subscribe<nav_msgs::Odometry>("/base_footprint_pose_ground_truth", 1, &Bridge::gt_callback, this);
+        //pcl2_sub_ = nh_.subscribe<sensor_msgs::PointCloud2>("/velodyne_points", 1, &Bridge::pcl2_callback, this);
+        //gt_sub_   = nh_.subscribe<nav_msgs::Odometry>("/base_footprint_pose_ground_truth", 1, &Bridge::gt_callback, this);
         ROS_INFO("to_trenz bridge initiated");
    
+        message_filters::Subscriber<sensor_msgs::PointCloud2> pcl2_sub_(nh_, "/velodyne_points", 1);
+        message_filters::Subscriber<nav_msgs::Odometry> gt_sub_ (nh_, "/base_footprint_pose_ground_truth", 1);
+
+        typedef message_filters::sync_policies::ApproximateTime<sensor_msgs::PointCloud2, nav_msgs::Odometry> MySyncPolicy;
+
+        message_filters::Synchronizer<MySyncPolicy> sync(MySyncPolicy(10), pcl2_sub_, gt_sub_);
+        sync.registerCallback(boost::bind(&Bridge::scanOdomCallback, this, _1, _2));
+
         ros::spin();
     }
 
