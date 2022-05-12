@@ -56,9 +56,9 @@ void pointCloud2Callback(const sensor_msgs::PointCloud2::ConstPtr& pcl_path)
     geometry_msgs::PoseStamped pose_stamped;
     pose_stamped.header = pcl_path->header;
     pose_stamped.pose.orientation.w = 1;
-    pose_stamped.pose.position.x = point.x;
-    pose_stamped.pose.position.y = point.y;
-    pose_stamped.pose.position.z = point.z;
+    pose_stamped.pose.position.x = point.z;
+    pose_stamped.pose.position.y = point.x;
+    pose_stamped.pose.position.z = point.y;
 
     ROS_DEBUG_STREAM("Converted LOAM PCL to Pose");
 

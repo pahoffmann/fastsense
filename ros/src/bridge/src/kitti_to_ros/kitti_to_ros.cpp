@@ -1,13 +1,14 @@
 #include <ros/ros.h>
-//#include <sensor_msgs/LaserScan.h>
+#include <boost/filesystem.hpp>
 #include <sensor_msgs/PointCloud2.h>
-
 #include <cmath>
 #include <cstdlib>
 #include <sstream>
 #include <fstream>
 
 ros::Publisher cloud_pub;
+
+namespace fs = boost::filesystem;
 
 struct MyPoint {
     float x;
@@ -29,18 +30,26 @@ int main(int argc, char **argv)
         return 0;
     }
 
+    auto base_path = fs::path(dir);
+    if (!fs::is_directory(base_path))
+    {
+        ROS_ERROR_STREAM("Entered directory doesn't exist!");
+        return 0;
+    }
+
+
     if (!n.getParam("rate", time_rate))
     {
         time_rate = 1.0;
     }
 
-    std::cout << "Starting with rate " << time_rate << std::endl;
+    ROS_INFO_STREAM("Starting with rate " << time_rate);
 
-    std::ifstream time_stream(dir + std::string("/times.txt"));
+    std::ifstream time_stream(base_path / "times.txt");
 
     if(!time_stream)
     {
-        std::cout << "Please enter a valid KITTI dataset folder with a \"time.txt\" in it!" << std::endl;
+        ROS_ERROR_STREAM("Please enter a valid KITTI dataset folder with a \"time.txt\" in it!");
         return 0;
     }
 
@@ -81,28 +90,28 @@ int main(int argc, char **argv)
         // load point cloud
         FILE *stream;
 
-        std::stringstream ss;
+        std::stringstream binfile_name;
+        binfile_name << std::setw(6) << std::setfill('0') << count;
+        binfile_name << std::string(".bin");
+        
 
-        //ss << std::string("/home/fastsense/ros_ws/kitti_velodyne/");
-        ss << dir;
-        ss << std::setw(6) << std::setfill('0') << count;
-        ss << std::string(".bin");
-
-        std::string file_name =  ss.str();
+        fs::path binfile_path = base_path / "velodyne" / binfile_name.str();
 
         if(!(time_stream >> stamp))
         {
             break;
         }
 
-        std::cout << "Loading: " << file_name << std::endl;
-
-        stream = fopen (file_name.c_str(),"rb");
+        stream = fopen(binfile_path.c_str(),"rb");
 
         if (stream == NULL)
         {
+            ROS_ERROR_STREAM("Failed to load: " << binfile_path);
             break;
         }
+
+        std::cout << "Loaded: " << binfile_path << std::endl;
+
 
         // allocate 4 MB buffer (only ~130*4*4 KB are needed)
         int32_t num = 1000000;
@@ -160,14 +169,14 @@ int main(int argc, char **argv)
             hz = 0.0;
         }
 
-        std::cout << hz << " hz" << std::endl;
+        ROS_INFO_STREAM(hz << "hz");
 
 
         last_stamp = stamp;
         ++count;
     }
 
-    std::cout << "KITTI dataset has ended" << std::endl;
+    ROS_INFO("KITTI dataset has ended");
 
     return 0;
 }
