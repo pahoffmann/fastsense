@@ -1,6 +1,7 @@
 #include <ros/ros.h>
 #include <nav_msgs/Path.h>
 #include <sensor_msgs/PointCloud.h>
+#include <sensor_msgs/PointCloud2.h>
 
 #include <tf2/LinearMath/Matrix3x3.h>
 #include <tf2/LinearMath/Transform.h>
@@ -18,7 +19,19 @@ auto pose_counter = 0u;
 nav_msgs::Path original_pose_path;
 std::unique_ptr<tf2_ros::TransformBroadcaster> broadcaster;
 
-void cloud_callback(const sensor_msgs::PointCloud::ConstPtr& cloud)
+double last_x = 0.0;
+double last_y = 0.0;
+double last_z = 0.0;
+
+ros::Time last_stamp;
+
+bool first = true;
+
+int vel_count = 0;
+double vel_sum = 0;
+
+
+void cloud_callback(const sensor_msgs::PointCloud2::ConstPtr& cloud)
 {
     if (broadcaster == nullptr)
     {
@@ -42,8 +55,37 @@ void cloud_callback(const sensor_msgs::PointCloud::ConstPtr& cloud)
         transform_data.transform.translation.y = pose_stamped.pose.position.y;
         transform_data.transform.translation.z = pose_stamped.pose.position.z;
 
+
         transform_data.header.stamp = ros::Time::now();
         broadcaster->sendTransform(transform_data);
+    
+        if (!first)
+        {
+            auto diff_x = last_x - pose_stamped.pose.position.x;
+            auto diff_y = last_y - pose_stamped.pose.position.y;
+            auto diff_z = last_z - pose_stamped.pose.position.z;
+
+            double dist = sqrt(diff_x * diff_x + diff_y * diff_y + diff_z * diff_z);
+            ++vel_count;
+
+            double vel = dist / (cloud->header.stamp - last_stamp).toSec();
+            vel_sum += vel;
+
+            std::cout << "curr vel: " << vel << " m/s    avg vel: " << vel_sum / vel_count << " m/s" << std::endl;
+        }
+        else
+        {
+            first = false;
+        }
+
+        last_x = pose_stamped.pose.position.x;
+        last_y = pose_stamped.pose.position.y;
+        last_z = pose_stamped.pose.position.z;
+        last_stamp = cloud->header.stamp;
+    }
+    else
+    {
+        std::cout << pose_counter  << std::endl;
     }
 
 
@@ -165,13 +207,13 @@ int main(int argc, char** argv)
         // }
 
         pose_path.poses.push_back(pose_stamped);
-        ++pose_counter;
+        //++pose_counter;
     }
 
 
     pose_stream.close();
 
-    ROS_INFO_STREAM("Read " << pose_counter << " poses");
+    //ROS_INFO_STREAM("Read " << pose_counter << " poses");
 
     original_pose_path = pose_path;
 
@@ -180,7 +222,7 @@ int main(int argc, char** argv)
     //tf2_ros::TransformBroadcaster broadcaster;
     broadcaster.reset(new tf2_ros::TransformBroadcaster());
 
-    auto cloud_sub = n.subscribe<sensor_msgs::PointCloud>("/from_trenz_bridge/velodyne/points", 1, cloud_callback);
+    auto cloud_sub = n.subscribe<sensor_msgs::PointCloud2>("/velodyne_points", 1, cloud_callback);
 
     std::cout << "Prepare for visualization..." << std::endl;
 
@@ -198,7 +240,7 @@ int main(int argc, char** argv)
 
     std::cout << "Visualize poses..." << std::endl;
 
-    while (ros::ok())
+    /*while (ros::ok())
     {
         pose_path.header.stamp = ros::Time::now();
         // transform_data.header.stamp = pose_path.header.stamp;
@@ -206,7 +248,9 @@ int main(int argc, char** argv)
         pub.publish(pose_path);
         ros::spinOnce();
         duration.sleep();
-    }
+    }*/
+
+    ros::spin();
 
     return 0;
 }
