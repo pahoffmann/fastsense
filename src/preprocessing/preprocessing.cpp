@@ -5,12 +5,14 @@
  */
 
 #include "preprocessing.h"
+#include <util/logging/logger.h>
 #include <util/config/config_manager.h>
 
 #include <unordered_set>
 
 using namespace fastsense::preprocessing;
 using fastsense::buffer::InputBuffer;
+using fastsense::util::logging::Logger;
 
 namespace std
 {
@@ -31,14 +33,16 @@ Preprocessing::Preprocessing(const std::shared_ptr<PointCloudBuffer>& in_buffer,
                              bool send_original,
                              bool send_preprocessed,
                              float scale)
-    : QueueBridge{in_buffer, out_buffer, 0, false}, send_buffer(send_buffer), send_original(send_original), send_preprocessed(send_preprocessed), scale(scale)
+    : QueueBridge{in_buffer, out_buffer, 0, false}, send_original(send_original), send_preprocessed(send_preprocessed), send_buffer(send_buffer), scale(scale), 
+      map_bounds(util::config::ConfigManager::config().slam.map_size_x() / 2 * MAP_RESOLUTION, 
+                 util::config::ConfigManager::config().slam.map_size_y() / 2 * MAP_RESOLUTION, 
+                 util::config::ConfigManager::config().slam.map_size_z() / 2 * MAP_RESOLUTION)
 {
 
 }
 
 void Preprocessing::thread_run()
 {
-    int expected_rings = util::config::ConfigManager::config().lidar.rings();
     fastsense::msg::PointCloudPtrStamped in_cloud;
     while (this->running)
     {
@@ -46,13 +50,6 @@ void Preprocessing::thread_run()
         {
             continue;
         }
-
-        if (send_original)
-        {
-            send_buffer->push_nb(in_cloud);
-        }
-
-        assert(expected_rings == in_cloud.data_->rings_);
 
         fastsense::msg::PointCloudPtrStamped out_cloud;
         out_cloud.data_ = in_cloud.data_;
@@ -66,13 +63,28 @@ void Preprocessing::thread_run()
             }
         }
 
-        median_filter(out_cloud, 5);
-        reduction_filter_closest(out_cloud);
+        if (send_original)
+        {
+            in_cloud.data_->scaling_ = scale;
+            send_buffer->push_nb(in_cloud);
+        }
 
+
+        /*if (util::config::ConfigManager::config().lidar.rings() == out_cloud.data_->rings_)
+        {
+            median_filter(out_cloud, 5);
+        }
+        else
+        {
+            Logger::warning("Expected rings not equal to received rings! Skipping median filter");
+        }*/
+        
+        reduction_filter_closest(out_cloud);
         this->out_->push_nb(out_cloud, true);
 
         if (send_preprocessed)
         {
+            out_cloud.data_->scaling_ = scale;
             send_buffer->push_nb(out_cloud);
         }
     }
@@ -89,7 +101,7 @@ void Preprocessing::reduction_filter_average(fastsense::msg::PointCloudPtrStampe
 
     for (const auto& point : cloud_points)
     {
-        if (point.x() == 0 && point.y() == 0 && point.z() == 0)
+        if ((point.x() == 0 && point.y() == 0 && point.z() == 0) || map_bounds.x() < std::abs(point.x()) || map_bounds.y() < std::abs(point.y()) || map_bounds.z() < std::abs(point.z()))
         {
             continue;
         }
@@ -125,7 +137,7 @@ void Preprocessing::reduction_filter_closest(fastsense::msg::PointCloudPtrStampe
 
     for (const auto& point : cloud_points)
     {
-        if (point.x() == 0 && point.y() == 0 && point.z() == 0)
+        if ((point.x() == 0 && point.y() == 0 && point.z() == 0) || map_bounds.x() < std::abs(point.x()) || map_bounds.y() < std::abs(point.y()) || map_bounds.z() < std::abs(point.z()))
         {
             continue;
         }
@@ -162,7 +174,7 @@ void Preprocessing::reduction_filter_voxel_center(fastsense::msg::PointCloudPtrS
 
     for (const auto& point : cloud_points)
     {
-        if (point.x() == 0 && point.y() == 0 && point.z() == 0)
+        if ((point.x() == 0 && point.y() == 0 && point.z() == 0) || map_bounds.x() < std::abs(point.x()) || map_bounds.y() < std::abs(point.y()) || map_bounds.z() < std::abs(point.z()))
         {
             continue;
         }
@@ -238,6 +250,7 @@ void Preprocessing::median_filter(fastsense::msg::PointCloudPtrStamped& cloud, u
 {
     if (window_size % 2 == 0)
     {
+        Logger::warning("Median filter window must be % 2 == 1, but isn't. Skipping.");
         return;
     }
 

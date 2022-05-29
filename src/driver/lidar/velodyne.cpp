@@ -240,7 +240,7 @@ void VelodyneDriver::decode_packet()
             if (az_block < az_last_)
             {
                 current_scan_->rings_ = 16;
-                // TODO set new time point?
+                current_scan_->scaling_ = 1.0f;
                 // TODO std::move()
                 scan_buffer_->push_nb(Stamped<PointCloud::Ptr>{current_scan_, util::HighResTime::now()}, true);
                 current_scan_ = std::make_shared<PointCloud>();

@@ -15,6 +15,8 @@ target_include_directories(from_trenz PRIVATE
   ${Eigen3_INCLUDE_DIRS}
 )
 
+add_dependencies(from_trenz ${catkin_EXPORTED_TARGETS})
+
 target_link_libraries(from_trenz
   ${catkin_LIBRARIES}
   libzmq

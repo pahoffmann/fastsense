@@ -121,12 +121,14 @@ int Application::run()
         throw std::runtime_error("More than one send option active in config.json/bridge/send_*");
     }
 
+    const float& point_scale = config.lidar.pointScale();
+
     Preprocessing preprocessing{pointcloud_buffer,
                                 pointcloud_bridge_buffer,
                                 pointcloud_send_buffer,
                                 send_original,
                                 send_preprocessed,
-                                config.lidar.pointScale()};
+                                point_scale};
 
     auto command_queue = fastsense::hw::FPGAManager::create_command_queue();
 
@@ -242,6 +244,7 @@ int Application::run()
                              config.slam.map_update_period(),
                              config.slam.map_update_position_threshold(),
                              config.bridge.tsdf_port_to(),
+                             point_scale,
                              command_queue};
         CloudCallback cloud_callback{registration,
                                      pointcloud_bridge_buffer,
@@ -252,7 +255,8 @@ int Application::run()
                                      send_after_registration,
                                      command_queue,
                                      map_thread,
-                                     map_mutex};
+                                     map_mutex,
+                                     point_scale};
 
         {
             Runner run_lidar_driver(*lidar_driver);

@@ -25,7 +25,8 @@ CloudCallback::CloudCallback(Registration& registration,
                              bool send_after_registration,
                              const fastsense::CommandQueuePtr& q,
                              MapThread& map_thread,
-                             std::mutex& map_mutex)
+                             std::mutex& map_mutex,
+                             float point_scale)
     : ProcessThread(),
       registration{registration},
       cloud_buffer{cloud_buffer},
@@ -38,7 +39,8 @@ CloudCallback::CloudCallback(Registration& registration,
       first_iteration{true},
       q{q},
       map_thread{map_thread},
-      map_mutex{map_mutex}
+      map_mutex{map_mutex},
+      point_scale{point_scale}
 {
 
 }
@@ -56,6 +58,7 @@ void CloudCallback::set_local_map(const std::shared_ptr<LocalMap>& local_map)
 void CloudCallback::thread_run()
 {
     fastsense::msg::PointCloudPtrStamped point_cloud;
+
     std::unique_ptr<InputBuffer<PointHW>> scan_point_buffer;
     auto& eval = RuntimeEvaluator::get_instance();
 #ifdef TIME_MEASUREMENT
@@ -69,14 +72,17 @@ void CloudCallback::thread_run()
         }
 
         eval.start("total");
-
+        
+        point_cloud.data_->scaling_ = point_scale;
         int num_points = point_cloud.data_->points_.size();
+
         if (scan_point_buffer == nullptr || num_points > (int)scan_point_buffer->size())
         {
             // IMPORTANT: Delete old buffer first
             scan_point_buffer.reset();
             scan_point_buffer.reset(new InputBuffer<PointHW>(q, num_points * 1.5));
         }
+        
         for (int i = 0; i < num_points; i++)
         {
             auto& point = point_cloud.data_->points_[i];
@@ -99,8 +105,6 @@ void CloudCallback::thread_run()
             eval.stop("reg");
             map_mutex.unlock();
 
-            // Logger::info("Pose:\n", std::fixed, std::setprecision(4), pose);
-
             if (std::isnan(pose(0, 0)))
             {
                 Logger::error("Registration gave NaN");
@@ -118,6 +122,7 @@ void CloudCallback::thread_run()
         msg::TransformStamped transform;
         transform.data_.translation = pose.block<3, 1>(0, 3);
         transform.data_.rotation = quat;
+        transform.data_.scaling = point_scale;
         transform_buffer->push_nb(transform, true);
 
         if (send_after_registration)

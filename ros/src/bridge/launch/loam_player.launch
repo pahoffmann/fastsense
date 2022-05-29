@@ -1,4 +1,5 @@
 <launch>
+  #### Use this file with Lego-LOAM dataset
   <arg name="bag" />
   <arg name="args" default=""/>
 
@@ -18,7 +19,7 @@
   
   <node pkg="rosbag" type="play" name="fastsense_player" output="screen" args="$(arg bag) $(arg args) --clock --topics /velodyne_points /imu/data">
     <remap from="/velodyne_points" to="/from_trenz/velodyne/points"/>
-    <remap from="/imu/data" to="/from_trenz/imu/raw"/>-
+    <remap from="/imu/data" to="/from_trenz/imu/raw"/>
   </node> 
 
 </launch>
