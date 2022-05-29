@@ -8,6 +8,7 @@
 
 #include <hw/buffer/buffer.h>
 #include <map/local_map_hw.h>
+#include <util/point.h>
 #include "global_map.h"
 
 namespace fastsense::map
@@ -237,6 +238,15 @@ public:
      * Calls write_back of the global map to store the data in the file.
      */
     void write_back();
+
+    /**
+     * @brief writes a passed mat4f pose to the hdf5 using the the global map
+     * 
+     * @param mat 
+     */
+    inline void write_path_pose(Matrix4f &mat) {
+        map_->write_path_node(Pose(mat));
+    }
 
 private:
     /**

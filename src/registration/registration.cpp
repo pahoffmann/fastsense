@@ -70,6 +70,7 @@ void Registration::register_cloud(fastsense::map::LocalMap& localmap,
 
     krnl.synchronized_run(localmap, cloud, num_points, max_iterations_, it_weight_gradient_, epsilon_, pose);
 
+    localmap.write_path_pose(pose);
     // apply final transformation
     transform_point_cloud(cloud, pose);
 }
