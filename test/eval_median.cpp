@@ -163,7 +163,7 @@ TEST_CASE("Eval_Median", "[eval_median][slow]")
     Stamped<PointCloud::Ptr> cloud_stamped;
     cloud_stamped.data_ = std::make_shared<PointCloud>();
     cloud_stamped.data_->points_.resize(num_points);
-    cloud_stamped.data_->rings_ = float_points.size();
+    cloud_stamped.data_->height_ = float_points.size();
 
 
     // Prepare normal registartion points

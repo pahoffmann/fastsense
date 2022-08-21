@@ -189,7 +189,7 @@ TEST_CASE("QueueBridge Stamped<PointCloud>", "[communication_queue_bridge]")
     Imu imu{{1, 2, 3}, {4, 5, 6}, {7, 8, 9}};
     auto ts_sent = HighResTime::now();
     PointCloud pc_to_send;
-    pc_to_send.rings_ = 2;
+    pc_to_send.height_ = 2;
     pc_to_send.points_.push_back({1, 2, 3});
     pc_to_send.points_.push_back({2, 3, 4});
     pc_to_send.points_.push_back({3, 4, 5});

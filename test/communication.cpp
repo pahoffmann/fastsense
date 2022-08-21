@@ -73,7 +73,7 @@ TEST_CASE("PointCloud Sender Receiver Test", "[communication]")
         bool stop = false;
 
         PointCloud pc_to_send;
-        pc_to_send.rings_ = 2;
+        pc_to_send.height_ = 2;
         pc_to_send.points_.push_back({1, 2, 3});
         pc_to_send.points_.push_back({2, 3, 4});
         pc_to_send.points_.push_back({3, 4, 5});
@@ -103,7 +103,7 @@ TEST_CASE("PointCloud Sender Receiver Test", "[communication]")
 
         receive_thread.join();
         send_thread.join();
-        REQUIRE(pc_to_send.rings_ == pc_received.rings_);
+        REQUIRE(pc_to_send.height_ == pc_received.height_);
         REQUIRE(pc_to_send.points_ == pc_received.points_);
     }
 }
@@ -116,7 +116,7 @@ TEST_CASE("PointCloudStamped Sender Receiver Test", "[communication]")
         bool stop = false;
 
         PointCloud pc_to_send;
-        pc_to_send.rings_ = 2;
+        pc_to_send.height_ = 2;
         pc_to_send.points_.push_back({1, 2, 3});
         pc_to_send.points_.push_back({2, 3, 4});
         pc_to_send.points_.push_back({3, 4, 5});
@@ -125,7 +125,7 @@ TEST_CASE("PointCloudStamped Sender Receiver Test", "[communication]")
 
         PointCloudStamped pcl_stamped{std::move(pc_to_send), tp_to_send};
 
-        REQUIRE(pcl_stamped.data_.rings_ == 2);
+        REQUIRE(pcl_stamped.data_.height_ == 2);
 
         PointCloudStamped pcl_stamped_received;
 
@@ -154,7 +154,7 @@ TEST_CASE("PointCloudStamped Sender Receiver Test", "[communication]")
         receive_thread.join();
         send_thread.join();
 
-        REQUIRE(pcl_stamped.data_.rings_ == pcl_stamped_received.data_.rings_);
+        REQUIRE(pcl_stamped.data_.height_ == pcl_stamped_received.data_.height_);
         REQUIRE(pcl_stamped.data_.points_ == pcl_stamped_received.data_.points_);
         REQUIRE(pcl_stamped.timestamp_ == pcl_stamped_received.timestamp_);
     }
@@ -168,7 +168,7 @@ TEST_CASE("Stamped<PointCloud> Sender Receiver Test", "[communication]")
         bool stop = false;
 
         PointCloud pc_to_send;
-        pc_to_send.rings_ = 2;
+        pc_to_send.height_ = 2;
         pc_to_send.points_.push_back({1, 2, 3});
         pc_to_send.points_.push_back({2, 3, 4});
         pc_to_send.points_.push_back({3, 4, 5});
@@ -203,7 +203,7 @@ TEST_CASE("Stamped<PointCloud> Sender Receiver Test", "[communication]")
         receive_thread.join();
         send_thread.join();
 
-        REQUIRE(pcl_stamped.data_.rings_ == pcl_stamped_received.data_.rings_);
+        REQUIRE(pcl_stamped.data_.height_ == pcl_stamped_received.data_.height_);
         REQUIRE(pcl_stamped.data_.points_ == pcl_stamped_received.data_.points_);
         REQUIRE(pcl_stamped.timestamp_ == pcl_stamped_received.timestamp_);
     }
@@ -493,7 +493,7 @@ TEST_CASE("ImuStamped Sender Receiver Test", "[communication]")
       PointCloud pcl(1.f);
       REQUIRE(pcl.scaling_ == 1.f);
 
-      pcl.rings_ = 2;
+      pcl.height_ = 2;
       pcl.scaling_ = SCALE;
       pcl.points_.push_back({1, 2, 3});
       pcl.points_.push_back({2, 3, 4});
@@ -513,7 +513,7 @@ TEST_CASE("ImuStamped Sender Receiver Test", "[communication]")
       // test pcl custom constructor
       PointCloud test{0.1f};
       REQUIRE(test.points_.empty());
-      REQUIRE(test.rings_ == 0);
+      REQUIRE(test.height_ == 0);
       REQUIRE(test.scaling_ == 0.1f);
 
       std::thread receive_thread{[&]()
@@ -546,7 +546,7 @@ TEST_CASE("ImuStamped Sender Receiver Test", "[communication]")
         auto&[pcl_ptr_stamped_recv, tp_received] = data_recv;
 
         REQUIRE(buffer->size() == 1);
-        REQUIRE(pcl_stamped.data_.rings_ == pcl_ptr_stamped_recv->rings_);
+        REQUIRE(pcl_stamped.data_.height_ == pcl_ptr_stamped_recv->height_);
         REQUIRE(pcl_stamped.data_.points_ == pcl_ptr_stamped_recv->points_);
         REQUIRE(pcl_stamped.data_.scaling_ == pcl_ptr_stamped_recv->scaling_);
         REQUIRE(pcl_ptr_stamped_recv->scaling_ == SCALE);
@@ -558,7 +558,7 @@ TEST_CASE("ImuStamped Sender Receiver Test", "[communication]")
         auto&[pcl_ptr_stamped_recv, tp_received] = data_recv;
 
         REQUIRE(buffer->empty());
-        REQUIRE(pcl_stamped.data_.rings_ == pcl_ptr_stamped_recv->rings_);
+        REQUIRE(pcl_stamped.data_.height_ == pcl_ptr_stamped_recv->height_);
         REQUIRE(pcl_stamped.data_.points_ == pcl_ptr_stamped_recv->points_);
         REQUIRE(pcl_stamped.data_.scaling_ == pcl_ptr_stamped_recv->scaling_);
         REQUIRE(pcl_ptr_stamped_recv->scaling_ == SCALE);

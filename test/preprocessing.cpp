@@ -55,7 +55,7 @@ TEST_CASE("Preprocessing", "[Preprocessing]")
     points[23] = {50, 50, 20}; //d = 73.484692
     
     cloud_stamped.data_->points_ = points;
-    cloud_stamped.data_->rings_ = 2;
+    cloud_stamped.data_->height_ = 2;
     cloud_stamped.data_->scaling_ = 1.0f;
 
     SECTION("Test median filter"){
@@ -182,7 +182,7 @@ TEST_CASE("Preprocessing", "[Preprocessing]")
         points[23] = {-60, 56, -27};
 
         cloud_stamped.data_->points_ = points;
-        cloud_stamped.data_->rings_ = 2;
+        cloud_stamped.data_->height_ = 2;
 
         preprocessor.reduction_filter_average(cloud_stamped);
 
@@ -219,7 +219,7 @@ TEST_CASE("Preprocessing", "[Preprocessing]")
         points[7] = {140, 1, -1};
 
         cloud_stamped.data_->points_ = points;
-        cloud_stamped.data_->rings_ = 2;
+        cloud_stamped.data_->height_ = 2;
 
         preprocessor.reduction_filter_voxel_center(cloud_stamped);
 
@@ -257,7 +257,7 @@ TEST_CASE("Preprocessing", "[Preprocessing]")
         points[7] = {140, 1, -1};
 
         cloud_stamped.data_->points_ = points;
-        cloud_stamped.data_->rings_ = 2;
+        cloud_stamped.data_->height_ = 2;
 
         preprocessor.reduction_filter_random_point(cloud_stamped);
 

@@ -101,7 +101,7 @@ TEST_CASE("TSDF_Kernel_Vis", "[tsdf_kernel_vis]")
 
         // Send local map to bridge
 
-        fastsense::msg::TSDFBridgeMessage tsdf_msg;
+        fastsense::msg::TSDF tsdf_msg;
 
         tsdf_msg.tau_ = TAU;
         tsdf_msg.size_ = size;
