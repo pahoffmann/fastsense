@@ -101,8 +101,9 @@ void Preprocessing::reduction_filter_average(fastsense::msg::PointCloudPtrStampe
 
     for (const auto& point : cloud_points)
     {
-        if ((point.x() == 0 && point.y() == 0 && point.z() == 0) || map_bounds.x() < std::abs(point.x()) || map_bounds.y() < std::abs(point.y()) || map_bounds.z() < std::abs(point.z()))
-        {
+        if ((point.x() == 0 && point.y() == 0 && point.z() == 0) || ((map_bounds.x() < std::abs(point.x()) || map_bounds.y() < std::abs(point.y()) || map_bounds.z() < std::abs(point.z())) 
+                                                                   && map_bounds.x() != 0 && map_bounds.y() != 0 && map_bounds.z() != 0))
+        { 
             continue;
         }
 
@@ -118,6 +119,7 @@ void Preprocessing::reduction_filter_average(fastsense::msg::PointCloudPtrStampe
     }
 
     cloud_points.resize(point_map.size());
+
     int counter = 0;
     for (auto& avg_point : point_map)
     {
@@ -174,7 +176,8 @@ void Preprocessing::reduction_filter_voxel_center(fastsense::msg::PointCloudPtrS
 
     for (const auto& point : cloud_points)
     {
-        if ((point.x() == 0 && point.y() == 0 && point.z() == 0) || map_bounds.x() < std::abs(point.x()) || map_bounds.y() < std::abs(point.y()) || map_bounds.z() < std::abs(point.z()))
+        if ((point.x() == 0 && point.y() == 0 && point.z() == 0) || ((map_bounds.x() < std::abs(point.x()) || map_bounds.y() < std::abs(point.y()) || map_bounds.z() < std::abs(point.z())) 
+                                                                   && map_bounds.x() != 0 && map_bounds.y() != 0 && map_bounds.z() != 0))
         {
             continue;
         }
