@@ -1,3 +1,8 @@
+This project is a joined operation of multiple students of the university of Osnabruck, which i took part in.
+A paper under the Name **HATSDF-SLAM** has been published and may be taken into account when interested in the other authors
+and the general idea behind this project and it's solutions.
+
+
 # HATSDF SLAM
 
 **INSERT SUPER AWESOME GIF**
